@@ -11,10 +11,25 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const DAILY_LIMIT = Number(Deno.env.get("SD_DAILY_LIMIT") || "60");
+// Full rewrite on Opus; titles, cold open, fixes and fact check on Sonnet. Override with secrets without redeploying.
 const MODELS: Record<string, string> = {
-  complex: Deno.env.get("SD_MODEL_COMPLEX") || "claude-sonnet-5-5",
-  default: Deno.env.get("SD_MODEL_DEFAULT") || "claude-haiku-5-5",
+  complex: Deno.env.get("SD_MODEL_COMPLEX") || "claude-opus-5-5",
+  default: Deno.env.get("SD_MODEL_DEFAULT") || "claude-sonnet-5-5",
 };
+// USD per million tokens [input, output] — platform.claude.com/docs/en/about-claude/pricing (Oct 2026).
+const PRICES: Record<string, [number, number]> = {
+  "claude-haiku-5-5": [0.10, 0.50],
+  "claude-sonnet-5-5": [2, 10],
+  "claude-opus-5-5": [4, 20],
+  "claude-fable-5-1": [10, 50],
+};
+const NAMES: Record<string, string> = { "claude-haiku-5-5": "Haiku 5.5", "claude-sonnet-5-5": "Sonnet 5.5", "claude-opus-5-5": "Opus 5.5", "claude-fable-5-1": "Fable 5.1" };
+function costOf(model: string, inTok: number, outTok: number): number | null {
+  let p = PRICES[model];
+  if (!p) return null;
+  if (model === "claude-haiku-5-5" && inTok > 100000) p = [0.50, 2.50];
+  return (inTok * p[0] + outTok * p[1]) / 1e6;
+}
 const MAX_TOKENS: Record<string, number> = { complex: 8000, default: 2500 };
 const SYSTEM =
   "Eres el asistente de Script Desk, una herramienta para revisar guiones de un pódcast cristiano de enseñanza bíblica en YouTube. " +
@@ -68,12 +83,17 @@ Deno.serve(async (req) => {
   }
   const out = await r.json().catch(() => null);
   const usage = out?.usage || {};
-  await sb.from("sd_ai_usage").insert({ user_id: userData.user.id, tier, model, input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null, ok: r.ok });
-  if (r.status === 429 || r.status === 529) return json({ code: "rate_limited" }, 429);
-  if (!r.ok) return json({ code: "upstream", detail: out?.error?.message || r.status }, 502);
+  const inTok = (usage.input_tokens || 0) + (usage.cache_creation_input_tokens || 0) + (usage.cache_read_input_tokens || 0);
+  const outTok = usage.output_tokens || 0;
+  const cost = r.ok ? costOf(model, inTok, outTok) : 0;
+  await sb.from("sd_ai_usage").insert({ user_id: userData.user.id, tier, model, input_tokens: inTok || null, output_tokens: outTok || null, ok: r.ok, cost_usd: cost });
+  const { data: month } = await sb.rpc("sd_month_cost");
+  const bill = { model, model_name: NAMES[model] || model, input_tokens: inTok, output_tokens: outTok, cost_usd: cost, month_cost_usd: month == null ? null : Number(month) };
+  if (r.status === 429 || r.status === 529) return json({ code: "rate_limited", usage: bill }, 429);
+  if (!r.ok) return json({ code: "upstream", detail: out?.error?.message || r.status, usage: bill }, 502);
 
   const text = (out?.content || []).filter((c: { type: string }) => c.type === "text").map((c: { text: string }) => c.text).join("");
   const data = parseJson(text);
-  if (!data || typeof data !== "object") return json({ code: "invalid_json" }, 422);
-  return json({ data });
+  if (!data || typeof data !== "object") return json({ code: "invalid_json", usage: bill }, 422);
+  return json({ data, usage: bill });
 });
