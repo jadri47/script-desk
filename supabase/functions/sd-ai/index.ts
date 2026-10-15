@@ -11,9 +11,9 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const DAILY_LIMIT = Number(Deno.env.get("SD_DAILY_LIMIT") || "60");
-// Full rewrite on Opus; titles, cold open, fixes and fact check on Sonnet. Override with secrets without redeploying.
+// Sonnet for every AI feature. Override per tier with secrets (SD_MODEL_COMPLEX / SD_MODEL_DEFAULT) without redeploying.
 const MODELS: Record<string, string> = {
-  complex: Deno.env.get("SD_MODEL_COMPLEX") || "claude-opus-5-5",
+  complex: Deno.env.get("SD_MODEL_COMPLEX") || "claude-sonnet-5-5",
   default: Deno.env.get("SD_MODEL_DEFAULT") || "claude-sonnet-5-5",
 };
 // USD per million tokens [input, output] — platform.claude.com/docs/en/about-claude/pricing (Oct 2026).
