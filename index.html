@@ -890,6 +890,33 @@ main[data-view="guide"] .ed{min-height:340px}
 }
 .ed-full .ed-bar{flex:0 0 auto}
 .ed-full .ed{min-height:0}
+/* ===== Desktop split: script on the left (fixed), everything else on the right (scrolls) ===== */
+html.sd-split,html.sd-split body{height:100%;overflow:hidden}
+html.sd-split main{max-width:1640px;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:18px 28px 0;box-sizing:border-box}
+html.sd-split main>*:not(.split){flex:0 0 auto}
+html.sd-split .masthead{padding-bottom:12px;margin-bottom:14px}
+html.sd-split .auth-bar{margin-bottom:10px;padding:6px 12px}
+html.sd-split #stepBar{margin:0 0 14px}
+html.sd-split .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(440px,1fr);gap:28px}
+.pane-l{display:flex;flex-direction:column;min-height:0;padding-bottom:16px}
+.pane-l .script-field{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;margin:0}
+.pane-l .script-field>label{flex:0 0 auto}
+.pane-l .script-field .steps{display:none}
+.pane-l .ed-wrap{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.pane-l .ed-wrap:not(.ed-full) .ed{flex:1 1 auto;height:auto !important;min-height:0;resize:none}
+.pane-l .meta-line{flex:0 0 auto;margin-top:8px}
+.pane-r{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 10px 40px 2px;scrollbar-gutter:stable;scrollbar-width:thin}
+.pane-r>#editor{margin-top:0}
+.pane-r .idea-field{margin-top:0}
+.pane-r .vr-row{grid-template-columns:1fr}
+.pane-r .vr-row .aud-field{max-width:none}
+.pane-r .bible-field select{max-width:none}
+html.sd-split main[data-view="guide"] .pane-l{display:flex !important}
+.stale-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;margin:0 0 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--j3) 55%,var(--rule));background:color-mix(in srgb,var(--j3) 13%,var(--sheet));font-size:14px}
+.pane-l .ed-bar{flex:0 0 auto}
+.pane-l>.actions{flex:0 0 auto;margin:10px 0 0;display:flex;align-items:center;gap:10px}
+html.sd-split main[data-view="guide"]:not([data-step="1"]) .pane-l>.actions{display:none}
+.pane-l .meta-line+.actions{margin-top:6px}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -6792,6 +6819,75 @@ richSlice = function (text, from, to, units, cues, unitWrap, cueWrap) {
   }
   return html + esc(pos, to);
 };
+/* ===== Escritorio: guion fijo a la izquierda, todo lo demás a la derecha con su propio scroll ===== */
+// Wide screens get a split view: the script never scrolls away, and the review, fixes, packaging and the
+// rest live in the right pane. Narrow screens keep the original single-column order.
+Object.assign(T.es, { stale: "Cambiaste el guion. Lo que ves aquí es de la versión anterior.", staleGo: "Actualizar la revisión" });
+Object.assign(T.en, { stale: "You changed the script. What you see here is from the previous version.", staleGo: "Update the review" });
+
+const SPLIT = { on: false, mq: window.matchMedia("(min-width: 1100px) and (min-height: 600px)") };
+(function initSplit() {
+  const main = document.querySelector("main"), editor = $("editor");
+  const scriptField = TA.closest(".field"), meta = editor.querySelector(".meta-line"), acts = $("runBtn").closest(".actions");
+  if (!main || !editor || !scriptField || !meta) return;
+  scriptField.classList.add("script-field");
+  const split = document.createElement("div"); split.className = "split";
+  const L = document.createElement("div"); L.id = "paneL"; L.className = "pane-l";
+  const R = document.createElement("div"); R.id = "paneR"; R.className = "pane-r";
+  split.append(L, R);
+  const rightIds = ["guideTop", "editor", "guide", "results", "guion", "historyBlock"];
+  const footer = main.querySelector("footer.disclaimer");
+
+  function arrange() {
+    const want = SPLIT.mq.matches;
+    if (want === SPLIT.on) return;
+    const hadFocus = document.activeElement === ED.el;
+    if (want) {
+      main.insertBefore(split, $("guideTop"));
+      L.append(scriptField, meta, acts);
+      rightIds.forEach((id) => { const el = $(id); if (el) R.appendChild(el); });
+      if (footer) R.appendChild(footer);
+    } else {
+      rightIds.forEach((id) => { const el = $(id); if (el) main.insertBefore(el, split); });
+      if (footer) main.insertBefore(footer, split);
+      editor.prepend(scriptField, meta);
+      editor.insertBefore(acts, $("exPick"));
+      split.remove();
+    }
+    SPLIT.on = want;
+    document.documentElement.classList.toggle("sd-split", want);
+    if (hadFocus) ED.el.focus();
+  }
+  arrange();
+  if (SPLIT.mq.addEventListener) SPLIT.mq.addEventListener("change", arrange); else SPLIT.mq.addListener(arrange);
+})();
+
+// New step: scroll the right pane to the top instead of the window.
+const _goStepS = goStep;
+goStep = function (n) { _goStepS(n); if (SPLIT.on) $("paneR").scrollTo({ top: 0, behavior: "auto" }); };
+
+// Editing on the left while the right shows an older review: one clear button to refresh it.
+function renderStale() {
+  const top = $("guideTop");
+  if (!top) return;
+  let bar = $("staleBar");
+  const stale = V.guided && V.step >= 2 && state.result && state.text !== $("script").value && hasScript();
+  if (!stale) { if (bar) bar.remove(); return; }
+  if (!bar) {
+    bar = document.createElement("div"); bar.id = "staleBar"; bar.className = "stale-bar"; bar.setAttribute("role", "status");
+    const strip = $("epStrip");
+    if (strip) strip.insertAdjacentElement("afterend", bar); else top.prepend(bar);
+  }
+  bar.innerHTML = `<span>${h(t("stale"))}</span><button type="button" class="small primary" id="staleGo">${h(t("staleGo"))}</button>`;
+  $("staleGo").addEventListener("click", () => {
+    state.fixSel = {}; state.fixAi = {};
+    ensureReview(); if (V.step >= 3) gCompute();
+    renderGuide();
+  });
+}
+(function () { let tm = null; TA.addEventListener("input", () => { clearTimeout(tm); tm = setTimeout(renderStale, 500); }); })();
+const _renderGuideS = renderGuide;
+renderGuide = function () { _renderGuideS(); renderStale(); };
 /* ===== Ayuda: un «?» junto a cada campo y sección, con una explicación breve ===== */
 Object.assign(T.es, { qhBtn: "¿Qué es esto?" });
 Object.assign(T.en, { qhBtn: "What is this?" });
