@@ -6,7 +6,7 @@
 <title>Script Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Onest:wght@400..700&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#F4F6F3; --sheet:#FFFFFF; --ink:#16303A; --ink-2:#4A5D63; --rule:#D5DCD7; --rule-2:#E7ECE8;
@@ -579,6 +579,159 @@ summary > .qh-txt{grid-column:1/-1;flex-basis:100%;width:100%;box-sizing:border-
 .ask-ans .k{font:600 12px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:10px 0 6px}
 .ask-ans > p{margin:0 0 8px}
 .ask-ans .diff{font-size:16px}
+/* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
+:root{
+  --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
+  --accent:#3247C9; --accent-ink:#FFFFFF; --gold:#8A5300; --gold-bg:#FDF0D5;
+  --verde:#0E7A55; --verde-bg:#DDF4EA; --amarillo:#8A5300; --amarillo-bg:#FDF0D5; --rojo:#B4234A; --rojo-bg:#FCE4EA;
+  --mul-bg:#ECE5FB; --mul:#6E45C4; --weak-bg:#E3E8FB; --weak:#3247C9; --reg-bg:#F8E3EF; --reg:#A0306E; --kw-bg:#FFF0B3;
+  /* jewels: fill colors (white text on 1,2,4,5; ink on 3) and text-safe tones */
+  --j1:#3247C9; --j2:#C02A55; --j3:#F0A532; --j4:#13805C; --j5:#6E45C4;
+  --j1t:#3247C9; --j2t:#B4234A; --j3t:#8A5300; --j4t:#0E7A55; --j5t:#6E45C4;
+  --j-on:#FFFFFF; --j3-on:#2A1B00;
+  --lift:0 1px 0 rgba(26,30,61,.04), 0 10px 30px -18px rgba(26,30,61,.28);
+  --serif:"Newsreader", "Iowan Old Style", Georgia, serif;
+  --sans:"Onest", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#10132A; --sheet:#181C38; --sheet-2:#1D2244; --ink:#EEF0FF; --ink-2:#A9AFD6; --rule:#2C3260; --rule-2:#232850;
+  --accent:#8C9EFF; --accent-ink:#10132A; --gold:#FFC566; --gold-bg:#3A2E14;
+  --verde:#52D6A6; --verde-bg:#12352B; --amarillo:#FFC566; --amarillo-bg:#3A2E14; --rojo:#FF7D9C; --rojo-bg:#3A1A2C;
+  --mul-bg:#2C2552; --mul:#C7B5FF; --weak-bg:#1E2A55; --weak:#9FB3FF; --reg-bg:#3B2033; --reg:#F3A6D2; --kw-bg:#4A3F10;
+  --j1:#8C9EFF; --j2:#FF7D9C; --j3:#FFC566; --j4:#52D6A6; --j5:#B79BFF;
+  --j1t:#8C9EFF; --j2t:#FF7D9C; --j3t:#FFC566; --j4t:#52D6A6; --j5t:#B79BFF;
+  --j-on:#10132A; --j3-on:#10132A;
+  --lift:0 1px 0 rgba(0,0,0,.25), 0 14px 34px -20px rgba(0,0,0,.7);
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --paper:#10132A; --sheet:#181C38; --sheet-2:#1D2244; --ink:#EEF0FF; --ink-2:#A9AFD6; --rule:#2C3260; --rule-2:#232850;
+  --accent:#8C9EFF; --accent-ink:#10132A; --gold:#FFC566; --gold-bg:#3A2E14;
+  --verde:#52D6A6; --verde-bg:#12352B; --amarillo:#FFC566; --amarillo-bg:#3A2E14; --rojo:#FF7D9C; --rojo-bg:#3A1A2C;
+  --mul-bg:#2C2552; --mul:#C7B5FF; --weak-bg:#1E2A55; --weak:#9FB3FF; --reg-bg:#3B2033; --reg:#F3A6D2; --kw-bg:#4A3F10;
+  --j1:#8C9EFF; --j2:#FF7D9C; --j3:#FFC566; --j4:#52D6A6; --j5:#B79BFF;
+  --j1t:#8C9EFF; --j2t:#FF7D9C; --j3t:#FFC566; --j4t:#52D6A6; --j5t:#B79BFF;
+  --j-on:#10132A; --j3-on:#10132A;
+  --lift:0 1px 0 rgba(0,0,0,.25), 0 14px 34px -20px rgba(0,0,0,.7);
+  color-scheme:dark; }
+
+/* the step's own jewel follows Juan through the page */
+main{--stepc:var(--j1);--stept:var(--j1t);--step-on:var(--j-on)}
+main[data-view="guide"][data-step="2"]{--stepc:var(--j2);--stept:var(--j2t)}
+main[data-view="guide"][data-step="3"]{--stepc:var(--j3);--stept:var(--j3t);--step-on:var(--j3-on)}
+main[data-view="guide"][data-step="4"]{--stepc:var(--j4);--stept:var(--j4t)}
+main[data-view="guide"][data-step="5"]{--stepc:var(--j5);--stept:var(--j5t)}
+
+body{font:16px/1.55 var(--sans);letter-spacing:-.003em}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.012em}
+main{max-width:980px}
+
+/* masthead: the five-pane stained-glass band is the one decorative element */
+.masthead{border-bottom:0;padding-bottom:20px;margin-bottom:26px;position:relative}
+.masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;border-radius:5px;
+  background:linear-gradient(90deg,var(--j1) 0 20%,var(--j2) 20% 40%,var(--j3) 40% 60%,var(--j4) 60% 80%,var(--j5) 80% 100%)}
+.masthead h1{font-size:34px;font-weight:650;letter-spacing:-.025em;font-variation-settings:"opsz" 72}
+.masthead p{font-size:15px}
+
+/* controls */
+button{font:600 15px/1 var(--sans);border-radius:12px;padding:12px 18px;border:1px solid var(--rule);background:var(--sheet);transition:background-color .15s,border-color .15s,box-shadow .15s}
+button:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 45%,var(--rule))}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 6px 18px -10px color-mix(in srgb,var(--accent) 80%,transparent)}
+button.primary:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 88%,var(--ink))}
+button.small{padding:8px 13px;border-radius:10px}
+button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent);border-color:var(--accent)}
+textarea,input,select{border-radius:12px;border:1.5px solid var(--rule);background:var(--sheet)}
+textarea#script{font-family:var(--serif);font-size:18px;line-height:1.75;border-radius:16px;padding:18px 20px}
+label{font-weight:600}
+.langswitch{border-radius:12px;padding:3px;gap:2px;border:1px solid var(--rule)}
+.langswitch button{border-radius:9px;padding:7px 12px}
+.themebtn{border-radius:12px}
+
+/* surfaces: one family, radius by hierarchy (panel 20 · inner 14 · chip 999) */
+.g-card,.block,details.mod,.topfix,.verdict,.gv,.ex-pick,#exPick{box-shadow:var(--lift)}
+.g-card{margin-top:22px;padding:18px 20px 20px;border-radius:20px;background:var(--sheet);border:1px solid var(--rule)}
+.g-card .g-h{border-bottom:0;padding-bottom:4px}
+.g-card .g-h h2,.block > header h2{font-size:22px}
+.block,details.mod,.verdict{border-radius:20px}
+.topfix{border-radius:20px;border-left:0;position:relative;overflow:hidden;padding-left:24px}
+.topfix::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--stepc)}
+.ex-pick,#exPick{margin-top:24px;padding:18px 20px;border-radius:20px;background:var(--sheet);border:1px solid var(--rule)}
+.ex-card{border-radius:14px;background:var(--sheet-2)}
+.ex-card.on{border-color:var(--accent)}
+
+/* guided step bar: each step is a pane of glass */
+.sb{gap:6px}
+.sb li:nth-child(1){--c:var(--j1);--ct:var(--j1t);--on:var(--j-on)}
+.sb li:nth-child(2){--c:var(--j2);--ct:var(--j2t);--on:var(--j-on)}
+.sb li:nth-child(3){--c:var(--j3);--ct:var(--j3t);--on:var(--j3-on)}
+.sb li:nth-child(4){--c:var(--j4);--ct:var(--j4t);--on:var(--j-on)}
+.sb li:nth-child(5){--c:var(--j5);--ct:var(--j5t);--on:var(--j-on)}
+.sb button{border-radius:14px;padding:10px 12px;background:var(--sheet);border:1px solid var(--rule);color:var(--ink-2);font:600 14px/1.1 var(--sans)}
+.sb-n{background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--ct);font-weight:700}
+.sb button.on{background:var(--c);border-color:var(--c);color:var(--on);box-shadow:0 8px 20px -12px var(--c)}
+.sb button.on .sb-n{background:color-mix(in srgb,var(--on) 22%,transparent);color:var(--on)}
+.sb button.done{color:var(--ink)}
+.sb button.done .sb-n{background:var(--c);color:var(--on)}
+.sb button:disabled{opacity:.5}
+
+/* step header: number takes the step's jewel */
+.g-step-h{gap:14px;margin:6px 0 8px}
+.g-step-h h2{font-size:28px;font-weight:600;letter-spacing:-.02em;font-variation-settings:"opsz" 60}
+.g-step-n{width:40px;height:40px;border-radius:12px;background:var(--stepc);color:var(--step-on);font:700 18px/1 var(--sans);transform:rotate(-4deg)}
+
+/* verdict: the traffic light as a confident pill */
+.gv{border-radius:20px;padding:16px 18px;gap:8px}
+.gv .lamp{font-size:17px;padding:9px 16px}
+.lamp::before{width:9px;height:9px;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 18%,transparent)}
+.gv-rojo{box-shadow:inset 5px 0 0 var(--rojo),var(--lift);border-color:var(--rule)}
+.gv-amarillo{box-shadow:inset 5px 0 0 var(--j3),var(--lift)}
+.gv-verde{box-shadow:inset 5px 0 0 var(--verde),var(--lift)}
+
+/* primary step actions */
+.g-nav-steps{border-top:0;margin-top:30px}
+.g-nav-steps .primary{background:var(--stepc);border-color:var(--stepc);color:var(--step-on);box-shadow:0 10px 24px -14px var(--stepc)}
+.g-xl{font-size:19px;padding:18px 34px;border-radius:16px}
+
+/* help pill + chips keep the accent */
+.qh-btn{border-radius:50%}
+.chip{border-radius:999px}
+.demo-bar{border-radius:16px}
+.auth-bar{border-radius:16px}
+
+/* mobile: glass tabs at the bottom */
+@media (max-width:620px){
+  .masthead h1{font-size:28px}
+  #stepBar{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--rule);box-shadow:0 -8px 24px -16px rgba(0,0,0,.35)}
+  .sb{gap:2px}
+  .sb button,.sb button.on,.sb button.done{background:transparent;border:0;box-shadow:none;color:var(--ink-2)}
+  .sb button.on{color:var(--ct)}
+  .sb button.on .sb-n{background:var(--c);color:var(--on)}
+  .sb-n{width:28px;height:28px;border-radius:9px}
+  .g-step-h h2{font-size:23px}
+  .g-card{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){ button{transition:none} }
+.g-big .primary,#gPP{background:var(--stepc);border-color:var(--stepc);color:var(--step-on);box-shadow:0 12px 28px -14px var(--stepc)}
+/* compact phone header: title, theme and language on one row, full-mode switch under it */
+@media (max-width:620px){
+  .masthead{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px 8px;padding-bottom:14px;margin-bottom:14px}
+  .masthead h1{grid-column:1;grid-row:1;font-size:26px}
+  .masthead > p{display:none}
+  .masthead .themebtn{grid-column:2;grid-row:1;width:36px;height:36px}
+  .masthead .langswitch{grid-column:3;grid-row:1;margin:0}
+  .masthead .langswitch button{font-size:0;padding:7px 10px;line-height:1}
+  .masthead .langswitch button::after{content:attr(data-ui);font:600 13px/1 var(--sans);text-transform:uppercase}
+  .masthead .xswitch{grid-column:1 / -1;grid-row:2;justify-self:start;margin:0;font-size:12.5px}
+  .masthead > .qh-txt{grid-column:1 / -1}
+  .masthead::after{height:4px}
+  .auth-bar.ok{padding:0 2px;margin:0 0 10px;gap:8px;flex-wrap:nowrap}
+  .auth-bar.ok p{min-width:0;flex-basis:auto}
+  .auth-bar.ok p{font-size:12.5px;flex:1 1 auto}
+  .auth-bar.ok button{padding:4px 6px;font-size:13px}
+  .demo-bar{padding:8px 12px;gap:6px 10px;margin-bottom:12px}
+  .demo-bar p{font-size:13px;line-height:1.4}
+  .demo-bar button{padding:6px 10px;font-size:13px}
+}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
