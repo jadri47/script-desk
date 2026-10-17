@@ -1099,6 +1099,26 @@ button.icon:hover{color:var(--ink)}
 @media (max-width:640px){ .rec-len{border-right:0;padding-right:0} .rec-len b{font-size:38px} #gRecCard #gPP{align-self:stretch} }
 
 #pkTitleIn{padding-right:70px;resize:none;font:inherit;line-height:1.4;min-height:0;overflow:hidden}
+
+/* ---- AI review of wording + per-section rewrite ---- */
+.pol-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 6px}
+.pol-head .hint{margin-right:auto}
+.pol-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.pol-item{border:1px solid var(--line,#d9dcea);border-radius:14px;padding:12px 14px;background:var(--card,#fff)}
+.pol-item .chip{margin-bottom:6px;display:inline-block}
+.pol-diff{margin:4px 0;font-family:var(--serif,Georgia,serif);font-size:1.02rem;line-height:1.55;overflow-wrap:anywhere}
+.pol-diff s{opacity:.62;text-decoration-thickness:1.5px}
+.pol-diff ins{background:var(--ins,rgba(34,150,100,.16));text-decoration:none;border-radius:4px;padding:0 2px}
+.pol-drop{margin-top:10px}
+.st-ai{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line,#c9cde2);border-radius:14px}
+.st-ai-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.st-ai-bar .hint{flex:1 1 220px;margin:0}
+.secai-opt{margin-top:12px;padding:12px 14px;border:1px solid var(--line,#d9dcea);border-radius:14px;background:var(--card,#fff)}
+.secai-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:4px}
+.secai-opt .diff{max-height:340px;overflow:auto;margin:8px 0}
+.chip.ok{background:rgba(34,150,100,.14);color:#167a52}
+.chip.warn{background:rgba(214,148,40,.18);color:#8a5a00}
+html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.warn{color:#f0c36a}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -2794,8 +2814,138 @@ function messageChecks(text, opts, ctx) {
     fix: recap ? null : L("Antes de despedirte, di en una frase lo que se llevan hoy.", "Before saying goodbye, say in one sentence what they take away today.") });
   return out;
 }
+// ---------- Bible-safe AI edits (pure, no DOM) ----------
+// Rule: the AI never gets to write or change Scripture. Verses are swapped for tokens before the AI sees the text,
+// and every answer is checked in code before it can be shown. Nothing here depends on the AI behaving.
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal };
+function mergeSpans(spans) {
+  const s = spans.filter((x) => x.end > x.start).sort((a, b) => a.start - b.start || b.end - a.end);
+  const out = [];
+  for (const x of s) {
+    const last = out[out.length - 1];
+    if (last && x.start < last.end) { last.end = Math.max(last.end, x.end); if (last.kind !== x.kind) last.kind = last.kind === "ref" ? x.kind : last.kind; }
+    else out.push({ ...x });
+  }
+  return out;
+}
+
+// Verse text that is not between quotation marks but is announced by a reference: "Juan 3:16 dice: Porque de tal manera…".
+const VERSE_LEAD = /^\s*(?:[:\-–—]|dice\b|dijo\b|says\b|said\b|declara\b|escribe\b|afirma\b|ense[ñn]a\b|reads\b|writes\b)/i;
+function verseSpans(text, R) {
+  const quotes = R && R.quotes ? R.quotes : findQuotes(text);
+  const refs = R && R.refs ? R.refs : findReferences(text);
+  const spans = [];
+  for (const q of quotes) spans.push({ start: q.start, end: q.end, kind: "quote" });
+  for (const r of refs) spans.push({ start: r.start, end: r.end, kind: "ref" });
+  for (const r of refs) {
+    if (quotes.some((q) => r.start >= q.start && r.end <= q.end)) continue;
+    if (!VERSE_LEAD.test(text.slice(r.end, r.end + 24))) continue;
+    const tail = text.slice(r.end, r.end + 300);
+    // Best effort: to the end of the first sentence that is at least 40 characters long, or the paragraph end if that comes first.
+    let stop = -1;
+    const m = /[.!?…](?=\s|$)/g; let x;
+    while ((x = m.exec(tail))) if (x.index >= 40) { stop = x.index + 1; break; }
+    const nl = tail.indexOf("\n");
+    if (nl >= 0 && (stop < 0 || nl < stop)) stop = nl;
+    if (stop < 0) stop = tail.length;
+    spans.push({ start: r.end, end: r.end + stop, kind: "unquoted" });
+  }
+  return mergeSpans(spans);
+}
+
+const VTOK = /⟦V\d+⟧/g;
+// Replace every verse (quoted or announced) inside [from, to) by a token. References stay visible but are checked afterwards.
+// A verse that crosses the edge of the range cannot be protected, so the caller must refuse that range.
+function maskVerses(text, spans, from, to) {
+  from = from == null ? 0 : from; to = to == null ? text.length : to;
+  const verse = spans.filter((s) => s.kind !== "ref");
+  for (const s of verse) if (s.start < to && s.end > from && (s.start < from || s.end > to)) return { error: "boundary", span: s };
+  const inside = verse.filter((s) => s.start >= from && s.end <= to).sort((a, b) => a.start - b.start);
+  let out = "", pos = from;
+  const toks = [];
+  inside.forEach((s, i) => {
+    const tok = `⟦V${i + 1}⟧`;
+    out += text.slice(pos, s.start) + tok;
+    toks.push({ tok, text: text.slice(s.start, s.end) });
+    pos = s.end;
+  });
+  out += text.slice(pos, to);
+  return { masked: out, toks };
+}
+
+// Put the verses back. Every token must be present exactly once and in the original order; nothing else of that shape may appear.
+function unmaskCheck(output, toks) {
+  const strays = (output.match(VTOK) || []).filter((x) => !toks.some((t) => t.tok === x));
+  if (strays.length) return { ok: false, reason: "stray" };
+  let last = -1;
+  for (const t of toks) {
+    const first = output.indexOf(t.tok);
+    if (first < 0) return { ok: false, reason: "missing" };
+    if (output.indexOf(t.tok, first + 1) >= 0) return { ok: false, reason: "duplicated" };
+    if (first < last) return { ok: false, reason: "order" };
+    last = first;
+  }
+  let text = output;
+  for (const t of toks) text = text.replace(t.tok, () => t.text);
+  return { ok: true, text };
+}
+
+const refsKey = (text) => findReferences(text).map((r) => r.canonical).sort().join("|");
+
+// A section rewrite is accepted only when Scripture is provably untouched and nothing new that looks like Scripture was added.
+function vetSection(origSlice, toks, aiText, cues) {
+  if (typeof aiText !== "string" || !aiText.trim()) return { ok: false, reason: "empty" };
+  const u = unmaskCheck(aiText.trim(), toks);
+  if (!u.ok) return { ok: false, reason: "verse" };
+  const text = u.text;
+  if (refsKey(text) !== refsKey(origSlice)) return { ok: false, reason: "ref" };
+  if (findQuotes(text).length !== findQuotes(origSlice).length) return { ok: false, reason: "quote" };
+  for (const t of toks) if (text.split(t.text).length - 1 !== 1) return { ok: false, reason: "verse" };
+  for (const c of cues || []) if (c.text && origSlice.includes(c.text) && !text.includes(c.text)) return { ok: false, reason: "cue" };
+  const wa = (origSlice.match(/[\p{L}\p{N}]+/gu) || []).length, wb = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
+  if (wa >= 20 && (wb < wa * 0.55 || wb > wa * 1.6)) return { ok: false, reason: "length" };
+  return { ok: true, text };
+}
+
+// ---- Grammar and wording suggestions ----
+function locateUnique(text, needle) {
+  if (!needle) return -1;
+  const i = text.indexOf(needle);
+  if (i < 0) return -1;
+  return text.indexOf(needle, i + 1) < 0 ? i : -2;
+}
+const POL_KINDS = ["grammar", "spelling", "punctuation", "filler", "clarity", "word"];
+function vetSuggestions(text, spans, items) {
+  const ok = [], drop = { notFound: 0, ambiguous: 0, bible: 0, invalid: 0 };
+  for (const it of items || []) {
+    const o = it && typeof it.original === "string" ? it.original : "", c = it && typeof it.corrected === "string" ? it.corrected : "";
+    if (!o.trim() || o === c || /[⟦⟧]/.test(o + c) || o.length > 600 || c.length > 700) { drop.invalid++; continue; }
+    const i = locateUnique(text, o);
+    if (i === -1) { drop.notFound++; continue; }
+    if (i === -2) { drop.ambiguous++; continue; }
+    if (spans.some((s) => i < s.end && i + o.length > s.start)) { drop.bible++; continue; }
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) { drop.bible++; continue; }
+    ok.push({ start: i, end: i + o.length, original: o, corrected: c, reason: String(it.reason || "").slice(0, 220), kind: POL_KINDS.includes(it.kind) ? it.kind : "clarity" });
+  }
+  ok.sort((a, b) => a.start - b.start);
+  const out = [];
+  let floor = -1;
+  for (const x of ok) { if (x.start < floor) { drop.invalid++; continue; } out.push(x); floor = x.end; }
+  return { items: out, drop };
+}
+// Apply one suggestion to the CURRENT text: it must still be found exactly once and must still be away from Scripture.
+function relocateSuggestion(text, s) {
+  const i = locateUnique(text, s.original);
+  if (i < 0) return null;
+  if (verseSpans(text).some((v) => i < v.end && i + s.original.length > v.start)) return null;
+  return i;
+}
+function applySuggestion(text, s) {
+  const i = relocateSuggestion(text, s);
+  return i == null ? null : text.slice(0, i) + s.corrected + text.slice(i + s.original.length);
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -7350,6 +7500,7 @@ function structPanel(s, clipIdx) {
     <div class="st-tools"><label class="hint">${h(t("strTools"))}</label>${typeSel}
       ${s.k > 0 ? `<span class="gsec-tools"><button type="button" class="icon" data-up="${s.k}" title="${h(t("upOne"))}" aria-label="${h(t("upOne"))}">↑</button><button type="button" class="icon" data-down="${s.k}" title="${h(t("downOne"))}" aria-label="${h(t("downOne"))}">↓</button><button type="button" class="small" data-merge="${s.k}">${h(t("mergePrev"))}</button></span>` : ""}</div>
     <p class="hint st-tap">${h(t("strTap"))}</p>
+    ${secAiHTML(s.k)}
     <div class="gsec-body" id="gSecsBody">${html.replace(/^\s+|\s+$/g, "")}</div>
     <details class="gnotes"${open ? " open" : ""}><summary>${h(t("notes"))}${ns.length ? ` · ${h(t("openNotes")(open))}` : ""}</summary>
       <ul>${ns.map((n) => `<li class="${n.done ? "done" : ""}"><span class="chip">${h(t("roles")[n.role] || n.role)}</span> ${h(n.text)} <label class="hint"><input type="checkbox" data-done="${h(n.id)}"${n.done ? " checked" : ""}> ${h(t("resolved"))}</label></li>`).join("")}</ul>
@@ -7357,6 +7508,7 @@ function structPanel(s, clipIdx) {
     </details></div>`;
 }
 function wireStructPanel(el) {
+  wireSecAI(el);
   el.querySelectorAll("[data-type]").forEach((s) => s.addEventListener("change", () => { manualOp((L) => { L[+s.dataset.type].type = s.value; L[+s.dataset.type].conf = "manual"; }); }));
   el.querySelectorAll("[data-up]").forEach((b) => b.addEventListener("click", () => moveStart(+b.dataset.up, -1)));
   el.querySelectorAll("[data-down]").forEach((b) => b.addEventListener("click", () => moveStart(+b.dataset.down, +1)));
@@ -7424,6 +7576,269 @@ function wireRecordCard() {
   const rh = $("gReh"); if (rh) rh.addEventListener("click", () => openPrompter("ensayo"));
   const sh = $("gSheet"); if (sh) sh.addEventListener("click", exportEditSheet);
 }
+/* ===== Revisión de redacción (Sonnet) y mejora por sección (Opus), con los versículos blindados en código ===== */
+Object.assign(T.es, {
+  moreRewrite: "Revisar redacción y gramática con IA", rwTitle: "Revisar redacción y gramática",
+  rwDesc: "La IA lee todo el guion y propone correcciones de gramática, ortografía, puntuación, muletillas y frases confusas. Tú aceptas o rechazas cada una. No reescribe el guion ni toca versículos, referencias ni términos sensibles.",
+  rwBtn: "Revisar texto",
+  polSafe: "Protejo todo lo que esté entre comillas « » o “ ” y las referencias bíblicas: la IA ni siquiera ve esos versículos. Si lees un versículo sin comillas, ponlo entre comillas para protegerlo.",
+  polNone: "No encontré correcciones que valgan la pena.",
+  polCount: (n) => `${n} sugerencia${n === 1 ? "" : "s"}`,
+  polAll: (n) => `Aceptar las ${n}`, polOk: "Aceptar", polSkip: "Omitir", polUndo: "Deshacer",
+  polDrop: (d) => `Descarté ${d.total} sugerencia${d.total === 1 ? "" : "s"} que no pasaron la verificación${d.bible ? `: ${d.bible} tocaba${d.bible === 1 ? "" : "n"} un versículo o una referencia` : ""}${d.notFound + d.ambiguous ? `${d.bible ? "; " : ": "}${d.notFound + d.ambiguous} no coincid${d.notFound + d.ambiguous === 1 ? "ía" : "ían"} exactamente con tu texto` : ""}.`,
+  polKinds: { grammar: "Gramática", spelling: "Ortografía", punctuation: "Puntuación", filler: "Muletilla", clarity: "Claridad", word: "Palabra" },
+  polDone: (n) => `${n} aplicada${n === 1 ? "" : "s"}.`,
+  secAiBtn: "Mejorar esta sección con IA",
+  secAiHint: "Te da dos opciones de esta sección con Opus 5.5 (más lento, unos centavos). Los versículos entre comillas no se tocan.",
+  secAiBusy: "Escribiendo dos opciones…", secAiUse: "Usar esta", secAiDiscard: "Descartar", secAiApplied: "Sección reemplazada.",
+  secAiChanged: "El guion cambió mientras se escribía la opción. Pídela de nuevo.",
+  secAiBad: (n) => `${n} opción${n === 1 ? "" : "es"} descartada${n === 1 ? "" : "s"}: alteraba${n === 1 ? "" : "n"} un versículo, una referencia o una cita.`,
+  secAiFixes: (n) => `Arregla ${n} revisión${n === 1 ? "" : "es"}`, secAiBreaks: (n) => `Rompe ${n}`, secAiOpt: (n) => `Opción ${n}`,
+  secAiNone: "La IA no devolvió una opción válida. Prueba de nuevo.",
+  secAiEdge: "Un versículo cruza el límite de esta sección, así que no se puede proteger. Ajusta el inicio o el fin de la sección y vuelve a intentar.",
+  secAiStale: "Actualiza la vista del guion y vuelve a intentar.",
+});
+Object.assign(T.en, {
+  moreRewrite: "Review wording and grammar with AI", rwTitle: "Review wording and grammar",
+  rwDesc: "The AI reads the whole script and suggests fixes for grammar, spelling, punctuation, fillers and confusing sentences. You accept or reject each one. It doesn't rewrite the script or touch verses, references or sensitive terms.",
+  rwBtn: "Review text",
+  polSafe: "Anything inside quotation marks « » or “ ” and Bible references are protected: the AI never even sees those verses. If you read a verse without quotation marks, put it in quotes to protect it.",
+  polNone: "I found no corrections worth making.",
+  polCount: (n) => `${n} suggestion${n === 1 ? "" : "s"}`,
+  polAll: (n) => `Accept all ${n}`, polOk: "Accept", polSkip: "Skip", polUndo: "Undo",
+  polDrop: (d) => `I dropped ${d.total} suggestion${d.total === 1 ? "" : "s"} that failed verification${d.bible ? `: ${d.bible} touched a verse or reference` : ""}${d.notFound + d.ambiguous ? `${d.bible ? "; " : ": "}${d.notFound + d.ambiguous} ${d.notFound + d.ambiguous === 1 ? "doesn't" : "don't"} match your text exactly` : ""}.`,
+  polKinds: { grammar: "Grammar", spelling: "Spelling", punctuation: "Punctuation", filler: "Filler", clarity: "Clarity", word: "Word" },
+  polDone: (n) => `${n} applied.`,
+  secAiBtn: "Improve this section with AI",
+  secAiHint: "Gives you two options for this section using Opus 5.5 (slower, a few cents). Verses inside quotation marks are never touched.",
+  secAiBusy: "Writing two options…", secAiUse: "Use this", secAiDiscard: "Discard", secAiApplied: "Section replaced.",
+  secAiChanged: "The script changed while the option was being written. Ask again.",
+  secAiBad: (n) => `${n} option${n === 1 ? "" : "s"} dropped: ${n === 1 ? "it" : "they"} altered a verse, a reference or a quote.`,
+  secAiFixes: (n) => `Fixes ${n} check${n === 1 ? "" : "s"}`, secAiBreaks: (n) => `Breaks ${n}`, secAiOpt: (n) => `Option ${n}`,
+  secAiNone: "The AI didn't return a valid option. Try again.",
+  secAiEdge: "A verse crosses the edge of this section, so it can't be protected. Adjust where the section starts or ends and try again.",
+  secAiStale: "Refresh the script view and try again.",
+});
+
+// Save the scroll position of the pane that scrolls, run a change, put it back.
+function keepScroll(fn) {
+  const sc = SPLIT.on && $("paneR") ? $("paneR") : document.scrollingElement;
+  const y = sc ? sc.scrollTop : 0;
+  fn();
+  if (sc) sc.scrollTop = y;
+}
+function pushUndo() {
+  state.fixUndo.push(snapshotForUndo());
+  if (state.fixUndo.length > 20) state.fixUndo.shift();
+}
+function reviewAfterEdit(msg) {
+  fixMsg = msg || "";
+  updateLive();
+  state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts);
+  renderResults();
+  if (G.prodId) markDirty();
+}
+
+// ---------- 1) Whole-script grammar and wording review (Sonnet) ----------
+const POL = { items: [], drop: null, asked: null, applied: 0 };
+function polishPrompt(masked, R) {
+  const P = protectedList(R);
+  return `Eres corrector y editor de estilo de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. El autor es el presentador: su voz, su argumento y su teología no se tocan. ${voice()}
+${t("outLang")} El guion está en ${scriptLangName()}.
+
+Lee el guion completo y devuelve SOLO sugerencias puntuales de corrección. No reescribas el guion.
+
+QUÉ SÍ: errores de gramática y concordancia, ortografía, puntuación, palabras repetidas, muletillas que estorban, frases confusas o demasiado largas para decirlas en voz alta, y palabras genéricas cuando hay una alternativa mejor que encaja.
+QUÉ NO: no cambies el sentido, el orden, los argumentos, las ilustraciones ni la doctrina; no añadas contenido, datos, nombres, cifras ni citas; no cambies el tono del presentador. Si algo está bien, déjalo.
+VERSÍCULOS: los versículos del guion fueron reemplazados por marcas como ⟦V1⟧. No las toques ni las incluyas en ninguna sugerencia. No escribas ni cites ningún versículo, y no añadas referencias bíblicas. Las referencias que sí ves (por ejemplo «Juan 3:16») no se cambian.
+TÉRMINOS SENSIBLES (no los cambies por eufemismos): ${P.risk}
+
+Reglas de cada sugerencia:
+- "original": texto copiado EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 25 palabras, y que aparezca UNA sola vez en el guion; incluye las palabras vecinas necesarias para que sea único.
+- "corrected": el mismo fragmento ya corregido, con el cambio mínimo.
+- "kind": uno de grammar, spelling, punctuation, filler, clarity, word.
+- "reason": una frase corta en ${UI === "en" ? "inglés" : "español"} que diga qué estaba mal.
+Máximo 40 sugerencias, las más valiosas primero. Si no hay nada que corregir, devuelve una lista vacía.
+
+Responde solo con JSON: {"suggestions": [{"original": "...", "corrected": "...", "kind": "grammar", "reason": "..."}], "summary": "una frase"}
+
+GUION:
+"""
+${masked}
+"""`;
+}
+async function doPolish(sample, out) {
+  const text = $("script").value, opts = readOpts(), R = analyze(text, opts);
+  const spans = verseSpans(text, R), mk = maskVerses(text, spans, 0, text.length);
+  const res = await sample.json(polishPrompt(mk.masked, R), { signal: aiCtl.signal, modelTier: "complex" });
+  const list = Array.isArray(res && res.suggestions) ? res.suggestions.slice(0, 60) : null;
+  if (!list) throw { code: "invalid_json" };
+  const v = vetSuggestions(text, spans, list);
+  POL.items = v.items.map((x, i) => ({ ...x, id: i, st: "open" }));
+  POL.drop = { ...v.drop, total: v.drop.notFound + v.drop.ambiguous + v.drop.bible + v.drop.invalid };
+  POL.asked = list.length; POL.applied = 0;
+  renderPolish();
+}
+doRewrite = async function (sample, out) { return doPolish(sample, out); };
+
+function polLive() {
+  const text = $("script").value;
+  return POL.items.filter((x) => x.st === "open" && relocateSuggestion(text, x) != null);
+}
+function renderPolish() {
+  const outs = document.querySelectorAll('[id="out-rewrite"]');
+  if (!outs.length) return;
+  let html = `<p class="hint pol-safe">${h(t("polSafe"))}</p>`;
+  if (POL.asked != null) {
+    const live = polLive(), k = t("polKinds");
+    const undo = state.fixUndo.length ? `<button class="small" data-pol-undo>${h(t("polUndo"))}</button>` : "";
+    if (!live.length && !POL.items.length) html += `<p class="status">${h(t("polNone"))}</p>`;
+    else html += `<div class="pol-head"><b>${h(t("polCount")(live.length))}</b>${POL.applied ? `<span class="hint">${h(t("polDone")(POL.applied))}</span>` : ""}
+        ${live.length > 1 ? `<button class="small primary" data-pol-all>${h(t("polAll")(live.length))}</button>` : ""}${undo}</div>
+      <ul class="pol-list">${live.map((x) => `<li class="pol-item"><span class="chip">${h(k[x.kind] || x.kind)}</span>
+        <p class="pol-diff"><s>${h(x.original)}</s> → <ins>${h(x.corrected)}</ins></p>${x.reason ? `<p class="hint">${h(x.reason)}</p>` : ""}
+        <div class="actions"><button class="small primary" data-pol-ok="${x.id}">${h(t("polOk"))}</button><button class="small" data-pol-skip="${x.id}">${h(t("polSkip"))}</button></div></li>`).join("")}</ul>`;
+    if (POL.drop && POL.drop.total) html += `<p class="hint pol-drop">${h(t("polDrop")(POL.drop))}</p>`;
+  }
+  outs.forEach((out) => {
+    out.innerHTML = html;
+    out.querySelectorAll("[data-pol-ok]").forEach((b) => b.addEventListener("click", () => polAccept([+b.dataset.polOk])));
+    out.querySelectorAll("[data-pol-skip]").forEach((b) => b.addEventListener("click", () => { const x = POL.items.find((i) => i.id === +b.dataset.polSkip); if (x) x.st = "skip"; keepScroll(renderPolish); }));
+    out.querySelectorAll("[data-pol-all]").forEach((b) => b.addEventListener("click", () => polAccept(polLive().map((x) => x.id))));
+    out.querySelectorAll("[data-pol-undo]").forEach((b) => b.addEventListener("click", () => { keepScroll(() => { undoFix(); POL.items.forEach((x) => { if (x.st === "done") x.st = "open"; }); POL.applied = 0; renderPolish(); }); }));
+  });
+}
+// Each suggestion is re-found in the current text right before it is applied; a change that no longer fits is skipped, never forced.
+function polAccept(ids) {
+  keepScroll(() => {
+    let text = $("script").value, n = 0;
+    const before = text;
+    for (const id of ids) {
+      const x = POL.items.find((i) => i.id === id);
+      if (!x || x.st !== "open") continue;
+      const next = applySuggestion(text, x);
+      if (next == null) { x.st = "stale"; continue; }
+      text = next; x.st = "done"; n++;
+    }
+    if (!n) { renderPolish(); return; }
+    pushUndo();
+    $("script").value = text;
+    POL.applied += n;
+    reviewAfterEdit(t("fxApplied"));
+    if (G.mode === "guion") gRefresh();
+  });
+}
+// The results area is rebuilt after every review; put the list back.
+const _renderResultsPol = renderResults;
+renderResults = function () { _renderResultsPol(); renderPolish(); };
+
+// ---------- 2) "Mejorar esta sección": two options on Opus, Scripture locked ----------
+const SECAI = {};
+const secAiKey = (k) => String(k);
+function secAiHTML(k) {
+  const st = SECAI[secAiKey(k)];
+  const btn = `<button type="button" class="small" data-secai="${k}"${st && st.busy ? " disabled" : ""}>✦ ${h(t("secAiBtn"))}</button>`;
+  let body = "";
+  if (st) {
+    if (st.busy) body = `<p class="status">${h(t("secAiBusy"))}</p>`;
+    else if (st.err) body = `<p class="status err">${h(st.err)}</p>`;
+    else if (st.applied) body = `<p class="status ok">${h(t("secAiApplied"))} <button type="button" class="small" data-secai-undo="${k}">${h(t("polUndo"))}</button></p>`;
+    else if (st.options) {
+      const stale = G.text !== st.textAt;
+      body = stale ? `<p class="status err">${h(t("secAiChanged"))}</p>` : st.options.map((o, j) => {
+        const diff = wordDiff(st.orig, o.text).map((x) => (x.changed ? `<ins>${h(x.text)}</ins>` : h(x.text))).join("");
+        return `<div class="secai-opt"><div class="secai-h"><b>${h(t("secAiOpt")(j + 1))}</b>
+          ${o.fixed.length ? `<span class="chip ok">${h(t("secAiFixes")(o.fixed.length))}</span>` : ""}${o.broke.length ? `<span class="chip warn">${h(t("secAiBreaks")(o.broke.length))}: ${h(o.broke.join(", "))}</span>` : ""}</div>
+          ${o.why ? `<p class="hint">${h(o.why)}</p>` : ""}<div class="diff">${diff}</div>
+          <div class="actions"><button type="button" class="small primary" data-secai-use="${k}:${j}">${h(t("secAiUse"))}</button><button type="button" class="small" data-secai-no="${k}:${j}">${h(t("secAiDiscard"))}</button></div></div>`;
+      }).join("") + (st.bad ? `<p class="hint">${h(t("secAiBad")(st.bad))}</p>` : "");
+    }
+  }
+  return `<div class="st-ai"><div class="st-ai-bar">${btn}<span class="hint">${h(t("secAiHint"))}</span></div><div class="st-ai-out">${body}</div></div>`;
+}
+function secAiPrompt(s, k, masked, R) {
+  const hookU = G.U[0], prev = G.U[s.first - 1], next = G.U[s.last + 1];
+  const risk = [...new Set(R.riskHits.map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
+  return `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. El autor es el presentador: su voz, su argumento y su teología no se tocan. ${voice()}
+${t("outLang")} El texto queda en ${scriptLangName()}.
+
+Reescribe SOLO la sección de abajo ("${secLabel(s)}") para que funcione mejor dicha en video: frases más cortas y habladas, sin muletillas, con ritmo, claridad y gramática correcta. Conserva el mensaje, el orden de las ideas, los argumentos, las ilustraciones y el tono del presentador.
+Escribe DOS opciones distintas:
+- Opción 1: cambios mínimos; casi todo queda igual.
+- Opción 2: más ágil y hablada, con más cambios, sin perder nada de lo que dice.
+No añadas enseñanza, datos, nombres, cifras, citas ni referencias nuevas. No uses frases de plantilla como "sin más preámbulos" o "profundicemos". Mantén la longitud (±15 %).
+VERSÍCULOS: los versículos de esta sección fueron reemplazados por marcas como ⟦V1⟧. Copia cada marca EXACTA, una sola vez, en el mismo orden y en el mismo lugar lógico. No escribas, cites ni parafrasees ningún versículo. Las referencias bíblicas visibles (por ejemplo «Juan 3:16») se quedan exactas.
+Mantén tal cual cualquier línea entre corchetes [así] o que empiece con #.
+TÉRMINOS SENSIBLES de este guion (no los cambies por eufemismos): ${risk}
+
+CONTEXTO (no lo reescribas):
+Título del episodio: ${$("title").value || "—"}
+Apertura del guion: «${hookU ? hookU.text : "—"}»
+Oración anterior a la sección: «${prev ? prev.text : "—"}»
+Oración siguiente a la sección: «${next ? next.text : "—"}»
+
+Responde solo con JSON: {"options": [{"text": "la sección completa reescrita", "why": "una frase"}, {"text": "...", "why": "..."}]}
+
+SECCIÓN A REESCRIBIR:
+"""
+${masked}
+"""`;
+}
+async function doSectionAI(k) {
+  const key = secAiKey(k), s = G.secs[k];
+  if (!s) return;
+  const sample = await caps.sample;
+  const paint = () => { const box = document.querySelector(`#gs-${k} .st-ai`); if (box) { box.outerHTML = secAiHTML(k); wireSecAI(document.querySelector(`#gs-${k}`)); } };
+  if (!sample) { SECAI[key] = { err: t("aiOnlyClaude") }; paint(); return; }
+  const text = $("script").value;
+  if (G.text !== text) { SECAI[key] = { err: t("secAiStale") }; paint(); gRefresh(); return; }
+  const [a, b] = sliceRange(k), orig = text.slice(a, b);
+  const opts = readOpts(), R = analyze(text, opts), spans = verseSpans(text, R), mk = maskVerses(text, spans, a, b);
+  if (mk.error) { SECAI[key] = { err: t("secAiEdge") }; paint(); return; }
+  const cues = (G.R && G.R.cues || []).filter((c) => c.start >= a && c.end <= b);
+  SECAI[key] = { busy: true }; paint();
+  aiCtl = new AbortController();
+  try {
+    const res = await sample.json(secAiPrompt(s, k, mk.masked, R), { signal: aiCtl.signal, modelTier: "rewrite" });
+    const raw = (res && Array.isArray(res.options) ? res.options : []).filter((o) => o && typeof o.text === "string").slice(0, 3);
+    const lead = orig.match(/^\s*/)[0], trail = orig.match(/\s*$/)[0];
+    const labels = {};
+    Object.values(R.sections).flat().forEach((r) => (labels[r.id] = r.label));
+    const options = [];
+    let bad = 0;
+    for (const o of raw) {
+      const v = vetSection(orig, mk.toks, o.text, cues);
+      if (!v.ok) { bad++; continue; }
+      if (v.text.trim() === orig.trim()) continue;
+      const full = lead + v.text.trim() + trail;
+      const chk = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start: a, end: b, rep: full }] });
+      options.push({ text: full, why: String(o.why || ""), fixed: chk.fixed.map((id) => labels[id] || id), broke: chk.broke.map((id) => labels[id] || id) });
+    }
+    if (!options.length) { SECAI[key] = { err: bad ? t("secAiBad")(bad) : t("secAiNone") }; paint(); return; }
+    SECAI[key] = { options, bad, a, b, orig, textAt: text };
+  } catch (e) { SECAI[key] = { err: e && e.code === "cancelled" ? "" : errText(e) }; }
+  paint();
+}
+function secAiApply(k, j) {
+  const key = secAiKey(k), st = SECAI[key];
+  if (!st || !st.options || $("script").value !== st.textAt) { SECAI[key] = { err: t("secAiChanged") }; renderStructure(); return; }
+  keepScroll(() => {
+    pushUndo();
+    $("script").value = st.textAt.slice(0, st.a) + st.options[j].text + st.textAt.slice(st.b);
+    Object.keys(SECAI).forEach((x) => delete SECAI[x]);
+    SECAI[key] = { applied: true };
+    reviewAfterEdit(t("fxApplied"));
+    gRefresh();
+  });
+}
+function wireSecAI(root) {
+  if (!root) return;
+  root.querySelectorAll("[data-secai]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; doSectionAI(+b.dataset.secai); }));
+  root.querySelectorAll("[data-secai-use]").forEach((b) => b.addEventListener("click", () => { const [k, j] = b.dataset.secaiUse.split(":").map(Number); secAiApply(k, j); }));
+  root.querySelectorAll("[data-secai-no]").forEach((b) => b.addEventListener("click", () => { const [k, j] = b.dataset.secaiNo.split(":").map(Number); const st = SECAI[secAiKey(k)]; if (st && st.options) { st.options.splice(j, 1); if (!st.options.length) delete SECAI[secAiKey(k)]; } const box = root.querySelector(".st-ai"); if (box) { box.outerHTML = secAiHTML(k); wireSecAI(root); } }));
+  root.querySelectorAll("[data-secai-undo]").forEach((b) => b.addEventListener("click", () => { keepScroll(() => { undoFix(); Object.keys(SECAI).forEach((x) => delete SECAI[x]); gRefresh(); }); }));
+  caps.sample.then((s) => { if (!s) root.querySelectorAll("[data-secai]").forEach((b) => (b.disabled = true)); });
+}
 /* ===== Ayuda: un «?» junto a cada campo y sección, con una explicación breve ===== */
 Object.assign(T.es, { qhBtn: "¿Qué es esto?" });
 Object.assign(T.en, { qhBtn: "What is this?" });
@@ -7454,7 +7869,7 @@ const HELP = {
     mSeo: "Qué tan fácil es que alguien encuentre el video al buscar en YouTube. Se mide con el tema: si aparece en el título, al inicio y a lo largo del episodio.",
     mRepeat: "Las palabras y frases que más dices. Si una describe mejor el tema que el que pusiste, tócala y la app revisa con esa.",
     mWeak: "Palabras vagas como «cosa», «algo» o «muy», con una opción más precisa. Al oído, lo preciso se entiende y se recuerda mejor.",
-    mRewrite: "La IA escribe una versión completa del guion. Ves los cambios marcados y decides si la usas; tu guion no cambia hasta que tú lo aceptes.",
+    mRewrite: "La IA lee todo el guion y propone correcciones puntuales de gramática, ortografía, puntuación y muletillas. Aceptas o rechazas cada una; tu guion no cambia hasta que aceptes. Los versículos entre comillas y las referencias no se tocan.",
     topic: "Tema = la frase corta que alguien escribiría en YouTube para encontrar este episodio, por ejemplo «qué dice la Biblia sobre el perdón». Toda la revisión de búsqueda se basa en ella.",
     next: "Lo que verán el episodio siguiente. La app lo usa para proponer el cierre («La próxima semana veremos…») y lo anota en el calendario.",
     date: "El día que se publica el video. Así aparece en el calendario de la serie.",
@@ -7491,7 +7906,7 @@ const HELP = {
     sSeo: "Qué tan fácil es que alguien encuentre el video al buscar en YouTube, según cómo usas el tema en el título y en el guion.",
     sMs: "Tu guion con colores: cada color es un tipo de aviso (ver la leyenda). Toca una palabra marcada para leer la nota.",
     sAi: "Herramientas que piden ayuda a la IA. Cada propuesta se revisa con las mismas reglas antes de mostrarse y nada se aplica sin tu aprobación.",
-    aiRewrite: "La IA reescribe el guion corrigiendo muletillas, palabras vagas y lo que falló en la revisión. No toca las citas bíblicas ni el argumento.",
+    aiRewrite: "La IA propone correcciones puntuales de gramática, ortografía y muletillas. Tú aceptas o rechazas cada una. No toca versículos ni el argumento.",
     aiHooks: "La IA propone tres formas distintas de abrir el episodio. Elige una o úsalas como idea.",
     aiTitles: "La IA propone títulos, textos de miniatura y una descripción, ya revisados para que no limiten anuncios.",
     save: "«Guardar esta versión» guarda el guion en el historial. «Teleprompter» descarga el texto limpio para otro programa de prompter. «Revisión» descarga este informe como archivo.",
@@ -7528,7 +7943,7 @@ const HELP = {
     mSeo: "How easily someone finds the video when searching YouTube. It's measured with the topic: whether it appears in the title, early on and throughout the episode.",
     mRepeat: "The words and phrases you say most. If one describes the topic better than the one you set, tap it and the app checks with that one.",
     mWeak: "Vague words like “thing”, “something” or “very”, with a more precise option. By ear, precise words are easier to follow and remember.",
-    mRewrite: "The AI writes a full version of the script. You see the changes marked and decide whether to use it; your script doesn't change until you accept.",
+    mRewrite: "The AI reads the whole script and suggests specific fixes for grammar, spelling, punctuation and fillers. You accept or reject each one; your script doesn't change until you accept. Verses in quotation marks and references are never touched.",
     topic: "Topic = the short phrase someone would type into YouTube to find this episode, e.g. “what the Bible says about forgiveness”. The whole search review is based on it.",
     next: "What the following episode covers. The app uses it to propose the closing line (“Next week we'll look at…”) and adds it to the calendar.",
     date: "The day the video goes live. That's how it shows up on the series calendar.",
@@ -7565,7 +7980,7 @@ const HELP = {
     sSeo: "How easily someone finds the video when searching YouTube, based on how you use the topic in the title and script.",
     sMs: "Your script in color: each color is a kind of warning (see the legend). Tap a marked word to read the note.",
     sAi: "Tools that ask the AI for help. Every proposal is checked with the same rules before it's shown, and nothing is applied without your approval.",
-    aiRewrite: "The AI rewrites the script, fixing filler, vague words and whatever failed the review. It doesn't touch Bible quotes or the argument.",
+    aiRewrite: "The AI suggests specific fixes for grammar, spelling and fillers. You accept or reject each one. It never touches verses or the argument.",
     aiHooks: "The AI proposes three different ways to open the episode. Pick one or use them as ideas.",
     aiTitles: "The AI proposes titles, thumbnail texts and a description, already checked so they don't limit ads.",
     save: "“Save this version” stores the script in the history. “Teleprompter” downloads clean text for another prompter app. “Review” downloads this report as a file.",
