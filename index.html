@@ -1270,7 +1270,7 @@ button.icon:hover{color:var(--ink)}
         r = await fetch(SB_URL + "/functions/v1/sd-ai", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token, apikey: SB_KEY },
-          body: JSON.stringify({ prompt, tier: opts.modelTier === "complex" ? "complex" : "default" }),
+          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default" }),
           signal: opts.signal,
         });
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
@@ -3276,7 +3276,7 @@ GUION:
 """
 ${state.text}
 """`;
-  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "complex" });
+  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "rewrite" });
   if (!res || typeof res.rewritten_text !== "string" || !res.rewritten_text.trim()) throw { code: "invalid_json" };
   const after = analyze(res.rewritten_text, state.opts);
   const authFails = (x) => x.sections.auth.filter((r) => !r.passed).length;
