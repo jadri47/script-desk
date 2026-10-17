@@ -701,7 +701,7 @@ label{font-weight:600}
 /* mobile: glass tabs at the bottom */
 @media (max-width:620px){
   .masthead h1{font-size:28px}
-  #stepBar{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--rule);box-shadow:0 -8px 24px -16px rgba(0,0,0,.35)}
+  #stepBar{background:color-mix(in srgb,var(--paper) 96%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--rule);box-shadow:0 -8px 24px -16px rgba(0,0,0,.35)}
   .sb{gap:2px}
   .sb button,.sb button.on,.sb button.done{background:transparent;border:0;box-shadow:none;color:var(--ink-2)}
   .sb button.on{color:var(--ct)}
@@ -917,6 +917,188 @@ html.sd-split main[data-view="guide"] .pane-l{display:flex !important}
 .pane-l>.actions{flex:0 0 auto;margin:10px 0 0;display:flex;align-items:center;gap:10px}
 html.sd-split main[data-view="guide"]:not([data-step="1"]) .pane-l>.actions{display:none}
 .pane-l .meta-line+.actions{margin-top:6px}
+
+/* ===== Guion y prompter: phases ===== */
+#guion{--php:var(--j3);--pht:var(--j3t);--ph-on:var(--j3-on)}
+#guion:has(#phPane.ph-rec){--php:var(--j4);--pht:var(--j4t);--ph-on:var(--j-on)}
+#guion:has(#phPane.ph-after){--php:var(--j5);--pht:var(--j5t);--ph-on:var(--j-on)}
+/* status strip */
+.st-strip{gap:8px;padding:10px 14px;border-radius:16px;box-shadow:var(--lift)}
+.st-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.st-lbl{font:600 12px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+.st-steps{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.st-step{display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 7px;border-radius:999px;font-size:14px;background:transparent;border:1px solid transparent;color:var(--ink-2)}
+.st-step+.st-step{position:relative;margin-left:14px}
+.st-step+.st-step::before{content:"";position:absolute;left:-13px;top:50%;width:10px;height:1.5px;background:var(--rule)}
+.st-dot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font:600 12px/1 var(--sans);background:var(--rule-2);color:var(--ink-2)}
+.st-step.past{color:var(--ink)}
+.st-step.past .st-dot{background:var(--verde-bg);color:var(--verde)}
+.st-step[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.st-step[aria-pressed="true"] .st-dot{background:color-mix(in srgb,var(--accent-ink) 22%,transparent);color:var(--accent-ink)}
+.st-step:disabled{opacity:.5}
+.st-end{margin-left:auto;display:flex;align-items:center;gap:10px}
+.st-gate{margin:0;font-size:13.5px}
+/* phase bar */
+.ph-bar{position:sticky;top:0;z-index:6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:14px 0 0;padding:6px;border-radius:18px;background:color-mix(in srgb,var(--paper) 96%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--rule)}
+.ph-tab{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:13px;border:1px solid transparent;background:transparent;text-align:left;color:var(--ink);min-width:0}
+.ph-tab:hover{background:var(--sheet)}
+.ph-tab{--c:var(--j3);--ct:var(--j3t);--con:var(--j3-on)}
+.ph-tab.ph-rec{--c:var(--j4);--ct:var(--j4t);--con:var(--j-on)}
+.ph-tab.ph-after{--c:var(--j5);--ct:var(--j5t);--con:var(--j-on)}
+.ph-n{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font:700 14px/1 var(--sans);border:1.5px solid var(--c);color:var(--ct)}
+.ph-tab.all .ph-n{background:var(--verde-bg);border-color:var(--verde);color:var(--verde)}
+.ph-tab[aria-selected="true"]{background:var(--sheet);border-color:var(--rule);box-shadow:var(--lift)}
+.ph-tab[aria-selected="true"] .ph-n{background:var(--c);border-color:var(--c);color:var(--con)}
+.ph-t{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.ph-t b{font:600 15px/1.1 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-p{display:flex;align-items:center;gap:6px}
+.ph-p i{flex:1;height:4px;border-radius:4px;background:var(--rule-2);position:relative;overflow:hidden;max-width:90px}
+.ph-p i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--p);background:var(--c);border-radius:4px}
+.ph-tab.all .ph-p i::after{background:var(--verde)}
+.ph-p small{font:600 11.5px/1 var(--sans);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.ph-pane{padding-top:4px}
+.ph-lead{margin:18px 2px 0;color:var(--ink-2);font-size:15px;max-width:70ch}
+.ph-pane .g-card{border-top:3px solid var(--php)}
+.ph-note{margin:18px 0 0;padding:12px 14px;border-radius:12px;background:var(--mul-bg);color:var(--ink);font-size:14.5px}
+.ph-next{display:flex;justify-content:flex-end;margin-top:26px;padding-top:16px;border-top:1px solid var(--rule)}
+.ph-next button.primary{background:var(--php);border-color:var(--php);color:var(--ph-on);font-size:15.5px;padding:12px 20px;box-shadow:0 10px 24px -14px var(--php)}
+#phApprove{padding:16px 18px;border-radius:16px;background:var(--sheet);border:1px dashed var(--rule)}
+#guion .g-gate a{color:var(--accent)}
+@media (max-width:640px){
+  .ph-bar{gap:4px;padding:4px;border-radius:14px}
+  .ph-tab{flex-direction:column;align-items:center;gap:5px;padding:8px 4px;text-align:center}
+  .ph-t{align-items:center}
+  .ph-p i{max-width:54px;min-width:34px}
+  .st-step{padding:5px 10px 5px 5px;font-size:13px}
+  .st-step+.st-step{margin-left:6px}
+  .st-step+.st-step::before{display:none}
+  .st-end{margin-left:0}
+}
+
+/* cold open */
+.co-box{border-left:0;border:1px solid color-mix(in srgb,var(--mul) 35%,var(--rule));background:linear-gradient(180deg,var(--mul-bg),var(--sheet) 70%);position:relative;padding:14px 16px 16px}
+.co-box>h3{display:inline-flex;align-items:center;gap:8px;margin:0 10px 10px 0;font-size:16px}
+.co-box>.verdict-tag{vertical-align:middle}
+.co-slots{display:grid;grid-template-columns:1fr;gap:10px}
+.co-slot{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;background:var(--sheet);border:1px solid var(--rule)}
+.co-slot.empty{background:transparent;border:1.5px dashed color-mix(in srgb,var(--mul) 45%,var(--rule))}
+.co-slot .co-k{font:600 12px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mul)}
+.co-slot .co-k .hint{text-transform:none;letter-spacing:0;font-weight:400;margin:0}
+.co-ph{color:var(--ink-2);font-size:14.5px}
+.co-slot .co-li-act{margin-top:4px}
+.co-foot{font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:999px;padding:2px;background:var(--sheet-2)}
+.seg button{border:0;background:transparent;border-radius:999px;padding:4px 11px;font-size:13px;box-shadow:none;min-height:0}
+.seg button[aria-pressed="true"]{background:var(--sheet);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+button.icon{display:inline-grid;place-items:center;width:32px;height:32px;padding:0;border-radius:9px;color:var(--ink-2)}
+button.icon:hover{color:var(--ink)}
+.co-tap{margin:14px 0 0}
+.co-cols{margin-top:10px}
+.co-col{gap:8px}
+.co-cand{position:relative;padding:0;gap:0;border-radius:14px;transition:border-color .15s,box-shadow .15s}
+.co-pick{display:flex;gap:11px;align-items:flex-start;width:100%;padding:12px 76px 12px 12px;border:0;background:transparent;text-align:left;color:inherit;border-radius:14px;box-shadow:none;font:inherit;cursor:pointer}
+.co-pick:hover{background:var(--sheet-2)}
+.co-pick:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.co-radio{flex:0 0 auto;width:20px;height:20px;margin-top:3px;border-radius:50%;border:2px solid var(--rule);background:var(--sheet);transition:all .15s}
+.co-cand.in-use{border-color:var(--verde);box-shadow:0 0 0 1px var(--verde) inset}
+.co-cand.in-use .co-radio{border-color:var(--verde);background:var(--verde);box-shadow:inset 0 0 0 3px var(--sheet)}
+.co-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.co-pick .co-text{font-size:16px;line-height:1.45;margin:0}
+.co-note{font-size:13px;color:var(--ink-2);font-style:italic}
+.co-tools{position:absolute;top:8px;right:8px;display:flex;gap:2px}
+.co-cand .co-editbox{padding:0 12px 12px 43px}
+.co-more{align-self:flex-start;padding:4px 2px}
+
+/* packaging + YouTube preview */
+#gPack{container-type:inline-size}
+.pk-top{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px;align-items:start}
+@container (min-width:560px){ .pk-top{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)} .pk-top .pk-fields{order:-1} }
+.pk-top .pk-fields{display:flex;flex-direction:column;gap:12px;margin:0}
+.pk-top .field{position:relative;margin:0}
+.pk-count{position:absolute;right:10px;bottom:11px;font:500 12px/1 var(--sans);color:var(--ink-2);font-variant-numeric:tabular-nums;pointer-events:none}
+.pk-count.over{color:var(--rojo);font-weight:700}
+.pk-top input{padding-right:70px}
+.yt-mock{margin:0;padding:12px;border-radius:16px;background:var(--sheet-2);border:1px solid var(--rule)}
+.yt-thumb{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;display:flex;align-items:center;padding:7% 8%;
+  background:radial-gradient(120% 90% at 85% 15%,color-mix(in srgb,var(--j3) 55%,transparent),transparent 60%),radial-gradient(90% 90% at 0% 100%,color-mix(in srgb,var(--j5) 70%,transparent),transparent 65%),#141836}
+.yt-tt{font:800 clamp(18px,7.2cqi,34px)/1.02 var(--sans);color:#fff;letter-spacing:-.01em;text-shadow:0 2px 14px rgba(0,0,0,.45);max-width:78%;overflow-wrap:anywhere}
+.yt-thumb.empty .yt-tt{color:rgba(255,255,255,.45);font-weight:700}
+.yt-dur{position:absolute;right:7px;bottom:7px;padding:2px 5px;border-radius:5px;background:rgba(0,0,0,.8);color:#fff;font:600 12px/1.2 var(--sans);font-variant-numeric:tabular-nums}
+.yt-info{display:flex;gap:10px;margin-top:10px;align-items:flex-start}
+.yt-av{flex:0 0 auto;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--j1);color:var(--j-on);font:700 15px/1 var(--sans)}
+.yt-info>span:last-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.yt-title{font:600 15px/1.3 var(--sans);color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.yt-title.empty{color:var(--ink-2);font-weight:500}
+.yt-ch{font-size:13px;color:var(--ink-2)}
+.pk-checks{display:grid;grid-template-columns:1fr;gap:6px 22px;margin-top:6px}
+@container (min-width:560px){ .pk-checks{grid-template-columns:1fr 1fr} }
+.pk-checks>div{position:relative}
+.pk-tally{position:absolute;right:0;top:14px;font:600 12px/1 var(--sans);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.pk-checks .row.pend .t{color:var(--ink-2)}
+.mark.pend{background:var(--rule-2);color:var(--ink-2);font-weight:800}
+#gPack .pk-wide{margin-top:18px}
+
+/* structure list */
+.st-list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.st-item{border:1px solid var(--rule);border-radius:13px;background:var(--sheet);overflow:hidden;scroll-margin-top:90px;position:relative}
+.st-item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.st-item.open{border-color:color-mix(in srgb,var(--c) 55%,var(--rule));box-shadow:var(--lift)}
+.st-main{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto 18px;gap:4px 12px;align-items:start;width:100%;padding:11px 12px 11px 16px;border:0;border-radius:0;background:transparent;text-align:left;color:inherit;font:inherit;box-shadow:none;cursor:pointer}
+.st-main.static{cursor:default;grid-template-columns:26px minmax(0,1fr) auto auto 18px}
+.st-main:not(.static):hover{background:var(--sheet-2)}
+.st-n{font:600 13px/1.6 var(--sans);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.st-name{display:flex;flex-direction:column;gap:3px;min-width:0}
+.st-name b{font:600 15px/1.35 var(--sans)}
+.st-first{font-family:var(--serif);font-size:14.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-name .flag{align-self:flex-start;font-size:13px;color:var(--amarillo);background:var(--amarillo-bg);padding:2px 8px;border-radius:6px;margin-top:2px}
+.st-conf{align-self:flex-start;font-size:11.5px;color:var(--ink-2);padding:1px 8px;border-radius:999px;background:var(--rule-2)}
+.st-time,.st-dur{font:500 14px/1.6 var(--sans);font-variant-numeric:tabular-nums;color:var(--ink-2);text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.st-dur{color:var(--ink);font-weight:600;min-width:44px}
+.st-time small,.st-delta{font-size:11.5px;font-weight:500}
+.st-delta.over{color:var(--rojo)} .st-delta.under{color:var(--verde)}
+.st-chev{width:9px;height:9px;margin-top:6px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);transition:transform .15s;justify-self:end}
+.st-item.open .st-chev{transform:rotate(-135deg);margin-top:10px}
+.st-cold{background:var(--mul-bg)}
+.st-panel{padding:4px 16px 16px 54px;border-top:1px solid var(--rule-2)}
+.st-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.st-tools select{width:auto;font-size:14px;padding:6px 8px}
+.st-tools .gsec-tools{margin-left:auto;display:flex;gap:4px;align-items:center}
+.st-tap{margin:10px 0 0;font-size:13px}
+.st-panel .gsec-body{margin-top:8px;font-size:16.5px;max-height:420px;overflow:auto;padding-right:6px}
+.st-panel .gnotes{margin-top:10px}
+.g-target{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.g-target input{width:96px}
+.g-target #gRedetect{margin-left:auto}
+@media (max-width:640px){
+  .st-main{grid-template-columns:20px minmax(0,1fr) auto 14px;gap:2px 8px;padding:10px 10px 10px 14px}
+  .st-time{display:none}
+  .st-panel{padding:4px 12px 14px 14px}
+}
+.ed .ed-flash{animation:edFlash 1.8s ease-out}
+@keyframes edFlash{0%,35%{background:color-mix(in srgb,var(--j3) 30%,transparent);box-shadow:-10px 0 0 color-mix(in srgb,var(--j3) 30%,transparent),10px 0 0 color-mix(in srgb,var(--j3) 30%,transparent)}100%{background:transparent;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){.ed .ed-flash{animation:none;outline:2px solid var(--j3)}}
+
+/* record card (full mode "Grabar" and guided step 4) */
+.rec-card{padding:22px}
+.rec-hero{display:flex;align-items:center;gap:20px 28px;flex-wrap:wrap}
+.rec-len{display:flex;flex-direction:column;gap:2px;padding-right:28px;border-right:1px solid var(--rule)}
+.rec-len small{font:600 12px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+.rec-len b{font:600 46px/1.05 var(--serif);font-variant-numeric:tabular-nums;color:var(--ink)}
+.rec-len .hint{margin:0}
+.rec-go{display:flex;flex-direction:column;gap:10px;flex:1;min-width:240px}
+#gRecCard #gPP{align-self:flex-start;background:var(--j4);border-color:var(--j4);color:var(--j-on);box-shadow:0 14px 30px -16px var(--j4)}
+.rec-sub{display:flex;gap:8px;flex-wrap:wrap}
+.rec-tip{margin:16px 0 0}
+.rec-clips{margin-top:16px;padding:12px 14px;border-radius:14px;background:var(--mul-bg)}
+.rec-clips p{margin:0 0 8px;font-size:14px}
+.rec-clips ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rec-clips li{font-family:var(--serif);font-size:16px;line-height:1.45}
+.rec-k{display:block;font:600 12px/1.3 var(--sans);color:var(--mul);letter-spacing:.04em;text-transform:uppercase}
+.rec-keys{margin-top:14px}
+.rec-keys summary{cursor:pointer;font-size:14px;color:var(--accent)}
+@media (max-width:640px){ .rec-len{border-right:0;padding-right:0} .rec-len b{font-size:38px} #gRecCard #gPP{align-self:stretch} }
+
+#pkTitleIn{padding-right:70px;resize:none;font:inherit;line-height:1.4;min-height:0;overflow:hidden}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -1899,6 +2081,14 @@ function detectLayout(U, R) {
     if (split === null) break;
     starts.set(split, { type: "body", conf: "baja", title: "" });
   }
+  // 7. Drop guessed "body" sections shorter than 12 s (e.g. one sentence between a call to action and the close).
+  const keys = [...starts.keys()].sort((a, b) => a - b);
+  keys.forEach((a, k) => {
+    const v = starts.get(a);
+    if (a === 0 || v.type !== "body" || v.conf === "alta") return;
+    const b = k + 1 < keys.length ? keys[k + 1] : U.length;
+    if (U[b - 1].t1 - U[a].t0 < 12) starts.delete(a);
+  });
   return [...starts.entries()].sort((a, b) => a[0] - b[0]).map(([first, v]) => ({ first, anchor: U[first].text.slice(0, 80), ...v }));
 }
 
@@ -2100,16 +2290,17 @@ function packagingChecks(o, R, promiseText) {
   const overlap = th.size ? [...th].filter((w) => tw.has(w)).length / th.size : 0;
   const shared = [...tw].filter((w) => pr.has(w) || (kw && norm(kw).includes(w)));
   const thumbWords = wordTokens(thumb).length;
+  // pending: the field the check reads is still empty, so it neither passes nor fails yet.
   return [
     { id: "title", req: true, pass: !!title },
-    { id: "titleLen", req: true, pass: !title || title.length <= 60, v: title.length },
-    { id: "titleRisk", req: true, pass: !title || !pk("title") || pk("title").level === "verde", v: pk("title") ? pk("title").issues.join("; ") : "" },
+    { id: "titleLen", req: true, pass: !title || title.length <= 60, v: title.length, pending: !title },
+    { id: "titleRisk", req: true, pass: !title || !pk("title") || pk("title").level === "verde", v: pk("title") ? pk("title").issues.join("; ") : "", pending: !title },
     { id: "thumb", req: true, pass: thumbWords >= 1 && thumbWords <= 5 && thumb.length <= 30, v: thumbWords },
-    { id: "thumbRisk", req: true, pass: !thumb || !pk("thumb") || pk("thumb").level === "verde", v: pk("thumb") ? pk("thumb").issues.join("; ") : "" },
-    { id: "titleKw", req: false, pass: !kw || norm(title).slice(0, 60).includes(norm(kw)), v: kw },
-    { id: "thumbRepeat", req: false, pass: !thumb || overlap < 0.75 },
-    { id: "promiseMatch", req: false, pass: !title || !promiseText || shared.length > 0, v: shared.slice(0, 3).join(", ") },
-    { id: "descKw", req: false, pass: !desc || !kw || norm(desc.slice(0, 150)).includes(norm(kw)) },
+    { id: "thumbRisk", req: true, pass: !thumb || !pk("thumb") || pk("thumb").level === "verde", v: pk("thumb") ? pk("thumb").issues.join("; ") : "", pending: !thumb },
+    { id: "titleKw", req: false, pass: !kw || norm(title).slice(0, 60).includes(norm(kw)), v: kw, pending: !title },
+    { id: "thumbRepeat", req: false, pass: !thumb || overlap < 0.75, pending: !thumb || !title },
+    { id: "promiseMatch", req: false, pass: !title || !promiseText || shared.length > 0, v: shared.slice(0, 3).join(", "), pending: !title },
+    { id: "descKw", req: false, pass: !desc || !kw || norm(desc.slice(0, 150)).includes(norm(kw)), pending: !desc },
   ];
 }
 
@@ -3347,6 +3538,8 @@ Object.assign(T.es, {
   coModeDup: "Duplicar: la frase también suena en su lugar", coModeMove: "Mover: se quita de su lugar", coRemove: "Quitar", coAi: "Sugerir con IA", coAuto: "Ver sugerencias automáticas",
   coAiFrom: "Elegidas por la IA entre las frases del guion.", coRecNote: "En el prompter estas frases llevan la marca CLIP: dilas mirando a la cámara, con una pausa antes y después, para que el editor las corte limpias.",
   coLostOne: "Una frase de la apertura cambió en el texto; elígela de nuevo.",
+  coSlotEmpty: (hook) => hook ? "Elige abajo la frase que engancha" : "Elige abajo la frase que dice qué van a aprender", coTap: "Toca una frase para usarla; tócala otra vez para quitarla.",
+  coMoreN: (n) => `Ver ${n} más`, coLess: "Ver menos", coDup: "Duplicar", coMove: "Mover",
   why: { q: "pregunta", you: "habla al oyente", tension: "tensión", kw: "palabra clave", verse: "versículo", late: "anticipa lo que viene", promise: "dice qué se aprende", risk: "término sensible", open: "ya suena al inicio: usa «Mover»", connector: "empieza con conector: edítalo", ai: "IA" },
   escTitle: "Escaleta", escLead: "Tiempos estimados al ritmo del presentador; un ensayo los reemplaza por tiempos reales.",
   thNum: "#", thSec: "Sección", thStart: "Inicio", thEnd: "Fin", thDur: "Dur.", thLeft: "Queda", thLatest: "Empezar antes de", thReh: "Ensayo", thDelta: "Δ", thVideo: "En el video",
@@ -3386,6 +3579,8 @@ Object.assign(T.en, {
   coModeDup: "Duplicate: the line also plays in place", coModeMove: "Move: it's cut from its place", coRemove: "Remove", coAi: "Suggest with AI", coAuto: "Show automatic suggestions",
   coAiFrom: "Picked by the AI from the script's own lines.", coRecNote: "In the prompter these lines carry a CLIP mark: say them to the lens, with a pause before and after, so the editor can cut them cleanly.",
   coLostOne: "A cold-open line changed in the text; pick it again.",
+  coSlotEmpty: (hook) => hook ? "Pick the line that hooks them below" : "Pick the line that says what they'll learn below", coTap: "Tap a line to use it; tap it again to remove it.",
+  coMoreN: (n) => `Show ${n} more`, coLess: "Show less", coDup: "Duplicate", coMove: "Move",
   why: { q: "question", you: "speaks to the viewer", tension: "tension", kw: "keyword", verse: "verse", late: "teases what's coming", promise: "says what they'll learn", risk: "sensitive term", open: "already at the start: use Move", connector: "starts with a connector: edit it", ai: "AI" },
   escTitle: "Rundown", escLead: "Times estimated at the host's pace; a rehearsal replaces them with real times.",
   thNum: "#", thSec: "Section", thStart: "Start", thEnd: "End", thDur: "Dur.", thLeft: "Left", thLatest: "Start by", thReh: "Rehearsal", thDelta: "Δ", thVideo: "In the video",
@@ -3652,15 +3847,19 @@ function renderProdBar() {
   });
 }
 
+const ICO = {
+  edit: `<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M13.6 3.4a2 2 0 0 1 2.8 2.8L7 15.6 3.5 16.5l.9-3.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+  see: `<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M1.8 10S5 4.5 10 4.5 18.2 10 18.2 10 15 15.5 10 15.5 1.8 10 1.8 10z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="2.4" fill="currentColor"/></svg>`,
+  x: `<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+};
 function whyChips(c) { return c.why.map((w) => `<span class="chip">${h(t("why")[w] || w)}</span>`).join(""); }
 function candHTML(c, kind) {
   const inUse = G.cold[kind] && G.cold[kind].i === c.i;
   const s = secAt(c.i);
   return `<div class="co-cand${inUse ? " in-use" : ""}" data-i="${c.i}" data-kind="${kind}">
-    <div class="co-text">«${h(c.text)}»</div>
-    <div class="co-meta"><span>${fmtTime(c.t0)} · ≈${Math.max(1, Math.round(c.dur))} s${s ? " · " + h(secLabel(s)) : ""}</span>${whyChips(c)}</div>
-    <div class="co-act">${inUse ? `<span class="verdict-tag v-ok">${h(t("coInUse"))}</span>` : `<button class="small primary" data-use="${kind}" data-i="${c.i}">${h(kind === "hook" ? t("coUseHook") : t("coUseProm"))}</button>`}
-      <button class="small" data-edit="${c.i}">${h(t("coEdit"))}</button><button class="small linkish" data-see="${c.i}">${h(t("coSee"))}</button></div>
+    <button type="button" class="co-pick" data-use="${kind}" data-i="${c.i}" aria-pressed="${inUse}" title="${h(inUse ? t("coRemove") : kind === "hook" ? t("coUseHook") : t("coUseProm"))}"><span class="co-radio" aria-hidden="true"></span>
+      <span class="co-body"><span class="co-text">«${h(c.text)}»</span><span class="co-meta"><span>${fmtTime(c.t0)} · ≈${Math.max(1, Math.round(c.dur))} s${s ? " · " + h(secLabel(s)) : ""}</span>${whyChips(c)}</span>${c.note ? `<span class="co-note">${h(c.note)}</span>` : ""}</span></button>
+    <span class="co-tools"><button type="button" class="icon" data-edit="${c.i}" title="${h(t("coEdit"))}" aria-label="${h(t("coEdit"))}">${ICO.edit}</button><button type="button" class="icon" data-see="${c.i}" title="${h(t("coSee"))}" aria-label="${h(t("coSee"))}">${ICO.see}</button></span>
     ${G.editing === c.i ? editBoxHTML(c.i) : ""}</div>`;
 }
 function editBoxHTML(i) {
@@ -3671,25 +3870,40 @@ function editBoxHTML(i) {
 function renderCold() {
   const el = $("gCold");
   if (!el) return;
+  G.coMore = G.coMore || {};
   const clips = coldClips(), tot = coldSec();
   const hookC = clips.find((c) => c.kind === "hook");
-  const chosen = clips.length ? `<ol class="co-chosen">${clips.map((c) => `<li><div class="co-k">${h(c.kind === "hook" ? t("coHooks") : t("coProms"))} <span class="hint">· ${h(t("coClipFrom")(fmtTime(c.t0), fmtTime(c.t1)))} · ≈${Math.max(1, Math.round(c.dur))} s</span></div><div class="co-text">«${h(c.text)}»</div><div class="co-li-act"><select data-cmode="${c.kind}" aria-label="${h(t("modeLbl"))}"><option value="dup"${c.mode !== "move" ? " selected" : ""}>${h(t("coModeDup"))}</option><option value="move"${c.mode === "move" ? " selected" : ""}>${h(t("coModeMove"))}</option></select><button class="small linkish" data-rm="${c.kind}">${h(t("coRemove"))}</button></div></li>`).join("")}</ol>
-    <div class="co-sum"><span class="verdict-tag ${(!hookC || hookC.dur <= 7.5) && tot <= 20 ? "v-ok" : "v-mid"}">${h(t("coTotal")(Math.round(tot)))}</span><span class="hint">${h(t("coTargets"))}</span></div>
-    <p class="hint">${h(t("coRecNote"))}</p>` : `<p class="hint">${h(t("coEmpty"))}</p>`;
+  const good = (!hookC || hookC.dur <= 7.5) && tot <= 20;
+  const slot = (kind) => {
+    const c = clips.find((x) => x.kind === kind), lbl = kind === "hook" ? t("coHooks") : t("coProms");
+    if (!c) return `<div class="co-slot empty"><span class="co-k">${h(lbl)}</span><span class="co-ph">${h(t("coSlotEmpty")(kind === "hook"))}</span></div>`;
+    return `<div class="co-slot"><span class="co-k">${h(lbl)} <span class="hint">${h(t("coClipFrom")(fmtTime(c.t0), fmtTime(c.t1)))} · ≈${Math.max(1, Math.round(c.dur))} s</span></span>
+      <span class="co-text">«${h(c.text)}»</span>
+      <span class="co-li-act"><span class="seg" role="group" aria-label="${h(t("modeLbl"))}"><button type="button" class="small" data-cmode="${kind}" data-v="dup" aria-pressed="${c.mode !== "move"}" title="${h(t("coModeDup"))}">${h(t("coDup"))}</button><button type="button" class="small" data-cmode="${kind}" data-v="move" aria-pressed="${c.mode === "move"}" title="${h(t("coModeMove"))}">${h(t("coMove"))}</button></span>
+      <button type="button" class="icon" data-rm="${kind}" title="${h(t("coRemove"))}" aria-label="${h(t("coRemove"))}">${ICO.x}</button></span></div>`;
+  };
   const src = G.aiPick || G.cands;
   const col = (kind) => {
     const list = (src && src[kind]) || [];
-    return `<div class="co-col"><h4>${h(kind === "hook" ? t("coHooks") : t("coProms"))}</h4>${list.map((c) => candHTML(c, kind)).join("")}${list.length < 3 && !G.aiPick ? `<p class="hint">${h(t("coFew")(list.length))}</p>` : ""}</div>`;
+    const chosen = G.cold[kind] && list.findIndex((c) => c.i === G.cold[kind].i);
+    const n = G.coMore[kind] ? list.length : Math.max(2, chosen >= 2 ? chosen + 1 : 2);
+    const more = list.length - n;
+    return `<div class="co-col"><h4>${h(kind === "hook" ? t("coHooks") : t("coProms"))}</h4>${list.slice(0, n).map((c) => candHTML(c, kind)).join("")}
+      ${more > 0 ? `<button type="button" class="linkish small co-more" data-comore="${kind}">${h(t("coMoreN")(more))}</button>` : G.coMore[kind] && list.length > 2 ? `<button type="button" class="linkish small co-more" data-comore="${kind}">${h(t("coLess"))}</button>` : ""}
+      ${list.length < 3 && !G.aiPick ? `<p class="hint">${h(t("coFew")(list.length))}</p>` : ""}</div>`;
   };
   el.innerHTML = `<header class="g-h"><h2>${h(t("coTitle"))}</h2><span class="g-ai"><button class="small" id="coAi">${h(G.aiPick ? t("coAuto") : t("coAi"))}</button></span></header>
     <p class="lead">${h(t("coLead"))}</p>${G.coldLost ? `<p class="status err">${h(t("coLostOne"))}</p>` : ""}
-    <div class="co-box"><h3>${h(t("coChosen"))}</h3>${chosen}</div>
-    ${G.aiPick ? `<p class="hint">${h(t("coAiFrom"))}</p>` : ""}<div class="co-cols">${col("hook")}${col("promise")}</div><p class="status" id="coAiStatus"></p>`;
-  el.querySelectorAll("[data-use]").forEach((b) => b.addEventListener("click", () => useCold(b.dataset.use, +b.dataset.i)));
+    <div class="co-box${clips.length ? " has" : ""}"><h3>${h(t("coChosen"))}</h3>${clips.length ? `<span class="verdict-tag ${good ? "v-ok" : "v-mid"}">${h(t("coTotal")(Math.round(tot)))}</span>` : ""}
+      <div class="co-slots">${slot("hook")}${slot("promise")}</div>
+      ${clips.length ? `<p class="hint co-foot">${h(t("coTargets"))} ${h(t("coRecNote"))}</p>` : ""}</div>
+    ${G.aiPick ? `<p class="hint">${h(t("coAiFrom"))}</p>` : `<p class="hint co-tap">${h(t("coTap"))}</p>`}<div class="co-cols">${col("hook")}${col("promise")}</div><p class="status" id="coAiStatus"></p>`;
+  el.querySelectorAll("[data-use]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.use, i = +b.dataset.i; if (G.cold[k] && G.cold[k].i === i) { G.cold[k] = null; markDirty(); gRefresh(); } else useCold(k, i); }));
   el.querySelectorAll("[data-rm]").forEach((b) => b.addEventListener("click", () => { G.cold[b.dataset.rm] = null; markDirty(); gRefresh(); }));
-  el.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => { G.editing = +b.dataset.edit; renderCold(); const ta = $("coEditTa"); if (ta) ta.focus(); }));
+  el.querySelectorAll("[data-comore]").forEach((b) => b.addEventListener("click", () => { G.coMore[b.dataset.comore] = !G.coMore[b.dataset.comore]; renderCold(); }));
+  el.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => { G.editing = G.editing === +b.dataset.edit ? null : +b.dataset.edit; renderCold(); const ta = $("coEditTa"); if (ta) ta.focus(); }));
   el.querySelectorAll("[data-see]").forEach((b) => b.addEventListener("click", () => showUnit(+b.dataset.see)));
-  el.querySelectorAll("[data-cmode]").forEach((r) => r.addEventListener("change", () => { const c = G.cold[r.dataset.cmode]; if (c) { c.mode = r.value; markDirty(); gRefresh(); } }));
+  el.querySelectorAll("[data-cmode]").forEach((r) => r.addEventListener("click", () => { const c = G.cold[r.dataset.cmode]; if (c && c.mode !== r.dataset.v) { c.mode = r.dataset.v; markDirty(); gRefresh(); } }));
   const sv = $("coEditSave"); if (sv) sv.addEventListener("click", () => { const i = G.editing; G.editing = null; applyEdit(i, $("coEditTa").value); });
   const cc = $("coEditCancel"); if (cc) cc.addEventListener("click", () => { G.editing = null; renderCold(); });
   $("coAi").addEventListener("click", (e) => { if (G.aiPick) { G.aiPick = null; renderCold(); } else aiPickCold(e.target); });
@@ -3760,7 +3974,13 @@ function richSlice(text, from, to, units, cues, unitWrap, cueWrap) {
   }
   return html + h(text.slice(pos, to));
 }
-const sliceRange = (k) => { const s = G.secs[k], n = G.secs[k + 1]; return [k === 0 ? 0 : G.U[s.first].start, n ? G.U[n.first].start : G.text.length]; };
+// A section starts at its first sentence, or at the "## Title" line written just before it.
+function secCut(i) {
+  const u = G.U[i], prev = G.U[i - 1], lo = prev ? prev.end : 0;
+  const hd = ((G.R && G.R.cues) || []).find((c) => c.heading && c.start >= lo && c.end <= u.start);
+  return hd ? hd.start : u.start;
+}
+const sliceRange = (k) => { const s = G.secs[k], n = G.secs[k + 1]; return [k === 0 ? 0 : secCut(s.first), n ? secCut(n.first) : G.text.length]; };
 
 function renderSecs() {
   const el = $("gSecs");
@@ -4237,11 +4457,11 @@ document.querySelectorAll(".modes [data-mode]").forEach((b) => b.setAttribute("a
 /* ===== Empaque · Shorts · Resultados ===== */
 Object.assign(T.es, {
   navCold: "Apertura", navEsc: "Escaleta", navSecs: "Secciones", navPack: "Empaque", navShorts: "Shorts", navRes: "Resultados", navRev: "Revisiones",
-  pkTitle: "Empaque", pkLead: "El título y la miniatura deciden si alguien hace clic; el guion decide si se queda. Para aprobar el guion, las revisiones obligatorias deben pasar.",
+  pkTitle: "Empaque", pkLead: "El título y la miniatura deciden si alguien hace clic; el guion decide si se queda. Escribe y mira cómo se verá.",
   pkReq: "Obligatorio", pkRec: "Recomendado",
   pk: { title: "Hay un título", titleLen: (n) => `Título de 60 caracteres o menos (${n})`, titleRisk: "Título sin términos de riesgo", thumb: "Miniatura de 1 a 5 palabras y 30 caracteres o menos", thumbRisk: "Miniatura sin términos de riesgo", titleKw: (k) => `La palabra clave «${k}» está en el título`, thumbRepeat: "La miniatura dice algo distinto al título", promiseMatch: "El título promete lo mismo que la apertura del guion", descKw: "La descripción nombra la palabra clave en sus primeros 150 caracteres" },
   pkFix: { title: "Escribe el título de trabajo.", titleLen: "Acórtalo: en el celular se corta cerca de 60 caracteres.", titleRisk: "Quita esos términos del título.", thumb: "Escribe de 2 a 4 palabras grandes para la miniatura.", thumbRisk: "Quita esos términos de la miniatura.", titleKw: "Pon la palabra clave al inicio del título.", thumbRepeat: "La miniatura complementa al título: añade la emoción o la tensión, no repitas las palabras.", promiseMatch: "Si el título promete algo que la apertura no menciona, la gente se va en los primeros segundos.", descKw: "Empieza la descripción con la promesa y la palabra clave." },
-  pkGate: (x) => `Para aprobar falta: ${x}.`, pkGoFix: "Ver Empaque", pkAi: "Sugerir títulos y miniatura con IA", pkUse: "Usar", pkSugTitles: "Títulos sugeridos", pkSugThumbs: "Miniatura sugerida",
+  pkGate: (x) => `Para aprobar falta: ${x}.`, pkPrevLbl: "Así se verá en YouTube", pkChannel: "Tu canal", pkNow: "ahora", pkThumbPh2: "Texto de la miniatura", pkTitlePh2: "Aquí va el título del video", pkWords: (n) => `${n} ${n === 1 ? "palabra" : "palabras"}`, pkPending: "pendiente", pkGoFix: "Ver Empaque", pkAi: "Sugerir títulos y miniatura con IA", pkUse: "Usar", pkSugTitles: "Títulos sugeridos", pkSugThumbs: "Miniatura sugerida",
   chTitle: "Capítulos para la descripción", chLead: "Salen de la escaleta. YouTube pide al menos tres, el primero en 0:00, cada uno de 10 segundos o más.", chIntro: "Introducción", chCopy: "Copiar", chToDesc: "Añadir a la descripción", chAdded: "Añadidos a la descripción.", chFew: "Hacen falta al menos tres capítulos: marca más puntos en «Guion por secciones».", chScaled: (a) => `Ajustados a la duración real del video (${a}).`, chEst: "Tiempos estimados: confírmalos en el video editado o escribe la duración real en Resultados.",
   shTitle: "Clips para Shorts", shLead: "Pasajes de 20 a 60 segundos que se entienden solos: empiezan con una pregunta o una tensión y terminan en una idea cerrada. Los que marques aparecen en la hoja del editor.", shMark: "Marcar para el editor", shMarked: "Marcado", shNone: "No encontré pasajes que funcionen solos. Suelen salir de una pregunta al oyente seguida de su respuesta.", shEnds: "termina en",
   rsTitle: "Resultados del episodio", rsLead: "Después de publicar, exporta la retención de público desde YouTube Studio (modo avanzado → Exportar, CSV) y pégala o súbela aquí. Acepta dos columnas: posición del video (% o mm:ss) y retención (%).",
@@ -4254,11 +4474,11 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   navCold: "Cold open", navEsc: "Rundown", navSecs: "Sections", navPack: "Packaging", navShorts: "Shorts", navRes: "Results", navRev: "Revisions",
-  pkTitle: "Packaging", pkLead: "The title and thumbnail decide whether anyone clicks; the script decides whether they stay. To approve the script, the required checks must pass.",
+  pkTitle: "Packaging", pkLead: "The title and thumbnail decide whether anyone clicks; the script decides whether they stay. Type and see how it will look.",
   pkReq: "Required", pkRec: "Recommended",
   pk: { title: "There's a title", titleLen: (n) => `Title of 60 characters or less (${n})`, titleRisk: "Title free of risk terms", thumb: "Thumbnail text of 1 to 5 words and 30 characters or less", thumbRisk: "Thumbnail free of risk terms", titleKw: (k) => `The keyword "${k}" is in the title`, thumbRepeat: "The thumbnail says something different from the title", promiseMatch: "The title promises what the script's opening promises", descKw: "The description names the keyword in its first 150 characters" },
   pkFix: { title: "Write the working title.", titleLen: "Shorten it: mobile cuts it near 60 characters.", titleRisk: "Remove those terms from the title.", thumb: "Write 2 to 4 big words for the thumbnail.", thumbRisk: "Remove those terms from the thumbnail.", titleKw: "Put the keyword near the start of the title.", thumbRepeat: "The thumbnail complements the title: add the emotion or tension, don't repeat the words.", promiseMatch: "If the title promises something the opening never mentions, people leave in the first seconds.", descKw: "Start the description with the promise and the keyword." },
-  pkGate: (x) => `To approve, still needed: ${x}.`, pkGoFix: "Go to Packaging", pkAi: "Suggest titles and thumbnail with AI", pkUse: "Use", pkSugTitles: "Suggested titles", pkSugThumbs: "Suggested thumbnail",
+  pkGate: (x) => `To approve, still needed: ${x}.`, pkPrevLbl: "How it will look on YouTube", pkChannel: "Your channel", pkNow: "just now", pkThumbPh2: "Thumbnail text", pkTitlePh2: "The video title goes here", pkWords: (n) => `${n} ${n === 1 ? "word" : "words"}`, pkPending: "pending", pkGoFix: "Go to Packaging", pkAi: "Suggest titles and thumbnail with AI", pkUse: "Use", pkSugTitles: "Suggested titles", pkSugThumbs: "Suggested thumbnail",
   chTitle: "Chapters for the description", chLead: "Built from the rundown. YouTube needs at least three, the first at 0:00, each 10 seconds or longer.", chIntro: "Introduction", chCopy: "Copy", chToDesc: "Add to description", chAdded: "Added to the description.", chFew: "At least three chapters are needed: mark more points in \"Script by section\".", chScaled: (a) => `Adjusted to the video's real length (${a}).`, chEst: "Estimated times: confirm them in the edited video or enter the real length in Results.",
   shTitle: "Clips for Shorts", shLead: "Passages of 20 to 60 seconds that stand on their own: they open with a question or tension and end on a finished thought. The ones you mark go on the editor sheet.", shMark: "Mark for the editor", shMarked: "Marked", shNone: "No passages stand on their own. They usually come from a question to the viewer followed by its answer.", shEnds: "ends on",
   rsTitle: "Episode results", rsLead: "After publishing, export audience retention from YouTube Studio (advanced mode → Export, CSV) and paste or upload it here. Two columns work: video position (% or mm:ss) and retention (%).",
@@ -4318,31 +4538,52 @@ function renderPack() {
   if (!el) return;
   el.innerHTML = `<header class="g-h"><h2>${h(t("pkTitle"))}</h2><button class="small" id="pkAi">${h(t("pkAi"))}</button></header>
     <p class="lead">${h(t("pkLead"))}</p>
-    <div class="pk-fields">
-      <div class="field"><label for="pkTitleIn">${h(t("titleLabel"))}</label><input id="pkTitleIn" maxlength="100" value="${h($("title").value)}" placeholder="${h(t("titlePh"))}"></div>
-      <div class="field"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><input id="pkThumbIn" maxlength="40" value="${h($("thumb").value)}" placeholder="${h(t("thumbPh"))}"></div>
-      <div class="field pk-wide"><label for="pkDescIn">${h(t("descLabel"))}</label><textarea id="pkDescIn" rows="4">${h($("description").value)}</textarea></div>
+    <div class="pk-top">
+      <figure class="yt-mock" id="pkPreview" aria-label="${h(t("pkPrevLbl"))}"></figure>
+      <div class="pk-fields">
+        <div class="field"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="2" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
+        <div class="field"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><input id="pkThumbIn" maxlength="40" value="${h($("thumb").value)}" placeholder="${h(t("thumbPh"))}"><span class="pk-count" id="pkThumbN"></span></div>
+      </div>
     </div>
     <div id="pkSug"></div><p class="status" id="pkStatus"></p>
     <div id="pkChecks"></div>
+    <div class="field pk-wide"><label for="pkDescIn">${h(t("descLabel"))}</label><textarea id="pkDescIn" rows="4">${h($("description").value)}</textarea></div>
     <div class="ch-box" id="pkChapters"></div>`;
   const sync = (from, to) => $(from).addEventListener("input", () => {
     $(to).value = $(from).value;
+    renderPkPreview();
     clearTimeout(pkTimer);
     pkTimer = setTimeout(() => { gCompute(); renderPackChecks(); renderProdBar(); markDirty(); }, 350);
   });
+  $("pkTitleIn").addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
+  $("pkTitleIn").addEventListener("input", (e) => { const v = e.target.value.replace(/\s*\n\s*/g, " "); if (v !== e.target.value) e.target.value = v; });
   sync("pkTitleIn", "title"); sync("pkThumbIn", "thumb"); sync("pkDescIn", "description");
   $("pkAi").addEventListener("click", (e) => aiPack(e.target));
-  renderPackSug(); renderPackChecks();
+  renderPkPreview(); renderPackSug(); renderPackChecks();
+}
+// What a viewer sees in the YouTube feed, updated as you type.
+function renderPkPreview() {
+  const el = $("pkPreview");
+  if (!el) return;
+  const title = $("title").value.trim(), thumb = $("thumb").value.trim(), ch = $("series").value.trim() || t("pkChannel");
+  const tn = $("pkTitleN"), hn = $("pkThumbN");
+  if (tn) { tn.textContent = `${title.length}/60`; tn.classList.toggle("over", title.length > 60); }
+  if (hn) { const w = thumb ? thumb.split(/\s+/).length : 0; hn.textContent = t("pkWords")(w); hn.classList.toggle("over", w > 5 || thumb.length > 30); }
+  el.innerHTML = `<div class="yt-thumb${thumb ? "" : " empty"}"><span class="yt-tt">${h(thumb || t("pkThumbPh2"))}</span><span class="yt-dur">${fmtTime(G.R ? totalVideo() : 0)}</span></div>
+    <figcaption class="yt-info"><span class="yt-av" aria-hidden="true">${h((ch[0] || "·").toUpperCase())}</span><span><span class="yt-title${title ? "" : " empty"}">${h(title || t("pkTitlePh2"))}</span><span class="yt-ch">${h(ch)} · ${h(t("pkNow"))}</span></span></figcaption>`;
 }
 function renderPackChecks() {
   const box = $("pkChecks");
   if (!box) return;
   const P = t("pk"), F = t("pkFix");
-  const label = (c) => (typeof P[c.id] === "function" ? P[c.id](c.id === "titleKw" ? c.v : c.v) : P[c.id]);
-  const row = (c) => `<div class="row"><div class="mark ${c.pass ? "pass" : c.req ? "red" : "fail"}">${c.pass ? "✓" : c.req ? "!" : "✕"}</div><div><div class="t">${h(label(c))}</div>${!c.pass && c.v && /Risk/.test(c.id) ? `<div class="i">${h(c.v)}</div>` : ""}${c.id === "promiseMatch" && c.pass && c.v ? `<div class="i">${h(c.v)}</div>` : ""}${!c.pass ? `<div class="f">${h(F[c.id])}</div>` : ""}</div></div>`;
+  const label = (c) => (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]);
+  const row = (c) => c.pending
+    ? `<div class="row pend"><div class="mark pend" aria-label="${h(t("pkPending"))}">·</div><div><div class="t">${h(label(c).replace(/\s*\(\d+\)$/, ""))}</div></div></div>`
+    : `<div class="row"><div class="mark ${c.pass ? "pass" : c.req ? "red" : "fail"}">${c.pass ? "✓" : c.req ? "!" : "✕"}</div><div><div class="t">${h(label(c))}</div>${!c.pass && c.v && /Risk/.test(c.id) ? `<div class="i">${h(c.v)}</div>` : ""}${c.id === "promiseMatch" && c.pass && c.v ? `<div class="i">${h(c.v)}</div>` : ""}${!c.pass ? `<div class="f">${h(F[c.id])}</div>` : ""}</div></div>`;
   const cs = packChecks().filter((c) => c.id !== "titleKw" || c.v);
-  box.innerHTML = `<h4 class="pk-h">${h(t("pkReq"))}</h4>${cs.filter((c) => c.req).map(row).join("")}<h4 class="pk-h">${h(t("pkRec"))}</h4>${cs.filter((c) => !c.req).map(row).join("")}`;
+  const req = cs.filter((c) => c.req), rec = cs.filter((c) => !c.req);
+  const tally = (list) => { const done = list.filter((c) => !c.pending && c.pass).length; return `<span class="pk-tally">${done}/${list.length}</span>`; };
+  box.innerHTML = `<div class="pk-checks"><div><h4 class="pk-h">${h(t("pkReq"))}</h4>${tally(req)}${req.map(row).join("")}</div><div><h4 class="pk-h">${h(t("pkRec"))}</h4>${tally(rec)}${rec.map(row).join("")}</div></div>`;
   renderChapters();
 }
 function renderChapters() {
@@ -4369,7 +4610,7 @@ function renderPackSug() {
   const kw = (G.R && G.R.keyword) || "";
   box.innerHTML = `<div class="pk-sug"><h4 class="pk-h">${h(t("pkSugTitles"))}</h4>${S.titles.map((x, i) => { const ok = x.length <= 60 && (!kw || norm(x).slice(0, 60).includes(norm(kw))); return `<div class="pk-opt"><span>${h(x)}</span><span class="hint">${x.length}</span><span class="verdict-tag ${ok ? "v-ok" : "v-mid"}">${h(ok ? t("ok") : t("review"))}</span><button class="small" data-pt="${i}">${h(t("pkUse"))}</button></div>`; }).join("")}
     <h4 class="pk-h">${h(t("pkSugThumbs"))}</h4><div class="chips">${S.thumbs.map((x, i) => `<button class="small" data-pth="${i}">${h(x)}</button>`).join("")}</div></div>`;
-  const apply = (main, mirror, v) => { $(main).value = v; $(mirror).value = v; gCompute(); renderPackChecks(); renderProdBar(); markDirty(); };
+  const apply = (main, mirror, v) => { $(main).value = v; $(mirror).value = v; renderPkPreview(); gCompute(); renderPackChecks(); renderProdBar(); markDirty(); };
   box.querySelectorAll("[data-pt]").forEach((b) => b.addEventListener("click", () => apply("title", "pkTitleIn", S.titles[+b.dataset.pt])));
   box.querySelectorAll("[data-pth]").forEach((b) => b.addEventListener("click", () => apply("thumb", "pkThumbIn", S.thumbs[+b.dataset.pth])));
 }
@@ -4852,16 +5093,9 @@ function renderGuide() {
     if (ap) ap.addEventListener("click", async () => { ap.disabled = true; await setStatus("aprobado"); goStep(4); });
   } else if (V.step === 4) {
     top.innerHTML = head(4);
-    const clips = coldClips();
-    body.innerHTML = `${verdictHTML(R)}<div class="g-big"><p class="lead">${h(t("s4Lead"))} ${h(t("s4Len")(fmtTime(totalVideo())))}</p>
-      <button type="button" class="primary g-xl" id="gPP">${h(t("s4Pp"))}</button>
-      <div class="actions"><button type="button" id="gReh">${h(t("s4Reh"))}</button><button type="button" id="gSheet">${h(t("s4Sheet"))}</button><span class="status" id="gSaveState"></span></div>
-      <p class="hint">${h(t("s4Help"))}</p></div>
-      ${clips.length ? `<div class="g-card-soft"><p>${h(t("s4Clips"))}</p><ol class="co-chosen">${clips.map((c) => `<li><div class="co-text">«${h(c.text)}»</div><div class="hint">${fmtTime(c.t0)}</div></li>`).join("")}</ol></div>` : ""}
+    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s4Lead"))}</p>${recordCardHTML()}
       ${navHTML(3, t("s4Done"), 'id="gRecorded"')}`;
-    $("gPP").addEventListener("click", () => openPrompter("prompter"));
-    $("gReh").addEventListener("click", () => openPrompter("ensayo"));
-    $("gSheet").addEventListener("click", exportEditSheet);
+    wireRecordCard();
     $("gRecorded").addEventListener("click", async (e) => { e.target.disabled = true; if (G.status !== "grabado") await setStatus(G.status === "aprobado" ? "grabado" : G.status); goStep(5); });
   } else {
     top.innerHTML = head(5);
@@ -6888,6 +7122,308 @@ function renderStale() {
 (function () { let tm = null; TA.addEventListener("input", () => { clearTimeout(tm); tm = setTimeout(renderStale, 500); }); })();
 const _renderGuideS = renderGuide;
 renderGuide = function () { _renderGuideS(); renderStale(); };
+/* ===== Guion y prompter en tres fases: Preparar · Grabar · Después ===== */
+// The full-mode tab used to stack seven cards (about 9,000 px). Now it shows one phase at a time,
+// merges the rundown and the section-by-section script into one "Estructura" list, and reuses the
+// same cards (apertura, empaque, prompter, Shorts, resultados) that the guided steps 3–5 show.
+Object.assign(T.es, {
+  phases: { prep: "Preparar", rec: "Grabar", after: "Después" },
+  phLead: {
+    prep: "Decide cómo empieza el video, revisa el orden y prepara el título. Cuando lo obligatorio pase, aprueba el guion.",
+    rec: "Todo listo para grabar. El prompter lleva el guion con las secciones y las frases de la apertura marcadas.",
+    after: "Después de grabar: anota el próximo episodio, marca clips para Shorts y, con el video publicado, mira dónde se fue la gente.",
+  },
+  phNext: { prep: "Siguiente: Grabar", rec: "Siguiente: Después" },
+  phDone: "listo", phRecorded: "Grabado", phNotYet: "Esta parte se usa después de grabar. Puedes adelantarla, pero lo normal es volver cuando el video ya esté grabado.",
+  phItems: { cold: "Apertura elegida", struct: "Estructura sin avisos", pack: "Título y miniatura", approved: "Guion aprobado", reh: "Ensayo hecho", rec: "Grabado", shorts: "Clips para Shorts", res: "Resultados" },
+  stLbl: "Estado", stEpisodes: "Mis episodios",
+  strTitle: "Estructura", strLead: "Las secciones del guion con su tiempo. Toca una para ver su texto, cambiar su tipo, moverla o dejar notas.",
+  strLeadSplit: "Las secciones del guion con su tiempo. Toca una para ir a ella en el guion de la izquierda y ver sus herramientas.",
+  strTools: "Tipo de sección", strText: "Texto de la sección", strTap: "Toca una frase para empezar ahí una sección, editarla o usarla en la apertura.",
+  strCold: "Apertura en frío", strVideo: (a) => `en el video ${a}`,
+  recLen: "Duración estimada", recSecs: (n, w) => `${n} secciones · ${w} palabras`, recLast: (a, b) => `Último ensayo: ${a} (estimado ${b})`,
+  recClips: "Frases de la apertura: dilas mirando a la cámara, con una pausa antes y después.", recKeys: "Atajos del prompter",
+  recTip: "Ensaya una vez con cronómetro: los tiempos de la estructura y de los capítulos pasan a ser los reales.",
+});
+Object.assign(T.en, {
+  phases: { prep: "Prepare", rec: "Record", after: "After" },
+  phLead: {
+    prep: "Decide how the video opens, check the order and get the title ready. Once the required checks pass, approve the script.",
+    rec: "Ready to record. The prompter carries the script with the sections and the cold-open lines marked.",
+    after: "After recording: note the next episode, mark clips for Shorts and, once the video is up, see where people left.",
+  },
+  phNext: { prep: "Next: Record", rec: "Next: After" },
+  phDone: "done", phRecorded: "Recorded", phNotYet: "This part is for after recording. You can get ahead, but usually you come back once the video is recorded.",
+  phItems: { cold: "Cold open picked", struct: "Structure without warnings", pack: "Title and thumbnail", approved: "Script approved", reh: "Rehearsal done", rec: "Recorded", shorts: "Clips for Shorts", res: "Results" },
+  stLbl: "Status", stEpisodes: "My episodes",
+  strTitle: "Structure", strLead: "The script's sections with their timing. Tap one to see its text, change its type, move it or leave notes.",
+  strLeadSplit: "The script's sections with their timing. Tap one to jump to it in the script on the left and see its tools.",
+  strTools: "Section type", strText: "Section text", strTap: "Tap a line to start a section there, edit it or use it in the cold open.",
+  strCold: "Cold open", strVideo: (a) => `in the video ${a}`,
+  recLen: "Estimated length", recSecs: (n, w) => `${n} sections · ${w} words`, recLast: (a, b) => `Last rehearsal: ${a} (estimated ${b})`,
+  recClips: "Cold-open lines: say them to the camera, with a pause before and after.", recKeys: "Prompter shortcuts",
+  recTip: "Rehearse once with the stopwatch: the structure and chapter times become the real ones.",
+});
+Object.assign(G, { phase: null, stOpen: null });
+const PH_KEYS = ["prep", "rec", "after"];
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function phaseDefault() { return G.status === "grabado" ? "after" : G.status === "aprobado" ? "rec" : "prep"; }
+function phaseItems() {
+  const flagsN = G.secs.reduce((a, s) => a + ((G.flags[s.k] || []).length), 0);
+  const approved = G.status === "aprobado" || G.status === "grabado";
+  return {
+    prep: [["cold", !!(G.cold.hook || G.cold.promise)], ["struct", flagsN === 0], ["pack", G.R ? packGateMissing().length === 0 : false], ["approved", approved]],
+    rec: [["reh", G.rehearsals.length > 0], ["rec", G.status === "grabado"]],
+    after: [["shorts", (G.shorts || []).length > 0], ["res", !!G.retention]],
+  };
+}
+
+// ---------- status strip (replaces the old "Producción" box) ----------
+renderProdBar = function () {
+  const el = $("gProdBar");
+  if (!el) return;
+  caps.db.then((db) => {
+    if (!el.isConnected) return;
+    const missing = G.R ? packGateMissing() : [];
+    const P = t("pk"), mLabel = (c) => (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase();
+    const cur = STATUSES.indexOf(G.status);
+    const steps = STATUSES.map((s, i) => {
+      const locked = (s === "grabado" && !["aprobado", "grabado"].includes(G.status)) || (s === "aprobado" && G.status !== "aprobado" && G.status !== "grabado" && missing.length > 0);
+      const why = s === "grabado" ? t("gGrabadoLock") : t("pkGate")(missing.map(mLabel).join("; "));
+      return `<button type="button" class="st-step${i < cur ? " past" : ""}" data-status="${s}" aria-pressed="${G.status === s}"${locked ? ` disabled title="${h(why)}"` : ""}><span class="st-dot" aria-hidden="true">${i < cur ? "✓" : i + 1}</span>${h(t("status")[s])}</button>`;
+    }).join("");
+    const gate = missing.length && !["aprobado", "grabado"].includes(G.status) && !(G.mode === "guion" && !V.guided && G.phase === "prep") ? `<p class="g-gate st-gate">${h(t("pkGate")(missing.map(mLabel).join("; ")))} <a href="#gPack" data-gopack>${h(t("pkGoFix"))}</a></p>` : "";
+    el.innerHTML = `<div class="g-bar st-strip">
+      <div class="st-row"><span class="st-lbl">${h(t("stLbl"))}</span><div class="st-steps" role="group" aria-label="${h(t("gStatusLbl"))}">${steps}</div>
+        <span class="st-end">${db ? `<span class="status" id="gSaveState">${h(saveText())}</span><button type="button" class="small" id="stEps">${h(t("stEpisodes"))}</button>` : ""}</span></div>
+      ${db ? "" : `<p class="hint">${h(t("gNoDb"))}</p>`}${gate}
+      ${G.conflict ? `<div class="g-conflict"><span>${h(t("gConflict"))}</span><button class="small" id="gTheirs">${h(t("gLoadTheirs"))}</button><button class="small" id="gMine">${h(t("gOverwrite"))}</button></div>` : ""}
+    </div>`;
+    el.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => setStatus(b.dataset.status)));
+    const eb = $("stEps"); if (eb) eb.addEventListener("click", openEpSheet);
+    el.querySelectorAll("[data-gopack]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); goPhase("prep", "gPack"); }));
+    const th = $("gTheirs"); if (th) th.addEventListener("click", () => { applyProd(G.prodId, G.conflict); gRefresh(); });
+    const mi = $("gMine"); if (mi) mi.addEventListener("click", () => saveProd(true));
+    if (G.mode === "guion" && !V.guided) renderPhaseBar();
+  });
+};
+
+// ---------- phase bar ----------
+function renderPhaseBar() {
+  const el = $("phBar");
+  if (!el) return;
+  const items = phaseItems(), names = t("phases");
+  el.innerHTML = PH_KEYS.map((k, i) => {
+    const list = items[k], done = list.filter((x) => x[1]).length, all = done === list.length;
+    const tip = list.map(([id, ok]) => `${ok ? "✓" : "○"} ${t("phItems")[id]}`).join("\n");
+    return `<button type="button" role="tab" class="ph-tab ph-${k}${all ? " all" : ""}" data-phase="${k}" aria-selected="${G.phase === k}" title="${h(tip)}">
+      <span class="ph-n" aria-hidden="true">${all ? "✓" : i + 1}</span><span class="ph-t"><b>${h(names[k])}</b><span class="ph-p"><i style="--p:${Math.round((done / list.length) * 100)}%"></i><small>${done}/${list.length}</small></span></span></button>`;
+  }).join("");
+  el.querySelectorAll("[data-phase]").forEach((b) => b.addEventListener("click", () => goPhase(b.dataset.phase)));
+}
+function phaseScroller() { return SPLIT.on ? $("paneR") : null; }
+function goPhase(k, anchor) {
+  G.phase = k; lsSet("sd-phase", k);
+  renderGuion();
+  const target = anchor && $(anchor);
+  if (target) target.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+}
+
+// ---------- the tab ----------
+const _renderGuionPh = renderGuion;
+renderGuion = function () {
+  if (V.guided) { _renderGuionPh(); return; }
+  const root = $("guion");
+  if (!root) return;
+  if (!G.R) { _renderGuionPh(); return; }
+  if (!PH_KEYS.includes(G.phase)) { const saved = lsGet("sd-phase"); G.phase = PH_KEYS.includes(saved) ? saved : phaseDefault(); }
+  const k = G.phase, nextK = PH_KEYS[PH_KEYS.indexOf(k) + 1];
+  let body = "";
+  if (k === "prep") {
+    const missing = packGateMissing(), done = G.status === "aprobado" || G.status === "grabado";
+    body = `<section class="g-card" id="gCold"></section><section class="g-card" id="gStruct"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
+      <div class="g-approve" id="phApprove">${approveInner(missing, done)}</div>`;
+  } else if (k === "rec") body = recordCardHTML();
+  else body = `${G.status !== "grabado" ? `<p class="ph-note">${h(t("phNotYet"))}</p>` : ""}<section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section><section class="g-card" id="gRev"></section>`;
+  root.innerHTML = `<div id="gProdBar"></div>
+    <nav class="ph-bar" id="phBar" role="tablist" aria-label="${h(t("sections"))}"></nav>
+    <div class="ph-pane ph-${k}" id="phPane"><p class="ph-lead">${h(t("phLead")[k])}</p>${body}
+      ${nextK ? `<div class="ph-next"><button type="button" class="primary" data-phase-next="${nextK}">${h(t("phNext")[k])} →</button></div>` : ""}</div>
+    <div class="g-selbar" id="gSelBar" hidden></div>`;
+  renderProdBar(); renderPhaseBar();
+  // A new phase starts at its top, not wherever the previous phase was scrolled to.
+  if (G.lastPhase !== k) {
+    G.lastPhase = k;
+    const sc = phaseScroller(), top = root.getBoundingClientRect().top;
+    if (sc) { const d = top - sc.getBoundingClientRect().top - 4; if (d < 0) sc.scrollTop += d; }
+    else if (top < 0) window.scrollBy(0, top - 8);
+  }
+  if (k === "prep") { renderCold(); renderStructure(); renderTopic(); renderPack(); wireApprove(); }
+  else if (k === "rec") wireRecordCard();
+  else { renderNextPlan(); renderShorts(); renderResultsCard(); renderRevisions(); }
+  root.querySelectorAll("[data-phase-next]").forEach((b) => b.addEventListener("click", () => goPhase(b.dataset.phaseNext)));
+  wireGoMode(root);
+};
+function approveInner(missing, done) {
+  const P = t("pk");
+  return done ? `<span class="lamp verde">${h(t("approved"))}</span>`
+    : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase()).join("; ")))}</span>` : ""}`;
+}
+function wireApprove() {
+  const ap = $("gApprove");
+  if (ap) ap.addEventListener("click", async () => { ap.disabled = true; await setStatus("aprobado"); });
+}
+// Keep the approve button in step with the packaging fields while typing (full mode).
+const _renderPackChecksPh = renderPackChecks;
+renderPackChecks = function () {
+  _renderPackChecksPh();
+  if (V.guided || G.mode !== "guion") return;
+  const box = $("phApprove");
+  if (box && !(G.status === "aprobado" || G.status === "grabado")) { box.innerHTML = approveInner(packGateMissing(), false); wireApprove(); }
+  renderPhaseBar();
+};
+// Status changes move the tab to the phase that comes next.
+const _setStatusPh = setStatus;
+setStatus = async function (s) {
+  const before = G.status;
+  if (!V.guided && s !== before) { if (s === "aprobado" && before !== "grabado") G.phase = "rec"; else if (s === "grabado") G.phase = "after"; if (G.phase) lsSet("sd-phase", G.phase); }
+  return _setStatusPh(s);
+};
+const _applyProdPh = applyProd;
+applyProd = function (id, d) { _applyProdPh(id, d); G.phase = phaseDefault(); G.stOpen = null; };
+
+// ---------- Estructura: rundown + sections in one list ----------
+function flagText(f) {
+  const fl = t("flags");
+  return f.id === "hookLong" ? fl.hookLong(f.v) : f.id === "promiseLate" ? fl.promiseLate(fmtTime(f.v)) : f.id === "gap" ? fl.gap(fmtTime(f.a), fmtTime(f.b)) : fl[f.id];
+}
+function renderStructure() {
+  const el = $("gStruct");
+  if (!el) return;
+  const clips = coldClips(), cs = coldSec(), tgt = parseMMSS(G.target), rec = totalRec(), vid = totalVideo();
+  const reh = G.rehearsals[G.rehearsals.length - 1];
+  const lapFor = (s) => { if (!reh) return null; const l = reh.laps.find((x) => x.anchor === s.anchor) || reh.laps.find((x) => x.first === s.first); return l ? l.sec : null; };
+  const diff = tgt ? vid - tgt : null;
+  const clipIdx = new Set(clips.map((c) => c.i));
+  if (G.stOpen != null && !G.secs[G.stOpen]) G.stOpen = null;
+  const coldRow = clips.length ? `<li class="st-item st-cold" style="--c:var(--mul)"><div class="st-main static"><span class="st-n">0</span><span class="st-name"><b>${h(t("strCold"))}</b><span class="st-first">${clips.map((c) => `${fmtTime(c.t0)}–${fmtTime(c.t1)}`).join(" + ")}</span></span><span class="st-time">0:00</span><span class="st-dur">${fmtTime(cs)}</span></div></li>` : "";
+  const rows = G.secs.map((s) => {
+    const fs = G.flags[s.k] || [], open = G.stOpen === s.k, lap = lapFor(s), d = lap != null ? lap - s.dur : null;
+    const first = G.U[s.first] ? G.U[s.first].text : "", ws = first.split(/\s+/);
+    const conf = s.conf === "manual" || s.conf === "baja" ? `<span class="st-conf">${h(t("conf")[s.conf])}</span>` : "";
+    const delta = d != null ? `<span class="st-delta ${Math.abs(d) < 5 ? "" : d > 0 ? "over" : "under"}">${d >= 0 ? "+" : "−"}${fmtTime(Math.abs(d))}</span>` : "";
+    return `<li class="st-item${fs.length ? " flagged" : ""}${open ? " open" : ""}" id="gs-${s.k}" style="--c:${SEC_COLOR[s.type]}">
+      <button type="button" class="st-main" data-st="${s.k}" aria-expanded="${open}">
+        <span class="st-n">${s.k + 1}</span>
+        <span class="st-name"><b>${h(secLabel(s))}</b>${conf}<span class="st-first">«${h(ws.slice(0, 9).join(" "))}${ws.length > 9 ? "…" : ""}»</span>${fs.map((f) => `<span class="flag">${h(flagText(f))}</span>`).join("")}</span>
+        <span class="st-time">${fmtTime(s.t0)}${clips.length ? `<small>${h(t("strVideo")(fmtTime(finalT(s.t0))))}</small>` : ""}</span><span class="st-dur">${fmtTime(s.dur)}${delta}</span>
+        <span class="st-chev" aria-hidden="true"></span>
+      </button>
+      ${open ? structPanel(s, clipIdx) : ""}</li>`;
+  }).join("");
+  el.innerHTML = `<header class="g-h"><h2>${h(t("strTitle"))}</h2><span class="count">${h(t("totalRec")(fmtTime(rec)))}${clips.length ? " · " + h(t("totalVideo")(fmtTime(vid))) : ""}</span></header>
+    <p class="lead">${h(SPLIT.on ? t("strLeadSplit") : t("strLead"))}</p>
+    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" inputmode="numeric" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}
+      ${G.manual ? `<button class="small" id="gRedetect">${h(t("redetect"))}</button>` : ""}</div>
+    <ol class="st-list">${coldRow}${rows}</ol>`;
+  const ti = $("gTarget");
+  ti.addEventListener("change", () => { G.target = ti.value.trim(); markDirty(); renderStructure(); });
+  const rd = $("gRedetect"); if (rd) rd.addEventListener("click", () => { G.manual = false; G.layout = null; G.stOpen = null; markDirty(); gRefresh(); });
+  el.querySelectorAll("[data-st]").forEach((b) => b.addEventListener("click", () => {
+    const k = +b.dataset.st, s = G.secs[k];
+    G.stOpen = G.stOpen === k ? null : k;
+    renderStructure();
+    if (G.stOpen != null && s && G.U[s.first]) edScrollToText(G.U[s.first].text);
+  }));
+  wireStructPanel(el);
+}
+function structPanel(s, clipIdx) {
+  const [a, b] = sliceRange(s.k);
+  const units = G.U.slice(s.first, s.last + 1);
+  const html = richSlice(G.text, a, b, units, G.R.cues,
+    (u, inner) => `<span class="u${clipIdx.has(u.i) ? " clip" : ""}${G.sel === u.i ? " sel" : ""}" data-u="${u.i}" tabindex="0" role="button">${clipIdx.has(u.i) ? `<b class="cliptag">${h(t("ppClip"))}</b>` : ""}${inner}</span>`,
+    (c) => `<span class="cue${c.pause ? " pause" : ""}">${h(c.text)}</span>`);
+  const ns = G.notes.filter((n) => { const i = noteUnit(n); return i >= s.first && i <= s.last; }), open = ns.filter((n) => !n.done).length;
+  const typeSel = `<select data-type="${s.k}" aria-label="${h(t("strTools"))}">${SEC_TYPES.map((x) => `<option value="${x}"${x === s.type ? " selected" : ""}>${h(t("st")[x])}</option>`).join("")}</select>`;
+  return `<div class="st-panel">
+    <div class="st-tools"><label class="hint">${h(t("strTools"))}</label>${typeSel}
+      ${s.k > 0 ? `<span class="gsec-tools"><button type="button" class="icon" data-up="${s.k}" title="${h(t("upOne"))}" aria-label="${h(t("upOne"))}">↑</button><button type="button" class="icon" data-down="${s.k}" title="${h(t("downOne"))}" aria-label="${h(t("downOne"))}">↓</button><button type="button" class="small" data-merge="${s.k}">${h(t("mergePrev"))}</button></span>` : ""}</div>
+    <p class="hint st-tap">${h(t("strTap"))}</p>
+    <div class="gsec-body" id="gSecsBody">${html.replace(/^\s+|\s+$/g, "")}</div>
+    <details class="gnotes"${open ? " open" : ""}><summary>${h(t("notes"))}${ns.length ? ` · ${h(t("openNotes")(open))}` : ""}</summary>
+      <ul>${ns.map((n) => `<li class="${n.done ? "done" : ""}"><span class="chip">${h(t("roles")[n.role] || n.role)}</span> ${h(n.text)} <label class="hint"><input type="checkbox" data-done="${h(n.id)}"${n.done ? " checked" : ""}> ${h(t("resolved"))}</label></li>`).join("")}</ul>
+      <div class="gnote-form"><select data-role="${s.k}" aria-label="role">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
+    </details></div>`;
+}
+function wireStructPanel(el) {
+  el.querySelectorAll("[data-type]").forEach((s) => s.addEventListener("change", () => { manualOp((L) => { L[+s.dataset.type].type = s.value; L[+s.dataset.type].conf = "manual"; }); }));
+  el.querySelectorAll("[data-up]").forEach((b) => b.addEventListener("click", () => moveStart(+b.dataset.up, -1)));
+  el.querySelectorAll("[data-down]").forEach((b) => b.addEventListener("click", () => moveStart(+b.dataset.down, +1)));
+  el.querySelectorAll("[data-merge]").forEach((b) => b.addEventListener("click", () => { G.stOpen = null; manualOp((L) => L.splice(+b.dataset.merge, 1)); }));
+  el.querySelectorAll(".u").forEach((sp) => {
+    const pick = () => selectUnit(+sp.dataset.u);
+    sp.addEventListener("click", pick);
+    sp.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  });
+  el.querySelectorAll("[data-addnote]").forEach((b) => b.addEventListener("click", () => {
+    const k = +b.dataset.addnote, ta = el.querySelector(`[data-notetext="${k}"]`), role = el.querySelector(`[data-role="${k}"]`).value;
+    const txt = ta.value.trim(); if (!txt) return;
+    const s = G.secs[k], u = G.U[s.first];
+    G.role = role; lsSet("sd-role", role);
+    G.notes.push({ id: Math.random().toString(36).slice(2, 10), ui: s.first, anchor: u.text.slice(0, 80), role, text: txt, done: false, at: Date.now() });
+    markDirty(); renderStructure(); const d = document.querySelector(`#gs-${k} details.gnotes`); if (d) d.open = true;
+  }));
+  el.querySelectorAll("[data-done]").forEach((c) => c.addEventListener("change", () => { const n = G.notes.find((x) => x.id === c.dataset.done); if (n) { n.done = c.checked; markDirty(); renderStructure(); } }));
+}
+// "Ver en el guion": open the sentence's section and, on wide screens, scroll the editor to it.
+showUnit = function (i) {
+  const s = secAt(i);
+  if (!s) return;
+  if ($("gStruct")) { G.stOpen = s.k; renderStructure(); }
+  edScrollToText(G.U[i] ? G.U[i].text : "");
+  const sp = document.querySelector(`#gSecsBody .u[data-u="${i}"]`);
+  if (sp) { sp.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "center" }); selectUnit(i); }
+};
+// Scroll the left editor (split view only) to a sentence and flash its paragraph.
+function edScrollToText(text) {
+  if (!SPLIT.on || !ED.el || !text) return;
+  const nodes = [], walker = document.createTreeWalker(ED.el, NodeFilter.SHOW_TEXT);
+  let acc = "";
+  while (walker.nextNode()) { nodes.push([walker.currentNode, acc.length]); acc += walker.currentNode.data; }
+  let idx = -1;
+  for (const n of [40, 24, 12]) { idx = acc.indexOf(text.slice(0, n)); if (idx >= 0) break; }
+  if (idx < 0) return;
+  let node = null;
+  for (const [nd, off] of nodes) { if (off <= idx) node = nd; else break; }
+  const block = node && node.parentElement && node.parentElement.closest("p, h2, li");
+  if (!block) return;
+  const sc = ED.el, top = block.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - sc.clientHeight / 3;
+  sc.scrollTo({ top: Math.max(0, top), behavior: reduceMotion() ? "auto" : "smooth" });
+  block.classList.remove("ed-flash"); void block.offsetWidth; block.classList.add("ed-flash");
+  setTimeout(() => block.classList.remove("ed-flash"), 1800);
+}
+
+// ---------- Grabar: one card shared with guided step 4 ----------
+function recordCardHTML() {
+  const clips = coldClips(), reh = G.rehearsals[G.rehearsals.length - 1];
+  const rehTot = reh && reh.laps ? reh.laps.reduce((a, l) => a + (l.sec || 0), 0) : 0;
+  return `<section class="g-card rec-card" id="gRecCard">
+    <div class="rec-hero">
+      <div class="rec-len"><small>${h(t("recLen"))}</small><b>${fmtTime(totalVideo())}</b><span class="hint">${h(t("recSecs")(G.secs.length, (G.R && G.R.wc) || 0))}</span></div>
+      <div class="rec-go"><button type="button" class="primary g-xl" id="gPP">${h(t("ppBtn"))}</button>
+        <div class="rec-sub"><button type="button" id="gReh">${h(t("rehBtn"))}</button><button type="button" id="gSheet">${h(t("editSheetBtn"))}</button></div></div>
+    </div>
+    <p class="hint rec-tip">${rehTot ? h(t("recLast")(fmtTime(rehTot), fmtTime(totalRec()))) : h(t("recTip"))}</p>
+    ${clips.length ? `<div class="rec-clips"><p>${h(t("recClips"))}</p><ol>${clips.map((c) => `<li><span class="rec-k">${h(c.kind === "hook" ? t("coHooks") : t("coProms"))} · ${fmtTime(c.t0)}</span>«${h(c.text)}»</li>`).join("")}</ol></div>` : ""}
+    <details class="rec-keys"><summary>${h(t("recKeys"))}</summary><p class="hint">${h(t("s4Help"))}</p></details>
+  </section>`;
+}
+function wireRecordCard() {
+  const pp = $("gPP"); if (pp) pp.addEventListener("click", () => openPrompter("prompter"));
+  const rh = $("gReh"); if (rh) rh.addEventListener("click", () => openPrompter("ensayo"));
+  const sh = $("gSheet"); if (sh) sh.addEventListener("click", exportEditSheet);
+}
 /* ===== Ayuda: un «?» junto a cada campo y sección, con una explicación breve ===== */
 Object.assign(T.es, { qhBtn: "¿Qué es esto?" });
 Object.assign(T.en, { qhBtn: "What is this?" });
@@ -6923,7 +7459,7 @@ const HELP = {
     next: "Lo que verán el episodio siguiente. La app lo usa para proponer el cierre («La próxima semana veremos…») y lo anota en el calendario.",
     date: "El día que se publica el video. Así aparece en el calendario de la serie.",
     cold: "Apertura en frío: el video empieza con una frase fuerte del propio episodio, antes del saludo. La app sugiere varias; elige una para el gancho y otra para la promesa, y edítalas si quieres.",
-    coChosen: "Lo que verá la gente en los primeros segundos. Se graba una sola vez, en su lugar dentro del guion, y el editor copia ese fragmento al inicio del video.",
+    coChosen: "Lo que verá la gente en los primeros segundos. Se graba una sola vez, en su lugar dentro del guion, y el editor copia ese fragmento al inicio del video. «Duplicar» deja la frase también en su lugar; «Mover» la quita de ahí.",
     hook: "Gancho: una frase que despierta curiosidad o tensión en los primeros 7 segundos, para que nadie se vaya.",
     promise: "Promesa: dice qué se va a llevar quien vea el episodio completo. Responde «¿por qué me quedo?».",
     pack: "Empaque es lo que la gente ve antes de hacer clic: el título, el texto de la miniatura y la descripción.",
@@ -6960,8 +7496,8 @@ const HELP = {
     aiTitles: "La IA propone títulos, textos de miniatura y una descripción, ya revisados para que no limiten anuncios.",
     save: "«Guardar esta versión» guarda el guion en el historial. «Teleprompter» descarga el texto limpio para otro programa de prompter. «Revisión» descarga este informe como archivo.",
     history: "Las versiones guardadas de cada guion y cómo le fue a cada episodio. Con tres episodios anotados, la duración estimada se ajusta al ritmo real de Juan.",
-    prod: "El episodio en el que trabajas. Todo lo que cambies aquí se guarda en ese episodio. Los botones de estado marcan la etapa: borrador, en revisión, aprobado y grabado.",
-    esc: "La escaleta es la lista de secciones con su minuto de inicio y fin. Sirve para saber cuánto dura cada parte y para los capítulos de YouTube.",
+    prod: "La etapa del episodio: borrador, en revisión, aprobado y grabado. Para aprobar, el título y la miniatura deben pasar lo obligatorio. Todo se guarda solo; «Mis episodios» abre los demás.",
+    esc: "Las secciones del guion (gancho, promesa, puntos, cierre) con su minuto de inicio y su duración. De aquí salen los capítulos de YouTube. Toca una sección para ver su texto, cambiar su tipo, mover dónde empieza o dejar notas para el equipo; en pantallas anchas también te lleva a ella en el guion.",
     target: "Cuánto quieres que dure el episodio, en minutos (por ejemplo 20). La escaleta te avisa si te pasas o te falta.",
     secs: "El guion dividido en secciones, como lo verá el presentador. Toca una frase para empezar ahí una sección, editarla o usarla en la apertura. Cada sección tiene notas para el equipo.",
     rev: "Historial de versiones del guion. Cada cambio de estado guarda una copia; también puedes guardar una con nombre y comparar dos para ver qué cambió.",
@@ -6997,7 +7533,7 @@ const HELP = {
     next: "What the following episode covers. The app uses it to propose the closing line (“Next week we'll look at…”) and adds it to the calendar.",
     date: "The day the video goes live. That's how it shows up on the series calendar.",
     cold: "Cold open: the video starts with a strong line from the episode itself, before the greeting. The app suggests several; pick one for the hook and one for the promise, and edit them if you like.",
-    coChosen: "What people see in the first seconds. It's recorded once, in its place in the script, and the editor copies that clip to the start of the video.",
+    coChosen: "What people see in the first seconds. It's recorded once, in its place in the script, and the editor copies that clip to the start of the video. \"Duplicate\" keeps the line in its place too; \"Move\" takes it out of there.",
     hook: "Hook: a line that sparks curiosity or tension in the first 7 seconds so nobody leaves.",
     promise: "Promise: says what viewers will take away if they watch to the end. It answers “why should I stay?”.",
     pack: "Packaging is what people see before they click: the title, the thumbnail text and the description.",
@@ -7034,8 +7570,8 @@ const HELP = {
     aiTitles: "The AI proposes titles, thumbnail texts and a description, already checked so they don't limit ads.",
     save: "“Save this version” stores the script in the history. “Teleprompter” downloads clean text for another prompter app. “Review” downloads this report as a file.",
     history: "Saved versions of each script and how each episode did. After three logged episodes, the estimated length adjusts to Juan's real pace.",
-    prod: "The episode you're working on. Everything you change here is saved to it. The status buttons mark the stage: draft, in review, approved and recorded.",
-    esc: "The run sheet lists the sections with start and end times. It shows how long each part runs and feeds the YouTube chapters.",
+    prod: "The episode's stage: draft, in review, approved and recorded. To approve, the title and thumbnail must pass the required checks. Everything saves itself; \"My episodes\" opens the others.",
+    esc: "The script's sections (hook, promise, points, close) with their start time and length. The YouTube chapters come from here. Tap a section to see its text, change its type, move where it starts or leave notes for the team; on wide screens it also takes you to it in the script.",
     target: "How long you want the episode to be, in minutes (e.g. 20). The run sheet tells you if you're over or under.",
     secs: "The script split into sections, as the presenter will see it. Tap a sentence to start a section there, edit it or use it in the opening. Each section has notes for the team.",
     rev: "Version history of the script. Each status change saves a copy; you can also save one with a name and compare two to see what changed.",
@@ -7069,14 +7605,12 @@ const HELP_ANCHORS = [
   ["date", 'label[for="tpDate"]', "row"],
   ["cold", "#gCold .g-h h2", "row"],
   ["coChosen", "#gCold .co-box > h3", "row"],
-  ["hook", "#gCold .co-cols > .co-col:first-child > h4", "row"],
-  ["promise", "#gCold .co-cols > .co-col:nth-child(2) > h4", "row"],
   ["pack", "#gPack .g-h h2", "row"],
   ["title", 'label[for="pkTitleIn"], label[for="title"]', "row"],
   ["thumb", 'label[for="pkThumbIn"], label[for="thumb"]', "row"],
   ["desc", 'label[for="pkDescIn"], label[for="description"]', "row"],
-  ["pkReq", "#pkChecks > h4.pk-h:first-of-type", "row"],
-  ["pkRec", "#pkChecks > h4.pk-h:nth-of-type(2)", "row"],
+  ["pkReq", "#pkChecks .pk-checks > div:first-child > h4.pk-h", "row"],
+  ["pkRec", "#pkChecks .pk-checks > div:nth-child(2) > h4.pk-h", "row"],
   ["chapters", "#pkChapters > h3", "row"],
   ["shorts", "#gShorts .g-h h2", "row"],
   ["results", "#gRes .g-h h2", "row"],
@@ -7108,10 +7642,9 @@ const HELP_ANCHORS = [
   ["aiTitles", '#sec-ai .helper:has([data-ai="titles"]) > h3', "row"],
   ["save", "#sec-save > header h2", "row"],
   ["history", "#historyBlock > header h2", "row"],
-  ["prod", 'label[for="gProdSel"]', "row:.g-bar"],
-  ["esc", "#gEsc .g-h h2", "row"],
+  ["prod", ".st-strip .st-lbl", "row:.st-strip"],
+  ["esc", "#gStruct .g-h h2", "row"],
   ["target", 'label[for="gTarget"]', "row:.g-target"],
-  ["secs", "#gSecs .g-h h2", "row"],
   ["rev", "#gRev .g-h h2", "row"],
 ];
 const HELP_OPEN = new Set();
