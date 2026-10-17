@@ -870,6 +870,26 @@ html.ed-lock,html.ed-lock body{overflow:hidden}
   .ed-btn[data-ed="undo"],.ed-btn[data-ed="redo"],.ed-sep:nth-of-type(2){display:none}
   .ed-sep{margin:6px 2px}
 }
+/* Fixed-height box: scroll inside, page stays tidy */
+.ed{height:clamp(340px,60vh,880px);overflow-y:auto;resize:vertical;overscroll-behavior:contain;scrollbar-width:thin}
+main[data-view="guide"] .ed{min-height:340px}
+.ed-wrap:not(.ed-full) .ed{border-radius:0 0 18px 18px}
+.ed-open-l{display:none}
+.ed-full .ed{height:auto;resize:none}
+@media (min-width:641px){.ed-wrap:not(.ed-full) [data-ed="full"]{color:var(--ink-2)}}
+/* Phone: the box is a preview; a tap opens the full-screen writing view */
+@media (max-width:640px){
+  .ed-wrap:not(.ed-full) .ed{height:min(46vh,380px);min-height:220px;resize:none;font-size:17px;padding:16px 16px 40px}
+  .ed-wrap:not(.ed-full) .ed-btn:not([data-ed="full"]),.ed-wrap:not(.ed-full) .ed-sep,.ed-wrap:not(.ed-full) .ed-gap{display:none}
+  .ed-wrap:not(.ed-full) .ed-bar{justify-content:stretch}
+  .ed-wrap:not(.ed-full) [data-ed="full"]{flex:1 1 auto;justify-content:center;color:var(--j1t);gap:8px}
+  .ed-wrap:not(.ed-full) .ed-open-l{display:inline;font:600 15px/1 var(--sans)}
+  .ed-wrap:not(.ed-full)::after{content:"";position:absolute;left:1px;right:1px;bottom:1px;height:44px;border-radius:0 0 17px 17px;background:linear-gradient(to bottom,transparent,var(--sheet));pointer-events:none}
+  .ed-wrap.ed-full .ed-bar{position:sticky;top:0;padding-top:max(6px,env(safe-area-inset-top))}
+  .ed-wrap.ed-full .ed{height:auto}
+}
+.ed-full .ed-bar{flex:0 0 auto}
+.ed-full .ed{min-height:0}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -6316,14 +6336,14 @@ gOnLang = function () { _gOnLangE.apply(this, arguments); if ($("epSheet") && $(
 Object.assign(T.es, {
   edBold: "Negrita (Ctrl+B)", edItalic: "Cursiva (Ctrl+I)", edUnder: "Subrayado (Ctrl+U)", edHi: "Resaltar",
   edHead: "Título de sección", edUl: "Lista con viñetas", edOl: "Lista numerada", edCue: "Texto en pantalla para el editor",
-  edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Salir",
+  edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
   edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edAuto: "Se guarda solo mientras escribes.",
 });
 Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
   edHead: "Section title", edUl: "Bulleted list", edOl: "Numbered list", edCue: "On-screen text for the editor",
-  edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Exit",
+  edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
   edCueText: "verse or phrase", edLocal: "Saved on this device", edAuto: "It saves itself as you write.",
 });
@@ -6501,7 +6521,7 @@ const TOOLS = [["b", "edBold"], ["i", "edItalic"], ["u", "edUnder"], ["h", "edHi
 
 function toolbarHTML() {
   return TOOLS.map((x) => (x === "|" ? '<span class="ed-sep"></span>' : x === "~" ? '<span class="ed-gap"></span>'
-    : `<button type="button" class="ed-btn" data-ed="${x[0]}" title="${h(t(x[1]))}" aria-label="${h(t(x[1]))}">${ICON[x[0]]}</button>`)).join("");
+    : `<button type="button" class="ed-btn" data-ed="${x[0]}" title="${h(t(x[1]))}" aria-label="${h(t(x[1]))}">${x[0] === "full" ? fullBtnHTML(ED.full) : ICON[x[0]]}</button>`)).join("");
 }
 function renderEd() {
   if (!ED.el) return;
@@ -6595,14 +6615,32 @@ function updateTools() {
   };
   ED.wrap.querySelectorAll("[data-ed]").forEach((x) => { if (x.dataset.ed in st) x.setAttribute("aria-pressed", st[x.dataset.ed] ? "true" : "false"); });
 }
-function setFull(on) {
+const isPhone = () => window.matchMedia("(max-width: 640px)").matches;
+function fullBtnHTML(on) {
+  if (on) return ICON.exitFull + `<span class="ed-exit-l">${h(t("edExit"))}</span>`;
+  return ICON.full + `<span class="ed-open-l">${h(t("edOpen"))}</span>`;
+}
+// Keep the caret in view after the box changes size.
+function caretIntoView() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !ED.el.contains(sel.anchorNode)) return;
+  let r = sel.getRangeAt(0).getBoundingClientRect();
+  if (!r || (!r.top && !r.bottom)) { const n = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement; if (n) r = n.getBoundingClientRect(); }
+  const box = ED.el.getBoundingClientRect();
+  if (r.top < box.top + 40 || r.bottom > box.bottom - 40) ED.el.scrollTop += r.top - box.top - box.height / 3;
+}
+function setFull(on, fromHistory) {
+  if (ED.full === on) return;
   ED.full = on;
   ED.wrap.classList.toggle("ed-full", on);
   document.documentElement.classList.toggle("ed-lock", on);
   const btn = ED.wrap.querySelector('[data-ed="full"]');
-  btn.innerHTML = on ? ICON.exitFull + `<span class="ed-exit-l">${h(t("edExit"))}</span>` : ICON.full;
+  btn.innerHTML = fullBtnHTML(on);
   btn.title = btn.ariaLabel = t(on ? "edFocusOff" : "edFocus");
-  ED.el.focus();
+  // On a phone the back button closes the writing view instead of leaving the app.
+  if (isPhone() && !fromHistory) { if (on) { try { history.pushState({ sdEd: 1 }, ""); } catch (e) {} } else if (history.state && history.state.sdEd) { try { history.back(); } catch (e) {} } }
+  if (on) { ED.el.focus(); requestAnimationFrame(() => requestAnimationFrame(caretIntoView)); }
+  else { syncFromEditor(); ED.el.blur(); ED.el.scrollTop = 0; ED.wrap.scrollIntoView({ block: "nearest" }); }
 }
 
 // Typing «- », «1. » or «## » at the start of a line turns it into a list or a section title, like in Docs.
@@ -6656,7 +6694,7 @@ function onPaste(e) {
       if (!G.prodId && !(typeof DEMO !== "undefined" && DEMO)) lsSet("sd-draft", JSON.stringify({ text: String(v), marks: FMT.marks, at: Date.now() }));
     },
   });
-  TA.focus = () => ED.el && ED.el.focus();
+  TA.focus = () => { if (!ED.el) return; if (isPhone()) ED.wrap.scrollIntoView({ block: "nearest", behavior: "smooth" }); else ED.el.focus(); };
   try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {}
 
   const wrap = document.createElement("div");
@@ -6677,6 +6715,14 @@ function onPaste(e) {
   // Typing straight into the box root would leave text outside any paragraph; keep one there.
   ED.el.addEventListener("focus", () => { if (!ED.el.firstElementChild) { ED.el.innerHTML = "<p><br></p>"; const r = document.createRange(); r.setStart(ED.el.firstChild, 0); r.collapse(true); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } });
   ED.el.addEventListener("paste", onPaste);
+  // Only a real tap opens it; buttons that focus the box from code (Borrar, Empezar) don't.
+  ED.el.addEventListener("pointerup", (e) => { if (isPhone() && !ED.full && e.pointerType !== "mouse") setFull(true); });
+  ED.el.addEventListener("click", () => { if (isPhone() && !ED.full) setFull(true); });
+  window.addEventListener("popstate", () => { if (ED.full && isPhone()) setFull(false, true); });
+  // Desktop: the box keeps the height Juan drags it to.
+  const hSaved = +lsGet("sd-edh");
+  if (hSaved >= 240 && !isPhone()) ED.el.style.height = hSaved + "px";
+  if (window.ResizeObserver) { let rt = null; new ResizeObserver(() => { if (ED.full || isPhone() || !ED.el.style.height) return; clearTimeout(rt); rt = setTimeout(() => lsSet("sd-edh", String(Math.round(ED.el.getBoundingClientRect().height))), 400); }).observe(ED.el); }
   ED.el.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && ED.full) { e.preventDefault(); setFull(false); }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "h" || e.key === "H")) { e.preventDefault(); edCmd("h"); }
@@ -6725,7 +6771,7 @@ gOnLang = function () {
   ED.wrap.querySelector(".ed-bar").innerHTML = toolbarHTML();
   ED.wrap.querySelectorAll("[data-ed]").forEach((b) => b.addEventListener("click", () => edCmd(b.dataset.ed)));
   ED.el.dataset.ph = t("edPh"); ED.el.lang = UI;
-  if (ED.full) setFull(true);
+  if (ED.full) { const b = ED.wrap.querySelector('[data-ed="full"]'); b.innerHTML = fullBtnHTML(true); }
 };
 
 // The prompter shows the same bold, italics, underline and highlight Juan wrote.
