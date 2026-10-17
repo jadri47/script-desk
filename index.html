@@ -897,7 +897,7 @@ html.sd-split main>*:not(.split){flex:0 0 auto}
 html.sd-split .masthead{padding-bottom:12px;margin-bottom:14px}
 html.sd-split .auth-bar{margin-bottom:10px;padding:6px 12px}
 html.sd-split #stepBar{margin:0 0 14px}
-html.sd-split .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(440px,1fr);gap:28px}
+html.sd-split .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(400px,1fr);gap:24px}
 .pane-l{display:flex;flex-direction:column;min-height:0;padding-bottom:16px}
 .pane-l .script-field{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;margin:0}
 .pane-l .script-field>label{flex:0 0 auto}
@@ -6825,7 +6825,7 @@ richSlice = function (text, from, to, units, cues, unitWrap, cueWrap) {
 Object.assign(T.es, { stale: "Cambiaste el guion. Lo que ves aquí es de la versión anterior.", staleGo: "Actualizar la revisión" });
 Object.assign(T.en, { stale: "You changed the script. What you see here is from the previous version.", staleGo: "Update the review" });
 
-const SPLIT = { on: false, mq: window.matchMedia("(min-width: 1100px) and (min-height: 600px)") };
+const SPLIT = { on: false, mq: window.matchMedia("(min-width: 900px) and (min-height: 560px)") };
 (function initSplit() {
   const main = document.querySelector("main"), editor = $("editor");
   const scriptField = TA.closest(".field"), meta = editor.querySelector(".meta-line"), acts = $("runBtn").closest(".actions");
