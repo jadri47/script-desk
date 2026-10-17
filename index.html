@@ -2657,7 +2657,7 @@ function buildFixCards(text, R, opts, failed, max = 3) {
       if (ps.length >= 2) card.proposals.push({ kind: "patch", label: L("Marcar cada punto con una transición", "Mark each point with a transition"), patches: ps });
     } else if (row.id === "refs") {
       card.evidence = (R.orphanQuotes || []).slice(0, 3).map((q) => ({ start: q.start, end: q.end, t: R.timeAt(q.start), marks: [[q.start, q.end]] }));
-    } else if (row.id === "bigidea" || row.id === "recap") {
+    } else if (row.id === "bigidea" || row.id === "recap" || row.id === "application") {
       const M = R.msg || {}, idea = (opts.bigIdea || "").trim().replace(/[.\s]+$/, "");
       // close the teaching right before the first goodbye/CTA of the ending, not after it
       const isOut = (u) => hasPhrase(u.text, NEXT_EP) || hasPhrase(u.text, CTAS);
@@ -2675,8 +2675,8 @@ function buildFixCards(text, R, opts, failed, max = 3) {
         if (ps.length) card.proposals.push({ kind: "patch", label: L("Decir tu idea con tus propias palabras", "Say your idea in your own words"), patches: ps });
       } else {
         if (lastU) card.evidence = [ev(lastU, [])];
-        if (idea && lastU) card.proposals.push({ kind: "patch", label: L("Cerrar con tu idea central", "Close with your central idea"), patches: [{ start: lastU.end, end: lastU.end, rep: " " + closeLine }] });
-        card.ai = lastU ? { start: lastU.start, end: lastU.end, note: L("Añade al final una sola frase que resuma la idea principal del episodio, con el mismo contenido que ya dijo el autor.", "Add one closing sentence that sums up the episode's main idea, using only what the author already said.") } : null;
+        if (row.id === "recap" && idea && lastU) card.proposals.push({ kind: "patch", label: L("Cerrar con tu idea central", "Close with your central idea"), patches: [{ start: lastU.end, end: lastU.end, rep: " " + closeLine }] });
+        card.ai = lastU ? { start: lastU.start, end: lastU.end, note: row.id === "application" ? L("Añade al final de este fragmento una sola frase que invite al oyente a una acción concreta que pueda hacer esta semana, usando solo lo que el autor ya enseñó. No inventes doctrina ni datos.", "Add one closing sentence that invites the viewer to one concrete action they can take this week, using only what the author already taught. Do not invent doctrine or facts.") : L("Añade al final una sola frase que resuma la idea principal del episodio, con el mismo contenido que ya dijo el autor.", "Add one closing sentence that sums up the episode's main idea, using only what the author already said.") } : null;
       }
     } else if ((row.id === "pulpit" || row.id === "jargon") && R.msg) {
       const hits = R.msg[row.id] || [];
@@ -2731,6 +2731,14 @@ const JARGON = [
 const EXPLAIN_RE = /(es decir|significa|quiere decir|o sea|en otras palabras|dicho de otro modo|that is|which means|means|in other words|\(|:|—|–)/i;
 const RECAP = ["hoy vimos", "hoy hemos visto", "en resumen", "para resumir", "recuerda", "recuerden", "recordad", "lo que nos llevamos", "si te quedas con", "si os quedáis con", "en pocas palabras", "la idea de hoy",
   "today we saw", "to sum up", "in summary", "remember", "if you remember one thing", "the big idea", "here's what we learned"];
+// A concrete step for the viewer, said near the end ("esta semana…", "te invito a…", "start by…").
+const APPLY = [
+  "esta semana", "esta noche", "hoy mismo", "a partir de hoy", "desde hoy", "mañana mismo", "te invito a", "te animo a", "te reto", "te desafío", "te propongo", "te pido que",
+  "tu tarea", "tu reto", "primer paso", "da el primer paso", "empieza por", "empieza hoy", "comienza hoy", "decide hoy", "ponlo en práctica", "pon en práctica", "aplica", "practica",
+  "ora por", "ora hoy", "escribe una", "escribe el nombre", "apunta", "anota", "haz esto", "llama a", "perdona a", "habla con", "dedica unos minutos", "cuando te levantes",
+  "this week", "tonight", "today, ", "starting today", "i invite you", "i challenge you", "i encourage you", "your homework", "first step", "take one step", "start by", "put it into practice",
+  "pray for", "pray today", "write down", "write a", "try this", "call someone", "forgive", "set aside a few minutes", "when you wake up",
+];
 const IDEA_STOP = new Set("para porque cuando donde sobre entre desde hasta como pero aunque también solo sólo esta este estos estas tiene tienen nuestro nuestra vuestro vuestra todos todas cada mismo misma puede pueden sino nunca siempre that this with from your about there their when what which have will into they them than then just only also because already today hoy".split(" "));
 
 function ideaWords(s) {
@@ -2812,6 +2820,16 @@ function messageChecks(text, opts, ctx) {
   add("message", { id: "recap", label: L("El cierre resume lo que se llevan", "The close sums up what they take away"), passed: !!recap,
     info: recap ? L("El final recoge la idea antes de despedirse.", "The ending gathers the idea before saying goodbye.") : L("El final no repite la idea principal. Una frase de resumen ayuda a recordarla y a volver.", "The ending doesn't restate the main idea. One summary sentence helps people remember and come back."),
     fix: recap ? null : L("Antes de despedirte, di en una frase lo que se llevan hoy.", "Before saying goodbye, say in one sentence what they take away today.") });
+
+  // 7. Teaching that ends in one concrete step for this week, not only in good information.
+  const noQuotes = text.replace(/«[^»]{8,}»|“[^”]{8,}”|"[^"]{8,}"/g, " ");
+  const lastPart = noQuotes.slice(Math.floor(noQuotes.length * 0.5));
+  const applyOk = hasPhrase(lastPart, APPLY);
+  out.noApply = !applyOk;
+  add("message", { id: "application", label: L("El cierre da un paso concreto", "The close gives one concrete step"), passed: applyOk,
+    info: applyOk ? L("En la última parte le pides al oyente algo concreto que hacer.", "In the last part you ask the viewer to do something concrete.")
+      : L("En la última parte no se oye una acción concreta («esta semana…», «te invito a…»). Una enseñanza que termina en información se olvida; la que termina en un paso se recuerda.", "The last part has no concrete action (“this week…”, “I invite you to…”). Teaching that ends in information is forgotten; teaching that ends in a step is remembered."),
+    fix: applyOk ? null : L("Antes del cierre, di una sola acción que puedan hacer esta semana, con tus palabras.", "Before the close, name one action they can take this week, in your own words.") });
   return out;
 }
 // ---------- Bible-safe AI edits (pure, no DOM) ----------
@@ -6157,11 +6175,11 @@ Object.assign(T.en, {
 });
 Object.assign(T.es.plain, {
   bigidea: "Tu idea central se oye al principio y al final", pulpit: "Habla a quien te ve, no a una congregación", jargon: "Los términos técnicos se explican",
-  onscreen: "Cada pasaje que lees aparece en pantalla", reading: "Lecturas que no cansan", recap: "El cierre resume lo que se llevan",
+  onscreen: "Cada pasaje que lees aparece en pantalla", reading: "Lecturas que no cansan", recap: "El cierre resume lo que se llevan", application: "El cierre da un paso concreto",
 });
 Object.assign(T.en.plain, {
   bigidea: "Your central idea is heard at the start and the end", pulpit: "Speak to the viewer, not a congregation", jargon: "Technical terms are explained",
-  onscreen: "Every passage you read appears on screen", reading: "Readings that don't tire", recap: "The close sums up what they take away",
+  onscreen: "Every passage you read appears on screen", reading: "Readings that don't tire", recap: "The close sums up what they take away", application: "The close gives one concrete step",
 });
 
 // Your order: the message first, then retention, then ads. A red ad risk still leads because it can sink the video.
