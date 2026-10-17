@@ -745,6 +745,20 @@ label{font-weight:600}
 li.fx-idea .fx-lbl,li.fx-idea .fx-lbl + *,li.fx-idea .fx-act [data-fxai]{display:none}
 .gv-note{font-size:12.5px;margin-top:2px !important}
 @media (max-width:620px){ .idea-inline{grid-template-columns:1fr} }
+/* translation + idea suggestion */
+.tr-box{margin:14px 0 0;padding:14px 16px;border:1px solid var(--rule);border-radius:16px;background:var(--sheet-2)}
+.tr-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.tr-row > label{flex:1 1 220px}
+.tr-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.tr-ctl select{width:auto;min-width:190px}
+.tr-box > .status{margin:8px 0 0}
+.tr-out{margin-top:10px}
+.tr-out .k,.idea-sug .k{font:600 12px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:4px 0 6px}
+.tr-prev{max-height:260px;overflow:auto;white-space:pre-wrap;font-family:var(--serif);font-size:16px;line-height:1.65;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+.idea-sug-box{margin-top:6px}
+.idea-sug{padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,var(--sheet));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--rule))}
+.idea-q{font-family:var(--serif);font-size:18px;line-height:1.5;margin:0 0 4px}
+.idea-inline .idea-ai{grid-column:1 / -1;margin:0}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -794,9 +808,10 @@ li.fx-idea .fx-lbl,li.fx-idea .fx-lbl + *,li.fx-idea .fx-act [data-fxai]{display
       <textarea id="script" data-i18n-ph="scriptPh" placeholder="Pega tu guion aquí…" spellcheck="true"></textarea>
     </div>
     <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span></div>
-    <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><input id="bigIdea" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."></div>
+    <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><input id="bigIdea" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."><div id="ideaSug" class="idea-sug-box"></div></div>
     <div class="field aud-field"><label for="audience" data-i18n="audLabel">Público del canal</label>
       <select id="audience"><option value="both" data-i18n="audBoth">Latinoamérica y España (neutro)</option><option value="latam" data-i18n="audLatam">Latinoamérica</option><option value="es" data-i18n="audEs">España</option></select></div>
+    <div id="trBox" class="tr-box"></div>
 
     <details class="extra" id="extraFields">
       <summary data-i18n="extraSummary">Título, palabra clave y descripción (opcional)</summary>
@@ -5681,6 +5696,251 @@ renderGuide = function () {
   $("introTry").addEventListener("click", () => { lsSet("sd-intro", "1"); startDemo("bad"); });
   $("introStart").addEventListener("click", () => { lsSet("sd-intro", "1"); card.remove(); $("script").focus(); });
 };
+/* ===== Variantes del español, traducción del guion y sugerencia de idea central ===== */
+Object.assign(T.es, {
+  audLabel: "Variante del español", audBoth: "Español neutro", audLatam: "Español latinoamericano", audEs: "Español de España",
+  trTitle: "Traducir o adaptar el guion",
+  trTo: "Pasar a",
+  trTargets: { neutral: "Español neutro", latam: "Español latinoamericano", es: "Español de España", en: "English (US)" },
+  trGo: "Traducir con IA",
+  trSame: "El guion ya está en esa variante.",
+  trNeedText: "Primero pega un guion.",
+  trWorking: "Traduciendo… puede tardar hasta un minuto.",
+  trResult: (x) => `Así quedaría en ${x}`,
+  trVerify: "Comprueba estas citas en la versión elegida antes de grabar:",
+  trUse: "Usar esta versión",
+  trDiscard: "Descartar",
+  trUndo: "Volver al original",
+  trApplied: "Listo. El guion, el título, la miniatura, la descripción y la idea central ya están en la nueva versión. Toca «Revisar guion».",
+  trUndone: "Recuperado el original.",
+  trNotes: "Notas de la adaptación",
+  ideaSugTitle: "Idea central sugerida por la IA",
+  ideaSugGo: "Sugerir con IA",
+  ideaSugWorking: "La IA está leyendo el guion para proponer la idea central…",
+  ideaConfirm: "Confirmar",
+  ideaIgnore: "Ignorar",
+  ideaSugHint: "Sale de tu propio guion; edítala si no la dirías así.",
+});
+Object.assign(T.en, {
+  audLabel: "Spanish variant", audBoth: "Neutral Spanish", audLatam: "Latin American Spanish", audEs: "Spain Spanish",
+  trTitle: "Translate or adapt the script",
+  trTo: "Change to",
+  trTargets: { neutral: "Neutral Spanish", latam: "Latin American Spanish", es: "Spain Spanish", en: "English (US)" },
+  trGo: "Translate with AI",
+  trSame: "The script is already in that variant.",
+  trNeedText: "Paste a script first.",
+  trWorking: "Translating… this can take up to a minute.",
+  trResult: (x) => `How it reads in ${x}`,
+  trVerify: "Check these quotes in the chosen Bible version before recording:",
+  trUse: "Use this version",
+  trDiscard: "Discard",
+  trUndo: "Back to the original",
+  trApplied: "Done. The script, title, thumbnail, description and central idea are now in the new version. Tap “Review script”.",
+  trUndone: "Original restored.",
+  trNotes: "Adaptation notes",
+  ideaSugTitle: "Central idea suggested by AI",
+  ideaSugGo: "Suggest with AI",
+  ideaSugWorking: "The AI is reading the script to suggest the central idea…",
+  ideaConfirm: "Confirm",
+  ideaIgnore: "Ignore",
+  ideaSugHint: "It comes from your own script; edit it if you wouldn't say it that way.",
+});
+
+const VARIANT_GUIDE = {
+  es: "español de España: dirígete a la audiencia con «vosotros» y sus formas verbales (tenéis, sabéis, os), con vocabulario peninsular natural, sin exagerar; «tú» para un oyente está bien",
+  latam: "español latinoamericano: «ustedes» y sus formas (nunca «vosotros»), vocabulario común en México, Centroamérica y Sudamérica, sin voseo y sin regionalismos de un solo país",
+  neutral: "español neutro que se entienda igual en Latinoamérica y en España: «ustedes» para la audiencia y «tú» para un oyente, sin «vosotros» ni voseo, y sin palabras propias de un solo país",
+  en: "natural, conversational American English as spoken in the United States",
+};
+const AUD_OF = { es: "es", latam: "latam", neutral: "both" };
+const TR = { target: "", busy: false, res: null, msg: "", err: "", undo: null };
+function trSource() {
+  const lang = state.result ? state.result.lang : (typeof detectLanguage === "function" ? detectLanguage($("script").value) : "es");
+  if (lang === "en") return "en";
+  const a = $("audience").value;
+  return a === "es" ? "es" : a === "latam" ? "latam" : "neutral";
+}
+
+function trPrompt(src, dst) {
+  const toEn = dst === "en", fromEn = src === "en", crossLang = toEn || fromEn;
+  const version = toEn ? "KJV (King James Version)" : ($("translation").value && !/^(KJV|NKJV|NIV|ESV|NLT)$/.test($("translation").value) ? $("translation").value : "RVR1960");
+  const task = crossLang
+    ? `Traduce este guion ${fromEn ? "del inglés" : "del español"} al ${toEn ? "inglés de EE. UU." : VARIANT_GUIDE[dst]}. Destino: ${VARIANT_GUIDE[dst]}.`
+    : `Adapta este guion de ${VARIANT_GUIDE[src].split(":")[0]} a ${VARIANT_GUIDE[dst]}. Cambia solo lo necesario para que suene natural en esa variante.`;
+  const quoteRule = crossLang
+    ? `Sustituye cada cita bíblica entre comillas por el texto de la versión ${version}, con la misma referencia (traduce también los nombres de los libros). Pon en "verify" la referencia de cada cita que hayas sustituido.`
+    : "Copia las citas bíblicas entre comillas exactamente igual, palabra por palabra: el texto bíblico no se adapta. Deja \"verify\" vacío.";
+  return `Eres traductor y editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. ${typeof PASTOR_NOTE === "string" ? PASTOR_NOTE : ""}
+${task}
+Reglas:
+- Conserva el mensaje, el orden, los párrafos, las ilustraciones y el tono del autor. No añadas ni quites contenido.
+- Conserva las señales entre corchetes ([B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA]) y los títulos «## …»; traduce su texto y los nombres de los libros bíblicos al idioma de destino.
+- Adapta modismos y ejemplos para que suenen naturales en el destino; no traduzcas palabra por palabra.
+- ${quoteRule}
+- Escribe "notes" en ${toEn ? "inglés" : "español"}: una o dos frases sobre las decisiones de adaptación más importantes.
+Devuelve solo este JSON: {"script": "guion completo", "title": "", "thumb": "", "description": "", "keyword": "", "bigIdea": "", "nextEp": "", "verify": ["referencias"], "notes": ""}
+Deja vacío ("") cualquier campo que venga vacío.
+
+TÍTULO: ${$("title").value}
+MINIATURA: ${$("thumb").value}
+DESCRIPCIÓN: ${$("description").value}
+PALABRA CLAVE: ${$("keyword").value}
+IDEA CENTRAL: ${($("bigIdea") || {}).value || ""}
+PRÓXIMO EPISODIO: ${G.nextEp || ""}
+GUION:
+"""
+${$("script").value}
+"""`;
+}
+
+async function trRun() {
+  TR.err = ""; TR.msg = ""; TR.res = null;
+  const text = $("script").value.trim();
+  if (!text) { TR.err = t("trNeedText"); renderTr(); return; }
+  const src = trSource(), dst = TR.target || (src === "en" ? "neutral" : "en");
+  if (src === dst) { TR.err = t("trSame"); renderTr(); return; }
+  const sample = await caps.sample;
+  if (!sample) { TR.err = t("aiOnlyClaude"); renderTr(); return; }
+  TR.busy = true; renderTr();
+  try {
+    const res = await sample.json(trPrompt(src, dst), { modelTier: "complex" });
+    if (!res || typeof res.script !== "string" || res.script.trim().length < text.length * 0.4) throw { code: "invalid_json" };
+    TR.res = { ...res, src, dst, verify: Array.isArray(res.verify) ? res.verify.slice(0, 20) : [] };
+  } catch (e) { TR.err = errText(e); }
+  TR.busy = false; renderTr();
+}
+function trApply() {
+  const r = TR.res;
+  if (!r) return;
+  TR.undo = { text: $("script").value, title: $("title").value, thumb: $("thumb").value, description: $("description").value, keyword: $("keyword").value,
+    bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)) };
+  $("script").value = r.script;
+  for (const f of ["title", "thumb", "description", "keyword"]) if (typeof r[f] === "string" && (r[f] || !$(f).value)) $(f).value = r[f];
+  if ($("bigIdea") && typeof r.bigIdea === "string" && r.bigIdea) $("bigIdea").value = r.bigIdea;
+  if (typeof r.nextEp === "string" && r.nextEp) G.nextEp = r.nextEp;
+  if (r.dst === "en") { $("lang").value = "en"; if (!/^(KJV|NKJV|NIV|ESV|NLT)$/.test($("translation").value)) $("translation").value = "KJV"; }
+  else { $("lang").value = "es"; $("audience").value = AUD_OF[r.dst]; lsSet("sd-aud", AUD_OF[r.dst]); if (/^(KJV|NKJV|NIV|ESV|NLT)$/.test($("translation").value)) $("translation").value = "RVR1960"; }
+  G.cold = { hook: null, promise: null }; G.layout = null; G.manual = false;
+  state.result = null; state.text = ""; state.fixUndo = []; state.fixDismissed = new Set(); IDEA.ignored = "";
+  TR.res = null; TR.msg = t("trApplied");
+  $("results").classList.add("hidden"); $("results").innerHTML = "";
+  updateLive(); markDirty(); renderTr(); renderIdeaSug();
+}
+function trUndo() {
+  const u = TR.undo;
+  if (!u) return;
+  $("script").value = u.text; for (const f of ["title", "thumb", "description", "keyword", "lang", "audience", "translation"]) $(f).value = u[f];
+  if ($("bigIdea")) $("bigIdea").value = u.bigIdea;
+  G.nextEp = u.nextEp; G.cold = u.cold; lsSet("sd-aud", u.audience);
+  state.result = null; state.text = "";
+  TR.undo = null; TR.msg = t("trUndone");
+  updateLive(); markDirty(); renderTr();
+}
+function renderTr() {
+  const el = $("trBox");
+  if (!el) return;
+  const src = trSource(), T2 = t("trTargets");
+  if (!TR.target || TR.target === src) TR.target = src === "en" ? "neutral" : "en";
+  const opts = ["neutral", "latam", "es", "en"].filter((k) => k !== src).map((k) => `<option value="${k}"${TR.target === k ? " selected" : ""}>${h(T2[k])}</option>`).join("");
+  const r = TR.res;
+  let out = "";
+  if (r) {
+    const preview = r.script.length > 1400 ? r.script.slice(0, 1400) + "…" : r.script;
+    out = `<div class="tr-out"><div class="k">${h(t("trResult")(T2[r.dst]))}</div><div class="tr-prev">${h(preview)}</div>
+      ${r.title ? `<p class="hint"><b>${h(t("titleLabel"))}:</b> ${h(r.title)}</p>` : ""}${r.bigIdea ? `<p class="hint"><b>${h(t("ideaLabel"))}:</b> ${h(r.bigIdea)}</p>` : ""}
+      ${r.notes ? `<p class="hint"><b>${h(t("trNotes"))}:</b> ${h(r.notes)}</p>` : ""}
+      ${r.verify.length ? `<p class="status err">${h(t("trVerify"))} ${r.verify.map((v) => `<a href="${h(bibleGatewayUrl(String(v), r.dst === "en" ? "KJV" : "RVR1960"))}" target="_blank" rel="noopener">${h(String(v))}</a>`).join(", ")}</p>` : ""}
+      <div class="actions"><button type="button" class="primary small" id="trUse">${h(t("trUse"))}</button><button type="button" class="small" id="trDiscard">${h(t("trDiscard"))}</button></div></div>`;
+  }
+  el.innerHTML = `<div class="tr-row"><label for="trTarget">${h(t("trTitle"))}</label>
+      <div class="tr-ctl"><span class="hint">${h(T2[src])} →</span><select id="trTarget">${opts}</select><button type="button" class="small" id="trGo"${TR.busy ? " disabled" : ""}>${h(t("trGo"))}</button></div></div>
+    <p class="status${TR.err ? " err" : ""}" id="trSt">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}`;
+  $("trTarget").addEventListener("change", (e) => { TR.target = e.target.value; });
+  $("trGo").addEventListener("click", trRun);
+  const u = $("trUse"); if (u) u.addEventListener("click", trApply);
+  const d = $("trDiscard"); if (d) d.addEventListener("click", () => { TR.res = null; renderTr(); });
+  const un = $("trUndo"); if (un) un.addEventListener("click", trUndo);
+}
+$("audience").addEventListener("change", renderTr);
+$("lang").addEventListener("change", renderTr);
+
+// ---------- AI-suggested central idea: confirm or ignore ----------
+const IDEA = { busy: false, sug: "", forText: "", ignored: "" };
+const textKey = (s) => s.length + ":" + s.slice(0, 60) + s.slice(-60);
+function ideaPrompt(text) {
+  return `Lee el guion de este pastor y escribe su idea central en UNA sola frase (máximo 25 palabras), con sus propias palabras y énfasis, en el mismo idioma del guion. No añadas enseñanza ni la mejores teológicamente: resume lo que él ya predica. ${typeof voice === "function" && state.result ? voice() : ""}
+Devuelve solo este JSON: {"idea": "frase"}
+GUION:
+"""
+${text.slice(0, 16000)}
+"""`;
+}
+async function ideaSuggest(force) {
+  const text = $("script").value.trim();
+  if (!text || (($("bigIdea") || {}).value || "").trim()) return;
+  const key = textKey(text);
+  if (!force && (IDEA.forText === key || IDEA.ignored === key)) return;
+  if (text.split(/\s+/).length < 120 && !force) return;
+  const sample = await caps.sample;
+  if (!sample || IDEA.busy) return;
+  IDEA.busy = true; IDEA.forText = key; IDEA.sug = ""; renderIdeaSug();
+  try {
+    const res = await sample.json(ideaPrompt(text), { modelTier: "default" });
+    IDEA.sug = String((res && res.idea) || "").trim().replace(/^[«"“]|[»"”]$/g, "");
+  } catch (e) { IDEA.sug = ""; IDEA.forText = ""; }
+  IDEA.busy = false; renderIdeaSug();
+}
+function ideaConfirm(v) {
+  const val = (v || IDEA.sug || "").trim();
+  if (!val) return;
+  $("bigIdea").value = val; IDEA.sug = "";
+  markDirty(); renderIdeaSug();
+  if (state.result && state.text) { state.fixSel = {}; state.fixAi = {}; rerunReview(t("ideaSaved")); }
+}
+function ideaIgnore() {
+  IDEA.ignored = IDEA.forText; IDEA.sug = "";
+  state.fixDismissed.add("bigidea");
+  renderIdeaSug();
+  if (state.result) { if (V.guided) renderGuide(); else renderResults(); }
+}
+function renderIdeaSug() {
+  const has = !!(($("bigIdea") || {}).value || "").trim();
+  // under the field in step 1 / full mode
+  const el = $("ideaSug");
+  if (el) {
+    if (has || !$("script").value.trim()) el.innerHTML = "";
+    else if (IDEA.busy) el.innerHTML = `<p class="status">${h(t("ideaSugWorking"))}</p>`;
+    else if (IDEA.sug) {
+      el.innerHTML = `<div class="idea-sug"><div class="k">${h(t("ideaSugTitle"))}</div><p class="idea-q">«${h(IDEA.sug)}»</p><p class="hint">${h(t("ideaSugHint"))}</p>
+        <div class="actions"><button type="button" class="primary small" data-ideaok>${h(t("ideaConfirm"))}</button><button type="button" class="small" data-ideano>${h(t("ideaIgnore"))}</button></div></div>`;
+    } else el.innerHTML = `<button type="button" class="small linkish" data-ideago>${h(t("ideaSugGo"))}</button>`;
+    el.querySelectorAll("[data-ideaok]").forEach((b) => b.addEventListener("click", () => ideaConfirm()));
+    el.querySelectorAll("[data-ideano]").forEach((b) => b.addEventListener("click", ideaIgnore));
+    el.querySelectorAll("[data-ideago]").forEach((b) => b.addEventListener("click", () => ideaSuggest(true)));
+  }
+  // inside the "idea central" fix card
+  const inl = $("ideaInline");
+  if (inl) {
+    const box = inl.closest(".idea-inline");
+    let note = box.querySelector(".idea-ai");
+    if (!note) { note = document.createElement("p"); note.className = "hint idea-ai"; box.appendChild(note); }
+    if (IDEA.busy) note.textContent = t("ideaSugWorking");
+    else if (IDEA.sug) {
+      if (!inl.value.trim()) inl.value = IDEA.sug;
+      note.textContent = t("ideaSugHint");
+      const save = $("ideaInlineSave"); if (save) save.textContent = t("ideaConfirm");
+      if (!box.querySelector("[data-ideano]")) { const b = document.createElement("button"); b.type = "button"; b.className = "small"; b.dataset.ideano = "1"; b.textContent = t("ideaIgnore"); b.addEventListener("click", ideaIgnore); save.insertAdjacentElement("afterend", b); }
+    } else note.textContent = "";
+  }
+}
+const _wireFixesL = wireFixes;
+wireFixes = function () { _wireFixesL(); renderIdeaSug(); };
+$("runBtn").addEventListener("click", () => setTimeout(() => ideaSuggest(false), 50));
+$("script").addEventListener("paste", () => setTimeout(() => ideaSuggest(false), 1200));
+$("bigIdea").addEventListener("input", renderIdeaSug);
+const _gOnLangL = gOnLang;
+gOnLang = function () { _gOnLangL(); renderTr(); renderIdeaSug(); };
+renderTr(); renderIdeaSug();
 /* ===== Ayuda: un «?» junto a cada campo y sección, con una explicación breve ===== */
 Object.assign(T.es, { qhBtn: "¿Qué es esto?" });
 Object.assign(T.en, { qhBtn: "What is this?" });
@@ -5693,10 +5953,11 @@ const HELP = {
     step4: "«Abrir prompter» muestra el guion en letra grande y lo hace avanzar solo. «Ensayar con cronómetro» mide cuánto tardas en cada sección y corrige los tiempos. «Hoja para el editor» descarga las secciones, tiempos y clips para quien edita. Dentro del prompter: ▶ empieza o pausa, − y + cambian la velocidad, A− y A+ el tamaño de letra.",
     step5: "Después de publicar: elige clips para Shorts y, a los pocos días, trae la retención de YouTube Studio para ver en qué parte del guion se fue la gente.",
     examples: "Tres guiones de práctica: uno flojo, uno regular y uno muy bueno. Ábrelos para ver qué marca la app y cómo propone arreglarlo. Mientras practicas nada se guarda; toca «Salir del ejemplo» para volver a tu trabajo.",
-    audience: "Para quién habla el canal. Cambia qué se marca como regionalismo: con «España» no se marcan «vosotros», «-áis/-éis», «vale» ni «coger»; con «Latinoamérica» no se marcan «ahorita» ni «platicar». «Latinoamérica y España» marca todo lo que no se entiende igual en ambos lados.",
+    audience: "La variante del español en que hablas al canal. Cambia qué se marca como regionalismo y cómo escribe la IA: con «Español de España» no se marcan «vosotros», «-áis/-éis», «vale» ni «coger»; con «Español latinoamericano» no se marcan «ahorita» ni «platicar». «Español neutro» marca todo lo que no se entiende igual en ambos lados.",
     ask: "Escribe con tus palabras lo que quieres mejorar, por ejemplo «hazlo más cálido» o «dame un ejemplo de la vida diaria». Elige un párrafo o todo el guion. Claude responde y, si propone texto nuevo, ves cómo quedaría antes de tocar «Aplicar». Cada pregunta tiene un pequeño costo, que aparece abajo al terminar.",
     bigIdea: "La idea que quieres que la gente se lleve, en una frase y con tus palabras (la «gran idea» del sermón). La app comprueba que se oiga en el primer minuto y otra vez al cierre; no la juzga ni la cambia.",
     sMessage: "Revisa cómo llega tu mensaje a alguien que te ve solo en YouTube, sin cambiarlo: que la idea central se oiga al principio y al final, que no haya frases de culto en vivo, que los términos técnicos se expliquen, que los pasajes salgan en pantalla y que el cierre resuma.",
+    translate: "Pasa el guion completo, con su título, miniatura, descripción e idea central, a otra variante del español (neutro, latinoamericano o de España) o al inglés de EE. UU., y viceversa. El mensaje no cambia. Entre variantes del español las citas bíblicas se copian igual; al cambiar de idioma se usa la versión de la Biblia de ese idioma y la app te lista las citas para que las compruebes. Puedes volver al original.",
     script: "Pega el guion completo. Puedes marcar secciones con «## Título» y dejar señales para el editor como [B-ROLL: …], [TEXTO: …], [CITA: …] o [PAUSA]; esas señales no cuentan como palabras dichas.",
     series: "Todos los episodios con su fecha de publicación. Escribe un tema y una fecha para planear uno nuevo, o toca «Abrir» para seguir trabajando en uno guardado.",
     backup: "Todo se guarda solo dentro de la app. Esta copia es un archivo extra por si algo se pierde: descárgala de vez en cuando. «Restaurar» vuelve a cargar un archivo de copia.",
@@ -5764,10 +6025,11 @@ const HELP = {
     step4: "“Open prompter” shows the script in large type and scrolls it for you. “Rehearse with timer” measures how long each section takes and corrects the timings. “Editor sheet” downloads the sections, timings and clips for whoever edits. Inside the prompter: ▶ starts or pauses, − and + change the speed, A− and A+ the text size.",
     step5: "After publishing: pick clips for Shorts and, a few days later, bring in the retention data from YouTube Studio to see where in the script people left.",
     examples: "Three practice scripts: a weak one, an average one and a very good one. Open them to see what the app flags and how it proposes fixes. Nothing is saved while you practice; tap “Leave the example” to return to your work.",
-    audience: "Who the channel speaks to; only matters for Spanish scripts. It changes what counts as regional: with “Spain”, vosotros, -áis/-éis, vale and coger aren't flagged; with “Latin America”, ahorita and platicar aren't. “Latin America and Spain” flags anything not understood the same on both sides.",
+    audience: "The Spanish variant you speak to the channel in; only matters for Spanish scripts. It changes what counts as regional and how the AI writes: with “Spain Spanish”, vosotros, -áis/-éis, vale and coger aren't flagged; with “Latin American Spanish”, ahorita and platicar aren't. “Neutral Spanish” flags anything not understood the same on both sides.",
     ask: "Type what you want to improve in your own words, e.g. “make it warmer” or “give me an everyday example”. Pick one paragraph or the whole script. Claude answers and, if it proposes new text, you see how it would read before tapping “Apply”. Each question has a small cost, shown at the bottom when it finishes.",
     bigIdea: "The idea you want people to take away, in one sentence and your own words (the sermon's big idea). The app checks it's heard in the first minute and again at the close; it doesn't judge or change it.",
     sMessage: "Checks how your message reaches someone watching alone on YouTube, without changing it: the central idea is heard at the start and end, no live-service phrases, technical terms explained, passages shown on screen, and a closing summary.",
+    translate: "Moves the whole script, with its title, thumbnail, description and central idea, to another Spanish variant (neutral, Latin American or Spain) or to US English, and back. The message doesn't change. Between Spanish variants Bible quotes are copied as is; when the language changes, the Bible version for that language is used and the app lists the quotes for you to check. You can go back to the original.",
     script: "Paste the full script. Mark sections with “## Title” and leave cues for the editor like [B-ROLL: …], [TEXTO: …], [CITA: …] or [PAUSA]; cues don't count as spoken words.",
     series: "Every episode with its publish date. Type a topic and a date to plan a new one, or tap “Open” to keep working on a saved one.",
     backup: "Everything saves automatically inside the app. This copy is an extra file in case something gets lost: download it now and then. “Restore” loads a backup file back in.",
@@ -5837,6 +6099,7 @@ const HELP_ANCHORS = [
   ["examples", "#exPick > h3", "row"],
   ["ask", "#askClaude .g-h h2", "row"],
   ["audience", 'label[for="audience"]', "row"],
+  ["translate", 'label[for="trTarget"]', "row:.tr-box"],
   ["series", "#gSeries .g-h h2, #gSeriesFull .g-h h2", "row"],
   ["backup", "#gBackup .g-h h2, #gBackupFull .g-h h2", "row"],
   ["topfix", ".fx-head h3", "row"],
