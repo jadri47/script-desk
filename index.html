@@ -572,6 +572,13 @@ summary > .qh-txt{grid-column:1/-1;flex-basis:100%;width:100%;box-sizing:border-
 .aud-field{max-width:340px;margin:12px 0 0}
 .aud-field select{width:100%}
 .verdict > .qh-txt{grid-column:1/-1;margin:0;max-width:none}
+/* Pregúntale a Claude */
+.ask-card .ask-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.ask-card .ask-chips button{font-size:13px;padding:6px 10px}
+.ask-ans{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule-2)}
+.ask-ans .k{font:600 12px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:10px 0 6px}
+.ask-ans > p{margin:0 0 8px}
+.ask-ans .diff{font-size:16px}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -5022,6 +5029,209 @@ renderGuide = function () { _renderGuideD(); const s = $("gSample"); if (s) s.pa
 const _gOnLangD = gOnLang;
 gOnLang = function () { _gOnLangD(); renderDemoBar(); renderExPick(); };
 renderExPick();
+/* ===== Pregúntale a Claude: petición libre sobre un párrafo o todo el guion, con aplicar / deshacer ===== */
+Object.assign(T.es, {
+  askTitle: "Pregúntale a Claude",
+  askLead: "Pide un cambio con tus propias palabras. Claude responde y, si propone texto nuevo, puedes aplicarlo con un toque y deshacerlo después.",
+  askTarget: "¿Sobre qué parte?",
+  askAll: "Todo el guion",
+  askPara: (n, s) => `Párrafo ${n} · «${s}»`,
+  askQ: "¿Qué quieres que haga Claude?",
+  askPh: "Por ejemplo: hazlo más cálido y personal, sin perder la cita",
+  askChips: ["Hazlo más cálido y cercano", "Hazlo más corto", "Más claro para alguien nuevo en la fe", "Dame un ejemplo de la vida diaria", "¿Suena natural dicho en voz alta?", "Añade una pregunta para el oyente"],
+  askGo: "Preguntar a Claude",
+  askNeedQ: "Escribe qué quieres que haga Claude.",
+  askNeedText: "Primero pega un guion.",
+  askReply: "Claude dice",
+  askWould: "Cómo quedaría",
+  askChecks: (a, b, c, d) => `Revisiones que pasan: ${a} de ${b} → ${c} de ${d}`,
+  askWorse: "Ojo: el cambio aumenta el riesgo para los anuncios.",
+  askLostQuote: (n) => `Ojo: ${n === 1 ? "una cita entre comillas ya no aparece" : n + " citas entre comillas ya no aparecen"} igual.`,
+  askApply: "Aplicar",
+  askDiscard: "Descartar",
+  askApplied: "Aplicado. Puedes deshacerlo con «Deshacer» arriba.",
+  askChanged: "El guion cambió desde la pregunta; pregunta de nuevo.",
+  askNoChange: "Claude no propuso cambios de texto.",
+  askFollow: "Puedes seguir pidiendo cambios sobre la misma parte; Claude recuerda lo último que le pediste.",
+});
+Object.assign(T.en, {
+  askTitle: "Ask Claude",
+  askLead: "Ask for a change in your own words. Claude answers and, if it proposes new text, you can apply it with one tap and undo it later.",
+  askTarget: "Which part?",
+  askAll: "The whole script",
+  askPara: (n, s) => `Paragraph ${n} · “${s}”`,
+  askQ: "What should Claude do?",
+  askPh: "For example: make it warmer and more personal, keep the quote",
+  askChips: ["Make it warmer", "Make it shorter", "Clearer for someone new to faith", "Give me an everyday example", "Does it sound natural out loud?", "Add a question for the listener"],
+  askGo: "Ask Claude",
+  askNeedQ: "Type what you want Claude to do.",
+  askNeedText: "Paste a script first.",
+  askReply: "Claude says",
+  askWould: "How it would read",
+  askChecks: (a, b, c, d) => `Checks passing: ${a} of ${b} → ${c} of ${d}`,
+  askWorse: "Careful: this change raises the ad risk.",
+  askLostQuote: (n) => `Careful: ${n === 1 ? "a quoted passage no longer appears" : n + " quoted passages no longer appear"} unchanged.`,
+  askApply: "Apply",
+  askDiscard: "Discard",
+  askApplied: "Applied. You can undo it with “Undo” above.",
+  askChanged: "The script changed since you asked; ask again.",
+  askNoChange: "Claude didn't propose a text change.",
+  askFollow: "You can keep asking for changes to the same part; Claude remembers your last request.",
+});
+
+const ASK = { target: "all", q: "", busy: false, ans: null, err: "", hist: [] };
+const RISK_RANK = { verde: 0, amarillo: 1, rojo: 2 };
+
+function askParas() {
+  const text = $("script").value, out = [], re = /[^\n]+(?:\n(?!\s*\n)[^\n]+)*/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const s = m[0].trim();
+    if (!s || /^##\s/.test(s) || /^\[[^\]]*\]$/.test(s) || s.split(/\s+/).length < 6) continue;
+    out.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+  }
+  return out;
+}
+function askFragment() {
+  const text = $("script").value;
+  if (ASK.target === "all") return { all: true, text };
+  const p = askParas()[+ASK.target];
+  return p ? { all: false, text: p.text } : { all: true, text };
+}
+
+function askHTML() {
+  const paras = askParas();
+  if (ASK.target !== "all" && !paras[+ASK.target]) ASK.target = "all";
+  const short = (s) => { const w = s.replace(/\s+/g, " ").trim(); return w.length > 48 ? w.slice(0, 46) + "…" : w; };
+  const opts = `<option value="all"${ASK.target === "all" ? " selected" : ""}>${h(t("askAll"))}</option>` + paras.map((p, i) => `<option value="${i}"${String(ASK.target) === String(i) ? " selected" : ""}>${h(t("askPara")(i + 1, short(p.text)))}</option>`).join("");
+  return `<header class="g-h"><h2>${h(t("askTitle"))}</h2></header>
+    <p class="lead">${h(t("askLead"))}</p>
+    <div class="field"><label for="askTarget">${h(t("askTarget"))}</label><select id="askTarget">${opts}</select></div>
+    <div class="field"><label for="askQ">${h(t("askQ"))}</label><textarea id="askQ" rows="3" placeholder="${h(t("askPh"))}">${h(ASK.q)}</textarea></div>
+    <div class="chips ask-chips">${t("askChips").map((c) => `<button type="button" class="small" data-askchip="${h(c)}">${h(c)}</button>`).join("")}</div>
+    <div class="actions"><button type="button" class="primary small" id="askGo"${ASK.busy ? " disabled" : ""}>${h(t("askGo"))}</button><span class="status${ASK.err ? " err" : ""}" id="askSt">${h(ASK.busy ? t("thinking") : ASK.err)}</span></div>
+    <div id="askOut">${askAnswerHTML()}</div>`;
+}
+function askAnswerHTML() {
+  const a = ASK.ans;
+  if (!a) return "";
+  let html = `<div class="ask-ans"><div class="k">${h(t("askReply"))}</div><p>${h(a.reply || "")}</p>`;
+  if (a.replacement) {
+    const diff = wordDiff(a.original, a.replacement).map((x) => (x.changed ? `<ins>${h(x.text)}</ins>` : h(x.text))).join("");
+    const R = state.result, A = a.after;
+    const warn = [];
+    if (A && R && RISK_RANK[A.worst] > RISK_RANK[R.worst]) warn.push(t("askWorse"));
+    if (a.lostQuotes) warn.push(t("askLostQuote")(a.lostQuotes));
+    html += `<div class="k">${h(t("askWould"))}</div><div class="diff">${diff}</div>
+      ${A && R ? `<p class="hint">${h(t("askChecks")(R.passed, R.total, A.passed, A.total))}</p>` : ""}
+      ${warn.map((w) => `<p class="status err">${h(w)}</p>`).join("")}
+      ${a.applied ? `<p class="status">${h(t("askApplied"))}</p>` : `<div class="actions"><button type="button" class="primary small" id="askApply">${h(t("askApply"))}</button><button type="button" class="small" id="askDiscard">${h(t("askDiscard"))}</button></div>`}`;
+  } else html += `<p class="hint">${h(t("askNoChange"))}</p>`;
+  html += `<p class="hint">${h(t("askFollow"))}</p></div>`;
+  return html;
+}
+
+function askPrompt(frag, q) {
+  const en = state.result && state.result.lang === "en";
+  const voiceTxt = typeof voice === "function" && state.result ? voice() : "";
+  const prev = ASK.hist.filter((x) => x.target === ASK.target).slice(-2).map((x) => `- Pidió: «${x.q}» → respondiste: «${x.reply}»`).join("\n");
+  const ctx = frag.all ? "" : `\nCONTEXTO (guion completo, solo para entender; NO lo devuelvas):\n"""\n${$("script").value.slice(0, 7000)}\n"""\n`;
+  return `Eres el editor de guiones de un pódcast cristiano de enseñanza bíblica en YouTube. El presentador te pide sobre ${frag.all ? "su guion completo" : "un párrafo de su guion"}: «${q}».
+${voiceTxt}
+${en ? "Responde y escribe el texto en inglés de EE. UU." : ""}
+Reglas:
+- Conserva palabra por palabra las citas bíblicas entre comillas y sus referencias (libro, capítulo y versículo).
+- No cambies la doctrina ni el argumento. No añadas invitaciones a suscribirse ni a comentar.
+- Mantén la voz del presentador: frases que se dicen de un aliento, sin muletillas ni frases de plantilla.
+- Conserva las señales entre corchetes ([B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA]) y los títulos «## …» si aparecen.
+- Si la petición es una pregunta o pide consejo, responde en "reply" y deja "replacement" en null.
+- Si pide un cambio de texto, pon en "replacement" SOLO el texto nuevo que sustituye al FRAGMENTO completo, listo para pegar.
+${prev ? `Conversación previa sobre esta misma parte:\n${prev}\n` : ""}${ctx}
+FRAGMENTO:
+"""
+${frag.text}
+"""
+
+Devuelve solo este JSON: {"reply": "respuesta breve, máximo 3 frases, en el idioma del guion", "replacement": "texto nuevo" o null}`;
+}
+
+async function askRun() {
+  const q = ($("askQ").value || "").trim();
+  ASK.q = q; ASK.err = "";
+  if (!$("script").value.trim()) { ASK.err = t("askNeedText"); renderAsk(); return; }
+  if (!q) { ASK.err = t("askNeedQ"); renderAsk(); $("askQ").focus(); return; }
+  const sample = await caps.sample;
+  if (!sample) { ASK.err = t("aiOnlyClaude"); renderAsk(); return; }
+  if (!state.result || state.text !== $("script").value) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); }
+  const frag = askFragment();
+  ASK.busy = true; ASK.ans = null; renderAsk();
+  try {
+    const res = await sample.json(askPrompt(frag, q), { modelTier: frag.all ? "complex" : "default" });
+    const reply = String((res && res.reply) || "").trim();
+    let rep = res && typeof res.replacement === "string" ? res.replacement : null;
+    if (rep && rep.trim() === frag.text.trim()) rep = null;
+    if (!reply && !rep) throw { code: "invalid_json" };
+    const ans = { target: ASK.target, original: frag.text, replacement: rep, reply, applied: false };
+    if (rep) {
+      const full = $("script").value;
+      const next = frag.all ? rep : full.replace(frag.text, () => rep);
+      ans.after = analyze(next, state.opts);
+      ans.lostQuotes = (state.result.quotes || []).filter((x) => frag.text.includes(x.inner.slice(0, 40)) && !rep.includes(x.inner.slice(0, 40))).length;
+    }
+    ASK.ans = ans;
+    ASK.hist.push({ target: ASK.target, q, reply: reply.slice(0, 200) });
+    if (ASK.hist.length > 10) ASK.hist.shift();
+  } catch (e) { ASK.err = errText(e); }
+  ASK.busy = false;
+  renderAsk();
+}
+function askApply() {
+  const a = ASK.ans;
+  if (!a || !a.replacement) return;
+  const full = $("script").value;
+  if (a.target !== "all" && !full.includes(a.original)) { ASK.err = t("askChanged"); ASK.ans = null; renderAsk(); return; }
+  state.fixUndo.push(snapshotForUndo());
+  if (state.fixUndo.length > 20) state.fixUndo.shift();
+  $("script").value = a.target === "all" ? a.replacement : full.replace(a.original, () => a.replacement);
+  a.applied = true;
+  state.fixSel = {}; state.fixAi = {};
+  rerunReview(t("fxApplied"));
+}
+
+function renderAsk() {
+  const el = $("askClaude");
+  if (!el) return;
+  const qNow = $("askQ"); if (qNow) ASK.q = qNow.value;
+  el.innerHTML = askHTML();
+  $("askTarget").addEventListener("change", (e) => { ASK.target = e.target.value; ASK.ans = null; ASK.err = ""; renderAsk(); });
+  $("askQ").addEventListener("input", (e) => { ASK.q = e.target.value; });
+  el.querySelectorAll("[data-askchip]").forEach((b) => b.addEventListener("click", () => { $("askQ").value = b.dataset.askchip; ASK.q = b.dataset.askchip; $("askQ").focus(); }));
+  $("askGo").addEventListener("click", askRun);
+  const ap = $("askApply"); if (ap) ap.addEventListener("click", askApply);
+  const di = $("askDiscard"); if (di) di.addEventListener("click", () => { ASK.ans = null; renderAsk(); });
+}
+function mountAsk(where, before) {
+  if (!where || $("askClaude")) return;
+  const sec = document.createElement("section");
+  sec.className = "g-card ask-card"; sec.id = "askClaude";
+  if (before) where.parentNode.insertBefore(sec, where); else where.appendChild(sec);
+  renderAsk();
+}
+// Guided step 2: under "Lo primero que arreglaría", above "Más revisiones". Full mode: right after the top fixes.
+const _renderGuideAsk = renderGuide;
+renderGuide = function () {
+  _renderGuideAsk();
+  if (!V.guided || V.step !== 2) return;
+  const more = document.querySelector("#guide .g-more-sec");
+  if (more) mountAsk(more, true);
+};
+const _renderResultsAsk = renderResults;
+renderResults = function () {
+  _renderResultsAsk();
+  if (V.guided) return;
+  const tf = document.querySelector("#results .topfix");
+  if (tf && tf.nextSibling) mountAsk(tf.nextSibling, true);
+};
 /* ===== Ayuda: un «?» junto a cada campo y sección, con una explicación breve ===== */
 Object.assign(T.es, { qhBtn: "¿Qué es esto?" });
 Object.assign(T.en, { qhBtn: "What is this?" });
@@ -5035,6 +5245,7 @@ const HELP = {
     step5: "Después de publicar: elige clips para Shorts y, a los pocos días, trae la retención de YouTube Studio para ver en qué parte del guion se fue la gente.",
     examples: "Tres guiones de práctica: uno flojo, uno regular y uno muy bueno. Ábrelos para ver qué marca la app y cómo propone arreglarlo. Mientras practicas nada se guarda; toca «Salir del ejemplo» para volver a tu trabajo.",
     audience: "Para quién habla el canal. Cambia qué se marca como regionalismo: con «España» no se marcan «vosotros», «-áis/-éis», «vale» ni «coger»; con «Latinoamérica» no se marcan «ahorita» ni «platicar». «Latinoamérica y España» marca todo lo que no se entiende igual en ambos lados.",
+    ask: "Escribe con tus palabras lo que quieres mejorar, por ejemplo «hazlo más cálido» o «dame un ejemplo de la vida diaria». Elige un párrafo o todo el guion. Claude responde y, si propone texto nuevo, ves cómo quedaría antes de tocar «Aplicar». Cada pregunta tiene un pequeño costo, que aparece abajo al terminar.",
     script: "Pega el guion completo. Puedes marcar secciones con «## Título» y dejar señales para el editor como [B-ROLL: …], [TEXTO: …], [CITA: …] o [PAUSA]; esas señales no cuentan como palabras dichas.",
     series: "Todos los episodios con su fecha de publicación. Escribe un tema y una fecha para planear uno nuevo, o toca «Abrir» para seguir trabajando en uno guardado.",
     backup: "Todo se guarda solo dentro de la app. Esta copia es un archivo extra por si algo se pierde: descárgala de vez en cuando. «Restaurar» vuelve a cargar un archivo de copia.",
@@ -5103,6 +5314,7 @@ const HELP = {
     step5: "After publishing: pick clips for Shorts and, a few days later, bring in the retention data from YouTube Studio to see where in the script people left.",
     examples: "Three practice scripts: a weak one, an average one and a very good one. Open them to see what the app flags and how it proposes fixes. Nothing is saved while you practice; tap “Leave the example” to return to your work.",
     audience: "Who the channel speaks to; only matters for Spanish scripts. It changes what counts as regional: with “Spain”, vosotros, -áis/-éis, vale and coger aren't flagged; with “Latin America”, ahorita and platicar aren't. “Latin America and Spain” flags anything not understood the same on both sides.",
+    ask: "Type what you want to improve in your own words, e.g. “make it warmer” or “give me an everyday example”. Pick one paragraph or the whole script. Claude answers and, if it proposes new text, you see how it would read before tapping “Apply”. Each question has a small cost, shown at the bottom when it finishes.",
     script: "Paste the full script. Mark sections with “## Title” and leave cues for the editor like [B-ROLL: …], [TEXTO: …], [CITA: …] or [PAUSA]; cues don't count as spoken words.",
     series: "Every episode with its publish date. Type a topic and a date to plan a new one, or tap “Open” to keep working on a saved one.",
     backup: "Everything saves automatically inside the app. This copy is an extra file in case something gets lost: download it now and then. “Restore” loads a backup file back in.",
@@ -5170,6 +5382,7 @@ const HELP_ANCHORS = [
   ["step", "#guideTop .g-step-h h2", "row"],
   ["script", 'label[for="script"]', "row"],
   ["examples", "#exPick > h3", "row"],
+  ["ask", "#askClaude .g-h h2", "row"],
   ["audience", 'label[for="audience"]', "row"],
   ["series", "#gSeries .g-h h2, #gSeriesFull .g-h h2", "row"],
   ["backup", "#gBackup .g-h h2, #gBackupFull .g-h h2", "row"],
