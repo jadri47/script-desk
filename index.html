@@ -769,6 +769,52 @@ li.fx-idea .fx-lbl,li.fx-idea .fx-lbl + *,li.fx-idea .fx-act [data-fxai]{display
 .tr-ver{display:inline-flex;align-items:center;gap:6px}
 .tr-ver select{min-width:120px}
 @media (max-width:640px){.vr-row{grid-template-columns:1fr}.tr-ctl select,.tr-ver,.tr-ver select{width:100%}.tr-ver label{white-space:nowrap}}
+/* Episodes: strip on top of each step, sheet, list rows, plan-next card */
+.ep-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin:0 0 14px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
+.ep-strip:empty{display:none}
+.ep-s-t{display:flex;flex-direction:column;min-width:0}
+.ep-s-t small{font:600 11px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.ep-s-t b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep-s-t .hint{font-size:13px}
+.ep-strip>button{flex:0 0 auto}
+dialog.ep-sheet{border:0;padding:0;margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 48px);border-radius:22px;background:var(--paper);color:var(--ink);box-shadow:0 24px 80px rgba(0,0,0,.35)}
+dialog.ep-sheet::backdrop{background:rgba(10,12,30,.55)}
+.ep-sheet-in{position:relative;padding:20px 18px 22px;overflow:auto;max-height:calc(100dvh - 48px)}
+.ep-x{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;font-size:24px;line-height:1;padding:0}
+.ep-list{list-style:none;margin:8px 0 10px;padding:0;display:flex;flex-direction:column;gap:8px}
+.ep-row{border:1px solid var(--rule);border-radius:14px;background:var(--sheet);overflow:hidden}
+.ep-row.cur{border-color:var(--j1);box-shadow:inset 3px 0 0 var(--j1)}
+.ep-row.late{box-shadow:inset 3px 0 0 var(--j2)}
+.ep-open{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-radius:0;background:transparent;padding:10px 12px;min-height:64px;color:inherit;box-shadow:none}
+.ep-open:not(:disabled):hover{background:color-mix(in srgb,var(--j1) 7%,transparent)}
+.ep-open:disabled{opacity:1;cursor:default}
+.ep-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:52px;border-radius:12px;background:color-mix(in srgb,var(--j1) 12%,transparent);color:var(--j1t);line-height:1.05}
+.ep-date b{font:700 20px/1 var(--sans)}
+.ep-date small{font:600 10px/1.2 var(--sans);text-transform:uppercase;letter-spacing:.05em}
+.ep-date.ep-nodate{background:color-mix(in srgb,var(--ink-2) 12%,transparent);color:var(--ink-2)}
+.ep-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ep-main b{font-size:15px;line-height:1.3}
+.ep-meta{font-size:13px;color:var(--ink-2)}
+.ep-meta em{font-style:normal;color:var(--j2t);font-weight:600}
+.ep-st.todo{color:var(--j3t);font-weight:600}
+.ep-st.ok{color:var(--j4t);font-weight:600}
+.ep-go{font-size:22px;color:var(--ink-2);padding-left:4px}
+.ep-row.cur .ep-go{font:600 12px/1 var(--sans);color:var(--j1t);text-transform:uppercase;letter-spacing:.05em}
+.ep-tools{display:flex;flex-wrap:wrap;gap:4px 14px;padding:0 12px 8px 76px}
+.ep-tools .linkish{font-size:13px}
+.ep-edit{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ep-edit input{width:auto}
+.ep-add{border:1px dashed var(--rule);border-radius:14px;padding:12px;margin-top:10px}
+.ep-add .field .hint,.np-fields .hint{display:block;margin-top:4px;font-size:13px}
+.ep-addbtn{margin-top:8px}
+.ep-bk{margin-top:16px;border-top:1px solid var(--rule);padding-top:10px}
+.ep-bk>summary{cursor:pointer;font-weight:600;color:var(--ink-2);padding:6px 0}
+.ep-bk .g-h h2{font-size:16px}
+.np-fields{display:grid;grid-template-columns:1fr 220px;gap:8px 14px}
+.np-fields input[type=date],.ep-add input[type=date]{width:100%}
+@media (max-width:640px){.np-fields{grid-template-columns:1fr}.ep-tools{padding-left:12px}dialog.ep-sheet{width:100vw;max-width:100vw;max-height:92dvh;margin:auto 0 0;border-radius:22px 22px 0 0}.ep-sheet-in{max-height:92dvh;padding-bottom:calc(22px + env(safe-area-inset-bottom))}}
+.ep-strip{flex-wrap:wrap}
+.ep-wait{flex:1 0 100%;margin:4px 0 0;padding-top:10px;border-top:1px solid var(--rule);font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -4570,7 +4616,7 @@ Object.assign(T.es, {
   s4Lead: "Abre el prompter y lee. El texto avanza solo, a tu ritmo.", s4Len: (a) => `El episodio dura unos ${a}.`, s4Clips: "Estas frases se usan al inicio del video: dilas mirando a la cámara, con una pausa antes y después.",
   s4Pp: "Abrir prompter", s4Reh: "Ensayar con cronómetro", s4Sheet: "Hoja para el editor", s4Done: "Ya lo grabamos",
   s4Help: "Con teclado o pedal: Espacio empieza o pausa · flechas ↑ ↓ cambian la velocidad · Esc sale. En el celular o la tableta: toca la pantalla para empezar o pausar.",
-  s5Lead: "Elige clips cortos para Shorts y, cuando el video lleve unos días publicado, mira dónde se fue la gente.",
+  s5Lead: "Apunta el próximo episodio, elige clips cortos para Shorts y, cuando el video lleve unos días publicado, mira dónde se fue la gente.",
   next: "Siguiente", back: "Atrás", approve: "Aprobar el guion", approved: "Guion aprobado", toReview: "Ver todas las revisiones",
   vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
   vGreenD: "No hay nada importante que cambiar.", vYellowD: "Nada impide grabar, pero estos cambios ayudan a que la gente se quede.", vRedD: "Hay algo que puede quitar los anuncios del video. Arréglalo primero.",
@@ -4595,7 +4641,7 @@ Object.assign(T.en, {
   s4Lead: "Open the prompter and read. The text moves on its own, at your pace.", s4Len: (a) => `The episode runs about ${a}.`, s4Clips: "These lines open the video: say them to the camera, with a pause before and after.",
   s4Pp: "Open prompter", s4Reh: "Rehearse with stopwatch", s4Sheet: "Editor sheet", s4Done: "We recorded it",
   s4Help: "With a keyboard or pedal: Space starts or pauses · ↑ ↓ change speed · Esc exits. On a phone or tablet: tap the screen to start or pause.",
-  s5Lead: "Pick short clips for Shorts and, once the video has been up a few days, see where people left.",
+  s5Lead: "Note the next episode, pick short clips for Shorts and, once the video has been up a few days, see where people left.",
   next: "Next", back: "Back", approve: "Approve the script", approved: "Script approved", toReview: "See every check",
   vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
   vGreenD: "Nothing important to change.", vYellowD: "Nothing stops you from recording, but these changes help people stay.", vRedD: "Something could remove ads from the video. Fix it first.",
@@ -4680,10 +4726,8 @@ function renderGuide() {
   top.innerHTML = ""; body.innerHTML = "";
   if (V.step === 1) {
     top.innerHTML = `${head(1)}<p class="lead">${h(t("s1Lead"))}</p>`;
-    body.innerHTML = `<div class="g-s1-extra"><button type="button" class="linkish" id="gSample">${h(t("s1Sample"))}</button></div>
-      <section class="g-card" id="gSeries"></section><section class="g-card" id="gBackup"></section>`;
+    body.innerHTML = `<div class="g-s1-extra"><button type="button" class="linkish" id="gSample">${h(t("s1Sample"))}</button></div>`;
     $("gSample").addEventListener("click", () => { $("script").value = SAMPLE_ES; updateLive(); $("script").focus(); });
-    renderSeries("gSeries"); renderBackup("gBackup");
     return;
   }
   if (!ensureReview()) { body.innerHTML = `<p class="lead">${h(t("needText"))}</p>${navHTML(1)}`; wireGuideNav(body); return; }
@@ -4719,7 +4763,7 @@ function renderGuide() {
     $("gRecorded").addEventListener("click", async (e) => { e.target.disabled = true; if (G.status !== "grabado") await setStatus(G.status === "aprobado" ? "grabado" : G.status); goStep(5); });
   } else {
     top.innerHTML = head(5);
-    body.innerHTML = `<p class="lead">${h(t("s5Lead"))}</p><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section>${navHTML(4)}`;
+    body.innerHTML = `<p class="lead">${h(t("s5Lead"))}</p><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section>${navHTML(4)}`;
     renderShorts(); renderResultsCard();
   }
   wireGuideNav(body);
@@ -6025,6 +6069,191 @@ $("bigIdea").addEventListener("input", renderIdeaSug);
 const _gOnLangL = gOnLang;
 gOnLang = function () { _gOnLangL(); renderTr(); renderIdeaSug(); };
 renderTr(); renderIdeaSug();
+/* ===== Tus episodios: lista sencilla en una hoja aparte, y «planea el próximo» en el paso 5 ===== */
+// The old calendar sat in step 1, before writing, with raw date boxes. Now: one line on top of every step
+// says which episode is open, «Mis episodios» opens the list, and step 5 plans the next one right after recording.
+Object.assign(T.es, {
+  srTitle: "Tus episodios", srLead: "Toca un episodio para abrirlo.",
+  epNow: "Episodio", epNew: "Episodio nuevo", epNoDate: "sin fecha de publicación", epOut: (d) => `sale el ${d}`,
+  epBtn: "Mis episodios", epClose: "Cerrar", epOpenNow: "Abierto", epChange: "Cambiar fecha", epSave: "Guardar", epCancel: "Cancelar",
+  epNoText: "Falta escribir", epLateM: "fecha pasada", epToday: "hoy", epTomorrow: "mañana", epIn: (n) => `en ${n} días`, epAgo: (n) => `hace ${n} días`,
+  epAdd: "+ Planear otro episodio", epAbout: "¿Sobre qué será?", epDay: "¿Qué día sale?", epAddBtn: "Añadir", epPast: (n) => `Ver los ${n} ya grabados`, epPastHide: "Ocultar los grabados",
+  epEmpty: "Aún no hay episodios guardados. Cuando revises tu primer guion, aparecerá aquí.", epBackup: "Copia de seguridad",
+  npTitle: "Planea el próximo episodio",
+  npLeadNext: (x) => `Al final del guion anuncias «${x}». Déjalo apuntado para no empezar de cero la semana que viene.`,
+  npLead: "Apunta el tema del siguiente episodio para no empezar de cero la semana que viene.",
+  npDone: (x, d) => `Ya está en tus episodios: «${x}», ${d}.`, npOpen: "Abrirlo", npAll: "Ver todos mis episodios", npSaved: "Añadido a tus episodios.",
+  npDateHint: (d) => `Se publicaría el ${d}.`, npGo: "Añadir a mis episodios", epPlanned: (x, d) => `Tienes «${x}» planeado${d ? " para el " + d : ""}.`, epWriteIt: "Escribir ese",
+});
+Object.assign(T.en, {
+  srTitle: "Your episodes", srLead: "Tap an episode to open it.",
+  epNow: "Episode", epNew: "New episode", epNoDate: "no publish date", epOut: (d) => `goes out ${d}`,
+  epBtn: "My episodes", epClose: "Close", epOpenNow: "Open", epChange: "Change date", epSave: "Save", epCancel: "Cancel",
+  epNoText: "Not written yet", epLateM: "date passed", epToday: "today", epTomorrow: "tomorrow", epIn: (n) => `in ${n} days`, epAgo: (n) => `${n} days ago`,
+  epAdd: "+ Plan another episode", epAbout: "What will it be about?", epDay: "What day does it go out?", epAddBtn: "Add", epPast: (n) => `See the ${n} already recorded`, epPastHide: "Hide recorded ones",
+  epEmpty: "No saved episodes yet. Once you review your first script, it shows up here.", epBackup: "Backup",
+  npTitle: "Plan the next episode",
+  npLeadNext: (x) => `At the end of the script you announce “${x}”. Note it down so you don't start from zero next week.`,
+  npLead: "Note the next episode's topic so you don't start from zero next week.",
+  npDone: (x, d) => `Already in your episodes: “${x}”, ${d}.`, npOpen: "Open it", npAll: "See all my episodes", npSaved: "Added to your episodes.",
+  npDateHint: (d) => `It would go out ${d}.`, npGo: "Add to my episodes", epPlanned: (x, d) => `You have “${x}” planned${d ? " for " + d : ""}.`, epWriteIt: "Write that one",
+});
+Object.assign(G, { epPast: false, epAdding: false, epEdit: "" });
+
+const dayDiff = (iso) => Math.round((new Date(iso + "T12:00:00") - new Date(isoToday() + "T12:00:00")) / 864e5);
+function relDay(iso) {
+  const n = dayDiff(iso);
+  return n === 0 ? t("epToday") : n === 1 ? t("epTomorrow") : n > 1 ? t("epIn")(n) : t("epAgo")(-n);
+}
+const longDay = (iso) => new Date(iso + "T12:00:00").toLocaleDateString(UI, { weekday: "long", day: "numeric", month: "long" });
+const capFirst = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+// ---------- the list (sheet, and the full-mode history tab) ----------
+renderSeries = function (cid) {
+  const el = $(cid);
+  if (!el) return;
+  caps.db.then((db) => {
+    if (!el.isConnected) return;
+    const head = `<header class="g-h"><h2>${h(t("srTitle"))}</h2></header>`;
+    if (!db) { el.innerHTML = head + `<p class="hint">${h(t("srNeedDb"))}</p>`; return; }
+    const today = isoToday();
+    const done = (p) => p.status === "grabado";
+    const byDate = (a, b) => (a.pubDate && b.pubDate ? a.pubDate.localeCompare(b.pubDate) : a.pubDate ? -1 : b.pubDate ? 1 : b.updatedAt - a.updatedAt);
+    const past = G.prods.filter((p) => done(p) && (!p.pubDate || p.pubDate < today) && p.id !== G.prodId).sort(byDate).reverse();
+    const active = G.prods.filter((p) => !past.includes(p)).sort(byDate);
+    const titles = new Set(G.prods.map((p) => norm(p.title)));
+    const row = (p) => {
+      const cur = p.id === G.prodId, late = p.pubDate && p.pubDate < today && !done(p);
+      const status = !p.hasText ? t("epNoText") : t("status")[p.status] || p.status;
+      const when = p.pubDate ? relDay(p.pubDate) : t("srNoDate").toLowerCase();
+      const d = p.pubDate ? new Date(p.pubDate + "T12:00:00") : null;
+      const tile = d ? `<span class="ep-date"><small>${h(d.toLocaleDateString(UI, { weekday: "short" }).replace(".", ""))}</small><b>${d.getDate()}</b><small>${h(d.toLocaleDateString(UI, { month: "short" }).replace(".", ""))}</small></span>` : `<span class="ep-date ep-nodate"><small>—</small></span>`;
+      const nextBtn = p.nextEp && !titles.has(norm(p.nextEp)) ? `<button type="button" class="small linkish" data-srnext="${h(p.id)}">${h(t("srPlanNext")(p.nextEp))}</button>` : "";
+      const tools = G.epEdit === p.id
+        ? `<span class="ep-edit"><input type="date" value="${h(p.pubDate || nextFreeDate())}" data-srdate="${h(p.id)}" aria-label="${h(t("tpDate"))}"><button type="button" class="small primary" data-srsave="${h(p.id)}">${h(t("epSave"))}</button><button type="button" class="small" data-srcancel>${h(t("epCancel"))}</button></span>`
+        : `<button type="button" class="small linkish" data-sredit="${h(p.id)}">${h(t("epChange"))}</button>${nextBtn}`;
+      return `<li class="ep-row${cur ? " cur" : ""}${late ? " late" : ""}">
+        <button type="button" class="ep-open" data-sropen="${h(p.id)}"${cur ? " disabled" : ""}>${tile}<span class="ep-main"><b>${h(p.title || "—")}</b>
+          <span class="ep-meta"><span class="ep-st${!p.hasText ? " todo" : done(p) ? " ok" : ""}">${h(status)}</span> · ${h(when)}${late ? ` · <em>${h(t("epLateM"))}</em>` : ""}</span></span>
+          <span class="ep-go">${cur ? h(t("epOpenNow")) : "›"}</span></button>
+        <div class="ep-tools">${tools}</div></li>`;
+    };
+    const addForm = G.epAdding
+      ? `<div class="ep-add"><div class="field"><label for="${cid}-t">${h(t("epAbout"))}</label><input id="${cid}-t" placeholder="${h(t("srNewPh"))}" maxlength="100"></div>
+          <div class="field"><label for="${cid}-d">${h(t("epDay"))}</label><input id="${cid}-d" type="date" value="${h(nextFreeDate())}"><span class="hint" id="${cid}-dh">${h(longDay(nextFreeDate()))}</span></div>
+          <div class="actions"><button type="button" class="small primary" id="${cid}-p">${h(t("epAddBtn"))}</button><button type="button" class="small" id="${cid}-x">${h(t("epCancel"))}</button></div></div>`
+      : `<button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button>`;
+    el.innerHTML = `${head}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
+      ${active.length ? `<ul class="ep-list">${active.map(row).join("")}</ul>` : ""}
+      ${past.length ? `<button type="button" class="small linkish" id="${cid}-past">${h(G.epPast ? t("epPastHide") : t("epPast")(past.length))}</button>${G.epPast ? `<ul class="ep-list ep-pastlist">${past.map(row).join("")}</ul>` : ""}` : ""}
+      ${addForm}`;
+    const q = (s) => el.querySelector(s);
+    if (q(`#${cid}-a`)) q(`#${cid}-a`).addEventListener("click", () => { G.epAdding = true; renderSeriesAll(); const i = $(`${cid}-t`); if (i) i.focus(); });
+    if (q(`#${cid}-x`)) q(`#${cid}-x`).addEventListener("click", () => { G.epAdding = false; renderSeriesAll(); });
+    if (q(`#${cid}-d`)) q(`#${cid}-d`).addEventListener("change", (e) => { q(`#${cid}-dh`).textContent = e.target.value ? longDay(e.target.value) : ""; });
+    if (q(`#${cid}-p`)) q(`#${cid}-p`).addEventListener("click", async (e) => {
+      const ti = q(`#${cid}-t`).value.trim();
+      if (!ti) { q(`#${cid}-t`).focus(); return; }
+      e.target.disabled = true; G.epAdding = false;
+      await planEpisode(capFirst(ti), q(`#${cid}-d`).value);
+    });
+    if (q(`#${cid}-past`)) q(`#${cid}-past`).addEventListener("click", () => { G.epPast = !G.epPast; renderSeriesAll(); });
+    el.querySelectorAll("[data-sropen]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; closeEpSheet(); await openFromSeries(b.dataset.sropen); }));
+    el.querySelectorAll("[data-sredit]").forEach((b) => b.addEventListener("click", () => { G.epEdit = b.dataset.sredit; renderSeriesAll(); }));
+    el.querySelectorAll("[data-srcancel]").forEach((b) => b.addEventListener("click", () => { G.epEdit = ""; renderSeriesAll(); }));
+    el.querySelectorAll("[data-srsave]").forEach((b) => b.addEventListener("click", () => { const i = el.querySelector(`[data-srdate="${b.dataset.srsave}"]`); G.epEdit = ""; setPubDate(b.dataset.srsave, i.value); }));
+    el.querySelectorAll("[data-srnext]").forEach((b) => b.addEventListener("click", async () => { const p = G.prods.find((x) => x.id === b.dataset.srnext); b.disabled = true; await planEpisode(capFirst(p.nextEp), p.pubDate ? addDays(p.pubDate, 7) : nextFreeDate()); }));
+  });
+};
+const _renderSeriesAllE = renderSeriesAll;
+renderSeriesAll = function () {
+  _renderSeriesAllE();
+  if ($("epList")) renderSeries("epList");
+  renderEpStrip(); renderNextPlan();
+};
+
+// ---------- the sheet ----------
+function openEpSheet() {
+  let d = $("epSheet");
+  if (!d) {
+    d = document.createElement("dialog");
+    d.id = "epSheet"; d.className = "ep-sheet";
+    document.body.appendChild(d);
+    d.addEventListener("click", (e) => { if (e.target === d) closeEpSheet(); });
+    d.addEventListener("close", () => { G.epAdding = false; G.epEdit = ""; });
+  }
+  d.innerHTML = `<div class="ep-sheet-in"><button type="button" class="ep-x" id="epX" aria-label="${h(t("epClose"))}">×</button><section id="epList"></section>
+    <details class="ep-bk"><summary>${h(t("epBackup"))}</summary><div id="epBackup"></div></details></div>`;
+  $("epX").addEventListener("click", closeEpSheet);
+  renderSeries("epList"); renderBackup("epBackup");
+  if (!d.open) { try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
+  loadProds();
+}
+function closeEpSheet() { const d = $("epSheet"); if (d && d.open) { try { d.close(); } catch (e) { d.removeAttribute("open"); } } }
+
+// ---------- one line on top of every step: which episode is open ----------
+function renderEpStrip() {
+  const el = $("epStrip");
+  if (!el) return;
+  caps.db.then((db) => {
+    if (!db || !el.isConnected) { el.innerHTML = ""; return; }
+    const p = G.prods.find((x) => x.id === G.prodId);
+    const title = (p && p.title) || $("title").value.trim() || t("epNew");
+    // Starting fresh while a planned episode waits: offer it, so Juan doesn't make a duplicate.
+    const today = isoToday();
+    const waiting = !G.prodId && !$("script").value.trim() && G.prods.filter((x) => !x.hasText && x.status !== "grabado" && (!x.pubDate || x.pubDate >= today)).sort((a, b) => (a.pubDate || "9").localeCompare(b.pubDate || "9"))[0];
+    el.innerHTML = `<span class="ep-s-t"><small>${h(t("epNow"))}</small><b>${h(title)}</b><span class="hint">${h(G.pubDate ? t("epOut")(fmtDay(G.pubDate)) : t("epNoDate"))}</span></span><button type="button" class="small" id="epBtn">${h(t("epBtn"))}</button>
+      ${waiting ? `<p class="ep-wait">${h(t("epPlanned")(waiting.title, waiting.pubDate ? fmtDay(waiting.pubDate) : ""))} <button type="button" class="small primary" id="epWrite">${h(t("epWriteIt"))}</button></p>` : ""}`;
+    $("epBtn").addEventListener("click", openEpSheet);
+    if ($("epWrite")) $("epWrite").addEventListener("click", (e) => { e.target.disabled = true; openFromSeries(waiting.id); });
+  });
+}
+const _renderGuideE = renderGuide;
+renderGuide = function () {
+  _renderGuideE();
+  if (!V.guided) return;
+  const top = $("guideTop");
+  if (top && !$("epStrip")) { const s = document.createElement("div"); s.id = "epStrip"; s.className = "ep-strip"; top.prepend(s); }
+  renderEpStrip();
+  if (V.step === 5) renderNextPlan();
+};
+
+// ---------- step 5: plan the next one right after recording ----------
+function renderNextPlan() {
+  const el = $("gNextPlan");
+  if (!el) return;
+  caps.db.then((db) => {
+    if (!el.isConnected) return;
+    if (!db) { el.innerHTML = ""; el.hidden = true; return; }
+    const next = (G.nextEp || "").trim();
+    const planned = next && G.prods.find((p) => p.id !== G.prodId && norm(p.title) === norm(next));
+    const head = `<header class="g-h"><h2>${h(t("npTitle"))}</h2></header>`;
+    if (planned) {
+      el.innerHTML = `${head}<p class="status ok">${h(t("npDone")(planned.title, planned.pubDate ? fmtDay(planned.pubDate) : t("srNoDate")))}</p>
+        <div class="actions"><button type="button" class="small primary" id="npOpen">${h(t("npOpen"))}</button><button type="button" class="small" id="npAll">${h(t("npAll"))}</button></div>`;
+      $("npOpen").addEventListener("click", () => openFromSeries(planned.id));
+      $("npAll").addEventListener("click", openEpSheet);
+      return;
+    }
+    const date = G.pubDate ? addDays(G.pubDate, 7) : nextFreeDate();
+    el.innerHTML = `${head}<p class="lead">${h(next ? t("npLeadNext")(next) : t("npLead"))}</p>
+      <div class="np-fields"><div class="field"><label for="npT">${h(t("epAbout"))}</label><input id="npT" maxlength="100" value="${h(capFirst(next))}" placeholder="${h(t("srNewPh"))}"></div>
+      <div class="field"><label for="npD">${h(t("epDay"))}</label><input id="npD" type="date" value="${h(date)}"><span class="hint" id="npDh">${h(t("npDateHint")(longDay(date)))}</span></div></div>
+      <div class="actions"><button type="button" class="primary small" id="npGo">${h(t("npGo"))}</button><button type="button" class="small linkish" id="npAll">${h(t("npAll"))}</button><span class="status" id="npSt"></span></div>`;
+    $("npD").addEventListener("change", (e) => { $("npDh").textContent = e.target.value ? t("npDateHint")(longDay(e.target.value)) : ""; });
+    $("npAll").addEventListener("click", openEpSheet);
+    $("npGo").addEventListener("click", async (e) => {
+      const ti = $("npT").value.trim();
+      if (!ti) { $("npT").focus(); return; }
+      e.target.disabled = true;
+      if (!next || norm(ti) !== norm(next)) { G.nextEp = ti; markDirty(); }
+      await planEpisode(capFirst(ti), $("npD").value);
+    });
+  });
+}
+const _gOnLangE = gOnLang;
+gOnLang = function () { _gOnLangE.apply(this, arguments); if ($("epSheet") && $("epSheet").open) openEpSheet(); };
+(function () { let tm = null; $("script").addEventListener("input", () => { clearTimeout(tm); tm = setTimeout(() => { if ($("epWrite") && $("script").value.trim()) renderEpStrip(); }, 400); }); })();
 /* ===== Ayuda: un «?» junto a cada campo y sección, con una explicación breve ===== */
 Object.assign(T.es, { qhBtn: "¿Qué es esto?" });
 Object.assign(T.en, { qhBtn: "What is this?" });
@@ -6043,7 +6272,9 @@ const HELP = {
     sMessage: "Revisa cómo llega tu mensaje a alguien que te ve solo en YouTube, sin cambiarlo: que la idea central se oiga al principio y al final, que no haya frases de culto en vivo, que los términos técnicos se expliquen, que los pasajes salgan en pantalla y que el cierre resuma.",
     translate: "Pasa el guion completo, con su título, miniatura, descripción e idea central, a otra variante del español (neutro, latinoamericano o de España) o al inglés de EE. UU., y viceversa. El mensaje no cambia. En «Citas en» eliges la versión de la Biblia del resultado (RVR1960, NVI, LBLA, KJV, NKJV, NASB…). Si mantienes la misma versión entre variantes del español, las citas se copian igual; si cambias de versión o de idioma, la IA las reescribe en la versión elegida y te lista cada una para que la compruebes. También sirve para pasar solo las citas a otra versión. Puedes volver al original.",
     script: "Pega el guion completo. Puedes marcar secciones con «## Título» y dejar señales para el editor como [B-ROLL: …], [TEXTO: …], [CITA: …] o [PAUSA]; esas señales no cuentan como palabras dichas.",
-    series: "Todos los episodios con su fecha de publicación. Escribe un tema y una fecha para planear uno nuevo, o toca «Abrir» para seguir trabajando en uno guardado.",
+    series: "Todos tus episodios, ordenados por el día en que salen. Toca uno para abrirlo y seguir trabajando. «Cambiar fecha» mueve su día de publicación, y «+ Planear otro episodio» apunta un tema futuro aunque todavía no tenga guion. Los ya grabados se guardan abajo.",
+    epStrip: "El episodio en el que estás trabajando y el día que sale. Toca «Mis episodios» para abrir otro o planear los siguientes.",
+    nextPlan: "Justo después de grabar es el mejor momento para apuntar el siguiente tema. Usa el que anuncias al final del guion; puedes cambiar el tema y el día.",
     backup: "Todo se guarda solo dentro de la app. Esta copia es un archivo extra por si algo se pierde: descárgala de vez en cuando. «Restaurar» vuelve a cargar un archivo de copia.",
     topfix: "Los cambios que más mejorarían el episodio, del más importante al menos. Cada tarjeta muestra la frase del guion que causa el aviso y una propuesta: «Aplicar» cambia el guion, «Deshacer» lo regresa y «Ahora no» oculta la tarjeta.",
     more: "La revisión completa, por si quieres más detalle. No hace falta abrir nada de esto para poder grabar.",
@@ -6115,7 +6346,9 @@ const HELP = {
     sMessage: "Checks how your message reaches someone watching alone on YouTube, without changing it: the central idea is heard at the start and end, no live-service phrases, technical terms explained, passages shown on screen, and a closing summary.",
     translate: "Moves the whole script, with its title, thumbnail, description and central idea, to another Spanish variant (neutral, Latin American or Spain) or to US English, and back. The message doesn't change. In “Quotes in” you pick the Bible version of the result (RVR1960, NVI, LBLA, KJV, NKJV, NASB…). Keeping the same version between Spanish variants copies quotes as is; changing version or language makes the AI rewrite them in the chosen version and list each one for you to check. It also works to move only the quotes to another version. You can go back to the original.",
     script: "Paste the full script. Mark sections with “## Title” and leave cues for the editor like [B-ROLL: …], [TEXTO: …], [CITA: …] or [PAUSA]; cues don't count as spoken words.",
-    series: "Every episode with its publish date. Type a topic and a date to plan a new one, or tap “Open” to keep working on a saved one.",
+    series: "All your episodes, ordered by the day they go out. Tap one to open it and keep working. “Change date” moves its publish day, and “+ Plan another episode” notes a future topic even before it has a script. Recorded ones are kept below.",
+    epStrip: "The episode you are working on and the day it goes out. Tap “My episodes” to open another or plan the next ones.",
+    nextPlan: "Right after recording is the best moment to note the next topic. It uses the one you announce at the end of the script; you can change the topic and the day.",
     backup: "Everything saves automatically inside the app. This copy is an extra file in case something gets lost: download it now and then. “Restore” loads a backup file back in.",
     topfix: "The changes that would improve the episode most, most important first. Each card shows the script sentence that causes the warning and a proposal: “Apply” changes the script, “Undo” reverts it, “Not now” hides the card.",
     more: "The full review, if you want more detail. You don't need to open any of this to record.",
@@ -6184,8 +6417,10 @@ const HELP_ANCHORS = [
   ["ask", "#askClaude .g-h h2", "row"],
   ["audience", 'label[for="audience"]', "row"],
   ["translate", 'label[for="trTarget"]', "row:.tr-box"],
-  ["series", "#gSeries .g-h h2, #gSeriesFull .g-h h2", "row"],
-  ["backup", "#gBackup .g-h h2, #gBackupFull .g-h h2", "row"],
+  ["series", "#epList .g-h h2, #gSeriesFull .g-h h2", "row"],
+  ["backup", "#epBackup .g-h h2, #gBackupFull .g-h h2", "row"],
+  ["epStrip", "#epStrip .ep-s-t small", "row:.ep-strip"],
+  ["nextPlan", "#gNextPlan .g-h h2", "row"],
   ["topfix", ".fx-head h3", "row"],
   ["more", ".g-more-sec > h3", "row"],
   ["mScripture", '.g-more-d[data-more="scripture"] > summary', "sum"],
