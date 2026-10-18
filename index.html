@@ -622,6 +622,9 @@ main[data-view="guide"]:not([data-step="1"]) #exPick:not(.demo-on){display:none}
 .em-legend{align-items:center;gap:8px}.em-lg{font:700 10.5px/1 var(--sans);letter-spacing:.03em;border-radius:5px;padding:3px 6px;color:#fff}
 .em-legend span::before{display:none}
 .em-note{margin:-4px 0 10px;font-size:12.5px}
+
+/* In an example, after step 1 only the yellow "you are practicing" bar tells the user it is an example */
+main[data-view="guide"]:not([data-step="1"]) #exPick{display:none}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -5575,6 +5578,7 @@ renderGuion = function () { if (V.guided) { $("guion").innerHTML = ""; renderGui
 
 $("runBtn").addEventListener("click", async () => {
   if (!V.guided || !hasScript()) return;
+  if ($("exPick") && $("exPick").dataset.open === "1") { $("exPick").dataset.open = "0"; if (typeof renderExPick === "function") renderExPick(); }
   const db = await caps.db;
   if (db && !G.prodId) await createProd();
   goStep(2);
@@ -6212,6 +6216,7 @@ async function startDemo(k) {
   const lg = UI === "en" ? "en" : "es";
   const e = EXAMPLES[lg] && EXAMPLES[lg][k];
   if (!e) return;
+  if ($("exPick")) $("exPick").dataset.open = "0"; // the picker folds once an example is chosen
   if (!DEMO) {
     if (G.prodId) { clearTimeout(saveTimer); await saveProd(false); }
     DEMO_PREV = { prodId: G.prodId, text: $("script").value, fields: ["title", "keyword", "thumb", "description", "series", "translation", "lang", "audience", "bigIdea"].map((id) => [id, $(id).value]) };
@@ -6260,7 +6265,7 @@ function renderExPick() {
   if (!el) return;
   const D = t("exD");
   // Collapsed by default so it takes one line; it stays open while an example is in use or once the user opened it.
-  const open = !!DEMO || el.dataset.open === "1";
+  const open = el.dataset.open === "1";
   el.classList.toggle("demo-on", !!DEMO);
   el.innerHTML = `<details class="ex-det"${open ? " open" : ""}><summary><h3>${h(DEMO ? t("exTitle") : t("exFirst"))}</h3>${DEMO ? `<span class="hint">· ${h(exName(DEMO))}</span>` : ""}</summary>
     <p class="hint">${h(t("exLead"))}</p>
