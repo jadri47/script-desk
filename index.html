@@ -597,6 +597,21 @@ html.guided .auth-cost{display:none}
 
 .st-fold{margin-top:8px}
 .st-fold>summary{cursor:pointer;font:600 15px/1.3 var(--sans);color:var(--accent);padding:8px 0;list-style:revert}
+
+/* v5: examples are a small "first time here?" pill at the top; Revisar is the full-width main action on phones */
+html #exPick,html .ex-pick{margin:0 0 12px;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+#exPick .ex-det>summary{display:inline-flex;min-height:36px;padding:4px 14px;border:1px solid var(--rule);border-radius:999px;background:var(--sheet);gap:8px}
+#exPick .ex-det>summary h3{font:600 14px/1.2 var(--sans);color:var(--accent)}
+#exPick .ex-det>summary::after{margin:0 0 0 2px;width:6px;height:6px}
+#exPick .ex-det[open]{padding:12px 14px 14px;border:1px solid var(--rule);border-radius:16px;background:var(--sheet);box-shadow:var(--lift)}
+#exPick .ex-det[open]>summary{margin-bottom:8px}
+main[data-view="guide"]:not([data-step="1"]) #exPick:not(.demo-on){display:none}
+@media (max-width:899px){
+  #editor>.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  #editor>.actions #runBtn{flex:1 1 100%;width:100%;min-height:58px;font-size:19px;border-radius:16px}
+  #editor>.actions #clearBtn{flex:1 1 auto;min-height:44px}
+  #editor>.actions .hint:empty{display:none}
+}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1213,6 +1228,7 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
       <button type="button" data-ui="es" aria-pressed="true">Español</button><button type="button" data-ui="en" aria-pressed="false">English</button>
     </div>
   </header>
+  <div id="exPick" class="ex-pick"></div>
   <div id="authBar" class="auth-bar" hidden></div>
   <div id="demoBar" class="demo-bar" role="status" hidden></div>
   <div id="stepBar" aria-label="Pasos"></div>
@@ -1262,7 +1278,6 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
       <button id="clearBtn" data-i18n="clear">Borrar</button>
       <span class="hint" id="runHint"></span>
     </div>
-    <div id="exPick" class="ex-pick"></div>
   </section>
 
   <div id="guide" aria-live="polite"></div>
@@ -6115,7 +6130,7 @@ const EXAMPLES = {
 }
 };
 Object.assign(T.es, {
-  exTitle: "Ejemplos para practicar",
+  exTitle: "Ejemplos para practicar", exFirst: "¿Primera vez aquí? Tócame",
   exLead: "Cinco guiones ya escritos, en español neutro, del más flojo al mejor. Lo que hagas en un ejemplo no se guarda ni toca tus episodios. En inglés (English, arriba) los ejemplos están en inglés de EE. UU.",
   exD: {
     demo: "Dos minutos para ver todas las revisiones de un vistazo: aciertos y fallos mezclados a propósito.",
@@ -6134,7 +6149,7 @@ Object.assign(T.es, {
   exNoBackup: "La copia de seguridad no está disponible mientras practicas con un ejemplo.",
 });
 Object.assign(T.en, {
-  exTitle: "Practice examples",
+  exTitle: "Practice examples", exFirst: "First time here? Tap me",
   exLead: "Five finished scripts, in US English, from the weakest to the best. Nothing you do in an example is saved or touches your episodes. In Español (top) the examples are in neutral Spanish.",
   exD: {
     demo: "Two minutes to see every check at a glance: hits and misses mixed on purpose.",
@@ -6233,7 +6248,8 @@ function renderExPick() {
   const D = t("exD");
   // Collapsed by default so it takes one line; it stays open while an example is in use or once the user opened it.
   const open = !!DEMO || el.dataset.open === "1";
-  el.innerHTML = `<details class="ex-det"${open ? " open" : ""}><summary><h3>${h(t("exTitle"))}</h3>${DEMO ? `<span class="hint">· ${h(exName(DEMO))}</span>` : ""}</summary>
+  el.classList.toggle("demo-on", !!DEMO);
+  el.innerHTML = `<details class="ex-det"${open ? " open" : ""}><summary><h3>${h(DEMO ? t("exTitle") : t("exFirst"))}</h3>${DEMO ? `<span class="hint">· ${h(exName(DEMO))}</span>` : ""}</summary>
     <p class="hint">${h(t("exLead"))}</p>
     <div class="ex-grid">${EX_KEYS.map((k) => `<button type="button" class="ex-card${DEMO === k ? " on" : ""}" data-ex="${k}"${DEMO === k ? ' aria-current="true"' : ""}>
       <span class="ex-h"><span class="ex-dot ex-${k}" aria-hidden="true"></span>${h(exName(k))}${exMin(k) ? ` <span class="ex-min">${h(exMin(k))} ${h(t("exDur"))}</span>` : ""}${DEMO === k ? ` <span class="hint">· ${h(t("exCur"))}</span>` : ""}</span>
@@ -7621,7 +7637,7 @@ const SPLIT = { on: false, mq: window.matchMedia("(min-width: 900px) and (min-he
       rightIds.forEach((id) => { const el = $(id); if (el) main.insertBefore(el, split); });
       if (footer) main.insertBefore(footer, split);
       editor.prepend(scriptField, meta);
-      editor.insertBefore(acts, $("exPick"));
+      editor.appendChild(acts);
       split.remove();
     }
     SPLIT.on = want;
