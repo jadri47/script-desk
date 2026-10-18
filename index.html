@@ -701,6 +701,20 @@ html .score-pill[hidden],html.pp-open .score-pill{display:none}
 .pf-tier{font:600 12px/1 var(--sans);padding:2px 8px;border-radius:999px;background:var(--sheet-2);border:1px solid var(--rule);color:var(--ink-2)}
 .pf-t{font-size:13px;color:var(--ink-2);margin-top:2px} .pf-t em{font-style:normal;font-weight:600;color:var(--rojo)}
 .pf-clear{font-size:14px;color:var(--ink-2);margin:2px 0 0}
+/* Practice picker, sign-in line and practice banner live in the header, above the five-color line */
+html .mast-tools{flex:0 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:2px 0 0;min-width:0}
+html .mast-tools #exPick{margin:0;flex:0 0 auto}
+html .mast-tools #exPick:has(details[open]){flex:1 1 100%}
+html .mast-tools .auth-bar{flex:1 1 280px;margin:0;padding:0 2px;border:0;background:transparent;gap:10px;min-width:0}
+html .mast-tools .auth-bar p{font-size:13px;line-height:1.35;color:var(--ink-2);flex:1 1 auto}
+html .mast-tools .auth-bar:not(.ok):not(.warn) button{padding:6px 12px;min-height:34px}
+html .mast-tools .auth-bar.warn{padding:6px 12px;border:1px solid var(--gold);background:var(--gold-bg);border-radius:12px}
+html .mast-tools .demo-bar{flex:1 1 100%;margin:2px 0 0;padding:6px 12px;gap:6px 10px;border-radius:12px}
+html .mast-tools .demo-bar p{font-size:13px;line-height:1.35;flex:1 1 200px}
+html .mast-tools .demo-bar button{padding:5px 12px;min-height:34px;font-size:13px}
+html .mast-tools .demo-bar .hint{display:none}
+@media (max-width:620px){ html .mast-tools{grid-column:1 / -1;margin-top:0} html .mast-tools .auth-bar{flex:1 1 100%} }
+html.sd-split .mast-tools .auth-bar{margin:0;padding:0 2px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1316,10 +1330,12 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
     <div class="langswitch" role="group" aria-label="Idioma / Language">
       <button type="button" data-ui="es" aria-pressed="true">Español</button><button type="button" data-ui="en" aria-pressed="false">English</button>
     </div>
-  </header>
-  <div id="exPick" class="ex-pick"></div>
-  <div id="authBar" class="auth-bar" hidden></div>
+    <div class="mast-tools">
+      <div id="exPick" class="ex-pick"></div>
+      <div id="authBar" class="auth-bar" hidden></div>
   <div id="demoBar" class="demo-bar" role="status" hidden></div>
+    </div>
+  </header>
   <div id="stepBar" aria-label="Pasos"></div>
   <nav class="modes" role="tablist" aria-label="Modo / Mode">
     <button type="button" role="tab" data-mode="review" aria-selected="true" data-i18n="modeReview">Revisión</button><button type="button" role="tab" data-mode="guion" aria-selected="false" data-i18n="modeGuion">Guion y prompter</button>
