@@ -641,6 +641,14 @@ html .ep-strip>button{font-size:13.5px;white-space:nowrap}
 .danger{background:var(--rojo);border-color:var(--rojo);color:#fff}
 .sr-clear{margin-top:14px;padding-top:10px;border-top:1px solid var(--rule-2);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 @media (max-width:520px){.sr-list li{grid-template-columns:1fr}.sr-acts{justify-content:flex-start}}
+
+/* Borrar guion: small red link under the script box; confirmation popup */
+.clear-link{color:var(--rojo);font-size:14px;padding:4px 0;margin-left:auto;background:none;border:0}
+.clr-dlg{width:min(440px,calc(100vw - 32px))}
+.clr-dlg h2{margin:0 0 8px;font-size:20px}
+.clr-act{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.clr-act button{width:100%;min-height:50px;font-size:16px}
+html .clear-link,html button.clear-link{color:var(--rojo)}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1272,7 +1280,7 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
       <p class="steps"><b data-i18n="tip1">Pega</b><i>→</i><b data-i18n="tip2">Revisa</b><i>→</i><b data-i18n="tip3">Exporta</b></p>
       <textarea id="script" data-i18n-ph="scriptPh" placeholder="Pega tu guion aquí…" spellcheck="true"></textarea>
     </div>
-    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span></div>
+    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span><button type="button" class="linkish clear-link" id="clearBtn" data-i18n="clear">Borrar guion</button></div>
     <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><textarea id="bigIdea" rows="1" data-one="1" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."></textarea><div id="ideaSug" class="idea-sug-box"></div></div>
 
     <details class="extra" id="extraFields">
@@ -1304,7 +1312,6 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
     <div id="trBox" class="tr-box"></div>
     <div class="actions">
       <button class="primary" id="runBtn" data-i18n="run">Revisar guion</button>
-      <button id="clearBtn" data-i18n="clear">Borrar</button>
       <span class="hint" id="runHint"></span>
     </div>
   </section>
@@ -3228,7 +3235,7 @@ const T = {
     kwLabel: "Palabra clave", kwPh: "la frase que alguien buscaría", thumbLabel: "Texto de la miniatura", thumbPh: "1 a 4 palabras",
     descLabel: "Descripción", trLabel: "Versión bíblica", seriesLabel: "Serie o episodio", seriesPh: "Ep. 3 · Salmos",
     scriptLangLabel: "Idioma del guion", detect: "Detectar", spanish: "Español", english: "Inglés",
-    run: "Revisar guion", clear: "Borrar", needText: "Pega un guion para revisarlo.",
+    run: "Revisar guion", clear: "Borrar guion", needText: "Pega un guion para revisarlo.",
     historyTitle: "Versiones y resultados",
     historyLead: "Guarda cada versión del guion y, después de publicar, anota cómo le fue al episodio. Con tres episodios anotados, la duración estimada se ajusta al ritmo real del presentador.",
     disc1: "YouTube no publica una lista de palabras ni una fórmula; las reglas aquí son nuestra lectura de sus pautas publicadas.",
@@ -3298,7 +3305,7 @@ const T = {
     kwLabel: "Keyword", kwPh: "the phrase someone would search", thumbLabel: "Thumbnail text", thumbPh: "1 to 4 words",
     descLabel: "Description", trLabel: "Bible translation", seriesLabel: "Series or episode", seriesPh: "Ep. 3 · Psalms",
     scriptLangLabel: "Script language", detect: "Detect", spanish: "Spanish", english: "English",
-    run: "Review script", clear: "Clear", needText: "Paste a script to review it.",
+    run: "Review script", clear: "Clear script", needText: "Paste a script to review it.",
     historyTitle: "Versions and results",
     historyLead: "Save each version of the script and, after publishing, record how the episode did. After three recorded episodes, the runtime estimate adjusts to the host's real pace.",
     disc1: "YouTube publishes no word list or formula; the rules here are our reading of its published guidelines.",
@@ -3403,10 +3410,11 @@ function updateLive() {
 $("script").addEventListener("input", updateLive);
 $("lang").addEventListener("change", updateLive);
 
-$("clearBtn").addEventListener("click", () => {
+$("clearBtn").addEventListener("click", () => { if (!$("script").value.trim()) { $("script").focus(); return; } if (typeof askClearScript === "function") askClearScript(); else doClearScript(); });
+function doClearScript() {
   $("script").value = ""; ["title", "keyword", "thumb", "description", "series"].forEach((id) => ($(id).value = ""));
   $("results").classList.add("hidden"); $("results").innerHTML = ""; state.result = null; state.rewrite = null; updateLive(); $("script").focus();
-});
+}
 
 $("runBtn").addEventListener("click", () => {
   const text = $("script").value;
@@ -7668,6 +7676,21 @@ richSlice = function (text, from, to, units, cues, unitWrap, cueWrap) {
   }
   return html + esc(pos, to);
 };
+
+// ---------- «Borrar guion» asks first, in a popup ----------
+Object.assign(T.es, { clrTitle: "¿Borrar todo el guion?", clrBody: "Se borra el texto del guion y también el título, la miniatura y la descripción que escribiste en esta pantalla.", clrSaved: "Este episodio está guardado: también quedará vacío.", clrNo: "No, conservar", clrYes: "Sí, borrar todo", clrUndo: "No se puede deshacer." });
+Object.assign(T.en, { clrTitle: "Delete the whole script?", clrBody: "This clears the script text and also the title, thumbnail and description you typed on this screen.", clrSaved: "This episode is saved: it will be left empty too.", clrNo: "No, keep it", clrYes: "Yes, delete everything", clrUndo: "This can't be undone." });
+function askClearScript() {
+  let d = $("clrDlg");
+  if (!d) { d = document.createElement("dialog"); d.id = "clrDlg"; d.className = "ep-sheet clr-dlg"; document.body.appendChild(d); d.addEventListener("click", (e) => { if (e.target === d) d.close(); }); }
+  const saved = !!G.prodId && !(typeof DEMO !== "undefined" && DEMO);
+  d.innerHTML = `<div class="ep-sheet-in"><h2>${h(t("clrTitle"))}</h2><p>${h(t("clrBody"))}</p>${saved ? `<p><b>${h(t("clrSaved"))}</b></p>` : ""}<p class="hint">${h(t("clrUndo"))}</p>
+    <div class="clr-act"><button type="button" class="primary" id="clrNo">${h(t("clrNo"))}</button><button type="button" class="danger" id="clrYes">${h(t("clrYes"))}</button></div></div>`;
+  $("clrNo").addEventListener("click", () => d.close());
+  $("clrYes").addEventListener("click", () => { d.close(); doClearScript(); });
+  try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
+  $("clrNo").focus();
+}
 /* ===== Escritorio: guion fijo a la izquierda, todo lo demás a la derecha con su propio scroll ===== */
 // Wide screens get a split view: the script never scrolls away, and the review, fixes, packaging and the
 // rest live in the right pane. Narrow screens keep the original single-column order.
