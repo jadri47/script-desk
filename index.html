@@ -1169,6 +1169,16 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
 @media (max-width:899px){
   #sec-manuscript .manuscript, .g-more-b .manuscript{max-height:min(62vh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-gutter:stable}
 }
+
+/* Phone: draggable height grip under the script box */
+.ed-grip{display:none}
+@media (max-width:640px){
+  .ed-wrap:not(.ed-full) .ed{height:var(--edh,min(46vh,380px));min-height:120px}
+  .ed-wrap:not(.ed-full) .ed-grip{display:flex;justify-content:center;align-items:center;height:30px;touch-action:none;cursor:ns-resize;border-top:1px solid var(--rule);border-radius:0 0 17px 17px;background:var(--sheet);position:relative;z-index:1}
+  .ed-grip span{width:44px;height:5px;border-radius:3px;background:var(--rule-2);transition:background .15s}
+  .ed-grip.on span,.ed-grip:focus-visible span{background:var(--accent)}
+  .ed-wrap:not(.ed-full)::after{bottom:30px}
+}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -7107,6 +7117,7 @@ Object.assign(T.es, {
   edBold: "Negrita (Ctrl+B)", edItalic: "Cursiva (Ctrl+I)", edUnder: "Subrayado (Ctrl+U)", edHi: "Resaltar",
   edHead: "Título de sección", edUl: "Lista con viñetas", edOl: "Lista numerada", edCue: "Texto en pantalla para el editor",
   edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
+  edGrip: "Arrastra para cambiar la altura del guion",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
   edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edAuto: "Se guarda solo mientras escribes.",
 });
@@ -7114,6 +7125,7 @@ Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
   edHead: "Section title", edUl: "Bulleted list", edOl: "Numbered list", edCue: "On-screen text for the editor",
   edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
+  edGrip: "Drag to change the script box height",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
   edCueText: "verse or phrase", edLocal: "Saved on this device", edAuto: "It saves itself as you write.",
 });
@@ -7470,7 +7482,8 @@ function onPaste(e) {
   const wrap = document.createElement("div");
   wrap.className = "ed-wrap";
   wrap.innerHTML = `<div class="ed-bar" role="toolbar" aria-label="${h(t("scriptLabel"))}">${toolbarHTML()}</div>
-    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="edLbl" spellcheck="true" data-ph="${h(t("edPh"))}"></div>`;
+    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="edLbl" spellcheck="true" data-ph="${h(t("edPh"))}"></div>
+    <div class="ed-grip" id="edGrip" role="separator" aria-orientation="horizontal" aria-label="${h(t("edGrip"))}" tabindex="0"><span></span></div>`;
   TA.insertAdjacentElement("beforebegin", wrap);
   TA.style.display = "none";
   const lbl = document.querySelector('label[for="script"]');
@@ -7478,6 +7491,20 @@ function onPaste(e) {
   ED.wrap = wrap; ED.el = wrap.querySelector("#ed");
   ED.el.lang = UI;
 
+  // Phone: drag the grip under the box to make it taller or shorter (the height is remembered).
+  (() => {
+    const grip = wrap.querySelector("#edGrip"), MIN = 120, maxH = () => Math.round(innerHeight * 0.85);
+    const cur = () => ED.el.getBoundingClientRect().height;
+    const setH = (px) => { const v = Math.max(MIN, Math.min(maxH(), Math.round(px))); wrap.style.setProperty("--edh", v + "px"); return v; };
+    try { const s = +lsGet("sd-edh"); if (s >= MIN) setH(s); } catch (e) {}
+    let y0 = 0, h0 = 0, drag = false;
+    grip.addEventListener("pointerdown", (e) => { drag = true; y0 = e.clientY; h0 = cur(); grip.setPointerCapture(e.pointerId); grip.classList.add("on"); e.preventDefault(); });
+    grip.addEventListener("pointermove", (e) => { if (drag) setH(h0 + (e.clientY - y0)); });
+    const end = () => { if (!drag) return; drag = false; grip.classList.remove("on"); try { lsSet("sd-edh", String(Math.round(cur()))); } catch (e) {} };
+    grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
+    grip.addEventListener("keydown", (e) => { if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const v = setH(cur() + (e.key === "ArrowDown" ? 40 : -40)); lsSet("sd-edh", String(v)); } });
+    grip.addEventListener("dblclick", () => { wrap.style.removeProperty("--edh"); lsSet("sd-edh", ""); });
+  })();
   wrap.querySelector(".ed-bar").addEventListener("mousedown", (e) => { if (e.target.closest("[data-ed]")) e.preventDefault(); });
   wrap.querySelectorAll("[data-ed]").forEach((b) => b.addEventListener("click", () => edCmd(b.dataset.ed)));
   ED.el.addEventListener("input", (e) => { markdownShortcut(e); queueSync(); });
