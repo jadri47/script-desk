@@ -766,6 +766,12 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 @media (max-width:1480px){ html.sd-split .masthead #exPick summary .hint{display:none} }
 @media (max-width:1320px){ html.sd-split .masthead #stepBar .sb button:not(.on) .sb-l{display:none} html.sd-split .masthead #stepBar .sb button:not(.on){justify-content:center} }
 @media (max-width:1320px){ html.sd-split .masthead .xswitch>span{display:none} }
+/* score v2 popover */
+.sc-lamp{margin:6px 0 2px;font-weight:600;font-size:14px}
+.sc-rows button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left}
+.sc-pts{flex:0 0 auto;font-variant-numeric:tabular-nums;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:999px;padding:1px 8px;font-size:12px}
+.sc-how{margin:8px 0 0;font-size:13px}.sc-how summary{cursor:pointer;color:var(--accent);font-weight:600}.sc-how ul{margin:6px 0 0;padding-left:18px;color:var(--ink-2)}.sc-how li{margin:3px 0}
+.fix-pts{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-variant-numeric:tabular-nums;vertical-align:middle}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -3216,27 +3222,51 @@ function applySuggestion(text, s) {
   const i = relocateSuggestion(text, s);
   return i == null ? null : text.slice(0, i) + s.corrected + text.slice(i + s.original.length);
 }
-/* ===== Puntuación Script Desk (0–100): banda primero, posición dentro de la banda =====
-   La banda (rojo/amarillo/verde) la decide el mismo criterio que el semáforo de verdictOf(); las revisiones solo mueven
-   el número dentro de esa banda. Las revisiones que el usuario descarta ("no aplica") siguen costando puntos. */
+/* ===== Puntuación Script Desk v2 (0–100): puntos que se pierden por cada revisión pendiente, según su impacto =====
+   score = 100 − Σ peso(revisión pendiente) − mitad del peso de las descartadas (tope 10).
+   Una revisión roja abierta limita la nota a 69. La lámpara (rojo/amarillo/verde) es la señal de política y NO limita el número
+   salvo el rojo. Pesos por nivel:
+     A anuncios (pf-* rojo 30 con tope 69, pf-* amarillo 8, pack-* 6) · B primeros 30 s y estructura 1–5 · C mensaje y citas 1–4
+     D que te encuentren 1–3 · E cómo suena y autenticidad 1–2. Cada id nuevo del motor debe tener su peso aquí (lo exige score_test). */
+const SCORE_W = {
+  promise: 5, content: 5, greeting: 4, cta: 3, ending: 2, hook: 2, rehook: 1, prayer: 1,
+  bigidea: 4, recap: 3, application: 3, onscreen: 2, jargon: 1, pulpit: 1, reading: 1, refs: 3,
+  kw: 3, title: 3, desc: 2, search: 2, kwspread: 1, chapters: 1, support: 1, kwopen: 1,
+  readability: 2, long: 1, regional: 1, weak: 1, muletillas: 1,
+  aitell: 2, openers: 1, rhythm: 1,
+  runtime: 0,
+};
+const SCORE_TIER = { pf: "A", pack: "A", promise: "B", content: "B", greeting: "B", cta: "B", ending: "B", hook: "B", rehook: "B", prayer: "B",
+  bigidea: "C", recap: "C", application: "C", onscreen: "C", jargon: "C", pulpit: "C", reading: "C", refs: "C",
+  kw: "D", title: "D", desc: "D", search: "D", kwspread: "D", chapters: "D", support: "D", kwopen: "D" };
+function weightOf(r) {
+  if (/^pf-/.test(r.id)) return r.level === "rojo" ? 30 : 8;
+  if (/^pack-/.test(r.id)) return 6;
+  return Object.prototype.hasOwnProperty.call(SCORE_W, r.id) ? SCORE_W[r.id] : 2;
+}
+function tierOf(r) { return /^pf-/.test(r.id) ? "A" : /^pack-/.test(r.id) ? "A" : SCORE_TIER[r.id] || "E"; }
 function scoreOf(R, dismissed) {
   dismissed = dismissed || new Set();
   const rows = Object.values(R.sections).flat();
   const cand = rows.filter((r) => (!r.passed || r.warn) && !FIX_SKIP.has(r.id));
   const open = cand.filter((r) => !dismissed.has(r.id));
   const ignored = cand.filter((r) => dismissed.has(r.id));
-  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
-  const total = Math.max(1, rows.length);
-  const ratio = 1 - (open.length + 0.5 * ignored.length) / total;
-  const pkgPen = R.worst === "amarillo" ? 5 : 0;
-  let score, band;
-  if (red) { band = "rojo"; score = Math.round(69 * Math.max(0, ratio)); score = Math.max(0, Math.min(69, score)); }
-  else if (open.length) { band = "amarillo"; score = Math.max(70, Math.min(89, Math.round(70 + 19 * ratio) - pkgPen)); }
-  else { band = "verde"; score = Math.max(90, Math.min(100, 100 - pkgPen - 2 * ignored.length)); }
-  return { score, band, open, ignored, pkgPen, total: rows.length, passed: R.passed };
+  const pts = new Map(); cand.forEach((r) => pts.set(r.id, weightOf(r)));
+  const openPts = open.reduce((a, r) => a + pts.get(r.id), 0);
+  const dismissPen = Math.min(10, Math.ceil(ignored.reduce((a, r) => a + pts.get(r.id), 0) / 2));
+  const lost = openPts + dismissPen;
+  const redOpen = open.some((r) => r.level === "rojo" && (!r.passed || r.warn));
+  const redLamp = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  let score = Math.max(0, Math.min(100, 100 - lost));
+  if (redLamp) score = Math.min(score, 69);
+  // verde = nada abierto: el tope de lo descartado (10) garantiza ≥ 90
+  const band = redLamp ? "rojo" : open.length ? "amarillo" : "verde";
+  if (band === "verde") score = Math.max(90, score);
+  if (band === "amarillo") score = Math.min(score, 99);
+  return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -5103,27 +5133,51 @@ function applySuggestion(text, s) {
   const i = relocateSuggestion(text, s);
   return i == null ? null : text.slice(0, i) + s.corrected + text.slice(i + s.original.length);
 }
-/* ===== Puntuación Script Desk (0–100): banda primero, posición dentro de la banda =====
-   La banda (rojo/amarillo/verde) la decide el mismo criterio que el semáforo de verdictOf(); las revisiones solo mueven
-   el número dentro de esa banda. Las revisiones que el usuario descarta ("no aplica") siguen costando puntos. */
+/* ===== Puntuación Script Desk v2 (0–100): puntos que se pierden por cada revisión pendiente, según su impacto =====
+   score = 100 − Σ peso(revisión pendiente) − mitad del peso de las descartadas (tope 10).
+   Una revisión roja abierta limita la nota a 69. La lámpara (rojo/amarillo/verde) es la señal de política y NO limita el número
+   salvo el rojo. Pesos por nivel:
+     A anuncios (pf-* rojo 30 con tope 69, pf-* amarillo 8, pack-* 6) · B primeros 30 s y estructura 1–5 · C mensaje y citas 1–4
+     D que te encuentren 1–3 · E cómo suena y autenticidad 1–2. Cada id nuevo del motor debe tener su peso aquí (lo exige score_test). */
+const SCORE_W = {
+  promise: 5, content: 5, greeting: 4, cta: 3, ending: 2, hook: 2, rehook: 1, prayer: 1,
+  bigidea: 4, recap: 3, application: 3, onscreen: 2, jargon: 1, pulpit: 1, reading: 1, refs: 3,
+  kw: 3, title: 3, desc: 2, search: 2, kwspread: 1, chapters: 1, support: 1, kwopen: 1,
+  readability: 2, long: 1, regional: 1, weak: 1, muletillas: 1,
+  aitell: 2, openers: 1, rhythm: 1,
+  runtime: 0,
+};
+const SCORE_TIER = { pf: "A", pack: "A", promise: "B", content: "B", greeting: "B", cta: "B", ending: "B", hook: "B", rehook: "B", prayer: "B",
+  bigidea: "C", recap: "C", application: "C", onscreen: "C", jargon: "C", pulpit: "C", reading: "C", refs: "C",
+  kw: "D", title: "D", desc: "D", search: "D", kwspread: "D", chapters: "D", support: "D", kwopen: "D" };
+function weightOf(r) {
+  if (/^pf-/.test(r.id)) return r.level === "rojo" ? 30 : 8;
+  if (/^pack-/.test(r.id)) return 6;
+  return Object.prototype.hasOwnProperty.call(SCORE_W, r.id) ? SCORE_W[r.id] : 2;
+}
+function tierOf(r) { return /^pf-/.test(r.id) ? "A" : /^pack-/.test(r.id) ? "A" : SCORE_TIER[r.id] || "E"; }
 function scoreOf(R, dismissed) {
   dismissed = dismissed || new Set();
   const rows = Object.values(R.sections).flat();
   const cand = rows.filter((r) => (!r.passed || r.warn) && !FIX_SKIP.has(r.id));
   const open = cand.filter((r) => !dismissed.has(r.id));
   const ignored = cand.filter((r) => dismissed.has(r.id));
-  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
-  const total = Math.max(1, rows.length);
-  const ratio = 1 - (open.length + 0.5 * ignored.length) / total;
-  const pkgPen = R.worst === "amarillo" ? 5 : 0;
-  let score, band;
-  if (red) { band = "rojo"; score = Math.round(69 * Math.max(0, ratio)); score = Math.max(0, Math.min(69, score)); }
-  else if (open.length) { band = "amarillo"; score = Math.max(70, Math.min(89, Math.round(70 + 19 * ratio) - pkgPen)); }
-  else { band = "verde"; score = Math.max(90, Math.min(100, 100 - pkgPen - 2 * ignored.length)); }
-  return { score, band, open, ignored, pkgPen, total: rows.length, passed: R.passed };
+  const pts = new Map(); cand.forEach((r) => pts.set(r.id, weightOf(r)));
+  const openPts = open.reduce((a, r) => a + pts.get(r.id), 0);
+  const dismissPen = Math.min(10, Math.ceil(ignored.reduce((a, r) => a + pts.get(r.id), 0) / 2));
+  const lost = openPts + dismissPen;
+  const redOpen = open.some((r) => r.level === "rojo" && (!r.passed || r.warn));
+  const redLamp = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  let score = Math.max(0, Math.min(100, 100 - lost));
+  if (redLamp) score = Math.min(score, 69);
+  // verde = nada abierto: el tope de lo descartado (10) garantiza ≥ 90
+  const band = redLamp ? "rojo" : open.length ? "amarillo" : "verde";
+  if (band === "verde") score = Math.max(90, score);
+  if (band === "amarillo") score = Math.min(score, 99);
+  return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -5457,7 +5511,7 @@ function renderResults() {
   const ringc = SCR.band === "rojo" ? "var(--rojo)" : SCR.band === "amarillo" ? "var(--amarillo)" : "var(--verde)";
   const verdict = `<div class="verdict">
     <div class="ring" style="--p:${pct};--ringc:${ringc}"><span>${SCR.score}<small>/ 100</small></span></div>
-    <div class="vhead"><div class="big">${h(t("scTitle"))}: ${SCR.score}</div><div class="hint">${h(t("checksPass")(R.passed, R.total))}</div>
+    <div class="vhead"><div class="big">${h(t("scTitle"))}: ${SCR.score}</div><div class="hint">${h(t("checksPass")(R.passed, R.total))}${SCR.open.length ? " · " + h(t("scLeft")(SCR.open.length, SCR.openPts)) : ""}</div>
       <div><span class="lamp ${R.worst}">${h(t("lvl")[R.worst])}</span></div>
       <span class="hint">${h(t("langName")[R.lang])} · ${R.wc} ${h(t("words"))}</span></div>
     ${statsHTML(R)}</div>`;
@@ -7206,7 +7260,7 @@ topFixHTML = function (R) {
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
     return `<li class="fx${open ? "" : " fx-closed"}" data-ci="${ci}" data-fid="${h(c.id)}">
-      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
+      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${(() => { const w = (c.ids || [c.id]).reduce((x, id) => { const r = Object.values(R.sections).flat().find((q) => q.id === id); return x + (r ? weightOf(r) : 0); }, 0); return w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${w}</span>` : ""; })()}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
       ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
       <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
       <div class="fx-lbl">${h(t("fxWould"))}${p && c.proposals.length > 1 ? ` <span class="hint">· ${h(p.label)}</span>` : p ? ` <span class="hint">· ${h(p.label)}</span>` : ""}</div>
@@ -7387,10 +7441,8 @@ function plainLabel(id, fallback) {
   return fallback;
 }
 function verdictOf(R) {
-  const rows = failedRows(R);
-  const red = R.worst === "rojo" || rows.some((r) => r.level === "rojo");
-  const n = rows.filter((r) => !FIX_SKIP.has(r.id) && !state.fixDismissed.has(r.id)).length;
-  return red ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: t("vYellow")(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
+  const S = scoreOf(R, state.fixDismissed), n = S.open.length;
+  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: t("vYellow")(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
 }
 const hasScript = () => !!$("script").value.trim();
 function ensureReview() {
@@ -8517,7 +8569,7 @@ failedRows = function (R) {
   const rows = _failedRowsM(R);
   const packRed = (r) => /^pack-/.test(r.id) && (R.packaging || []).some((p) => p.level === "rojo" && r.id === "pack-" + p.label);
   const red = (r) => r.level === "rojo" || packRed(r);
-  return rows.sort((a, b) => (red(b) ? 1 : 0) - (red(a) ? 1 : 0) || (MSG_PRIO[a.sec] || 9) - (MSG_PRIO[b.sec] || 9));
+  return rows.sort((a, b) => (red(b) ? 1 : 0) - (red(a) ? 1 : 0) || (MSG_PRIO[a.sec] || 9) - (MSG_PRIO[b.sec] || 9) || weightOf(b) - weightOf(a));
 };
 
 const _plainLabelM = plainLabel;
@@ -10584,27 +10636,39 @@ function editMarks(R, text) {
 // scoreOf() vive en score_logic.js (banda primero, posición dentro de la banda). El análisis en vivo corre en un
 // Web Worker con el mismo motor que la revisión; si no hay worker, corre en la pausa del navegador con "debounce".
 Object.assign(T.es, {
-  scTitle: "Puntuación Script Desk", scWord: "Puntuación", scBand: { rojo: "Revisa esto primero", amarillo: "Casi listo", verde: "Listo para grabar" },
+  scTitle: "Puntuación Script Desk", scWord: "Puntuación", scBand: { rojo: "Anuncios en riesgo", amarillo: "Sin riesgo grave de anuncios", verde: "Listo para grabar" },
+  scLamp: { rojo: "Anuncios en riesgo: hay un término que YouTube no perdona.", amarillo: "Sin riesgo grave de anuncios.", verde: "Limpio: nada pendiente." },
+  scLeft: (n, p) => `Te ${n === 1 ? "falta 1 revisión, que vale" : `faltan ${n} revisiones, que valen`} ${p} ${p === 1 ? "punto" : "puntos"}.`,
+  scHowT: "Cómo se calcula",
+  scHow: ["Anuncios (términos de riesgo): 6–8 puntos cada uno; un término grave pone la nota en rojo (máx. 69).", "Primeros 30 segundos y estructura: 1–5 puntos.", "Que el mensaje se entienda (idea central, cierre, citas): 1–4 puntos.", "Que te encuentren (palabra clave, título, descripción): 1–3 puntos.", "Cómo suena (lecturas, muletillas, regionalismos): 1–2 puntos. Lo que descartas cuesta la mitad."],
+  scPtsTip: "Puntos que sube la nota al arreglarlo",
+  scNew: "Nueva puntuación: cada revisión pesa según su impacto. Si tu número bajó, el guion no cambió; ahora ves qué arreglar primero.",
   scSince: (a, b) => `Desde que empezaste: ${a} → ${b}`, scTop: "Lo que más sube la nota", scNone: "Nada pendiente.",
-  scIgnored: (n, x) => `Ignoraste ${n} ${n === 1 ? "revisión" : "revisiones"} (${x >= 1 ? `−${x} ${x === 1 ? "punto" : "puntos"}` : "no cuenta como arreglada"})`, scShowAgain: "Volver a mostrar",
-  scNote: "Puntuación de Script Desk según sus propias revisiones. No es la nota de YouTube: sube cuando arreglas lo que la app marca.",
+  scIgnored: (n, x) => `Ignoraste ${n} ${n === 1 ? "revisión" : "revisiones"} (−${x} ${x === 1 ? "punto" : "puntos"})`, scShowAgain: "Volver a mostrar",
+  scNote: "Puntuación de Script Desk: 100 menos lo que pesa cada revisión pendiente. No es la nota de YouTube.",
   scHide: "Ocultar burbuja", scShow: "Mostrar puntuación", scAria: (n) => `Puntuación ${n} de 100`, scChecks: (p, n) => `${p} de ${n} revisiones pasan`, scClose: "Cerrar",
 });
 Object.assign(T.en, {
-  scTitle: "Script Desk score", scWord: "Score", scBand: { rojo: "Check this first", amarillo: "Almost ready", verde: "Ready to record" },
+  scTitle: "Script Desk score", scWord: "Score", scBand: { rojo: "Ads at risk", amarillo: "No serious ad risk", verde: "Ready to record" },
+  scLamp: { rojo: "Ads at risk: a term YouTube doesn't forgive.", amarillo: "No serious ad risk.", verde: "Clean: nothing pending." },
+  scLeft: (n, p) => `${n} ${n === 1 ? "check" : "checks"} left, worth ${p} ${p === 1 ? "point" : "points"}.`,
+  scHowT: "How it's scored",
+  scHow: ["Ads (risk terms): 6–8 points each; one serious term turns the score red (max 69).", "First 30 seconds and structure: 1–5 points.", "That the message lands (central idea, close, quotes): 1–4 points.", "That people find it (keyword, title, description): 1–3 points.", "How it sounds (readings, fillers, regionalisms): 1–2 points. What you dismiss costs half."],
+  scPtsTip: "Points this adds to the score when fixed",
+  scNew: "New score: each check weighs by its impact. If your number dropped, the script did not change; now you see what to fix first.",
   scSince: (a, b) => `Since you started: ${a} → ${b}`, scTop: "What raises it most", scNone: "Nothing pending.",
-  scIgnored: (n, x) => `You dismissed ${n} ${n === 1 ? "check" : "checks"} (${x >= 1 ? `−${x} ${x === 1 ? "point" : "points"}` : "not counted as fixed"})`, scShowAgain: "Show again",
-  scNote: "Script Desk's own score, from its checks. It is not YouTube's score: it rises as you fix what the app flags.",
+  scIgnored: (n, x) => `You dismissed ${n} ${n === 1 ? "check" : "checks"} (−${x} ${x === 1 ? "point" : "points"})`, scShowAgain: "Show again",
+  scNote: "Script Desk score: 100 minus the weight of each pending check. It is not YouTube's score.",
   scHide: "Hide bubble", scShow: "Show score", scAria: (n) => `Score ${n} out of 100`, scChecks: (p, n) => `${p} of ${n} checks pass`, scClose: "Close",
 });
 if (typeof HELP !== "undefined") {
-  HELP.es.verdictCard = "Resumen de la revisión. El círculo muestra la puntuación de Script Desk (0 a 100): sube cuando arreglas lo que la app marca. No es la nota de YouTube. Debajo ves cuántas revisiones pasan; la etiqueta de color habla solo de los anuncios.";
-  HELP.en.verdictCard = "Review summary. The ring shows the Script Desk score (0 to 100): it rises as you fix what the app flags. It is not YouTube's score. Below it you see how many checks pass; the colored label is about ads only.";
+  HELP.es.verdictCard = "Resumen de la revisión. El círculo muestra la puntuación de Script Desk (0 a 100): cada revisión pendiente resta según su impacto, las de anuncios primero. No es la nota de YouTube. La etiqueta de color habla solo de los anuncios.";
+  HELP.en.verdictCard = "Review summary. The ring shows the Script Desk score (0 to 100): each pending check subtracts by its impact, ads first. It is not YouTube's score. The colored label is about ads only.";
 }
 
 const SC = { w: null, seq: 0, pending: 0, guard: null, timer: null, delay: 700, ms: 0, R: null, S: null, base: null, baseKey: null, shown: null, off: lsGet("sd-bubble") === "off", where: "", pop: false, noWorker: false, liveAt: 0 };
 window.SC = SC;
-const scKey = () => "sd-score-base:" + (G.prodId || "draft");
+const scKey = () => "sd-score-base-v2:" + (G.prodId || "draft");
 const scDemo = () => typeof DEMO !== "undefined" && !!DEMO;
 const scReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -10681,7 +10745,16 @@ function scApply() {
     if (b == null) { b = S.score; if (!scDemo()) lsSet(key, JSON.stringify({ score: b, at: Date.now() })); }
     SC.base = b;
   }
-  SC.S = S; scPaint();
+  SC.S = S; scPaint(); scNewToast();
+}
+function scNewToast() {
+  if (scDemo() || SC.off || !hasScript() || lsGet("sd-score-v2-seen") === "1") return;
+  lsSet("sd-score-v2-seen", "1");
+  let el = $("scToast");
+  if (!el) { el = document.createElement("div"); el.id = "scToast"; el.className = "cost-toast"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+  el.innerHTML = `<span>${h(t("scNew"))}</span><button type="button" aria-label="${h(t("scClose"))}">×</button>`;
+  el.querySelector("button").addEventListener("click", () => el.classList.remove("on"));
+  el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 12000);
 }
 function scEnsure() {
   let p = $("scorePill");
@@ -10729,25 +10802,22 @@ function scPaint() {
 
 // ---- popover ----
 function scTopRows(S) {
-  return failedRows(SC.R).filter((r) => !FIX_SKIP.has(r.id) && !state.fixDismissed.has(r.id)).slice(0, 3);
+  const sp = typeof SEC_PRIORITY !== "undefined" ? SEC_PRIORITY : {};
+  return S.open.map((r, i) => ({ r, i, w: S.pts.get(r.id) || 0 })).sort((a, b) => b.w - a.w || a.i - b.i).slice(0, 3).map((x) => x.r);
 }
 const scLabel = (r) => (typeof plainLabel === "function" ? plainLabel(r.id, r.label) : r.label);
 function scRenderPop() {
   const pop = $("scPop"); if (!pop || !SC.S) return;
   const S = SC.S, d = S.score - SC.base;
   const top = scTopRows(S);
-  let pen = 0;
-  if (S.ignored.length) {
-    const ids = new Set(S.ignored.map((r) => r.id)), sec = {};
-    for (const k of Object.keys(SC.R.sections)) sec[k] = SC.R.sections[k].map((r) => (ids.has(r.id) ? { ...r, passed: true, warn: false } : r));
-    pen = Math.max(0, scoreOf({ ...SC.R, sections: sec }, state.fixDismissed).score - S.score);
-  }
   pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${S.score}<small>/100</small></span><span class="sc-band">${h(t("scBand")[S.band])}</span><button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
-    <p class="hint sc-checks">${h(t("scChecks")(S.passed, S.total))}</p>
+    <p class="sc-lamp">${h(t("scLamp")[S.band])}</p>
+    <p class="hint sc-checks">${S.open.length ? h(t("scLeft")(S.open.length, S.openPts)) + " " : ""}${h(t("scChecks")(S.passed, S.total))}</p>
     ${d ? `<p class="sc-since">${h(t("scSince")(SC.base, S.score))}</p>` : ""}
     <div class="sc-k">${h(t("scTop"))}</div>
-    ${top.length ? `<ul class="sc-rows">${top.map((r) => `<li><button type="button" data-scrow="${h(r.id)}">${h(scLabel(r))}</button></li>`).join("")}</ul>` : `<p class="hint">${h(t("scNone"))}</p>`}
-    ${S.ignored.length ? `<div class="sc-ign"><b>${h(t("scIgnored")(S.ignored.length, pen))}</b><ul>${S.ignored.map((r) => `<li><span>${h(scLabel(r))}</span><button type="button" class="small" data-scshow="${h(r.id)}">${h(t("scShowAgain"))}</button></li>`).join("")}</ul></div>` : ""}
+    ${top.length ? `<ul class="sc-rows">${top.map((r) => `<li><button type="button" data-scrow="${h(r.id)}"><span>${h(scLabel(r))}</span><b class="sc-pts">+${S.pts.get(r.id)}</b></button></li>`).join("")}</ul>` : `<p class="hint">${h(t("scNone"))}</p>`}
+    ${S.ignored.length ? `<div class="sc-ign"><b>${h(t("scIgnored")(S.ignored.length, S.dismissPen))}</b><ul>${S.ignored.map((r) => `<li><span>${h(scLabel(r))}</span><button type="button" class="small" data-scshow="${h(r.id)}">${h(t("scShowAgain"))}</button></li>`).join("")}</ul></div>` : ""}
+    <details class="sc-how"><summary>${h(t("scHowT"))}</summary><ul>${t("scHow").map((x) => `<li>${h(x)}</li>`).join("")}</ul></details>
     <p class="hint sc-note">${h(t("scNote"))}</p>
     <button type="button" class="linkish sc-hide" id="scHide">${h(t("scHide"))}</button>`;
   $("scX").addEventListener("click", scClosePop);
