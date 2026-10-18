@@ -684,6 +684,23 @@ html .score-pill[hidden],html.pp-open .score-pill{display:none}
 .sc-note{margin:12px 0 6px} .sc-hide{font-size:14px;min-height:36px}
 .sc-showbtn{font-size:13px;margin-left:12px} .sc-showbtn[hidden]{display:none}
 .gv-top{display:flex;align-items:baseline;gap:10px} .gv-n{font:800 34px/1 var(--sans);font-variant-numeric:tabular-nums} .gv-n small{font:600 15px/1 var(--sans);color:var(--ink-2);margin-left:2px} .gv-l{font:600 13px/1.2 var(--sans);color:var(--ink-2)}
+/* Ads by category: the words that cause each flag */
+.pf-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.pf-d{border:1px solid var(--rule);border-radius:14px;background:var(--sheet);padding:0}
+.pf-d.lvl-rojo{border-color:var(--rojo);box-shadow:inset 4px 0 0 var(--rojo)} .pf-d.lvl-amarillo{box-shadow:inset 4px 0 0 var(--amarillo)} .pf-d.lvl-verde{box-shadow:inset 4px 0 0 var(--verde)}
+.pf-d>summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:12px 14px;min-height:44px}
+.pf-d>summary::-webkit-details-marker{display:none}
+.pf-top{display:flex;align-items:center;justify-content:space-between;gap:10px} .pf-top b{font-size:16px}
+.pf-sub{font-size:13px;color:var(--ink-2)}
+.pf-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pf-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font:600 14px/1.2 var(--sans);border:1px solid var(--rule);background:var(--sheet-2);color:var(--ink)}
+.pf-chip.pf-rojo{background:color-mix(in srgb,var(--rojo) 12%,var(--sheet));border-color:var(--rojo)} .pf-chip.pf-amarillo{background:var(--gold-bg);border-color:var(--amarillo);color:var(--gold)} .pf-chip small{font-weight:500}
+.pf-body{padding:0 14px 14px;border-top:1px solid var(--rule)} .pf-body p{margin:4px 0 8px;font-size:15px;line-height:1.5}
+.pf-k{font:600 12px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:12px 0 4px}
+.pf-terms{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px} .pf-terms li{font-size:15px}
+.pf-tier{font:600 12px/1 var(--sans);padding:2px 8px;border-radius:999px;background:var(--sheet-2);border:1px solid var(--rule);color:var(--ink-2)}
+.pf-t{font-size:13px;color:var(--ink-2);margin-top:2px} .pf-t em{font-style:normal;font-weight:600;color:var(--rojo)}
+.pf-clear{font-size:14px;color:var(--ink-2);margin:2px 0 0}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -10757,6 +10774,59 @@ const _opSC = typeof openPrompter === "function" ? openPrompter : null;
 if (_opSC) openPrompter = function (m) { scClosePop(); return _opSC(m); };
 scEnsure(); scPlace(); scShowBtn();
 if (hasScript()) scQueue(true);
+/* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
+Object.assign(T.es, {
+  atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",
+  atWhy: "Por qué cuenta", atTerms: "Palabras y cuándo salen", atFix: "Qué hacer", atClear: "Sin palabras de riesgo en:",
+  atMore: (n) => `+${n} más`, atTimes: (n) => `${n} ${n === 1 ? "vez" : "veces"}`, atPack: "Título, miniatura y descripción",
+  atPackWhy: "Aquí YouTube es más estricto: una sola palabra de riesgo puede limitar los anuncios.",
+  atOpen: "apertura", atEarly: "primeros 30 s", atTierStrong: "fuerte", atTierModerate: "moderada", atTierLight: "leve",
+  atMentioned: "Solo se menciona, sin detalle gráfico ni énfasis: no limita anuncios.",
+});
+Object.assign(T.en, {
+  atHint: "Tap a category to see why it counts and what to do. The words show under each name.",
+  atWhy: "Why it counts", atTerms: "Words and when they come up", atFix: "What to do", atClear: "No risk words in:",
+  atMore: (n) => `+${n} more`, atTimes: (n) => `${n} ${n === 1 ? "time" : "times"}`, atPack: "Title, thumbnail and description",
+  atPackWhy: "YouTube is stricter here: a single risk word can limit ads.",
+  atOpen: "opening", atEarly: "first 30 s", atTierStrong: "strong", atTierModerate: "moderate", atTierLight: "mild",
+  atMentioned: "Only mentioned, without graphic detail or emphasis: it does not limit ads.",
+});
+if (typeof HELP !== "undefined") {
+  HELP.es.mAds = "Cada categoría que YouTube revisa para decidir si un video lleva anuncios. Debajo del nombre ves las palabras de tu guion que la causan; toca la categoría para ver cuándo salen, por qué cuenta y qué hacer.";
+  HELP.en.mAds = "Each category YouTube checks to decide whether a video gets ads. Under the name you see the words in your script that cause it; tap the category to see when they come up, why it counts and what to do.";
+}
+function atGroup(p, R) {
+  const m = new Map();
+  for (const x of p.hits || []) {
+    const k = String(x.text).toLowerCase();
+    const g = m.get(k) || { word: x.text, n: 0, times: [], tier: x.tier || "", early: false, first: 1e9 };
+    g.n++; const s = R.timeAt ? R.timeAt(x.start) : 0; g.times.push(s); if (s < 30) g.early = true; g.first = Math.min(g.first, s);
+    if (x.tier === "strong") g.tier = "strong";
+    m.set(k, g);
+  }
+  return [...m.values()].sort((a, b) => a.first - b.first);
+}
+const atTier = (x) => (x === "strong" ? t("atTierStrong") : x === "moderate" ? t("atTierModerate") : x === "light" ? t("atTierLight") : "");
+function atZone(s) { return s < 7 ? t("atOpen") : s < 30 ? t("atEarly") : ""; }
+function atRow(p, R) {
+  const g = atGroup(p, R);
+  const chips = g.slice(0, 6).map((x) => `<span class="pf-chip pf-${p.level}">«${h(x.word)}»${x.n > 1 ? ` <small>×${x.n}</small>` : ""}</span>`).join("") + (g.length > 6 ? `<span class="pf-chip pf-more">${h(t("atMore")(g.length - 6))}</span>` : "");
+  const terms = g.map((x) => {
+    const ts = x.times.slice().sort((a, b) => a - b), shown = ts.slice(0, 6).map((s) => `${fmtTime(s)}${atZone(s) ? ` <em>${h(atZone(s))}</em>` : ""}`).join(" · ");
+    const tier = atTier(x.tier);
+    return `<li><b>«${h(x.word)}»</b>${tier ? ` <span class="pf-tier">${h(tier)}</span>` : ""} <span class="hint">${h(t("atTimes")(x.n))}</span><div class="pf-t">${shown}${ts.length > 6 ? ` · ${h(t("atMore")(ts.length - 6))}` : ""}</div></li>`;
+  }).join("");
+  const why = p.level === "verde" && p.count ? t("atMentioned") + (p.note ? " " + p.note : "") : p.note || "";
+  return `<details class="pf-d lvl-${p.level}"${p.level === "rojo" ? " open" : ""}><summary><span class="pf-top"><b>${h(p.label)}</b><span class="lamp ${p.level}">${h(t("icon")[p.level])}</span></span><span class="pf-sub">${p.count} · ${h(deg(p.degree))}</span><span class="pf-chips">${chips}</span></summary>
+    <div class="pf-body">${why ? `<div class="pf-k">${h(t("atWhy"))}</div><p>${h(why)}</p>` : ""}<div class="pf-k">${h(t("atTerms"))}</div><ul class="pf-terms">${terms}</ul>${p.fix && p.level !== "verde" ? `<div class="pf-k">${h(t("atFix"))}</div><p>${h(p.fix)}</p>` : ""}</div></details>`;
+}
+preflightTable = function (R) {
+  const hit = R.preflight.filter((p) => p.count > 0), clear = R.preflight.filter((p) => !(p.count > 0));
+  const pack = (R.packaging || []).filter((p) => p.level !== "verde" && (p.issues || []).length);
+  const packHTML = pack.length ? `<details class="pf-d lvl-${pack.some((p) => p.level === "rojo") ? "rojo" : "amarillo"}" open><summary><span class="pf-top"><b>${h(t("atPack"))}</b><span class="lamp ${pack.some((p) => p.level === "rojo") ? "rojo" : "amarillo"}">${h(t("icon")[pack.some((p) => p.level === "rojo") ? "rojo" : "amarillo"])}</span></span><span class="pf-sub">${h(t("atPackWhy"))}</span></summary>
+    <div class="pf-body"><ul class="pf-terms">${pack.map((p) => `<li><b>${h(p.label)}</b> <span class="lamp ${p.level}">${h(t("icon")[p.level])}</span><div class="pf-t">${p.issues.map((x) => h(x)).join("<br>")}</div></li>`).join("")}</ul></div></details>` : "";
+  return `<div class="pf-list"><p class="hint">${h(t("atHint"))}</p>${packHTML}${hit.map((p) => atRow(p, R)).join("")}${clear.length ? `<p class="pf-clear"><span class="lamp verde">${h(t("icon").verde)}</span> ${h(t("atClear"))} ${clear.map((p) => h(p.label)).join(", ")}.</p>` : ""}</div>`;
+};
 /* ===== Text fields grow to show all their text (no inner scrolling) ===== */
 // Single-line fields (title, topic, thumbnail text, series, central idea…) are rendered as one-row textareas marked data-one:
 // they wrap and grow like a paragraph, but Enter never adds a line break and pasted line breaks become spaces.
