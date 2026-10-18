@@ -6267,7 +6267,14 @@ function renderExPick() {
     <div class="ex-grid">${EX_KEYS.map((k) => `<button type="button" class="ex-card${DEMO === k ? " on" : ""}" data-ex="${k}"${DEMO === k ? ' aria-current="true"' : ""}>
       <span class="ex-h"><span class="ex-dot ex-${k}" aria-hidden="true"></span>${h(exName(k))}${exMin(k) ? ` <span class="ex-min">${h(exMin(k))} ${h(t("exDur"))}</span>` : ""}${DEMO === k ? ` <span class="hint">· ${h(t("exCur"))}</span>` : ""}</span>
       <span class="ex-d">${h(D[k] || "")}</span></button>`).join("")}</div></details>`;
-  el.querySelector("details").addEventListener("toggle", (e) => { el.dataset.open = e.target.open ? "1" : "0"; });
+  // One tap opens everything, the next tap closes it (explicit, so no other tap target inside the pill can interfere).
+  const det = el.querySelector("details");
+  det.querySelector("summary").addEventListener("click", (e) => {
+    e.preventDefault();
+    det.open = !det.open;
+    el.dataset.open = det.open ? "1" : "0";
+    if (det.open) requestAnimationFrame(() => det.scrollIntoView({ block: "start", behavior: "smooth" }));
+  });
   el.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { el.querySelectorAll("[data-ex]").forEach((x) => (x.disabled = true)); startDemo(b.dataset.ex); }));
 }
 
@@ -8502,7 +8509,6 @@ const HELP_ANCHORS = [
   ["expert", "label.xswitch", "end:.masthead"],
   ["step", "#guideTop .g-step-h h2", "row"],
   ["script", 'label[for="script"]', "row"],
-  ["examples", "#exPick summary h3", "row"],
   ["ask", "#askClaude .g-h h2", "row"],
   ["audience", 'label[for="audience"]', "row"],
   ["translate", 'label[for="trTarget"]', "row:.tr-box"],
