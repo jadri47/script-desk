@@ -1119,6 +1119,15 @@ button.icon:hover{color:var(--ink)}
 .chip.ok{background:rgba(34,150,100,.14);color:#167a52}
 .chip.warn{background:rgba(214,148,40,.18);color:#8a5a00}
 html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.warn{color:#f0c36a}
+
+/* Translate/adapt: collapsed until tapped */
+.tr-det>summary{cursor:pointer;font-weight:600;color:var(--ink-2);padding:10px 0;min-height:44px;display:flex;align-items:center}
+.tr-det[open]>summary{margin-bottom:8px}
+.vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.tr-det>summary{list-style:none;gap:12px}
+.tr-det>summary::-webkit-details-marker{display:none}
+.tr-det>summary::after{content:"";margin-left:auto;margin-right:6px;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.tr-det[open]>summary::after{transform:rotate(-135deg) translateY(-2px)}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -6554,7 +6563,7 @@ const VARIANT_GUIDE = {
   en: "natural, conversational American English as spoken in the United States",
 };
 const AUD_OF = { es: "es", latam: "latam", neutral: "both" };
-const TR = { target: "", ver: "", busy: false, res: null, msg: "", err: "", undo: null };
+const TR = { target: "", ver: "", busy: false, res: null, msg: "", err: "", undo: null, open: false };
 function trSource() {
   const lang = state.result ? state.result.lang : (typeof detectLanguage === "function" ? detectLanguage($("script").value) : "es");
   if (lang === "en") return "en";
@@ -6655,9 +6664,12 @@ function renderTr() {
       ${r.verify.length ? `<p class="status err">${h(t("trVerify"))} ${r.verify.map((v) => `<a href="${h(bibleGatewayUrl(String(v), r.ver))}" target="_blank" rel="noopener">${h(String(v))}</a>`).join(", ")}</p>` : ""}
       <div class="actions"><button type="button" class="primary small" id="trUse">${h(t("trUse"))}</button><button type="button" class="small" id="trDiscard">${h(t("trDiscard"))}</button></div></div>`;
   }
-  el.innerHTML = `<div class="tr-row"><label for="trTarget">${h(t("trTitle"))}</label>
+  // Collapsed until tapped; stays open while it is working or has a result to review.
+  const open = TR.open || TR.busy || !!TR.res;
+  el.innerHTML = `<details class="tr-det" id="trDet"${open ? " open" : ""}><summary>${h(t("trTitle"))}</summary><div class="tr-row"><label for="trTarget" class="vh">${h(t("trTitle"))}</label>
       <div class="tr-ctl"><span class="hint">${h(T2[src])} →</span><select id="trTarget">${opts}</select><span class="tr-ver"><label for="trVer" class="hint">${h(t("trVer"))}</label><select id="trVer">${bibleOptions(TR.target, TR.ver)}</select></span><button type="button" class="small" id="trGo"${TR.busy ? " disabled" : ""}>${h(t("trGo"))}</button></div></div>
-    <p class="status${TR.err ? " err" : ""}" id="trSt">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}`;
+    <p class="status${TR.err ? " err" : ""}" id="trSt">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}</details>`;
+  $("trDet").addEventListener("toggle", (e) => { TR.open = e.target.open; });
   $("trTarget").addEventListener("change", (e) => { TR.target = e.target.value; TR.ver = ""; renderTr(); });
   $("trVer").addEventListener("change", (e) => { TR.ver = e.target.value; });
   $("trGo").addEventListener("click", trRun);
