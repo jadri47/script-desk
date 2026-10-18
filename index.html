@@ -715,6 +715,27 @@ html .mast-tools .demo-bar button{padding:5px 12px;min-height:34px;font-size:13p
 html .mast-tools .demo-bar .hint{display:none}
 @media (max-width:620px){ html .mast-tools{grid-column:1 / -1;margin-top:0} html .mast-tools .auth-bar{flex:1 1 100%} }
 html.sd-split .mast-tools .auth-bar{margin:0;padding:0 2px}
+/* PROTOTYPE: taller script box */
+html.sd-split .pane-l .script-field>#edLbl{display:none}
+html.sd-split .mast-tools{flex-wrap:nowrap;gap:12px}
+html.sd-split .mast-tools .demo-bar{order:2;flex:1 1 0;margin:0;padding:5px 12px}
+html.sd-split .mast-tools .auth-bar{order:3;flex:0 0 auto}
+html.sd-split .masthead{padding-bottom:14px}
+@media (max-width:640px){
+  html .mast-tools{flex-wrap:wrap;gap:4px 8px}
+  html .mast-tools #exPick{flex:1 1 auto}
+  html .mast-tools .auth-bar{flex:0 0 100%}
+  html .mast-tools .demo-bar{padding:5px 10px;font-size:12.5px}
+  html .mast-tools .demo-bar p{font-size:12.5px;flex:1 1 100%}
+  main .g-step-h h2{font-size:21px}
+  main[data-view="guide"] #editor>.steps,main #editor .g-step-sub{font-size:14px}
+  .ed-wrap:not(.ed-full) .ed{height:var(--edh,calc(100dvh - 215px));min-height:300px}
+  #edLbl{display:none}
+}
+html.sd-split main[data-view] .pane-l#paneL{display:grid !important;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) auto;column-gap:14px;padding-bottom:10px}
+html.sd-split .pane-l>.script-field{grid-column:1 / -1;grid-row:1}
+html.sd-split .pane-l>.meta-line{grid-column:1;grid-row:2;align-self:center;margin-top:6px}
+html.sd-split .pane-l>.actions{grid-column:2;grid-row:2;margin:6px 0 0;align-self:center}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
