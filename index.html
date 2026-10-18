@@ -76,6 +76,8 @@ button:disabled{opacity:.55;cursor:default}
 .tl-bar{position:absolute;left:0;right:0;top:22px;height:14px;border-radius:7px;background:var(--rule-2);overflow:hidden}
 .tl-zone{position:absolute;top:0;bottom:0}
 .tl-tick{position:absolute;top:14px;height:30px;border-left:1.5px solid var(--ink-2);opacity:.7}
+.tl-tick.rh{border-left:3px solid var(--accent);opacity:1;top:8px;height:42px}
+.lg-rh{width:3px !important;height:14px !important;border-radius:1px !important;background:var(--accent) !important}
 .tl-tick span{position:absolute;top:-14px;left:3px;font-size:11px;color:var(--ink-2);white-space:nowrap}
 .tl-dot{position:absolute;top:24px;width:10px;height:10px;margin-left:-5px;border-radius:50%;border:1.5px solid var(--sheet)}
 .tl-dot.diamond{border-radius:2px;transform:rotate(45deg)}
@@ -612,6 +614,14 @@ main[data-view="guide"]:not([data-step="1"]) #exPick:not(.demo-on){display:none}
   #editor>.actions #clearBtn{flex:1 1 auto;min-height:44px}
   #editor>.actions .hint:empty{display:none}
 }
+
+/* Marks for speaker and editor inside the marked script */
+.manuscript .em{display:inline-block;font:700 10.5px/1 var(--sans);letter-spacing:.03em;border-radius:5px;padding:3px 6px;margin:0 5px 0 2px;vertical-align:2px;cursor:help;color:#fff;background:var(--ink-2)}
+.em-hook{background:#c2410c !important}.em-promise{background:var(--verde) !important}.em-intro{background:#7c3aed !important}.em-rehook{background:var(--accent) !important}.em-rehook.warn{background:var(--rojo) !important}
+.em-broll{background:#0e7490 !important}.em-ad{background:#a16207 !important}.em-cta{background:#be185d !important}
+.em-legend{align-items:center;gap:8px}.em-lg{font:700 10.5px/1 var(--sans);letter-spacing:.03em;border-radius:5px;padding:3px 6px;color:#fff}
+.em-legend span::before{display:none}
+.em-note{margin:-4px 0 10px;font-size:12.5px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -3221,7 +3231,7 @@ const T = {
     thCat: "Categoría", thCount: "Apariciones", thIcon: "Ícono probable",
     denseWin: "Tramos de 2 minutos con más términos sensibles: ",
     pass: "pasa", fail: "no pasa",
-    tlTitle: "Línea de tiempo del episodio", tlZones: "0–7 s gancho · 20 s promesa · 30 s intro", tlPromise: "promesa", tlRef: "cita bíblica", tlCta: "llamada a la acción", tlRisk: "término de riesgo", tlGap: "tramo sin re-enganche", tlNoHook: "Sin re-enganche", tlPromiseT: "Promesa", tlCtaT: "Llamada a la acción", tickTip: "Aproximadamente aquí",
+    tlTitle: "Línea de tiempo del episodio", tlZones: "0–7 s gancho · 20 s promesa · 30 s intro", tlPromise: "promesa", tlRef: "cita bíblica", tlCta: "llamada a la acción", tlRisk: "término de riesgo", tlRehook: "barra: re-enganche cada 4 min", tlGap: "tramo sin re-enganche", tlNoHook: "Sin re-enganche", tlPromiseT: "Promesa", tlCtaT: "Llamada a la acción", tickTip: "Aproximadamente aquí",
     lgRisk: "riesgo de anuncios", lgMul: "muletilla", lgWeak: "palabra genérica", lgReg: "regionalismo", lgQuote: "cita bíblica", lgKw: "palabra clave", lgTick: "marca de tiempo", tapNote: "toca una marca para ver la nota",
     noRefs: "No se detectaron referencias bíblicas (libro + capítulo).", refNoQuote: "Referenciada, sin cita textual.", readIn: (t) => `Leer en ${t} (Bible Gateway)`,
     scriptureLead: (t) => `Compara cada cita con la ${t}. La IA no tiene el texto oficial a mano: marca lo que no coincide según su conocimiento y te da el enlace para confirmar.`,
@@ -3291,7 +3301,7 @@ const T = {
     thCat: "Category", thCount: "Occurrences", thIcon: "Likely icon",
     denseWin: "2-minute stretches with the most sensitive terms: ",
     pass: "passes", fail: "fails",
-    tlTitle: "Episode timeline", tlZones: "0–7 s hook · 20 s promise · 30 s intro", tlPromise: "promise", tlRef: "Bible quote", tlCta: "call to action", tlRisk: "risk term", tlGap: "stretch without a re-hook", tlNoHook: "No re-hook", tlPromiseT: "Promise", tlCtaT: "Call to action", tickTip: "Approximately here",
+    tlTitle: "Episode timeline", tlZones: "0–7 s hook · 20 s promise · 30 s intro", tlPromise: "promise", tlRef: "Bible quote", tlCta: "call to action", tlRisk: "risk term", tlRehook: "bar: re-hook every 4 min", tlGap: "stretch without a re-hook", tlNoHook: "No re-hook", tlPromiseT: "Promise", tlCtaT: "Call to action", tickTip: "Approximately here",
     lgRisk: "ad risk", lgMul: "filler", lgWeak: "generic word", lgReg: "regional form", lgQuote: "Bible quote", lgKw: "keyword", lgTick: "time mark", tapNote: "tap a mark to see the note",
     noRefs: "No Bible references detected (book + chapter).", refNoQuote: "Referenced, not quoted.", readIn: (t) => `Read in ${t} (Bible Gateway)`,
     scriptureLead: (t) => `Compares each quote with the ${t}. The AI doesn't have the official text on hand: it flags what doesn't match from its own knowledge and gives you the link to confirm.`,
@@ -3427,14 +3437,14 @@ function timelineHTML(R) {
   const ticks = [7, 20, 30].filter((x) => x < Tt);
   for (let x = 240; x < Tt; x += 240) ticks.push(x);
   const every = Tt > 1800 ? 2 : 1;
-  ticks.forEach((x, i) => { const show = x <= 30 ? x === 30 || Tt < 240 : i % every === 0; html += `<div class="tl-tick" style="left:${pct(x)}">${show ? `<span>${fmtTime(x)}</span>` : ""}</div>`; });
+  ticks.forEach((x, i) => { const show = x <= 30 ? x === 30 || Tt < 240 : i % every === 0; html += `<div class="tl-tick${x > 30 ? " rh" : ""}" style="left:${pct(x)}">${show ? `<span>${fmtTime(x)}</span>` : ""}</div>`; });
   const dot = (x, color, title, shape) => `<div class="tl-dot${shape ? " " + shape : ""}" style="left:${pct(x)};background:${color}" title="${h(title)}"></div>`;
   for (const r of R.refs) html += dot(R.timeAt(r.start), "var(--gold)", r.canonical + " · " + fmtTime(R.timeAt(r.start)), "diamond");
   for (const c of R.clusters) html += dot(c.t, "var(--accent)", t("tlCtaT") + " · " + fmtTime(c.t));
   for (const x of R.riskHits) { const lvl = (R.preflight.find((p) => p.id === x.cat) || {}).level || "amarillo"; if (lvl !== "verde") html += dot(R.timeAt(x.start), "var(--rojo)", x.text + " · " + fmtTime(R.timeAt(x.start)), "risk"); }
   if (R.firstPromiseT !== null) html += dot(R.firstPromiseT, "var(--verde)", t("tlPromiseT") + " · " + fmtTime(R.firstPromiseT));
   html += `</div><div class="tl-ends"><span>0:00</span><span>${fmtTime(Tt)}</span></div>
-  <div class="tl-legend"><span><i style="background:var(--accent);opacity:.55"></i>${h(t("tlZones"))}</span><span><i style="background:var(--verde)"></i>${h(t("tlPromise"))}</span><span><i style="background:var(--gold);border-radius:1px;transform:rotate(45deg)"></i>${h(t("tlRef"))}</span><span><i style="background:var(--accent)"></i>${h(t("tlCta"))}</span><span><i style="background:var(--rojo)"></i>${h(t("tlRisk"))}</span>${missing.length ? `<span><i style="background:var(--amarillo);border-radius:2px"></i>${h(t("tlGap"))}</span>` : ""}</div></div>`;
+  <div class="tl-legend"><span><i style="background:var(--accent);opacity:.55"></i>${h(t("tlZones"))}</span><span><i style="background:var(--verde)"></i>${h(t("tlPromise"))}</span><span><i style="background:var(--gold);border-radius:1px;transform:rotate(45deg)"></i>${h(t("tlRef"))}</span><span><i style="background:var(--accent)"></i>${h(t("tlCta"))}</span><span><i class="lg-rh"></i>${h(t("tlRehook"))}</span><span><i style="background:var(--rojo)"></i>${h(t("tlRisk"))}</span>${missing.length ? `<span><i style="background:var(--amarillo);border-radius:2px"></i>${h(t("tlGap"))}</span>` : ""}</div></div>`;
   return html;
 }
 
@@ -3450,11 +3460,14 @@ function manuscriptHTML(R, text) {
   R.marks.forEach((m) => { bounds.add(m.start); bounds.add(m.end); });
   R.quoteSpans.forEach((q) => { bounds.add(q.start); bounds.add(q.end); });
   R.tickPos.forEach((x) => bounds.add(x.pos));
+  const emAt = new Map();
+  if (typeof editMarks === "function") for (const e of editMarks(R, text)) { if (e.pos >= 0 && e.pos <= text.length) { bounds.add(e.pos); emAt.set(e.pos, (emAt.get(e.pos) || []).concat(e)); } }
   const pts = [...bounds].filter((x) => x >= 0 && x <= text.length).sort((a, b) => a - b);
   const markAt = (s) => R.marks.find((m) => m.start <= s && s < m.end);
   const inQuote = (s) => R.quoteSpans.some((q) => q.start <= s && s < q.end);
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1];
+    if (emAt.has(a)) emAt.get(a).forEach((e) => pieces.push(`<span class="em em-${e.kind}${e.warn ? " warn" : ""}" title="${h(e.tip)}">${h(e.label)}</span>`));
     if (ticksAt.has(a)) ticksAt.get(a).forEach((x) => pieces.push(`<span class="tick" title="${h(t("tickTip"))}">${fmtTime(x)}</span>`));
     let seg = h(text.slice(a, b));
     const m = markAt(a);
@@ -3550,7 +3563,7 @@ function renderResults() {
     <span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span>
     <span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}
     <span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span>
-    <span style="--c:var(--accent)">${h(t("lgTick"))}</span></div>`;
+    <span style="--c:var(--accent)">${h(t("lgTick"))}</span></div>${typeof editLegendHTML === "function" ? editLegendHTML() : ""}`;
   const msOpen = (() => { try { return localStorage.getItem("sd-ms-open") === "1"; } catch (e) { return false; } })();
   const manuscript = `<details class="block ms-block" id="sec-manuscript"${msOpen ? " open" : ""}><summary><h2>${h(t("secMs"))}</h2><span class="count">${h(t("tapNote"))}</span></summary>${legend}<div class="manuscript" id="ms">${manuscriptHTML(R, text)}</div><p class="tipbar hidden" id="tipbar" role="status"></p></details>`;
 
@@ -5877,7 +5890,7 @@ document.addEventListener("click", (e) => {
 V.moreOpen = V.moreOpen || new Set();
 function moreChecksHTML(R) {
   const tr = state.opts.translation;
-  const legend = `<div class="legend"><span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span><span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}<span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span></div>`;
+  const legend = `<div class="legend"><span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span><span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}<span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span></div>${editLegendHTML()}`;
   const block = (id, title, body) => `<details class="g-more-d" data-more="${id}"${V.moreOpen.has(id) ? " open" : ""}><summary>${h(title)}</summary><div class="g-more-b">${body}</div></details>`;
   return `<section class="g-more-sec"><h3>${h(t("moreTitle"))}</h3>
     ${block("scripture", t("moreScripture"), `${scriptureBlock(R)}<div class="g-facts"><p class="lead">${h(t("factsLead"))}</p><div class="actions"><button class="small" data-ai="facts">${h(t("reviewFacts"))}</button></div><div class="out" id="out-facts"></div></div>`)}
@@ -8605,6 +8618,81 @@ new MutationObserver(() => { if (helpQueued) return; helpQueued = true; requestA
 const _gOnLangHelp = gOnLang;
 gOnLang = function () { _gOnLangHelp(); resetHelp(); };
 injectHelp();
+/* ===== Marcas para el locutor y el editor dentro del guion marcado ===== */
+// Chips in the marked script: hook, promise, intro slot, re-hook points (every 4 min), suggested B-roll, ad breaks.
+// All timings are our own targets (see the legend note), not YouTube rules. B-roll and re-hooks are suggestions.
+Object.assign(T.es, {
+  emHook: "GANCHO", emPromise: "PROMESA", emIntro: "INTRO", emRehook: "RE-ENGANCHE", emBroll: "B-ROLL", emAd: "ANUNCIO", emCta: "PEDIDO",
+  emHookT: "Primeros 7 segundos: lo que hace que la gente se quede. Cámara a plano cercano, sin saludos.", emPromiseT: "Aquí queda dicho qué van a aprender.",
+  emIntroT: (c) => c ? "Después de la apertura en frío: título o animación de 5 segundos como máximo y sigue el guion desde aquí." : "Después del gancho y la promesa: título o animación de 5 segundos como máximo.",
+  emRehookT: (m, gap) => `Cada 4 minutos conviene reenganchar a quien se distrae (${m}). ${gap ? "Aquí no hay pregunta ni anticipo: añade uno." : "Ya hay una pregunta o un anticipo cerca."}`,
+  emBrollT: (s) => `Sugerido: ${s} segundos hablando a cámara sin cambio visual. Un B-roll, una imagen o un texto en pantalla ayuda. Es una meta propia, no una regla.`,
+  emAdT: (m) => `Pausa de anuncio sugerida hacia ${m} del video: termina un punto y no cae en un versículo.`,
+  emCtaT: "Aquí hay un pedido al oyente; el editor puede poner un recordatorio en pantalla.",
+  emLeg: "Para el locutor y el editor", emLegNote: "Las marcas de tiempo, el B-roll sugerido y los re-enganches son metas propias, no reglas de YouTube.",
+});
+Object.assign(T.en, {
+  emHook: "HOOK", emPromise: "PROMISE", emIntro: "INTRO", emRehook: "RE-HOOK", emBroll: "B-ROLL", emAd: "AD BREAK", emCta: "ASK",
+  emHookT: "First 7 seconds: what makes people stay. Close shot, no greetings.", emPromiseT: "Here the viewer is told what they'll learn.",
+  emIntroT: (c) => c ? "After the cold open: a title or animation of 5 seconds at most, then the script continues from here." : "After the hook and promise: a title or animation of 5 seconds at most.",
+  emRehookT: (m, gap) => `Every 4 minutes it helps to refocus a wandering viewer (${m}). ${gap ? "No question or teaser here: add one." : "There is already a question or teaser nearby."}`,
+  emBrollT: (s) => `Suggested: ${s} seconds of talking to camera with no visual change. B-roll, an image or on-screen text helps. Our own target, not a rule.`,
+  emAdT: (m) => `Suggested ad break around ${m} of the video: a point ends and it isn't inside a verse.`,
+  emCtaT: "A call to the viewer sits here; the editor can add an on-screen reminder.",
+  emLeg: "For the speaker and the editor", emLegNote: "Time marks, suggested B-roll and re-hooks are our own targets, not YouTube rules.",
+});
+const EM_KINDS = ["hook", "promise", "intro", "rehook", "broll", "ad", "cta"];
+function editLegendHTML() {
+  const L = (k) => `<span class="em-lg em-${k}">${h(t("em" + k[0].toUpperCase() + k.slice(1)))}</span>`;
+  return `<div class="legend em-legend"><b>${h(t("emLeg"))}:</b> ${EM_KINDS.map(L).join("")}</div><p class="hint em-note">${h(t("emLegNote"))}</p>`;
+}
+// Marks for one script, keyed by text position. Cached per text.
+let _EM = { text: null, list: [] };
+function editMarks(R, text) {
+  if (_EM.text === text && _EM.R === R) return _EM.list;
+  const out = [];
+  try {
+    if ($("script").value !== text) return (_EM = { text, R, list: [] }).list;
+    if (!G.R || G.text !== text) gCompute();
+    const U = G.U, secs = G.secs;
+    if (!U.length || !secs.length) return (_EM = { text, R, list: [] }).list;
+    const posAt = (tm) => { const u = U.find((x) => tm >= x.t0 && tm < x.t1) || U[U.length - 1]; return u.start; };
+    const clips = coldClips(), cold = clips.length > 0;
+    const first = U[0];
+    out.push({ pos: first.start, kind: "hook", label: t("emHook") + " 0:00", tip: t("emHookT") });
+    const pT = R.firstPromiseT;
+    let promisePos = null;
+    if (pT !== null && pT !== undefined) { promisePos = posAt(pT); out.push({ pos: promisePos, kind: "promise", label: t("emPromise") + " " + fmtTime(pT), tip: t("emPromiseT") }); }
+    // Intro slot: with a cold open the video starts with it, then the intro, then the script from its top.
+    const introPos = cold ? first.start : (() => { const u = U.find((x) => x.t0 >= (pT || 7) && x.t0 >= 7) || U[Math.min(1, U.length - 1)]; return u.start; })();
+    if (!(introPos === first.start && !cold)) out.push({ pos: introPos, kind: "intro", label: t("emIntro") + " ≤5 s", tip: t("emIntroT")(cold) });
+    // Re-hook points every 4 minutes
+    const total = secs[secs.length - 1].t1;
+    for (let tm = 240; tm < total - 30; tm += 240) {
+      const gap = R.blocks.some((b) => !b.has && tm >= b.from && tm <= b.to);
+      out.push({ pos: posAt(tm), kind: "rehook", label: t("emRehook") + " " + fmtTime(tm) + (gap ? " !" : ""), tip: t("emRehookT")(fmtTime(tm), gap), warn: gap });
+    }
+    // Suggested B-roll: talking to camera 150 s or more with no [B-ROLL]/[TEXTO]/[CITA] cue and no verse on screen
+    const vis = (R.cues || []).filter((c) => !c.heading && !c.pause && /^(B-?ROLL|TEXTO|CITA|IMAGEN|IMAGE|TEXT|QUOTE|GRAPHIC|GR[AÁ]FICO)/i.test(c.kind || "")).map((c) => { const u = U.find((x) => c.start >= x.start && c.start < x.end); return u ? u.t0 : null; }).filter((x) => x !== null).sort((a, b) => a - b);
+    let last = 0;
+    for (const u of U) {
+      const inCue = vis.some((v) => Math.abs(v - u.t0) < 1);
+      if (inCue) { last = u.t0; continue; }
+      if (u.t0 - last >= 150 && u.t0 > 20) { out.push({ pos: u.start, kind: "broll", label: t("emBroll") + " " + fmtTime(u.t0), tip: t("emBrollT")(Math.round(u.t0 - last)) }); last = u.t0; }
+    }
+    // Ad breaks (the same ones the packaging card lists)
+    const sc = videoScale();
+    for (const b of adBreaks(secs, U, text, R)) {
+      const nx = U[secs[b.k].last + 1]; if (!nx) continue;
+      const vt = finalT(b.t) * sc;
+      out.push({ pos: nx.start, kind: "ad", label: t("emAd") + " ≈" + fmtTime(vt), tip: t("emAdT")(fmtTime(vt)) });
+    }
+    // Calls to the viewer
+    for (const c of R.clusters || []) out.push({ pos: posAt(c.t), kind: "cta", label: t("emCta") + " " + fmtTime(c.t), tip: t("emCtaT") });
+  } catch (e) { /* marks are optional */ }
+  out.sort((a, b) => a.pos - b.pos);
+  return (_EM = { text, R, list: out }).list;
+}
 /* ===== Text fields grow to show all their text (no inner scrolling) ===== */
 // Single-line fields (title, topic, thumbnail text, series, central idea…) are rendered as one-row textareas marked data-one:
 // they wrap and grow like a paragraph, but Enter never adds a line break and pasted line breaks become spaces.
