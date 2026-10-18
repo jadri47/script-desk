@@ -585,6 +585,15 @@ summary > .qh-txt{grid-column:1/-1;flex-basis:100%;width:100%;box-sizing:border-
 .ask-ans .k{font:600 12px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:10px 0 6px}
 .ask-ans > p{margin:0 0 8px}
 .ask-ans .diff{font-size:16px}
+
+/* v4 guided: cost is for the producer, approve button stays reachable, folded extras */
+html.guided .auth-cost{display:none}
+.pk-more,.sh-more{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px}
+.pk-more>summary,.sh-more>summary{cursor:pointer;font:600 15px/1.3 var(--sans);color:var(--accent);padding:6px 0;list-style:revert}
+.pk-more[open]>summary,.sh-more[open]>summary{margin-bottom:8px}
+.g-approve{position:sticky;bottom:0;z-index:15;background:var(--paper);padding:10px 0 12px;margin-top:22px;border-top:1px solid var(--rule)}
+@media (max-width:899px){.g-approve{bottom:calc(62px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:899px){html.guided #gStruct>.lead{display:none}}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -4827,6 +4836,7 @@ document.querySelectorAll(".modes [data-mode]").forEach((b) => b.setAttribute("a
 /* ===== Empaque · Shorts · Resultados ===== */
 Object.assign(T.es, {
   navCold: "Apertura", navEsc: "Escaleta", navSecs: "Secciones", navPack: "Empaque", navShorts: "Shorts", navRes: "Resultados", navRev: "Revisiones",
+  pkMore: "Más: descripción, capítulos y pausas de anuncios", shMore: (n) => `Ver ${n} más`,
   pkTitle: "Empaque", pkLead: "El título y la miniatura deciden si alguien hace clic; el guion decide si se queda. Escribe y mira cómo se verá.",
   pkReq: "Obligatorio", pkRec: "Recomendado",
   pk: { title: "Hay un título", titleLen: (n) => `Título de 60 caracteres o menos (${n})`, titleRisk: "Título sin términos de riesgo", thumb: "Miniatura de 1 a 5 palabras y 30 caracteres o menos", thumbRisk: "Miniatura sin términos de riesgo", titleKw: (k) => `La palabra clave «${k}» está en el título`, thumbRepeat: "La miniatura dice algo distinto al título", promiseMatch: "El título promete lo mismo que la apertura del guion", descKw: "La descripción nombra la palabra clave en sus primeros 150 caracteres" },
@@ -4845,6 +4855,7 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   navCold: "Cold open", navEsc: "Rundown", navSecs: "Sections", navPack: "Packaging", navShorts: "Shorts", navRes: "Results", navRev: "Revisions",
+  pkMore: "More: description, chapters and ad breaks", shMore: (n) => `Show ${n} more`,
   pkTitle: "Packaging", pkLead: "The title and thumbnail decide whether anyone clicks; the script decides whether they stay. Type and see how it will look.",
   pkReq: "Required", pkRec: "Recommended",
   pk: { title: "There's a title", titleLen: (n) => `Title of 60 characters or less (${n})`, titleRisk: "Title free of risk terms", thumb: "Thumbnail text of 1 to 5 words and 30 characters or less", thumbRisk: "Thumbnail free of risk terms", titleKw: (k) => `The keyword "${k}" is in the title`, thumbRepeat: "The thumbnail says something different from the title", promiseMatch: "The title promises what the script's opening promises", descKw: "The description names the keyword in its first 150 characters" },
@@ -4919,8 +4930,9 @@ function renderPack() {
     </div>
     <div id="pkSug"></div><p class="status" id="pkStatus"></p>
     <div id="pkChecks"></div>
+    <details class="pk-more"><summary>${h(t("pkMore"))}</summary>
     <div class="field pk-wide"><label for="pkDescIn">${h(t("descLabel"))}</label><textarea id="pkDescIn" rows="4">${h($("description").value)}</textarea></div>
-    <div class="ch-box" id="pkChapters"></div><div class="ch-box" id="pkAds"></div>`;
+    <div class="ch-box" id="pkChapters"></div><div class="ch-box" id="pkAds"></div></details>`;
   const sync = (from, to) => $(from).addEventListener("input", () => {
     $(to).value = $(from).value;
     renderPkPreview();
@@ -5026,6 +5038,16 @@ ${G.text.slice(0, 6000)}
 }
 
 // ---------- Shorts card ----------
+function shortsListHTML(list, marked) {
+  const shItem = (c, k) => `<div class="sh-item${marked(c) ? " in-use" : ""}"><div class="sh-time">${fmtTime(c.t0)}–${fmtTime(c.t1)}<span>≈${Math.round(c.dur)} s</span></div>
+      <div class="sh-body"><div class="co-text">«${h(c.first)}»</div>${c.i1 > c.i0 ? `<div class="hint">${h(t("shEnds"))} «${h(c.last.length > 110 ? c.last.slice(0, 110) + "…" : c.last)}»</div>` : ""}
+      <div class="co-meta">${c.why.map((w) => `<span class="chip">${h(t("why")[w] || w)}</span>`).join("")}</div>
+      <div class="co-act">${marked(c) ? `<button class="small" data-unmark="${k}" aria-pressed="true">✓ ${h(t("shMarked"))}</button>` : `<button class="small primary" data-mark="${k}">${h(t("shMark"))}</button>`}<button class="small linkish" data-see="${c.i0}">${h(t("coSee"))}</button></div></div></div>`
+  const rank = list.map((c, k) => ({ c, k, s: (marked(c) ? 100 : 0) + (c.why ? c.why.length : 0) })).sort((x, y) => y.s - x.s || x.c.t0 - y.c.t0);
+  const top = new Set(rank.slice(0, 3).map((r) => r.k));
+  const first = list.map((c, k) => (top.has(k) ? shItem(c, k) : "")).join(""), rest = list.map((c, k) => (top.has(k) ? "" : shItem(c, k))).join("");
+  return `<div class="sh-list">${first}</div>${rest ? `<details class="sh-more"><summary>${h(t("shMore")(list.length - top.size))}</summary><div class="sh-list">${rest}</div></details>` : ""}`;
+}
 function renderShorts() {
   const el = $("gShorts");
   if (!el) return;
@@ -5034,10 +5056,7 @@ function renderShorts() {
   for (const m of G.shorts) if (!list.some((c) => c.i0 === m.i0 && c.i1 === m.i1)) { const a = G.U[m.i0], b = G.U[m.i1]; list.push({ i0: m.i0, i1: m.i1, t0: a.t0, t1: b.t1, dur: b.t1 - a.t0, why: [], first: a.text, last: b.text }); }
   list.sort((x, y) => x.t0 - y.t0);
   el.innerHTML = `<header class="g-h"><h2>${h(t("shTitle"))}</h2><span class="count">${G.shorts.length ? h(t("shMarked")) + " " + G.shorts.length : ""}</span></header><p class="lead">${h(t("shLead"))}</p>
-    ${list.length ? `<div class="sh-list">${list.map((c, k) => `<div class="sh-item${marked(c) ? " in-use" : ""}"><div class="sh-time">${fmtTime(c.t0)}–${fmtTime(c.t1)}<span>≈${Math.round(c.dur)} s</span></div>
-      <div class="sh-body"><div class="co-text">«${h(c.first)}»</div>${c.i1 > c.i0 ? `<div class="hint">${h(t("shEnds"))} «${h(c.last.length > 110 ? c.last.slice(0, 110) + "…" : c.last)}»</div>` : ""}
-      <div class="co-meta">${c.why.map((w) => `<span class="chip">${h(t("why")[w] || w)}</span>`).join("")}</div>
-      <div class="co-act">${marked(c) ? `<button class="small" data-unmark="${k}" aria-pressed="true">✓ ${h(t("shMarked"))}</button>` : `<button class="small primary" data-mark="${k}">${h(t("shMark"))}</button>`}<button class="small linkish" data-see="${c.i0}">${h(t("coSee"))}</button></div></div></div>`).join("")}</div>` : `<p class="hint">${h(t("shNone"))}</p>`}`;
+    ${list.length ? shortsListHTML(list, marked) : `<p class="hint">${h(t("shNone"))}</p>`}`;
   el.querySelectorAll("[data-mark]").forEach((b) => b.addEventListener("click", () => { const c = list[+b.dataset.mark]; G.shorts.push({ i0: c.i0, i1: c.i1, a: G.U[c.i0].text.slice(0, 80), b: G.U[c.i1].text.slice(0, 80) }); markDirty(); renderShorts(); }));
   el.querySelectorAll("[data-unmark]").forEach((b) => b.addEventListener("click", () => { const c = list[+b.dataset.unmark]; G.shorts = G.shorts.filter((m) => !(m.i0 === c.i0 && m.i1 === c.i1)); markDirty(); renderShorts(); }));
   el.querySelectorAll("[data-see]").forEach((b) => b.addEventListener("click", () => showUnit(+b.dataset.see)));
@@ -5215,7 +5234,7 @@ topFixHTML = function (R) {
     const p = c.proposals[sel];
     const ai = state.fixAi[c.id];
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
-    const open = ci === 0 || (typeof V !== "undefined" && V.guided) || (state.fixOpen && state.fixOpen.has(c.id));
+    const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
     return `<li class="fx${open ? "" : " fx-closed"}" data-ci="${ci}" data-fid="${h(c.id)}">
       <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
       ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
@@ -5462,7 +5481,7 @@ function renderGuide() {
   const R = state.result;
   if (V.step === 2) {
     top.innerHTML = head(2);
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>${topFixHTML(R)}
+    body.innerHTML = `${verdictHTML(R)}${timelineHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>${topFixHTML(R)}
       <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>${navHTML(1, t("next"), 'data-step="3"')}`;
     wireFixes();
     $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
@@ -5470,10 +5489,10 @@ function renderGuide() {
     top.innerHTML = head(3);
     const missing = packGateMissing();
     const done = G.status === "aprobado" || G.status === "grabado";
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gTopic"></section><section class="g-card" id="gCold"></section><section class="g-card" id="gPack"></section>
+    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gStruct"></section><section class="g-card" id="gCold"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
       <div class="g-approve">${done ? `<span class="lamp verde">${h(t("approved"))}</span>` : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : ""}`}</div>
       ${navHTML(2, done ? t("next") : "", 'data-step="4"')}`;
-    renderTopic(); renderCold(); renderPack();
+    renderStructure(); renderCold(); renderTopic(); renderPack();
     const ap = $("gApprove");
     if (ap) ap.addEventListener("click", async () => { ap.disabled = true; await setStatus("aprobado"); goStep(4); });
   } else if (V.step === 4) {
@@ -6416,7 +6435,7 @@ renderGuide = function () {
   _renderGuideAsk();
   if (!V.guided || V.step !== 2) return;
   const more = document.querySelector("#guide .g-more-sec");
-  if (more) mountAsk(more, true);
+  if (more && more.nextSibling) mountAsk(more.nextSibling, true);
 };
 const _renderResultsAsk = renderResults;
 renderResults = function () {
@@ -8653,7 +8672,7 @@ function renderAuthBar() {
     el.innerHTML = `<p>${h(t("authNotMember")(AUTH.email || ""))}</p><button type="button" class="small" id="authOut">${h(t("authOut"))}</button>`;
   } else {
     el.hidden = false; el.className = "auth-bar ok";
-    el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? ` · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span>` : ""}</p><button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
+    el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p><button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
   }
   $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) {} lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
 }
