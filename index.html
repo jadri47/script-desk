@@ -649,6 +649,14 @@ html .ep-strip>button{font-size:13.5px;white-space:nowrap}
 .clr-act{display:flex;flex-direction:column;gap:10px;margin-top:16px}
 .clr-act button{width:100%;min-height:50px;font-size:16px}
 html .clear-link,html button.clear-link{color:var(--rojo)}
+/* Traducir o adaptar: a small link in the meta line; its panel opens right below */
+html .tr-toggle{margin-left:auto;font-size:14px;padding:4px 0;min-height:32px;background:none;border:0;color:var(--link,#255F7E);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+html .tr-toggle::after{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+html .tr-toggle.on::after{transform:rotate(-135deg) translateY(-1px)}
+html .tr-toggle.has-res::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold,#B8860B)}
+html .clear-link{margin-left:0}
+html .meta-line .tr-box{flex:0 0 100%;order:9;margin:6px 0 0}
+html .meta-line .tr-box[hidden]{display:none}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1280,7 +1288,7 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
       <p class="steps"><b data-i18n="tip1">Pega</b><i>→</i><b data-i18n="tip2">Revisa</b><i>→</i><b data-i18n="tip3">Exporta</b></p>
       <textarea id="script" data-i18n-ph="scriptPh" placeholder="Pega tu guion aquí…" spellcheck="true"></textarea>
     </div>
-    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span><button type="button" class="linkish clear-link" id="clearBtn" data-i18n="clear">Borrar guion</button></div>
+    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span><button type="button" class="linkish tr-toggle" id="trToggle" aria-expanded="false" aria-controls="trBox" data-i18n="trTitle">Traducir o adaptar el guion</button><button type="button" class="linkish clear-link" id="clearBtn" data-i18n="clear">Borrar guion</button><div id="trBox" class="tr-box" hidden></div></div>
     <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><textarea id="bigIdea" rows="1" data-one="1" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."></textarea><div id="ideaSug" class="idea-sug-box"></div></div>
 
     <details class="extra" id="extraFields">
@@ -1309,7 +1317,6 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
       <p class="hint" id="bibleHint"></p></div>
     </div>
     </details>
-    <div id="trBox" class="tr-box"></div>
     <div class="actions">
       <button class="primary" id="runBtn" data-i18n="run">Revisar guion</button>
       <span class="hint" id="runHint"></span>
@@ -6830,7 +6837,7 @@ ${$("script").value}
 }
 
 async function trRun() {
-  TR.err = ""; TR.msg = ""; TR.res = null;
+  TR.err = ""; TR.msg = ""; TR.res = null; TR.open = true;
   const text = $("script").value.trim();
   if (!text) { TR.err = t("trNeedText"); renderTr(); return; }
   const src = trSource(), dst = TR.target || (src === "en" ? "neutral" : "en"), ver = TR.ver || bibleFor(dst, $("translation").value);
@@ -6891,11 +6898,13 @@ function renderTr() {
       <div class="actions"><button type="button" class="primary small" id="trUse">${h(t("trUse"))}</button><button type="button" class="small" id="trDiscard">${h(t("trDiscard"))}</button></div></div>`;
   }
   // Collapsed until tapped; stays open while it is working or has a result to review.
-  const open = TR.open || TR.busy || !!TR.res;
-  el.innerHTML = `<details class="tr-det" id="trDet"${open ? " open" : ""}><summary>${h(t("trTitle"))}</summary><div class="tr-row"><label for="trTarget" class="vh">${h(t("trTitle"))}</label>
+  const open = !!TR.open;
+  const tg = $("trToggle"); if (tg) { tg.setAttribute("aria-expanded", open ? "true" : "false"); tg.classList.toggle("on", open); tg.classList.toggle("has-res", !!TR.res && !open); }
+  el.hidden = !open;
+  if (!open) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="tr-row"><label for="trTarget" class="vh">${h(t("trTitle"))}</label>
       <div class="tr-ctl"><span class="hint">${h(T2[src])} →</span><select id="trTarget">${opts}</select><span class="tr-ver"><label for="trVer" class="hint">${h(t("trVer"))}</label><select id="trVer">${bibleOptions(TR.target, TR.ver)}</select></span><button type="button" class="small" id="trGo"${TR.busy ? " disabled" : ""}>${h(t("trGo"))}</button></div></div>
-    <p class="status${TR.err ? " err" : ""}" id="trSt">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}</details>`;
-  $("trDet").addEventListener("toggle", (e) => { TR.open = e.target.open; });
+    <p class="status${TR.err ? " err" : ""}" id="trSt">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}`;
   $("trTarget").addEventListener("change", (e) => { TR.target = e.target.value; TR.ver = ""; renderTr(); });
   $("trVer").addEventListener("change", (e) => { TR.ver = e.target.value; });
   $("trGo").addEventListener("click", trRun);
@@ -6983,6 +6992,7 @@ $("bigIdea").addEventListener("input", renderIdeaSug);
 const _gOnLangL = gOnLang;
 gOnLang = function () { _gOnLangL(); renderTr(); renderIdeaSug(); };
 renderTr(); renderIdeaSug();
+{ const tg = $("trToggle"); if (tg) tg.addEventListener("click", () => { TR.open = !TR.open; renderTr(); }); }
 /* ===== Tus episodios: lista sencilla en una hoja aparte, y «planea el próximo» en el paso 5 ===== */
 // The old calendar sat in step 1, before writing, with raw date boxes. Now: one line on top of every step
 // says which episode is open, «Mis episodios» opens the list, and step 5 plans the next one right after recording.
