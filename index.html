@@ -1153,6 +1153,10 @@ li.fx-closed>.fx-top::after{content:"›";margin-left:auto;color:var(--ink-2);fo
 /* Sections with nothing to fix sit after the ones that need attention */
 .mods-ok-lead{margin:14px 0 4px;font-size:13px}
 details.mod.mod-ok>summary .mt{color:var(--ink-2)}
+/* Phone: the marked script scrolls inside its own window instead of stretching the page */
+@media (max-width:899px){
+  #sec-manuscript .manuscript, .g-more-b .manuscript{max-height:min(62vh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-gutter:stable}
+}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
