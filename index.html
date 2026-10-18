@@ -594,6 +594,9 @@ html.guided .auth-cost{display:none}
 .g-approve{position:sticky;bottom:0;z-index:15;background:var(--paper);padding:10px 0 12px;margin-top:22px;border-top:1px solid var(--rule)}
 @media (max-width:899px){.g-approve{bottom:calc(62px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:899px){html.guided #gStruct>.lead{display:none}}
+
+.st-fold{margin-top:8px}
+.st-fold>summary{cursor:pointer;font:600 15px/1.3 var(--sans);color:var(--accent);padding:8px 0;list-style:revert}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -5358,6 +5361,7 @@ Object.assign(T.es, {
   steps: ["Escribir", "Arreglar", "Preparar", "Grabar", "Después"],
   stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene arreglar antes de grabar", "Cómo empieza el video y cómo se llama", "Grabar con el prompter", "Después de grabar"],
   s1Lead: "Pega aquí el guion completo del episodio. Te diremos qué conviene arreglar antes de grabar.", s1Sample: "Probar con un guion de ejemplo", s1Continue: "Seguir con un episodio guardado", s1Open: "Abrir",
+  stFold: (n, d) => `Ver las ${n} secciones · ${d}`,
   s2Lead: "Toca «Aplicar» para aceptar un cambio. Si no te convence, toca «Ahora no». Siempre puedes deshacer.",
   s3Lead: "La apertura usa frases que ya están en tu guion: no hay que grabar nada aparte. Después escribe el título y el texto de la miniatura.",
   s4Lead: "Abre el prompter y lee. El texto avanza solo, a tu ritmo.", s4Len: (a) => `El episodio dura unos ${a}.`, s4Clips: "Estas frases se usan al inicio del video: dilas mirando a la cámara, con una pausa antes y después.",
@@ -5383,6 +5387,7 @@ Object.assign(T.en, {
   steps: ["Write", "Fix", "Prepare", "Record", "After"],
   stepQ: ["Write or paste the episode script", "What to fix before recording", "How the video opens and what it's called", "Record with the prompter", "After recording"],
   s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Sample: "Try a sample script", s1Continue: "Continue a saved episode", s1Open: "Open",
+  stFold: (n, d) => `Show the ${n} sections · ${d}`,
   s2Lead: "Tap \"Apply\" to accept a change. If you don't like it, tap \"Not now\". You can always undo.",
   s3Lead: "The opening uses lines already in your script: nothing extra to record. Then write the title and the thumbnail text.",
   s4Lead: "Open the prompter and read. The text moves on its own, at your pace.", s4Len: (a) => `The episode runs about ${a}.`, s4Clips: "These lines open the video: say them to the camera, with a pause before and after.",
@@ -5492,7 +5497,7 @@ function renderGuide() {
     body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gStruct"></section><section class="g-card" id="gCold"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
       <div class="g-approve">${done ? `<span class="lamp verde">${h(t("approved"))}</span>` : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : ""}`}</div>
       ${navHTML(2, done ? t("next") : "", 'data-step="4"')}`;
-    renderStructure(); renderCold(); renderTopic(); renderPack();
+    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack();
     const ap = $("gApprove");
     if (ap) ap.addEventListener("click", async () => { ap.disabled = true; await setStatus("aprobado"); goStep(4); });
   } else if (V.step === 4) {
@@ -5509,6 +5514,19 @@ function renderGuide() {
   wireGuideNav(body);
   body.querySelectorAll("[data-see]").forEach((b) => b.remove());
 }
+// Phone: the section list folds to one line (sections + length); tap to open. Stays open on wide screens.
+V.stFold = false;
+function foldStruct() {
+  const el = $("gStruct"), list = el && el.querySelector(".st-list");
+  if (!list || !matchMedia("(max-width:899px)").matches || list.closest(".st-fold")) return;
+  const n = G.secs.length, d = document.createElement("details");
+  d.className = "st-fold"; d.open = V.stFold || G.stOpen != null;
+  d.innerHTML = `<summary>${h(t("stFold")(n, fmtTime(totalRec())))}</summary>`;
+  list.parentNode.insertBefore(d, list); d.appendChild(list);
+  d.addEventListener("toggle", () => { V.stFold = d.open; });
+}
+const _renderStructureG = renderStructure;
+renderStructure = function () { _renderStructureG(); if (V.guided) foldStruct(); };
 function wireGuideNav(root) { root.querySelectorAll(".g-nav-steps [data-step]").forEach((b) => b.addEventListener("click", () => goStep(+b.dataset.step))); }
 
 // Rendering hooks: in guided mode, results and the Guion tab draw into the current step instead.
