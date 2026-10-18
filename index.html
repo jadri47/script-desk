@@ -657,6 +657,33 @@ html .tr-toggle.has-res::before{content:"";width:8px;height:8px;border-radius:50
 html .clear-link{margin-left:0}
 html .meta-line .tr-box{flex:0 0 100%;order:9;margin:6px 0 0}
 html .meta-line .tr-box[hidden]{display:none}
+/* Score bubble */
+.score-pill{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);font:700 16px/1 var(--sans);box-shadow:0 4px 16px rgba(20,24,60,.18);cursor:pointer;font-variant-numeric:tabular-nums}
+.score-pill .sc-dot,.sc-big .sc-dot{width:10px;height:10px;border-radius:50%;background:var(--verde);flex:none;display:inline-block}
+.band-rojo .sc-dot{background:var(--rojo)} .band-amarillo .sc-dot{background:var(--amarillo)} .band-verde .sc-dot{background:var(--verde)}
+.score-pill .sc-d{font:600 12px/1 var(--sans)} .score-pill .sc-d:empty{display:none}
+.score-pill .sc-d.up{color:var(--verde)} .score-pill .sc-d.down{color:var(--rojo)}
+html .score-pill.float{position:fixed;right:12px;bottom:calc(84px + var(--sc-kb,0px) + env(safe-area-inset-bottom,0px));z-index:30}
+html:not(.guided) .score-pill.float{bottom:calc(16px + var(--sc-kb,0px) + env(safe-area-inset-bottom,0px))}
+html .score-pill.float.lift{margin-bottom:68px}
+html .score-pill.docked{box-shadow:none;min-height:32px;padding:0 11px;font-size:14px}
+html .score-pill[hidden],html.pp-open .score-pill{display:none}
+.sc-scrim{position:fixed;inset:0;z-index:69;background:rgba(10,12,30,.28)} .sc-scrim[hidden],.sc-pop[hidden]{display:none}
+@media (min-width:900px){.sc-scrim{background:transparent}}
+.sc-pop{position:fixed;z-index:70;background:var(--sheet);color:var(--ink);border:1px solid var(--rule);border-radius:18px;box-shadow:0 14px 44px rgba(10,12,30,.32);padding:16px 18px;font-size:15px;line-height:1.45;width:min(360px,calc(100vw - 24px))}
+@media (max-width:899px){.sc-pop{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:78vh;overflow:auto}}
+.sc-head{display:flex;align-items:center;gap:10px}
+.sc-big{display:inline-flex;align-items:center;gap:8px;font:800 30px/1 var(--sans)} .sc-big small{font:600 14px/1 var(--sans);color:var(--ink-2);margin-left:-4px}
+.sc-band{font-weight:600;color:var(--ink-2)} .sc-x{margin-left:auto;min-height:44px;min-width:44px;border:0;background:none;font-size:26px;color:var(--ink-2);cursor:pointer}
+.sc-since{margin:4px 0 8px;font-weight:600} .sc-checks{margin:2px 0 6px}
+.sc-k{font:600 12px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:10px 0 6px}
+.sc-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sc-rows button{width:100%;text-align:left;min-height:44px;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet-2);color:var(--ink);font:500 15px/1.3 var(--sans);cursor:pointer}
+.sc-ign{margin-top:12px;padding:10px 12px;border:1px solid var(--amarillo);border-radius:12px;background:var(--gold-bg);color:var(--gold)}
+.sc-ign ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px} .sc-ign li{display:flex;align-items:center;gap:8px;justify-content:space-between} .sc-ign li span{flex:1}
+.sc-note{margin:12px 0 6px} .sc-hide{font-size:14px;min-height:36px}
+.sc-showbtn{font-size:13px;margin-left:12px} .sc-showbtn[hidden]{display:none}
+.gv-top{display:flex;align-items:baseline;gap:10px} .gv-n{font:800 34px/1 var(--sans);font-variant-numeric:tabular-nums} .gv-n small{font:600 15px/1 var(--sans);color:var(--ink-2);margin-left:2px} .gv-l{font:600 13px/1.2 var(--sans);color:var(--ink-2)}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1343,6 +1370,1791 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
     <p data-i18n="disc4">La IA aquí no navega por internet: verifica citas y datos con las fuentes enlazadas antes de grabar.</p></details></p>
   </footer>
 </main>
+<script type="text/plain" id="engineSrc">
+/* ===== Script Desk — pure analysis logic (no DOM) ===== */
+
+// ---------- Word lists (spec section F) ----------
+const SW_ES = "el la los las un una unos unas y o pero si entonces así para de del al en por con como donde cuando porque este esta estos estas ese esa esos esas es son fue fueron ser estar mi tu su nuestro nuestra sus me te lo nos les no muy solo sobre entre desde hasta más también ya que qué cómo se le lo".split(" ");
+const SW_EN = "a an the and or but if then so to of in on for with as at by from is are was were be been being this that these those it its i you he she we they my your his her our their me him them us do does did not no yes very just about into over under again once here there when where why how all any both each few more most other some such only own same than too can will should now".split(" ");
+const STOP = new Set([...SW_ES, ...SW_EN]);
+
+// F.2 muletillas — patterns, not bare words, so "este libro" or "un buen hombre" never count.
+const MULETILLAS = [
+  { re: /\bo sea\b/gi, label: "o sea" },
+  { re: /\beste(?=\s*(,|\.\.\.|…))/gi, label: "este…" },
+  { re: /(^|[.!?¡¿]\s*)(bueno)(?=,)/gim, label: "bueno,", group: 2 },
+  { re: /(^|[.!?¡¿]\s*)(pues)(?=,)/gim, label: "pues,", group: 2 },
+  { re: /¿verdad\?/gi, label: "¿verdad?" },
+  { re: /,\s*¿no\?/gi, label: "¿no?" },
+  { re: /¿sí\?/gi, label: "¿sí?" },
+  { re: /\b(eh+|em+|mm+)\b/gi, label: "eh / em" },
+  { re: /\bdigamos\b/gi, label: "digamos" },
+  { re: /\bbásicamente\b/gi, label: "básicamente" },
+  { re: /\bliteralmente\b/gi, label: "literalmente" },
+  { re: /\bla verdad es que\b/gi, label: "la verdad es que" },
+  { re: /\bcomo que\b/gi, label: "como que" },
+  { re: /\btipo(?=,)/gi, label: "tipo," },
+  { re: /\by nada\b/gi, label: "y nada" },
+  { re: /¿me explico\?/gi, label: "¿me explico?" },
+  { re: /¿me entienden\?/gi, label: "¿me entienden?" },
+  { re: /\ba ver(?=,)/gi, label: "a ver," },
+  { re: /\b(okay|ok)\b/gi, label: "ok" },
+  // English
+  { re: /\b(um+|uh+)\b/gi, label: "um / uh" },
+  { re: /\byou know\b/gi, label: "you know" },
+  { re: /\b(kind of|sort of)\b/gi, label: "kind of / sort of" },
+  { re: /\bI mean\b/gi, label: "I mean" },
+];
+
+// F.3 greetings and filler openers
+const GREETINGS = ["hola a todos", "hola amigos", "qué tal", "bienvenidos a", "bienvenidos de nuevo", "bienvenidos", "en este episodio vamos a", "en este video voy a", "en este video vamos a", "hoy vamos a hablar de", "antes de empezar", "sin más preámbulos", "what's up guys", "hey guys", "welcome back", "in this video i'm going to", "without further ado"];
+
+// F.5 calls to action
+const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten", "comparte", "compartan", "compártelo", "compártela", "compártanlo", "compártanla", "share it", "suscribíos", "suscribirse", "comentad", "compartid", "compartidlo", "compartidla", "escribidnos", "dadle a me gusta", "suscribiros", "activad la campanita", "hit the bell", "like and subscribe", "leave a comment", "dale like", "dejen su like", "activa la campanita", "enlace en la descripción", "link en la descripción", "escríbenos", "escríbeme", "únete al grupo", "subscribe", "comment below", "link in the description", "share this"];
+
+// F.6 structure, promise, open-loop
+const TRANSITIONS = ["primero", "segundo", "tercero", "en primer lugar", "en segundo lugar", "ahora bien", "por otro lado", "luego", "después", "finalmente", "por último", "en resumen", "para terminar", "first", "second", "next", "finally", "in summary"];
+const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "vas a descubrir", "vas a aprender", "vas a entender", "vamos a descubrir", "vamos a aprender", "vamos a estudiar", "te voy a mostrar", "les voy a mostrar", "you'll see", "you'll learn", "by the end of this", "you're going to learn", "you're going to see", "we'll look at"];
+const OPEN_LOOPS = ["imaginad", "dejadme contaros", "os voy a contar", "here's what almost nobody notices", "más adelante", "en un momento", "quédate hasta el final", "pero antes", "hay algo más", "la clave está en", "lo que casi nadie nota", "imagínate", "imagina", "déjame contarte", "les voy a contar", "later in this", "stay until the end", "here's the thing", "imagine"];
+const PRAYER_OPEN = ["oremos", "vamos a orar", "quiero orar", "antes de empezar oremos", "padre celestial", "padre amado", "señor te damos gracias", "señor, te damos gracias", "señor te pedimos", "señor, te pedimos", "en el nombre de jesús", "en el nombre de cristo", "en tu nombre", "amén", "let's pray", "heavenly father", "father god", "in jesus' name", "in jesus name", "amen"];
+// A bare "amén" counts as prayer only when it isn't the rhetorical "¿amén?" asked of the audience mid-teaching.
+const PRAYER_CORE = PRAYER_OPEN.filter((p) => !/^amé?n$/i.test(p));
+const BLESSINGS = ["dios les bendiga", "dios te bendiga", "que dios les bendiga", "que dios te bendiga", "bendiciones", "el señor te bendiga", "el señor les bendiga", "god bless", "be blessed"];
+// A sentence is prayer when it uses a prayer phrase, says "amén" (not the rhetorical "¿amén?"), or speaks to God by name ("Señor, …").
+const PRAYER_VOC = /^\s*(señor|padre|dios|jesús|cristo|espíritu santo|lord|father|god|jesus)\s*[,!]/i;
+const isPrayerText = (t) => {
+  const has = (list) => findPhrases(t, list, "x").length > 0;
+  if (has(PRAYER_CORE)) return true;
+  return !/[?¿]/.test(t) && (has(["amén", "amen"]) || PRAYER_VOC.test(t));
+};
+const PREV_EP = ["la semana pasada", "en el episodio anterior", "el episodio pasado", "la última vez", "vimos que", "como vimos", "como veíamos", "seguimos con", "continuamos con", "previously", "last week", "last time", "as we saw", "we continue"];
+const PROMISE_VERBS = /(?<![\p{L}])(cambia|cambiar|cambiará|entender|entenderás|descubrir|descubrirás|aprender|aprenderás|saber|sabrás|vivir|vencer|venceremos|salir|sanar|sanidad|recibir|recibirás|encontrar|encontrarás|conocer|conocerás|libera|liberar|learn|understand|discover|find|know|live|overcome|receive|change|changes)(?![\p{L}])/iu;
+const NEXT_EP = ["próximo episodio", "la próxima semana", "en el siguiente episodio", "siguiente episodio", "en la próxima", "next episode", "next week"];
+
+// F.4 weak words → alternatives
+const WEAK = {
+  "cosas": ["aspectos", "elementos", "verdades"],
+  "muy importante": ["esencial", "decisivo"],
+  "un montón": ["muchos", "numerosos"],
+  "bonito": ["hermoso", "glorioso"],
+  "bonita": ["hermosa", "gloriosa"],
+  "interesante": ["revelador", "sorprendente"],
+  "súper": ["muy", "realmente"],
+  "hacer una oración": ["orar"],
+  "hacer un estudio": ["estudiar"],
+  "stuff": ["tools", "ideas", "details"],
+  "things": ["truths", "points", "details"],
+  "very important": ["essential", "crucial"],
+  "a lot of": ["many", "much"],
+  "nice": ["beautiful", "good"],
+};
+// "bueno/malo/grande" as adjectives (not "bueno," filler)
+const WEAK_ADJ = { "bueno": ["fiel", "sólido", "provechoso"], "buena": ["fiel", "sólida", "provechosa"], "malo": ["dañino", "engañoso"], "mala": ["dañina", "engañosa"], "grande": ["enorme", "profundo"] };
+
+// F.7 protected phrases
+const PROTECTED = ["palabra de dios", "espíritu santo", "hijo de dios", "cordero de dios", "buenas nuevas", "buena nueva", "buen pastor", "buena voluntad", "buen samaritano", "gran comisión", "gran mandamiento", "gran tribulación", "gran ramera", "cosas nuevas", "todas las cosas", "cosas viejas", "cosas de arriba", "buena obra", "buenas obras", "buen fruto", "mal fruto"];
+
+// F.8 regional → neutral
+const REGIONAL = [
+  { re: /\bvosotr[oa]s\b/gi, fix: "ustedes" },
+  { re: /\bvos\b/gi, fix: "tú" },
+  { re: /\b\p{L}+(?:áis|éis)\b/giu, fix: "forma de ustedes (-an / -en)" },
+  { re: /(?<![\p{L}])(sabés|tenés|querés|podés|sos|vení|mirá|escuchá)(?![\p{L}])/giu, fix: "tú / usted (sabes, tienes…)" },
+  { re: /\bvale(?=\s*[,.?!])/gi, fix: "bien, de acuerdo" },
+  { re: /,\s*(tío|tía)\b/gi, fix: "amigo / hermano" },
+  { re: /\ben plan\b/gi, fix: "como, algo así como" },
+  { re: /\b(güey|wey|guey)\b/gi, fix: "(quitar)" },
+  { re: /\bche\b/gi, fix: "(quitar)" },
+  { re: /\b(chévere|chido|bacán|padrísimo)\b/gi, fix: "excelente" },
+  { re: /\b(pana|parcero|cuate)\b/gi, fix: "amigo / hermano" },
+  { re: /\bahorita\b/gi, fix: "en un momento" },
+  { re: /\bplaticar\b/gi, fix: "conversar" },
+  { re: /\bcoger\b/gi, fix: "tomar / agarrar (vulgar en parte de Latinoamérica)" },
+];
+
+// Which audiences flag each regional form. "both" (default) flags everything; "latam" accepts Mexican/Central American
+// everyday words; "es" (Spain) accepts vosotros, -áis/-éis, vale, tío and coger.
+const REG_SPAIN = /vosotr|áis\|éis|\\bvale|tío|en plan|coger/;
+const REG_LATAM_OK = /ahorita|platicar/;
+function regFlags(r, aud) {
+  const src = r.re.source;
+  if (aud === "es") return !REG_SPAIN.test(src);
+  if (aud === "latam") return !REG_LATAM_OK.test(src);
+  return true;
+}
+// F.11 AI-tell phrases
+const AI_TELLS = ["en este video exploraremos", "sin más preámbulos", "es importante destacar", "cabe mencionar", "cabe destacar", "en el mundo actual", "acompáñame en este viaje", "un tapiz de", "profundicemos", "descubre los secretos", "delve", "tapestry", "in today's fast-paced world", "it's important to note", "let's dive in", "a testament to", "unlock the secrets"];
+
+// ---------- Monetization pre-flight categories (spec C.6 + F.9) ----------
+// level per degree: "verde" | "amarillo" | "rojo". These are this app's reading of YouTube's published
+// advertiser-friendly guidelines as of 2026, not YouTube's decision.
+const PROF_STRONG = ["fuck", "fucking", "motherfucker", "cunt", "hijo de puta", "hijos de puta", "puta", "puto", "joder", "coño", "chingar", "chingada", "chingado", "verga"];
+const PROF_MOD = ["shit", "bitch", "asshole", "mierda", "cabrón", "cabrona", "pendejo", "pendeja", "carajo", "culero", "pinche"];
+const GRAPHIC = ["behead", "gushing", "dismember", "mutilat", "disembowel", "gory", "a borbotones", "desangr", "vísceras", "visceras", "desmembr", "mutil", "decapit", "ahorc", "colgarse", "se colgó", "cortarse las venas", "cortes en", "navaja", "cuchilla", "sobredosis de", "pastillas para morir", "paso a paso", "con detalle", "golpes brutales", "la violó", "lo violó", "gore"];
+const MONEY_CATS = [
+  { id: "lang", label: "Lenguaje inapropiado", label_en: "Inappropriate language", special: true },
+  { id: "adult", label: "Contenido para adultos", label_en: "Adult content", note_en: "Talking about pornography or sexuality without explicit description is teaching; explicit detail limits ads.", terms: ["porno", "pornografía", "pornográfico", "porn", "sexo oral", "sexo anal", "masturbación", "orgasmo", "onlyfans", "desnudos", "nudes"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Hablar de la pornografía o la sexualidad sin descripciones explícitas es enseñanza; los detalles explícitos limitan anuncios." },
+  { id: "violence", label: "Violencia", label_en: "Violence", note_en: "Historical or biblical violence told without graphic detail is fine; graphic description limits ads.", terms: ["asesinato", "asesinar", "asesinó", "masacre", "tiroteo", "torturar", "tortura", "ejecución", "ejecutado", "decapitado", "decapitó", "decapitación", "decapitar", "decapita", "apuñal", "murder", "massacre", "shooting", "torture", "execution", "beheaded", "stabbing"], mention: "verde", focal: "verde", graphic: "amarillo", note: "La violencia histórica o bíblica narrada sin detalle gráfico es apta; la descripción gráfica limita anuncios." },
+  { id: "harm", label: "Actos peligrosos y promesas garantizadas", label_en: "Harmful acts and guaranteed promises", note_en: "Promising healing or money as a guaranteed outcome falls under medical or financial misinformation; teach faith without promising results or discouraging treatment.", terms: ["dios te sanará si", "dios te va a sanar si", "deja la medicina", "deja tus medicamentos", "no necesitas medicina", "no vayas al médico", "cura el cáncer", "cura milagrosa", "sanidad garantizada", "siembra y recibirás", "multiplica tu dinero", "prosperidad garantizada", "garantizado por dios", "stop taking your medication", "will be healed if", "guaranteed healing", "seed offering"], mention: "amarillo", focal: "amarillo", graphic: "amarillo", note: "Promesas de sanidad o dinero como resultado garantizado caen en desinformación médica o financiera; enseña la fe sin prometer resultados ni desaconsejar tratamiento." },
+  { id: "controversial", label: "Temas controversiales", label_en: "Controversial issues", note_en: "Since January 2026 these topics can earn full ads when discussed without graphic detail. Child abuse and eating disorders remain restricted.", terms: ["aborto", "abortar", "suicidio", "suicidarse", "quitarse la vida", "autolesión", "autolesiones", "violencia doméstica", "abuso sexual", "violación", "acoso sexual", "abortion", "suicide", "self-harm", "domestic abuse", "sexual abuse", "rape", "sexual harassment"], restricted: ["abuso infantil", "abuso de menores", "abusó de un niño", "abusó de una niña", "trastorno alimenticio", "trastornos alimenticios", "anorexia", "bulimia", "child abuse", "eating disorder"], mention: "verde", focal: "verde", graphic: "amarillo", note: "Desde enero de 2026 estos temas son aptos si se tratan sin detalle gráfico. El abuso infantil y los trastornos alimenticios siguen restringidos." },
+  { id: "drugs", label: "Drogas", label_en: "Drugs", note_en: "A testimony of addiction and freedom is fine; a focus on using or obtaining drugs limits ads.", terms: ["cocaína", "heroína", "metanfetamina", "fentanilo", "crack", "marihuana", "drogarse", "inyectarse", "cocaine", "heroin", "meth", "fentanyl"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Un testimonio de adicción y libertad es apto; el enfoque en consumir o conseguir drogas limita anuncios." },
+  { id: "firearms", label: "Armas de fuego", label_en: "Firearms", note_en: "Mentioning weapons in a story is fine; focusing on them limits ads.", terms: ["pistola", "rifle", "arma de fuego", "armas de fuego", "ametralladora", "ar-15", "glock", "gun", "firearm"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Mencionar armas en una historia es apto; centrarse en ellas limita anuncios." },
+  { id: "hate", label: "Odio o contenido despectivo", label_en: "Hateful or derogatory content", note_en: "Calling a protected group a plague, a disease, or something to eliminate is hate, regardless of religious framing. You can teach about sin without dehumanizing people.", special: true, note: "Llamar a un grupo protegido plaga, enfermedad o algo a eliminar es odio, sin importar el marco religioso. Se puede enseñar sobre el pecado sin deshumanizar a personas." },
+  { id: "shocking", label: "Contenido impactante", label_en: "Shocking content", note_en: "Repulsive or graphic descriptions limit ads even in an educational context.", terms: ["cadáver putrefacto", "carne podrida", "vísceras", "intestinos", "gusanos en", "rotting flesh", "gore"], mention: "amarillo", focal: "amarillo", graphic: "amarillo", note: "Descripciones repulsivas o gráficas limitan anuncios incluso en contexto educativo." },
+  { id: "events", label: "Eventos sensibles", label_en: "Sensitive events", note_en: "Mentioning tragedies in a reflection is fine; exploiting them sensationally limits ads.", terms: ["pandemia", "covid", "coronavirus", "ataque terrorista", "tiroteo masivo", "atentado", "pandemic", "terror attack", "mass shooting"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Mencionar tragedias en una reflexión es apto; explotarlas de forma sensacionalista limita anuncios." },
+];
+const HATE_GROUPS = ["judíos", "musulmanes", "católicos", "evangélicos", "cristianos", "mormones", "testigos de jehová", "ateos", "homosexuales", "gays", "lesbianas", "trans", "transgénero", "inmigrantes", "negros", "indígenas", "mexicanos", "hondureños", "árabes", "jews", "muslims", "catholics", "gays", "immigrants", "atheists", "christians", "mormons"];
+const HATE_WORDS = ["plaga", "cáncer de", "son un cáncer", "basura", "animales", "ratas", "alimañas", "exterminar", "eliminarlos", "infrahumanos", "no son humanos", "parásitos", "vermin", "subhuman", "exterminate", "plague"];
+
+// ---------- Bible books (F.10) ----------
+const BOOKS = [
+  ["Génesis|Genesis|Gén|Gn", "GEN", "Génesis"], ["Éxodo|Exodo|Éx|Ex", "EXO", "Éxodo"], ["Levítico|Levitico|Lv", "LEV", "Levítico"], ["Números|Numeros|Núm|Nm", "NUM", "Números"], ["Deuteronomio|Dt", "DEU", "Deuteronomio"], ["Josué|Josue|Jos", "JOS", "Josué"], ["Jueces|Jue", "JDG", "Jueces"], ["Rut", "RUT", "Rut"],
+  ["1\\s?Samuel|1\\s?S|1\\s?Sm", "1SA", "1 Samuel"], ["2\\s?Samuel|2\\s?S|2\\s?Sm", "2SA", "2 Samuel"], ["1\\s?Reyes|1\\s?R", "1KI", "1 Reyes"], ["2\\s?Reyes|2\\s?R", "2KI", "2 Reyes"], ["1\\s?Crónicas|1\\s?Cronicas|1\\s?Cr", "1CH", "1 Crónicas"], ["2\\s?Crónicas|2\\s?Cronicas|2\\s?Cr", "2CH", "2 Crónicas"],
+  ["Esdras|Esd", "EZR", "Esdras"], ["Nehemías|Nehemias|Neh", "NEH", "Nehemías"], ["Ester|Est", "EST", "Ester"], ["Job", "JOB", "Job"], ["Salmos|Salmo|Sal", "PSA", "Salmos"], ["Proverbios|Prov|Pr", "PRO", "Proverbios"], ["Eclesiastés|Eclesiastes|Ec", "ECC", "Eclesiastés"], ["Cantar de los Cantares|Cantares|Cnt", "SNG", "Cantares"],
+  ["Isaías|Isaias|Is", "ISA", "Isaías"], ["Jeremías|Jeremias|Jer", "JER", "Jeremías"], ["Lamentaciones|Lm", "LAM", "Lamentaciones"], ["Ezequiel|Ez", "EZK", "Ezequiel"], ["Daniel|Dn", "DAN", "Daniel"], ["Oseas|Os", "HOS", "Oseas"], ["Joel|Jl", "JOL", "Joel"], ["Amós|Amos|Am", "AMO", "Amós"], ["Abdías|Abdias|Abd", "OBA", "Abdías"], ["Jonás|Jonas|Jon", "JON", "Jonás"], ["Miqueas|Mi", "MIC", "Miqueas"], ["Nahúm|Nahum|Nah", "NAM", "Nahúm"], ["Habacuc|Hab", "HAB", "Habacuc"], ["Sofonías|Sofonias|Sof", "ZEP", "Sofonías"], ["Hageo|Hag", "HAG", "Hageo"], ["Zacarías|Zacarias|Zac", "ZEC", "Zacarías"], ["Malaquías|Malaquias|Mal", "MAL", "Malaquías"],
+  ["Mateo|Mt", "MAT", "Mateo"], ["Marcos|Mr|Mc", "MRK", "Marcos"], ["Lucas|Lc", "LUK", "Lucas"], ["Juan|Jn", "JHN", "Juan"], ["Hechos|Hch", "ACT", "Hechos"], ["Romanos|Rom|Ro", "ROM", "Romanos"], ["1\\s?Corintios|1\\s?Co", "1CO", "1 Corintios"], ["2\\s?Corintios|2\\s?Co", "2CO", "2 Corintios"], ["Gálatas|Galatas|Gál|Gá|Gal", "GAL", "Gálatas"], ["Efesios|Ef", "EPH", "Efesios"], ["Filipenses|Flp|Fil", "PHP", "Filipenses"], ["Colosenses|Col", "COL", "Colosenses"],
+  ["1\\s?Tesalonicenses|1\\s?Ts", "1TH", "1 Tesalonicenses"], ["2\\s?Tesalonicenses|2\\s?Ts", "2TH", "2 Tesalonicenses"], ["1\\s?Timoteo|1\\s?Ti", "1TI", "1 Timoteo"], ["2\\s?Timoteo|2\\s?Ti", "2TI", "2 Timoteo"], ["Tito|Tit", "TIT", "Tito"], ["Filemón|Filemon|Flm", "PHM", "Filemón"], ["Hebreos|Heb|He", "HEB", "Hebreos"], ["Santiago|Stg", "JAS", "Santiago"],
+  ["1\\s?Pedro|1\\s?P", "1PE", "1 Pedro"], ["2\\s?Pedro|2\\s?P", "2PE", "2 Pedro"], ["1\\s?Juan|1\\s?Jn", "1JN", "1 Juan"], ["2\\s?Juan|2\\s?Jn", "2JN", "2 Juan"], ["3\\s?Juan|3\\s?Jn", "3JN", "3 Juan"], ["Judas|Jud", "JUD", "Judas"], ["Apocalipsis|Ap", "REV", "Apocalipsis"],
+];
+const BOOKS_EN = { GEN: "Genesis|Gen", EXO: "Exodus", LEV: "Leviticus|Lev", NUM: "Numbers", DEU: "Deuteronomy|Deut", JOS: "Joshua", JDG: "Judges", RUT: "Ruth", "1SA": "1\\s?Sam", "2SA": "2\\s?Sam", "1KI": "1\\s?Kings", "2KI": "2\\s?Kings", "1CH": "1\\s?Chronicles", "2CH": "2\\s?Chronicles", EZR: "Ezra", NEH: "Nehemiah", EST: "Esther", PSA: "Psalms|Psalm|Ps", PRO: "Proverbs|Prov", ECC: "Ecclesiastes|Eccl", SNG: "Song of Solomon|Song of Songs", ISA: "Isaiah|Isa", JER: "Jeremiah|Jer", LAM: "Lamentations", EZK: "Ezekiel|Ezek", HOS: "Hosea", OBA: "Obadiah", JON: "Jonah", MIC: "Micah", NAM: "Nahum", HAB: "Habakkuk", ZEP: "Zephaniah", HAG: "Haggai", ZEC: "Zechariah", MAL: "Malachi", MAT: "Matthew|Matt", MRK: "Mark", LUK: "Luke", JHN: "John", ACT: "Acts", ROM: "Romans|Rom", "1CO": "1\\s?Corinthians|1\\s?Cor", "2CO": "2\\s?Corinthians|2\\s?Cor", GAL: "Galatians", EPH: "Ephesians|Eph", PHP: "Philippians|Phil", COL: "Colossians|Col", "1TH": "1\\s?Thessalonians", "2TH": "2\\s?Thessalonians", "1TI": "1\\s?Timothy|1\\s?Tim", "2TI": "2\\s?Timothy|2\\s?Tim", TIT: "Titus", PHM: "Philemon", HEB: "Hebrews|Heb", JAS: "James", "1PE": "1\\s?Peter", "2PE": "2\\s?Peter", "1JN": "1\\s?John", "2JN": "2\\s?John", "3JN": "3\\s?John", JUD: "Jude", REV: "Revelation|Rev" };
+const enName = (a) => a.split("|")[0].replace(/\\s\?/g, " ");
+const BOOK_ALTS = [...BOOKS.flatMap(([alts, code, name]) => alts.split("|").map((a) => ({ a, code, name }))), ...Object.entries(BOOKS_EN).flatMap(([code, alts]) => alts.split("|").map((a) => ({ a, code, name: enName(alts) })))]
+  .filter((x, i, arr) => arr.findIndex((y) => y.a.toLowerCase() === x.a.toLowerCase()) === i).sort((x, y) => y.a.length - x.a.length);
+// Numbered chapter required (":" verse optional) so "Juan dijo" or "Job perdió" never match.
+const REF_RE = new RegExp("(?<![\\p{L}\\d])(" + BOOK_ALTS.map((b) => b.a).join("|") + ")\\.?\\s+(\\d{1,3})(?:\\s?[:.]\\s?(\\d{1,3})(?:\\s?[-–]\\s?(\\d{1,3}))?)?(?![\\p{L}])", "gu");
+
+// ---------- Text helpers ----------
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function wordTokens(text) {
+  const out = [];
+  const re = /[\p{L}\p{N}'’-]+/gu;
+  let m;
+  while ((m = re.exec(text))) out.push({ w: m[0], start: m.index, end: m.index + m[0].length });
+  return out;
+}
+
+function sentences(text) {
+  const out = [];
+  // Protect verse colons/periods ("Juan 3.16") from splitting by only splitting on ., !, ?, … followed by space/newline, or newlines.
+  const re = /[^.!?…\n]+(?:[.!?…]+[»”"’)]*(?=\s|$)|\n|$)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const s = m[0];
+    if (s.trim().length === 0) { if (m[0].length === 0) re.lastIndex++; continue; }
+    out.push({ text: s.trim(), start: m.index + (s.length - s.trimStart().length), end: m.index + s.trimEnd().length });
+  }
+  return out;
+}
+
+function detectLanguage(text) {
+  const words = norm(text).match(/[a-zñ]+/g) || [];
+  const es = new Set(SW_ES.map(norm)), en = new Set(SW_EN);
+  let a = 0, b = 0;
+  for (const w of words) { if (es.has(w)) a++; if (en.has(w)) b++; }
+  return b > a ? "en" : "es";
+}
+
+// Spanish syllables: nuclei per vowel group = number of strong vowels (a e o, or an accented í ú), min 1.
+// "qu"/"gu" before e/i drop the u; a final "y" acts as a weak vowel.
+function syllablesES(word) {
+  let w = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
+  if (!w) return /\d/.test(word) ? 2 : 0;
+  w = w.replace(/qu(?=[eiéí])/g, "q").replace(/gu(?=[eiéí])/g, "g");
+  if (w.endsWith("y")) w = w.slice(0, -1) + "i";
+  const strong = new Set(["a", "e", "o", "á", "é", "ó", "í", "ú"]);
+  const vowel = new Set(["a", "e", "i", "o", "u", "á", "é", "í", "ó", "ú", "ü"]);
+  let count = 0, i = 0;
+  while (i < w.length) {
+    if (vowel.has(w[i])) {
+      let s = 0;
+      while (i < w.length && vowel.has(w[i])) { if (strong.has(w[i])) s++; i++; }
+      count += Math.max(1, s);
+    } else i++;
+  }
+  return Math.max(1, count);
+}
+function syllablesEN(word) {
+  const w = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!w) return /\d/.test(word) ? 2 : 0;
+  const m = w.match(/[aeiouy]+/g);
+  let c = m ? m.length : 1;
+  if (w.endsWith("e") && !w.endsWith("le") && c > 1) c--;
+  return Math.max(1, c);
+}
+
+// IFSZ (Flesch-Szigriszt) and INFLESZ band — Barrio-Cantalejo et al. 2008.
+function ifsz(syl, words, sents) { return 206.835 - 62.3 * (syl / words) - words / sents; }
+function inflesz(score, ui) {
+  const en = ui === "en";
+  if (score < 40) return en ? "Very difficult" : "Muy difícil";
+  if (score < 55) return en ? "Somewhat difficult" : "Algo difícil";
+  if (score < 65) return en ? "Normal" : "Normal";
+  if (score <= 80) return en ? "Fairly easy" : "Bastante fácil";
+  return en ? "Very easy" : "Muy fácil";
+}
+function fernandezHuerta(syl, words, sents) { return 206.84 - 0.6 * (100 * syl / words) - 1.02 * (words / sents); }
+function fkGrade(syl, words, sents) { return 0.39 * (words / sents) + 11.8 * (syl / words) - 15.59; }
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function findPhrases(text, phrases, kind, extra) {
+  const out = [];
+  for (const p of phrases) {
+    const re = new RegExp("(?<![\\p{L}])" + esc(p) + "(?![\\p{L}])", "giu");
+    let m;
+    while ((m = re.exec(text))) out.push({ start: m.index, end: m.index + m[0].length, text: m[0], phrase: p, kind, ...(extra ? extra(p) : {}) });
+  }
+  return out;
+}
+
+function insideAny(spans, start, end) { return spans.some((s) => start >= s.start && end <= s.end); }
+
+// Production cues: [B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA] and "## Heading" lines are not spoken.
+const CUE_RE = /\[[^\]\n]{1,200}\]|^[ \t]*#{1,3}[^\n]*$/gm;
+const PAUSE_SEC = 1.0; // assumed length of a written [PAUSA]; rehearsal timing replaces the estimate
+function findCues(text) {
+  const out = [];
+  CUE_RE.lastIndex = 0;
+  let m;
+  while ((m = CUE_RE.exec(text))) {
+    if (!m[0].length) { CUE_RE.lastIndex++; continue; }
+    const raw = m[0], lead = raw.length - raw.trimStart().length, body = raw.trim();
+    const heading = body.startsWith("#");
+    const kind = heading ? "HEADING" : ((body.match(/^\[\s*([^:\]]+)/) || [])[1] || "").trim().toUpperCase();
+    out.push({ start: m.index + lead, end: m.index + raw.trimEnd().length, text: body, heading, pause: !heading && /^(PAUSA|PAUSE)\b/.test(kind), kind });
+  }
+  return out;
+}
+
+function median(xs) { const a = [...xs].sort((x, y) => x - y); const n = a.length; return n ? (n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2) : null; }
+
+// ---------- Scripture ----------
+function findReferences(text) {
+  const out = [];
+  let m;
+  REF_RE.lastIndex = 0;
+  while ((m = REF_RE.exec(text))) {
+    const alt = BOOK_ALTS.find((b) => new RegExp("^" + b.a + "$", "iu").test(m[1]));
+    if (!alt) continue;
+    // Single-letter-ish abbreviations ("Is", "Am", "He", "Os", "Ex", "Ro"...) only count with a verse number, to avoid "He 3" noise.
+    if (alt.a.replace(/\\s\?/g, "").length <= 2 && !m[3]) continue;
+    const ch = m[2], v1 = m[3], v2 = m[4];
+    out.push({ start: m.index, end: m.index + m[0].length, text: m[0], code: alt.code, book: alt.name, chapter: +ch, verse: v1 ? +v1 : null, verseEnd: v2 ? +v2 : null, canonical: `${alt.name} ${ch}${v1 ? ":" + v1 + (v2 ? "-" + v2 : "") : ""}` });
+  }
+  return out;
+}
+function findQuotes(text) {
+  const out = [];
+  const re = /«([^»]{8,})»|“([^”]{8,})”|"([^"]{8,})"/g;
+  let m;
+  while ((m = re.exec(text))) out.push({ start: m.index, end: m.index + m[0].length, inner: (m[1] || m[2] || m[3]).trim() });
+  return out;
+}
+function pairQuotes(refs, quotes) {
+  const pairs = [];
+  const usedQ = new Set();
+  for (const r of refs) {
+    let best = null, bestD = 160;
+    quotes.forEach((q, i) => {
+      if (usedQ.has(i)) return;
+      const d = q.start >= r.end ? q.start - r.end : r.start >= q.end ? r.start - q.end : 0;
+      if (d < bestD) { best = i; bestD = d; }
+    });
+    if (best !== null) usedQ.add(best);
+    pairs.push({ ref: r, quote: best !== null ? quotes[best] : null });
+  }
+  const orphanQuotes = quotes.filter((_, i) => !usedQ.has(i));
+  return { pairs, orphanQuotes };
+}
+function bibleGatewayUrl(canonical, translation) {
+  return "https://www.biblegateway.com/passage/?search=" + encodeURIComponent(canonical) + "&version=" + encodeURIComponent(translation || "RVR1960");
+}
+
+// ---------- Diff (word-level LCS) ----------
+function wordDiff(a, b) {
+  const A = a.split(/(\s+)/), B = b.split(/(\s+)/);
+  const m = A.length, n = B.length;
+  if (m * n > 30e6) return B.map((t) => ({ text: t, changed: true }));
+  const dp = Array.from({ length: m + 1 }, () => new Uint32Array(n + 1));
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) dp[i][j] = A[i - 1] === B[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  const kept = new Set();
+  let i = m, j = n;
+  while (i > 0 && j > 0) {
+    if (A[i - 1] === B[j - 1]) { kept.add(j - 1); i--; j--; }
+    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
+  }
+  return B.map((t, k) => ({ text: t, changed: !kept.has(k) && t.trim() !== "" }));
+}
+
+// ---------- Main analysis ----------
+// opts: { lang: "auto"|"es"|"en", title, thumb, description, translation, k }
+function analyze(text, opts = {}) {
+  const lang = opts.lang && opts.lang !== "auto" ? opts.lang : detectLanguage(text);
+  const ui = opts.uiLang || lang;
+  const L = (es, en) => (ui === "en" ? en : es);
+  const cl = (c) => L(c.label, c.label_en || c.label);
+  const cn = (c) => L(c.note || "", c.note_en || c.note || "");
+  const k = opts.k || 0.65; // ≈150 words/min in Spanish; calibrated from real episodes
+  const rate = (lang === "en" ? 6.19 : 7.82) * k; // syllables per second when teaching
+  const readRate = lang === "en" ? 6.19 : 7.82;
+  const syl = lang === "en" ? syllablesEN : syllablesES;
+
+  const cues = findCues(text);
+  const words = wordTokens(text).filter((w) => !insideAny(cues, w.start, w.end));
+  let wp = 0;
+  const sents = sentences(text).filter((s) => { while (wp < words.length && words[wp].end <= s.start) wp++; return wp < words.length && words[wp].start < s.end; });
+  const pauseAt = cues.filter((c) => c.pause).map((c) => c.start);
+  let cum = 0, tsec = 0, pi = 0;
+  for (const w of words) {
+    while (pi < pauseAt.length && pauseAt[pi] < w.start) { tsec += PAUSE_SEC; pi++; }
+    w.syl = syl(w.w); cum += w.syl; w.t0 = tsec; tsec += w.syl / rate; w.t = tsec;
+  }
+  const totalSyl = cum;
+  const wc = words.length;
+  const sc = Math.max(1, sents.length);
+  const runtimeSec = tsec + (pauseAt.length - pi) * PAUSE_SEC;
+  // Cold open: clips lifted from the recording and placed before the script in the edit.
+  const co = opts.coldOpen && (opts.coldOpen.hook || opts.coldOpen.promise) ? opts.coldOpen : null;
+  const clipSec = (s) => (s ? wordTokens(s).reduce((a, w) => a + syl(w.w), 0) / rate : 0);
+  const coHookSec = co ? clipSec(co.hook) : 0, coSec = co ? coHookSec + clipSec(co.promise) : 0;
+  const coHook = co && co.hook ? co.hook : "", coProm = co && co.promise ? co.promise : "";
+  const readSec = totalSyl / readRate;
+  // time at a character offset
+  const timeAt = (pos) => {
+    let lo = 0, hi = words.length - 1, ans = 0;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (words[mid].start <= pos) { ans = words[mid].t; lo = mid + 1; } else hi = mid - 1; }
+    return ans;
+  };
+  const posAtTime = (sec) => { const w = words.find((x) => x.t >= sec); return w ? w.start : text.length; };
+
+  const refs = findReferences(text);
+  const quotes = findQuotes(text);
+  const { pairs, orphanQuotes } = pairQuotes(refs, quotes);
+  const protectedSpans = [...quotes, ...findPhrases(text, PROTECTED, "protected")];
+
+  const marks = []; // highlight spans
+  const sections = {};
+  // soft rows are advice: a miss shows as a warning and never lowers the score
+  const add = (sec, row) => { if (row.soft && !row.passed) row = { ...row, passed: true, warn: true }; (sections[sec] = sections[sec] || []).push(row); };
+
+  // ===== Monetization pre-flight =====
+  const lower = text.toLowerCase();
+  const per1000 = (n) => (wc ? (n * 1000) / wc : 0);
+  const riskHits = [];
+  const strongP = findPhrases(text, PROF_STRONG, "risk", () => ({ cat: "lang", tier: "strong" }));
+  const modP = findPhrases(text, PROF_MOD, "risk", () => ({ cat: "lang", tier: "moderate" }));
+  riskHits.push(...strongP, ...modP);
+  const graphicHits = findPhrases(text, GRAPHIC.filter((g) => !g.endsWith("r") || true), "graphic");
+  // stems like "desangr" need prefix matching
+  const graphicStem = [];
+  for (const g of GRAPHIC) {
+    const re = new RegExp("(?<![\\p{L}])" + esc(g), "giu");
+    let m; while ((m = re.exec(text))) graphicStem.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+  }
+  const nearGraphic = (pos) => {
+    const wi = words.findIndex((w) => w.start >= pos);
+    if (wi < 0) return false;
+    const lo = words[Math.max(0, wi - 15)].start, hi = words[Math.min(words.length - 1, wi + 15)].end;
+    return graphicStem.some((g) => g.start >= lo && g.end <= hi);
+  };
+
+  const preflight = [];
+  // Language: frequency-based (July 2025 rule), body only.
+  {
+    const s = strongP.length, mo = modP.length, dens = per1000(s + mo);
+    let level = "verde", degree = "ninguno";
+    if (s + mo > 0) degree = "mencionado";
+    if ((dens >= 4 && s + mo >= 3) || s >= 6) { level = "amarillo"; degree = "frecuente"; }
+    preflight.push({ id: "lang", label: L("Lenguaje inapropiado", "Inappropriate language"), count: s + mo, hits: [...strongP, ...modP], degree, level,
+      note: s + mo === 0 ? L("Sin groserías en el guion.", "No profanity in the script.") : L(`${s} fuerte(s), ${mo} moderada(s); ${dens.toFixed(1)} por cada 1.000 palabras. Desde julio de 2025 una grosería aislada, incluso al inicio, no limita anuncios; la frecuencia alta sí. En el título o la miniatura cualquiera limita anuncios.`, `${s} strong, ${mo} moderate; ${dens.toFixed(1)} per 1,000 words. Since July 2025 an occasional word, even at the start, doesn't limit ads; high frequency does. Any profanity in the title or thumbnail does.`),
+      fix: level === "verde" ? null : L("Quita o espacia las groserías; no las conviertas en eufemismos.", "Remove or space out the profanity; don't swap in euphemisms.") });
+  }
+  for (const cat of MONEY_CATS) {
+    if (cat.special) continue;
+    const hits = findPhrases(text, cat.terms, "risk", () => ({ cat: cat.id }));
+    const restricted = cat.restricted ? findPhrases(text, cat.restricted, "risk", () => ({ cat: cat.id, restricted: true })) : [];
+    const all = [...hits, ...restricted];
+    riskHits.push(...all);
+    if (!all.length) { preflight.push({ id: cat.id, label: cl(cat), count: 0, hits: [], degree: "ninguno", level: "verde", note: L("No aparece.", "Not present."), fix: null }); continue; }
+    const graphic = all.some((h) => nearGraphic(h.start));
+    const focal = all.length >= 5 || (per1000(all.length) >= 4 && all.length >= 3);
+    let degree = graphic ? "gráfico" : focal ? "central" : "mencionado";
+    let level = graphic ? cat.graphic : focal ? cat.focal : cat.mention;
+    if (restricted.length) { level = "amarillo"; }
+    preflight.push({ id: cat.id, label: cl(cat), count: all.length, hits: all, degree, level,
+      note: cn(cat) + (restricted.length ? L(" Aparece un tema que sigue restringido.", " A still-restricted topic appears.") : ""),
+      fix: level === "verde" ? null : graphic ? L("Quita el detalle gráfico cerca de estos términos; el tema puede quedarse.", "Remove the graphic detail near these terms; the topic can stay.") : L("Reduce el énfasis o reformula sin cambiar el mensaje.", "Reduce the emphasis or reframe without changing the message.") });
+  }
+  // Hate: dehumanizing words near a group word (±8 words)
+  {
+    const groupHits = findPhrases(text, HATE_GROUPS, "group");
+    const hateHits = [];
+    for (const hw of HATE_WORDS) {
+      const re = new RegExp("(?<![\\p{L}])" + esc(hw), "giu");
+      let m; while ((m = re.exec(text))) {
+        const wi = words.findIndex((w) => w.start >= m.index);
+        if (wi < 0) continue;
+        const lo = words[Math.max(0, wi - 8)].start, hi = words[Math.min(words.length - 1, wi + 8)].end;
+        if (groupHits.some((g) => g.start >= lo && g.end <= hi)) hateHits.push({ start: m.index, end: m.index + m[0].length, text: m[0], kind: "risk", cat: "hate" });
+      }
+    }
+    riskHits.push(...hateHits);
+    const cat = MONEY_CATS.find((c) => c.id === "hate");
+    preflight.push({ id: "hate", label: cl(cat), count: hateHits.length, hits: hateHits, degree: hateHits.length ? "deshumanizante" : "ninguno", level: hateHits.length ? "rojo" : "verde",
+      note: hateHits.length ? cn(cat) : L("Ningún lenguaje deshumanizante hacia un grupo.", "No dehumanizing language toward a group."), fix: hateHits.length ? L("Reformula para hablar de ideas o conductas, no de personas como algo menos que humanas.", "Reframe to address ideas or conduct, not people as less than human.") : null });
+  }
+  // Densest 2-minute windows
+  const sortedHits = riskHits.map((h) => ({ ...h, t: timeAt(h.start) })).sort((a, b) => a.t - b.t);
+  const windows = [];
+  for (let i = 0; i < sortedHits.length; i++) {
+    let j = i; while (j + 1 < sortedHits.length && sortedHits[j + 1].t - sortedHits[i].t <= 120) j++;
+    if (j - i + 1 >= 2) windows.push({ from: sortedHits[i].t, to: sortedHits[i].t + 120, n: j - i + 1 });
+  }
+  windows.sort((a, b) => b.n - a.n);
+  const dense = [];
+  for (const w of windows) if (!dense.some((d) => Math.abs(d.from - w.from) < 120)) dense.push(w);
+
+  // Packaging scan (title, thumbnail, description) — stricter
+  const packaging = [];
+  const scanPack = (label, s, strict) => {
+    if (!s || !s.trim()) return;
+    const hits = [...findPhrases(s, [...PROF_STRONG, ...PROF_MOD], "x"), ...MONEY_CATS.filter((c) => !c.special).flatMap((c) => findPhrases(s, [...c.terms, ...(c.restricted || [])], "x"))];
+    const caps = (s.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length;
+    const issues = [];
+    if (hits.length) issues.push(L(`contiene ${hits.map((h) => "«" + h.text + "»").join(", ")}`, `contains ${hits.map((h) => '"' + h.text + '"').join(", ")}`));
+    if (strict === "title" && caps >= 2) issues.push(L("varias palabras en mayúsculas sostenidas (lee como clickbait)", "several all-caps words (reads as clickbait)"));
+    const graphicHits = strict ? GRAPHIC.filter((g) => new RegExp("(?<![\\p{L}])" + esc(g), "iu").test(s)) : [];
+    if (graphicHits.length && !hits.length) issues.push(L(`detalle gráfico («${graphicHits.join("», «")}»)`, `graphic detail ("${graphicHits.join('", "')}")`));
+    const severe = strict && (graphicHits.length || findPhrases(s, PROF_STRONG, "x").length);
+    const level = severe ? "rojo" : issues.length ? "amarillo" : "verde";
+    packaging.push({ key: strict || "desc", label, level, issues });
+  };
+  scanPack(L("Título", "Title"), opts.title, "title");
+  scanPack(L("Texto de miniatura", "Thumbnail text"), opts.thumb, "thumb");
+  scanPack(L("Descripción", "Description"), opts.description, false);
+  for (const p of packaging) add("money", { id: "pack-" + p.label, label: L(`${p.label} sin términos de riesgo`, `${p.label} free of risk terms`), passed: p.level === "verde", info: p.level === "verde" ? L("Limpio.", "Clean.") : L("En el empaque YouTube es más estricto: ", "YouTube is strictest on packaging: ") + p.issues.join("; ") + ".", fix: p.level === "verde" ? null : L("Quita esos términos del empaque; pueden quedarse en el cuerpo del guion si no son gráficos.", "Remove those terms from the packaging; they can stay in the script body if not graphic.") });
+  for (const p of preflight.filter((p) => p.count > 0 || p.level !== "verde")) add("money", { id: "pf-" + p.id, label: p.label, passed: p.level === "verde", level: p.level, info: p.note, fix: p.fix, degree: p.degree, count: p.count, times: p.hits.slice(0, 6).map((h) => fmtTime(timeAt(h.start))) });
+
+  // Inauthentic content (C.9)
+  const sentLens = sents.map((s) => wordTokens(s.text).length).filter((n) => n > 0);
+  const mean = sentLens.reduce((a, b) => a + b, 0) / Math.max(1, sentLens.length);
+  const sd = Math.sqrt(sentLens.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, sentLens.length));
+  const openerCount = {};
+  sents.forEach((s) => { const ws = wordTokens(s.text).slice(0, 2).map((x) => x.w.toLowerCase()).join(" "); if (ws.split(" ").length === 2) openerCount[ws] = (openerCount[ws] || 0) + 1; });
+  const repeatedOpeners = Object.entries(openerCount).filter(([, n]) => n > 3).sort((a, b) => b[1] - a[1]);
+  const aiHits = findPhrases(text, AI_TELLS, "aitell");
+  const monotone = sentLens.length >= 10 && sd < 4;
+  const inauth = { monotone, sd, repeatedOpeners, aiHits };
+  add("auth", { id: "rhythm", label: L("Ritmo variado de oraciones", "Varied sentence rhythm"), passed: !monotone, info: sentLens.length < 10 ? L("Muy pocas oraciones para medir el ritmo.", "Too few sentences to measure rhythm.") : L(`Desviación de largo de oración: ${sd.toFixed(1)} palabras (meta propia: 4 o más).`, `Sentence-length spread: ${sd.toFixed(1)} words (our cutoff: 4 or more).`), fix: monotone ? L("Mezcla oraciones cortas con algunas largas; el texto plano suena a plantilla.", "Mix short and long sentences; flat rhythm sounds templated.") : null });
+  add("auth", { id: "openers", label: L("Inicios de oración variados", "Varied sentence openings"), passed: !repeatedOpeners.length, info: repeatedOpeners.length ? L(`Se repiten: ${repeatedOpeners.map(([w, n]) => `«${w}…» ×${n}`).join(", ")}.`, `Repeated: ${repeatedOpeners.map(([w, n]) => `"${w}…" ×${n}`).join(", ")}.`) : L("Ningún inicio se repite más de 3 veces.", "No opening repeats more than 3 times."), fix: repeatedOpeners.length ? L("Varía cómo empiezas las oraciones.", "Vary how sentences start.") : null });
+  add("auth", { id: "aitell", label: L("Sin frases típicas de texto generado por IA", "No typical AI-generated phrases"), passed: !aiHits.length, info: aiHits.length ? L(`Encontradas: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube llama a esto contenido no auténtico desde julio de 2025 cuando es masivo o repetitivo.`, `Found: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube calls mass-produced text inauthentic content since July 2025.`) : L("Ninguna.", "None."), fix: aiHits.length ? L("Dilo con tus propias palabras.", "Say it in your own words.") : null });
+
+  // ===== Structure (C.2) =====
+  const firstSent = sents[0] ? sents[0].text : "";
+  // The hook is judged on the first spoken sentence; an opening prayer is neutral (it has its own row below).
+  const prayerSent = (x) => isPrayerText(x.text);
+  const hookS = sents.find((x) => !prayerSent(x)) || sents[0] || { text: "" };
+  const hookText = coHook || hookS.text;
+  const hookWords = wordTokens(hookText).length;
+  const titleSet = contentSet(opts.title), kwN = norm(opts.keyword || "");
+  const hookWhy = [], hookLack = [];
+  let hookScore = 0;
+  if (/[?¿]/.test(hookText)) { hookScore += 2; hookWhy.push(L("pregunta", "question")); }
+  if (TENSION_RE.test(hookText)) { hookScore += 2; hookWhy.push(L("tensión", "tension")); }
+  if (YOU_RE.test(hookText)) { hookScore += 2; hookWhy.push(L("dirigida al oyente", "addresses the listener")); }
+  if ((kwN && norm(hookText).includes(kwN)) || wordTokens(hookText).some((w) => titleSet.has(norm(w.w)))) { hookScore += 1; hookWhy.push(L("ligada al título o la palabra clave", "tied to the title or keyword")); }
+  const hookGreet = hasPhrase(hookText, GREETINGS) || hasPhrase(hookText, CTAS);
+  if (hookGreet) { hookScore -= 3; hookLack.push(L("es un saludo o un pedido", "it is a greeting or an ask")); }
+  if (hookWords > 18) { hookScore -= 2; hookLack.push(L(`${hookWords} palabras: no cabe en 7 s (unas 18)`, `${hookWords} words: doesn't fit in 7 s (about 18)`)); }
+  if (coHook && coHookSec > 9) { hookScore -= 2; hookLack.push(L(`dura ≈${Math.round(coHookSec)} s: más de 9 s`, `runs ≈${Math.round(coHookSec)} s: over 9 s`)); }
+  const hookPass = hookScore >= 2;
+  add("structure", { id: "hook", soft: true, label: L("Gancho en los primeros 7 segundos", "Hook in the first 7 seconds"), passed: hookPass, info: L(`${coHook ? `Apertura en frío (≈${Math.round(coHookSec)} s, clip tomado de la grabación)` : "Primera oración"}: «${hookText.slice(0, 160)}» (${hookWords} palabras). ${hookWhy.length ? "Tiene: " + hookWhy.join(", ") + ". " : "No tiene pregunta, tensión ni apelación al oyente. "}${hookLack.length ? "Le resta: " + hookLack.join("; ") + ". " : ""}Los 7 segundos y las 18 palabras son nuestra meta, no un dato de YouTube.`, `${coHook ? `Cold open (≈${Math.round(coHookSec)} s, a clip from the recording)` : "First sentence"}: "${hookText.slice(0, 160)}" (${hookWords} words). ${hookWhy.length ? "It has: " + hookWhy.join(", ") + ". " : "It has no question, tension or address to the listener. "}${hookLack.length ? "Against it: " + hookLack.join("; ") + ". " : ""}The 7 seconds and 18 words are our target, not a YouTube figure.`), fix: hookPass ? null : coHook ? L("Elige una frase más corta o más directa para la apertura en frío.", "Pick a shorter or more direct line for the cold open.") : L("Abre con una pregunta o una tensión dirigida al oyente, en menos de 18 palabras y sin saludo; o elige una apertura en frío en Guion y prompter.", "Open with a question or tension aimed at the listener, in under 18 words, with no greeting; or pick a cold open in Script and prompter.") });
+
+  const promiseHits = findPhrases(text, PROMISES, "promise");
+  const firstPromise = promiseHits.sort((a, b) => a.start - b.start)[0];
+  const promiseT = coProm ? coSec : firstPromise ? timeAt(firstPromise.start) + coSec : null;
+  // Series episodes (a series name, or a recap of the last episode in the first minute) get 45 s: returning viewers tolerate a short recap.
+  const seriesMode = !!(opts.series && String(opts.series).trim()) || findPhrases(text, PREV_EP, "x").some((h) => timeAt(h.start) + coSec <= 60);
+  const promiseDeadline = seriesMode ? 45 : 20;
+  const impliedBy = (limit) => sents.find((x) => timeAt(x.start) + coSec <= limit && PROMISE_VERBS.test(x.text) && (YOU_RE.test(x.text) || /(?<![\p{L}])(hoy|today|ahora|juntos|together)(?![\p{L}])/iu.test(x.text)) && ((kwN && norm(x.text).includes(kwN)) || wordTokens(x.text).filter((w) => titleSet.has(norm(w.w))).length >= 2));
+  const impliedOk = impliedBy(promiseDeadline), impliedLate = impliedBy(90);
+  const promiseOk = !!coProm ? coSec <= promiseDeadline : (promiseT !== null && promiseT <= promiseDeadline) || !!impliedOk;
+  const promiseLate = !promiseOk && ((promiseT !== null && promiseT <= 90) || !!impliedLate);
+  const promiseSoft = promiseLate;
+  add("structure", { id: "promise", soft: promiseSoft, label: L(`Promesa clara antes de ${promiseDeadline} segundos`, `Clear promise by ${promiseDeadline} seconds`), passed: promiseOk, info: coProm ? L(`Promesa en la apertura en frío: «${coProm.slice(0, 160)}»; termina en ≈${fmtTime(coSec)}.`, `Promise in the cold open: "${coProm.slice(0, 160)}"; ends at ≈${fmtTime(coSec)}.`) : promiseOk
+    ? (promiseT !== null && promiseT <= promiseDeadline ? L(`Primera promesa en ${fmtTime(promiseT)}: «${firstPromise.text}».`, `First promise at ${fmtTime(promiseT)}: "${firstPromise.text}".`) : L(`Promesa implícita en ${fmtTime(timeAt(impliedOk.start) + coSec)}: «${impliedOk.text.slice(0, 120)}».`, `Implied promise at ${fmtTime(timeAt(impliedOk.start) + coSec)}: "${impliedOk.text.slice(0, 120)}".`)) + (seriesMode ? L(` Episodio de serie: se permiten ${promiseDeadline} s (meta propia).`, ` Series episode: ${promiseDeadline} s allowed (our target).`) : "")
+    : promiseLate ? L(`La promesa llega pasados los ${promiseDeadline} s${promiseT !== null ? " (" + fmtTime(promiseT) + ")" : ""}. ${promiseDeadline} s es meta propia${seriesMode ? " (episodio de serie)" : ""}.`, `The promise arrives after ${promiseDeadline} s${promiseT !== null ? " (" + fmtTime(promiseT) + ")" : ""}. ${promiseDeadline} s is our target${seriesMode ? " (series episode)" : ""}.`)
+    : L("No hay promesa, ni explícita («hoy veremos», «vas a descubrir»…) ni implícita, en los primeros 90 segundos.", "No promise, explicit (\"you'll see\", \"today we'll\"…) or implied, in the first 90 seconds."),
+    fix: promiseOk ? null : L("Di pronto qué va a aprender o recibir el oyente, por ejemplo «hoy vas a descubrir…».", "Say early what the listener will learn or receive, e.g. \"today you'll discover…\".") });
+
+  const transHits = findPhrases(text, TRANSITIONS, "transition");
+  const contentStarts = [...refs.map((r) => r.start), ...transHits.map((h) => h.start), ...(firstPromise ? [firstPromise.start] : [])];
+  const contentT = co && co.promise ? coSec : contentStarts.length ? timeAt(Math.min(...contentStarts)) + coSec : null;
+
+  const greetHits = findPhrases(text, GREETINGS, "greeting");
+  const ctaHits = findPhrases(text, CTAS, "cta");
+  const contentPos = contentStarts.length ? Math.min(...contentStarts) : null;
+  const contentFluff = contentPos === null ? [] : [...greetHits, ...ctaHits].filter((h) => h.start >= contentPos && timeAt(h.start) + coSec <= 30);
+  const contentOk = contentT !== null && contentT <= 30 && !contentFluff.length;
+  add("structure", { id: "content", label: L("La enseñanza empieza antes de 30 segundos", "Teaching starts within 30 seconds"), passed: contentOk, info: L("YouTube mide oficialmente cuántos siguen viendo a los 30 segundos (métrica «Intro» en Analytics). ", "YouTube officially reports how many viewers remain at 30 seconds (the Intro metric in Analytics). ") + (contentT === null ? L("No se detectó el inicio del contenido.", "No content start detected.") : L(`El contenido empieza en ${fmtTime(contentT)}.`, `Content starts at ${fmtTime(contentT)}.`)) + (contentFluff.length ? L(` Pero después de empezar aparece ${contentFluff.map((h) => "«" + h.text + "»").join(", ")} antes del segundo 30.`, ` But after it starts, ${contentFluff.map((h) => '"' + h.text + '"').join(", ")} appears before second 30.`) : ""), fix: contentOk ? null : contentFluff.length ? L("Quita el saludo o el pedido que interrumpe el comienzo de la enseñanza.", "Remove the greeting or ask that interrupts the start of the teaching.") : L("Lleva el primer versículo o el primer punto antes del segundo 30.", "Bring the first verse or first point before second 30.") });
+  const promiseCut = firstPromise ? firstPromise.start : posAtTime(30);
+  const earlyFluff = [...greetHits, ...ctaHits].filter((h) => h.start < promiseCut && timeAt(h.start) <= 30);
+  if (coHook) earlyFluff.length = 0;
+  add("structure", { id: "greeting", label: L("Sin saludos ni pedidos antes del contenido", "No greetings or asks before content"), passed: !earlyFluff.length, info: coHook ? L("La apertura en frío va antes de cualquier saludo.", "The cold open plays before any greeting.") : earlyFluff.length ? L(`Antes de la promesa aparece: ${earlyFluff.map((h) => "«" + h.text + "»").join(", ")}.`, `Before the promise: ${earlyFluff.map((h) => '"' + h.text + '"').join(", ")}.`) : L("La apertura va directo al tema.", "The opening goes straight to the topic."), fix: earlyFluff.length ? L("Mueve el saludo después de la promesa, o quítalo.", "Move the greeting after the promise, or cut it.") : null });
+
+  // Opening prayer: normal in Christian teaching and never timed. What matters is where it sits: after the hook and the promise,
+  // a viewer from search already knows why to stay. Before the promise it is only a problem if it pushes the promise past its target.
+  const prayerSents = sents.filter((x) => prayerSent(x) && timeAt(x.start) + coSec <= 120);
+  let openPrayer = null;
+  if (prayerSents.length) {
+    const pA = Math.min(...prayerSents.map((x) => x.start)), pB = Math.max(...prayerSents.map((x) => x.end));
+    const prayerSec = Math.max(1, Math.round(timeAt(pB) - timeAt(pA)));
+    const before = !coProm && (!firstPromise || pA < firstPromise.start) && !(impliedOk && impliedOk.start < pA);
+    openPrayer = { from: timeAt(pA) + coSec, to: timeAt(pB) + coSec, before };
+    const prayerOk = !before || promiseOk;
+    add("structure", { id: "prayer", soft: true, label: L("Oración de apertura después de la promesa", "Opening prayer after the promise"), passed: prayerOk,
+      info: !before ? L(`La oración (unos ${prayerSec} s) va después de la promesa: quien llega desde la búsqueda ya sabe por qué quedarse. Su duración no se mide.`, `The prayer (about ${prayerSec} s) comes after the promise: a viewer from search already knows why to stay. Its length isn't judged.`)
+        : prayerOk ? L(`La oración (unos ${prayerSec} s) va antes de la promesa, pero la promesa aún llega a tiempo. Su duración no se mide.`, `The prayer (about ${prayerSec} s) comes before the promise, but the promise still lands in time. Its length isn't judged.`)
+        : L(`La oración (unos ${prayerSec} s) va antes de la promesa y la retrasa más allá de ${promiseDeadline} s. Quien llega desde la búsqueda aún no sabe qué va a recibir. El orden gancho → promesa → oración es consejo propio.`, `The prayer (about ${prayerSec} s) comes before the promise and pushes it past ${promiseDeadline} s. A viewer from search doesn't yet know what they'll get. The order hook → promise → prayer is our advice.`),
+      fix: prayerOk ? null : L("Deja la oración completa y muévela justo después de la promesa: gancho → promesa → oración → enseñanza.", "Keep the whole prayer and move it right after the promise: hook → promise → prayer → teaching.") });
+  }
+
+  // Re-hooks: each teaching point (a heading, or a paragraph that opens with a transition) longer than 4 minutes needs a question to the listener or a teaser after its first sentence.
+  const loopHits = findPhrases(text, OPEN_LOOPS, "loop");
+  const qPositions = [];
+  for (let i = 0; i < text.length; i++) if (text[i] === "?") qPositions.push(i);
+  const hookEvents = [...loopHits.map((h) => h.start)];
+  for (const x of sents) if (/[?]/.test(x.text) && wordTokens(x.text).length <= 20 && YOU_RE.test(x.text)) hookEvents.push(x.start);
+  const bounds = [0];
+  {
+    const re = /\n\s*\n/g; let pm;
+    while ((pm = re.exec(text))) {
+      const p = pm.index + pm[0].length, para = text.slice(p, p + 160);
+      if (p >= text.length) break;
+      if ((/^#{1,3}\s/.test(para) || ORD_RE.test(para) || CONNECT_RE.test(para)) && timeAt(p) >= timeAt(bounds[bounds.length - 1]) + 60) bounds.push(p);
+    }
+  }
+  const blocks = [];
+  bounds.forEach((p, i) => {
+    const from = timeAt(p), to = i + 1 < bounds.length ? timeAt(bounds[i + 1]) : runtimeSec;
+    if (to - from <= 240) return;
+    const first = sents.find((x) => x.start >= p), skipTo = first ? first.end : p;
+    const end = i + 1 < bounds.length ? bounds[i + 1] : text.length;
+    blocks.push({ from, to, has: hookEvents.some((q) => q > skipTo && q < end) });
+  });
+  const missing = blocks.filter((b) => !b.has);
+  add("structure", { id: "rehook", soft: true, label: L("Re-enganches en los puntos largos", "Re-hooks in long points"), passed: !missing.length, info: !blocks.length ? L("Ningún punto pasa de 4 minutos: no aplica.", "No point runs past 4 minutes: not applicable.") : missing.length ? L(`Sin pregunta ni anticipo entre ${missing.map((b) => fmtTime(b.from) + "–" + fmtTime(b.to)).join(", ")}. Los 4 minutos son meta propia.`, `No question or teaser between ${missing.map((b) => fmtTime(b.from) + "–" + fmtTime(b.to)).join(", ")}. The 4 minutes are our target.`) : L("Cada punto largo tiene una pregunta o un anticipo.", "Every long point has a question or teaser."), fix: missing.length ? L("Añade una pregunta al oyente o un anticipo («más adelante veremos…») en esos tramos.", "Add a question or a teaser (\"later we'll see…\") in those stretches.") : null });
+
+  // Single CTA
+  const ctaSorted = ctaHits.sort((a, b) => a.start - b.start);
+  const clusters = [];
+  for (const c of ctaSorted) { const t = timeAt(c.start); const last = clusters[clusters.length - 1]; if (last && t - last.t <= Math.min(30, runtimeSec / 6)) last.items.push(c); else clusters.push({ t, items: [c] }); }
+  const ctaOk = clusters.length === 1;
+  add("structure", { id: "cta", label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
+
+  // Ending: the next-episode line counts in the last 90 s, or up to 45 s before a closing prayer or blessing (which can run as long as it needs).
+  // YouTube's end screen only uses the last 5–20 s.
+  const nextHits = findPhrases(text, NEXT_EP, "next");
+  const closeSents = sents.filter((x) => timeAt(x.start) >= runtimeSec - 240 && (prayerSent(x) || hasPhrase(x.text, BLESSINGS)));
+  const closePrayerT = closeSents.length ? timeAt(closeSents[0].start) : null;
+  const closeFrom = Math.max(0, Math.min(runtimeSec - 90, closePrayerT !== null ? closePrayerT - 45 : Infinity));
+  const nextT = nextHits.map((h) => timeAt(h.start)).filter((t) => t >= closeFrom);
+  const endOk = nextT.length > 0;
+  const closeWhere = closePrayerT !== null ? L(`el cierre (desde ${fmtTime(closeFrom)}, incluida la oración o bendición final en ${fmtTime(closePrayerT)})`, `the close (from ${fmtTime(closeFrom)}, including the closing prayer or blessing at ${fmtTime(closePrayerT)})`) : L("los últimos 90 segundos", "the last 90 seconds");
+  add("structure", { id: "ending", label: L("Cierre que anuncia el siguiente episodio", "Ending that leads to the next episode"), passed: endOk, info: endOk ? L(`El próximo episodio se menciona en ${fmtTime(nextT[0])}, en ${closeWhere}.`, `The next episode is mentioned at ${fmtTime(nextT[0])}, within ${closeWhere}.`) : L(`No se menciona el próximo episodio en ${closeWhere}. La pantalla final de YouTube ocupa los últimos 5–20 s.`, `The next episode isn't mentioned in ${closeWhere}. YouTube's end screen uses the last 5–20 s.`), fix: endOk ? null : L("Antes de la oración o la bendición final, di de qué trata el próximo episodio.", "Before the closing prayer or blessing, say what the next episode is about.") });
+
+  // ===== Scripture (C.7, deterministic part) =====
+  add("scripture", { id: "refs", label: L("Citas bíblicas con referencia", "Scripture quotes have references"), passed: !orphanQuotes.length, info: L(`${refs.length} referencia(s) y ${quotes.length} cita(s) entre comillas. `, `${refs.length} reference(s), ${quotes.length} quoted passage(s). `) + (orphanQuotes.length ? L(`${orphanQuotes.length} cita(s) sin referencia cercana; si son versículos, añade libro, capítulo y versículo.`, `${orphanQuotes.length} quote(s) without a nearby reference.`) : ""), fix: orphanQuotes.length ? L("Añade la referencia justo antes o después de cada cita.", "Add the reference next to each quote.") : null });
+
+  // ===== Spoken Spanish quality (C.3–C.5) =====
+  let readability;
+  // Readability is judged on the speaker's own words: quoted Scripture (RVR1960 wording, long sentences) is not theirs to simplify.
+  const verseOnly = verseSpans(text, { quotes, refs }).filter((x) => x.kind !== "ref");
+  const ownWords = words.filter((w) => !insideAny(verseOnly, w.start, w.end));
+  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => ownWords.some((w) => w.start >= x.start && w.end <= x.end)).length);
+  const excludedWords = wc - rWc;
+  if (rWc < 30) { rSyl = totalSyl; rWc = wc; rSc = sc; }
+  const nqNote = excludedWords > 0 && rWc !== wc ? L(" (sin contar las citas bíblicas)", " (not counting Scripture quotes)") : "";
+  if (lang === "es") {
+    const v = ifsz(rSyl, Math.max(1, rWc), rSc), fh = fernandezHuerta(rSyl, Math.max(1, rWc), rSc);
+    readability = { kind: "IFSZ", value: v, band: inflesz(v, ui), fh };
+    add("spoken", { id: "readability", label: L("Legibilidad (Flesch-Szigriszt / INFLESZ)", "Readability (Flesch-Szigriszt / INFLESZ)"), passed: v >= 65, info: L(`IFSZ ${v.toFixed(1)}${nqNote}: «${inflesz(v, ui)}». Fernández Huerta ${fh.toFixed(1)}. La escala INFLESZ es validada; exigir 65 o más para un guion hablado es nuestra meta (la investigación en salud pide 55 para lectura).`, `IFSZ ${v.toFixed(1)}${nqNote}: "${inflesz(v, ui)}". Fernández Huerta ${fh.toFixed(1)}. The INFLESZ scale is validated for Spanish; requiring 65 or more for a spoken script is our cutoff (health research asks 55 for reading).`), fix: v >= 65 ? null : L("Acorta oraciones y cambia palabras largas por otras más simples.", "Shorten sentences and swap long words for simpler ones.") });
+  } else {
+    const g = fkGrade(rSyl, Math.max(1, rWc), rSc);
+    readability = { kind: "FK", value: g, band: L(`nivel escolar ${g.toFixed(1)}`, `grade ${g.toFixed(1)}`) };
+    add("spoken", { id: "readability", label: L("Legibilidad (Flesch-Kincaid)", "Readability (Flesch-Kincaid)"), passed: g <= 9, info: L(`Nivel escolar ${g.toFixed(1)}${nqNote}. La fórmula es estándar; el límite de 9 es nuestra meta.`, `Grade level ${g.toFixed(1)}${nqNote}. The formula is standard; the grade-9 bar is our cutoff.`), fix: g <= 9 ? null : L("Acorta oraciones y simplifica palabras largas.", "Shorten sentences and simplify long words.") });
+  }
+  // Scripture inside quotation marks can't be split, so only the presenter's own words count.
+  const spokenOutsideQuotes = (s) => words.filter((w) => w.start >= s.start && w.end <= s.end && !insideAny(quotes, w.start, w.end)).length;
+  const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);
+  add("spoken", { id: "long", label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
+
+  add("spoken", { id: "runtime", soft: runtimeSec >= 480, label: L("Duración razonable para un episodio de enseñanza", "Reasonable length for a teaching episode"), passed: runtimeSec >= 480 && runtimeSec <= 2700, info: L(`Enseñando: ${fmtTime(runtimeSec)} · leído de corrido: ${fmtTime(readSec)}. Calculado por sílabas (${totalSyl}) a ${readRate.toFixed(2)} sílabas/s (Pellegrino et al., 2011) × factor de ritmo ${k.toFixed(2)}${opts.kCalibrated ? " calibrado con sus episodios" : opts.kReh ? " ajustado con ensayos" : " (supuesto; se calibra con episodios reales)"}.${co ? ` La apertura en frío suma ≈${Math.round(coSec)} s al video${co.mode === "move" ? " si se duplica; al moverla no cambia el total" : ""}.` : ""}`, `Teaching: ${fmtTime(runtimeSec)} · straight read: ${fmtTime(readSec)}. From ${totalSyl} syllables at ${readRate.toFixed(2)} syllables/s (Pellegrino et al., 2011) × pace factor ${k.toFixed(2)}${opts.kCalibrated ? " calibrated from your episodes" : opts.kReh ? " adjusted from rehearsals" : " (assumed; calibrates from real episodes)"}.${co ? ` The cold open adds ≈${Math.round(coSec)} s to the video${co.mode === "move" ? " if duplicated; moved, the total doesn't change" : ""}.` : ""}`), fix: runtimeSec < 480 ? L("Menos de 8 minutos: según guías de creadores, YouTube no permite anuncios intermedios por debajo de 8 min; confírmalo en YouTube Studio → Monetización.", "Under 8 minutes: creator guides say YouTube allows no mid-roll ads below 8 min; confirm it in YouTube Studio → Monetization.") : runtimeSec > 2700 ? L("Más de 45 minutos. Las guías de creadores coinciden en que el porcentaje visto baja en los videos más largos, aunque los minutos vistos suben; no encontramos una cifra verificable para enseñanza bíblica. Decide con tu propia retención (pestaña Resultados).", "Over 45 minutes. Creator guides agree that percentage watched falls on longer videos while minutes watched rise; we found no verifiable figure for Bible teaching. Decide from your own retention (Results tab).") : null });
+
+  const mulHits = [];
+  for (const m of MULETILLAS) {
+    m.re.lastIndex = 0; let x;
+    while ((x = m.re.exec(text))) {
+      const g = m.group ? x[m.group] : x[0];
+      const start = m.group ? x.index + x[0].lastIndexOf(g) : x.index;
+      mulHits.push({ start, end: start + g.length, text: g, label: m.label, kind: "muletilla" });
+      if (x[0].length === 0) m.re.lastIndex++;
+    }
+  }
+  const mulRate = wc ? (mulHits.length * 100) / wc : 0;
+  const mulCount = {}; mulHits.forEach((h) => (mulCount[h.label] = (mulCount[h.label] || 0) + 1));
+  const topMul = Object.entries(mulCount).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  add("spoken", { id: "muletillas", soft: true, label: L("Muletillas bajo control", "Filler words under control"), passed: mulRate <= 1.5, info: L(`${mulHits.length} muletilla(s), ${mulRate.toFixed(1)} por cada 100 palabras (meta propia: 1,5 o menos). Solo cuenta las muletillas escritas en el guion; las que se dicen al grabar se notan en el modo Ensayo.`, `${mulHits.length} filler(s), ${mulRate.toFixed(1)} per 100 words (our cutoff: 1.5). Only fillers written in the script are counted; the ones spoken while recording show up in Rehearsal mode.`) + (topMul.length ? L(" Más frecuentes: ", " Most frequent: ") + topMul.map(([w, n]) => `${w} ×${n}`).join(", ") + "." : ""), fix: mulRate <= 1.5 ? null : L("Quítalas del guion; en la grabación tienden a aumentar, no a bajar.", "Cut them in the script; they increase on camera, not decrease.") });
+
+  const weakHits = [];
+  for (const [w, alts] of Object.entries(WEAK)) for (const h of findPhrases(text, [w], "weak")) if (!insideAny(protectedSpans, h.start, h.end)) weakHits.push({ ...h, alts });
+  for (const [w, alts] of Object.entries(WEAK_ADJ)) {
+    const re = new RegExp("(?<![\\p{L}])" + esc(w) + "(?![\\p{L}])(?!\\s*,)", "giu"); let m;
+    while ((m = re.exec(text))) if (!insideAny(protectedSpans, m.index, m.index + m[0].length)) {
+      const before = text.slice(Math.max(0, m.index - 3), m.index);
+      if (/[.!?¡¿]\s*$/.test(before) || m.index === 0) continue; // sentence-initial "Bueno" is a filler, handled above
+      weakHits.push({ start: m.index, end: m.index + m[0].length, text: m[0], kind: "weak", alts });
+    }
+  }
+  add("spoken", { id: "weak", label: L("Palabras precisas", "Precise words"), passed: weakHits.length < Math.max(2, Math.ceil(wc / 150)), info: weakHits.length ? L(`${weakHits.length} palabra(s) genérica(s); las expresiones fijas («Buen Pastor», «todas las cosas») y las citas bíblicas no se marcan.`, `${weakHits.length} generic word(s); fixed phrases and scripture quotes are skipped.`) : L("Vocabulario específico.", "Specific vocabulary."), fix: weakHits.length >= Math.max(2, Math.ceil(wc / 150)) ? L("Toca cada palabra marcada en el guion para ver alternativas.", "Tap each marked word in the script for alternatives.") : null });
+
+  const regHits = [];
+  if (lang === "es") for (const r of REGIONAL.filter((r) => regFlags(r, opts.audience))) { r.re.lastIndex = 0; let m; while ((m = r.re.exec(text))) if (!insideAny(quotes, m.index, m.index + m[0].length)) regHits.push({ start: m.index + (m[0].length - m[0].trimStart().replace(/^,\s*/, "").length), end: m.index + m[0].length, text: m[0].replace(/^,\s*/, ""), kind: "regional", fix: r.fix }); }
+  if (lang === "es") add("spoken", { id: "regional", label: L("Español neutro", "Neutral Spanish"), passed: !regHits.length, info: regHits.length ? L(`${regHits.length} regionalismo(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. La audiencia va de Centroamérica a España; las citas bíblicas (que usan «vosotros» en la RVR1960) no se marcan.`, `${regHits.length} regional form(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. The audience spans Central America to Spain; Bible quotes (RVR1960 uses "vosotros") are not marked.`) : L("Sin regionalismos marcados.", "No regional forms marked."), fix: regHits.length ? L("Toca cada palabra marcada en el guion para ver la forma neutra.", "Tap each marked word in the script to see the neutral form.") : null });
+
+  // ===== Discoverability (C.10) =====
+  const contentWords = words.map((w) => w.w.toLowerCase()).filter((w) => w.length > 3 && !STOP.has(w) && !STOP.has(norm(w)));
+  const freq = {}; contentWords.forEach((w) => (freq[w] = (freq[w] || 0) + 1));
+  const top = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  // Auto keyword: prefer a repeated 2–3 word phrase ("silencio de dios"); single words skip ubiquitous faith words.
+  const COMMON = new Set(["dios", "señor", "jesús", "jesus", "cristo", "biblia", "palabra", "hermanos", "god", "lord", "jesus", "christ", "bible"]);
+  const lw = words.map((w) => w.w.toLowerCase());
+  const isContent = (w) => w.length > 2 && !STOP.has(w) && !STOP.has(norm(w));
+  const grams = {};
+  for (let n = 2; n <= 3; n++) for (let i = 0; i + n <= lw.length; i++) {
+    const g = lw.slice(i, i + n);
+    if (!isContent(g[0]) || !isContent(g[n - 1])) continue;
+    if (g.every((x) => COMMON.has(x) || !isContent(x))) continue;
+    const key = g.join(" "); grams[key] = (grams[key] || 0) + 1;
+  }
+  const bestGram = Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0];
+  const bestWord = top.find(([w, c]) => c > 1 && !COMMON.has(w));
+  const keyword = (opts.keyword || "").trim().toLowerCase() || (bestGram ? bestGram[0] : bestWord ? bestWord[0] : "");
+  const kwRe = keyword ? new RegExp("(?<![\\p{L}])" + esc(norm(keyword)) + "(?![\\p{L}])", "giu") : null;
+  const normText = norm(text);
+  const kwPositions = []; if (kwRe) { let m; while ((m = kwRe.exec(normText))) kwPositions.push(m.index); }
+  // A multi-word keyword ("Caín y Abel") also counts when a sentence names all its main words.
+  const kwParts = keyword ? norm(keyword).split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)) : [];
+  if (kwParts.length > 1) for (const s of sents) { const ns = norm(s.text); if (kwParts.every((w) => new RegExp("(?<![\\p{L}])" + esc(w) + "(?![\\p{L}])", "u").test(ns)) && !kwPositions.some((p) => p >= s.start && p < s.end)) kwPositions.push(s.start); }
+  kwPositions.sort((a, b) => a - b);
+  const kwMin = wc < 500 ? 2 : 3; // short scripts can't repeat a phrase three times naturally
+  const kwFirstT = kwPositions.length ? timeAt(kwPositions[0]) : null;
+  const thirds = new Set(kwPositions.map((p) => Math.min(2, Math.floor((timeAt(p) / Math.max(1, runtimeSec)) * 3))));
+  const title = (opts.title || "").trim();
+  const desc = (opts.description || "").trim();
+  const searchy = /(¿?qu[eé] dice la biblia|¿?c[oó]mo|¿?por qu[eé]|¿?qu[eé] (es|significa)|¿?qui[eé]n (fue|era)|explicad[oa]|estudio b[ií]blico|how to|what does the bible|why|who was)/i;
+  add("seo", { id: "kw", label: L("Palabra clave principal definida", "Primary keyword defined"), passed: !!keyword, info: keyword ? L(`Palabra clave: «${keyword}»${opts.keyword ? " (escrita por ti)" : " (la más repetida; mejor escríbela tú)"}.`, `Keyword: "${keyword}"${opts.keyword ? " (yours)" : " (most repeated; better to set it)"}.`) : L("No hay una palabra clave clara.", "No clear keyword."), fix: keyword ? null : L("Escribe en el campo «Palabra clave» la frase que un oyente buscaría.", "Type the phrase a viewer would search in the Keyword field.") });
+  add("seo", { id: "kwopen", soft: true, label: L("Palabra clave en los primeros 20 segundos", "Keyword in the first 20 seconds"), passed: kwFirstT !== null && kwFirstT <= 20, info: kwFirstT === null ? L("No aparece en el guion.", "Not in the script.") : L(`Primera mención en ${fmtTime(kwFirstT)}. Los subtítulos automáticos se indexan; que el inicio pese más es una práctica común, no un dato publicado por YouTube.`, `First mention at ${fmtTime(kwFirstT)}. Auto-captions are indexed; that the opening weighs more is common practice, not a figure YouTube publishes.`), fix: kwFirstT !== null && kwFirstT <= 20 ? null : L("Dila en la primera o segunda oración.", "Say it in the first or second sentence.") });
+  add("seo", { id: "kwspread", label: L("Palabra clave repartida en todo el episodio", "Keyword spread across the episode"), passed: kwPositions.length >= kwMin && thirds.size >= 2, info: L(`${kwPositions.length} mención(es), en ${thirds.size} de 3 tercios del episodio.`, `${kwPositions.length} mention(s), in ${thirds.size} of 3 thirds.`), fix: kwPositions.length >= kwMin && thirds.size >= 2 ? null : L("Repítela con naturalidad al inicio, a la mitad y al cierre.", "Repeat it naturally at the start, middle and end.") });
+  const support = top.find(([w, n]) => n >= 2 && w !== keyword && !keyword.includes(w));
+  add("seo", { id: "support", label: L("Términos de apoyo relacionados", "Related supporting terms"), passed: !!support, info: support ? L(`También repites «${support[0]}» (×${support[1]}).`, `Also repeats "${support[0]}" (×${support[1]}).`) : L("Solo una palabra se repite.", "Only one word repeats."), fix: support ? null : L("Usa uno o dos sinónimos del tema, no solo la misma frase.", "Use a synonym or two, not just the same phrase.") });
+  add("seo", { id: "search", label: L("Frase con forma de búsqueda", "Search-shaped phrasing"), passed: searchy.test(title) || searchy.test(firstSent), info: L("Por ejemplo «¿Qué dice la Biblia sobre…?», «¿Por qué…?», «¿Quién fue…?» en el título o la primera oración.", "E.g. \"What does the Bible say about…?\" in the title or first sentence."), fix: searchy.test(title) || searchy.test(firstSent) ? null : L("Formula el título como la pregunta que la gente escribe en YouTube.", "Phrase the title as the question people type.") });
+  if (title) add("seo", { id: "title", label: L("Título de 60 caracteres o menos, con la palabra clave visible", "Title ≤ 60 characters, keyword visible"), passed: title.length <= 60 && (!keyword || norm(title).slice(0, 60).includes(norm(keyword))), info: L(`${title.length} caracteres. YouTube permite 100, pero en móvil se corta cerca de 60.`, `${title.length} characters. YouTube allows 100; mobile truncates near 60.`), fix: title.length > 60 ? L("Acórtalo.", "Shorten it.") : keyword && !norm(title).slice(0, 60).includes(norm(keyword)) ? L("Pon la palabra clave dentro de los primeros 60 caracteres.", "Put the keyword within the first 60 characters.") : null });
+  if (desc) add("seo", { id: "desc", label: L("Descripción: palabra clave en los primeros 150 caracteres", "Description: keyword in first 150 characters"), passed: !!keyword && norm(desc.slice(0, 150)).includes(norm(keyword)), info: L("Es lo que se ve antes de «más».", "That's what shows before \"more\"."), fix: keyword && norm(desc.slice(0, 150)).includes(norm(keyword)) ? null : L("Reescribe el inicio de la descripción con la promesa y la palabra clave.", "Rewrite the description opening with the promise and keyword.") });
+  const chapterMarks = [...transHits, ...refs].map((h) => timeAt(h.start)).sort((a, b) => a - b);
+  const chapterPts = []; for (const t of chapterMarks) if (!chapterPts.length || t - chapterPts[chapterPts.length - 1] >= 60) chapterPts.push(t);
+  add("seo", { id: "chapters", label: L("Transiciones habladas para capítulos automáticos", "Spoken transitions for automatic chapters"), passed: transHits.length >= 2 || runtimeSec < 300, info: L(`${transHits.length} transición(es) («primero», «ahora bien», «por último»…). YouTube detecta capítulos a partir del habla y la transcripción.`, `${transHits.length} transition(s). YouTube detects chapters from speech and transcript cues.`), fix: transHits.length >= 2 || runtimeSec < 300 ? null : L("Marca cada punto principal con una transición clara.", "Mark each main point with a clear transition.") });
+
+  // ===== Highlight spans =====
+  for (const h of riskHits) marks.push({ start: h.start, end: h.end, kind: "risk", level: (preflight.find((p) => p.id === h.cat) || {}).level || "amarillo", tip: `${(() => { const c = MONEY_CATS.find((c) => c.id === h.cat); return c ? cl(c) : L("Riesgo", "Risk"); })()}${h.restricted ? L(" (tema restringido)", " (restricted topic)") : ""}` });
+  for (const h of mulHits) marks.push({ start: h.start, end: h.end, kind: "muletilla", tip: L("Muletilla", "Filler") });
+  for (const h of weakHits) marks.push({ start: h.start, end: h.end, kind: "weak", tip: L("Alternativas: ", "Alternatives: ") + h.alts.join(", ") });
+  for (const h of regHits) marks.push({ start: h.start, end: h.end, kind: "regional", tip: L("Neutro: ", "Neutral form: ") + h.fix });
+  for (const h of aiHits) marks.push({ start: h.start, end: h.end, kind: "aitell", tip: L("Suena a texto generado", "Sounds generated") });
+  for (const h of [...greetHits, ...ctaHits]) marks.push({ start: h.start, end: h.end, kind: h.kind === "cta" ? "cta" : "greeting", tip: h.kind === "cta" ? L("Llamada a la acción", "Call to action") : L("Saludo / relleno", "Greeting / filler") });
+  for (const r of refs) marks.push({ start: r.start, end: r.end, kind: "ref", tip: r.canonical });
+  for (const q of quotes) marks.push({ start: q.start, end: q.end, kind: "quote", tip: L("Cita", "Quote") });
+  if (kwRe) for (const p of kwPositions) marks.push({ start: p, end: p + keyword.length, kind: "keyword", tip: L("Palabra clave", "Keyword") });
+  const prio = { risk: 9, aitell: 8, muletilla: 7, cta: 6, greeting: 6, regional: 5, weak: 4, ref: 3, keyword: 2, quote: 1 };
+  // quotes are long containers: lay them out as background, everything else resolves by priority without overlap
+  const flat = marks.filter((m) => m.kind !== "quote").sort((a, b) => a.start - b.start || prio[b.kind] - prio[a.kind]);
+  const resolved = []; let lastEnd = -1;
+  for (const m of flat) if (m.start >= lastEnd) { resolved.push(m); lastEnd = m.end; }
+
+  const ticks = [7, 20, 30];
+  for (let t = 240; t < runtimeSec; t += 240) ticks.push(t);
+  const tickPos = ticks.filter((t) => t < runtimeSec).map((t) => ({ t, pos: posAtTime(t) }));
+
+  const msg = messageChecks(text, opts, { add, L, refs, quotes, pairs, cues, runtimeSec, posAtTime });
+  // count summary
+  const allRows = Object.values(sections).flat();
+  const passed = allRows.filter((r) => r.passed).length;
+  const worst = preflight.some((p) => p.level === "rojo") || packaging.some((p) => p.level === "rojo") ? "rojo" : preflight.some((p) => p.level === "amarillo") || packaging.some((p) => p.level === "amarillo") ? "amarillo" : "verde";
+
+  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, promiseDeadline, openPrayer, closeFrom, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
+}
+
+// ---------- Guion: sentence units, sections, cold-open candidates (pure) ----------
+const SEC_TYPES = ["hook", "promise", "intro", "point", "body", "cta", "close"];
+// Spanish "ordenadores" (Martín Zorraquino & Portolés 1999) and English equivalents open a new point.
+// "Primero Dios" is a set phrase, not an ordinal.
+const ORD_RE = /^[\s«"“¿¡(—-]*(primero(?!\s+dios)|primer punto|en primer lugar|segundo|en segundo lugar|tercero|en tercer lugar|cuarto|en cuarto lugar|por último|en último lugar|finalmente|para terminar|para cerrar|(?:el|mi) (?:primer|segundo|tercer|cuarto|quinto|último) punto|la (?:primera|segunda|tercera|cuarta|última) (?:verdad|lección|clave|razón|enseñanza)|first(?:ly)?|second(?:ly)?|third(?:ly)?|next|finally|lastly|the (?:first|second|third|fourth|last) (?:point|thing|truth|lesson|reason))(?![\p{L}])/iu;
+const TENSION_RE = /(?<![\p{L}])(nadie|nunca|jamás|error|mentira|la verdad|secreto|por qué|qué pasa si|en realidad|casi nadie|sorprend\p{L}*|miedo|dolor|perder|perdió|perdido|imposible|peligro|no es lo que|cambió todo|cambia todo|lo que nadie|nobody|never|truth|mistake|secret|why|what if|actually|afraid|fear|lose|lost|impossible|changed everything)(?![\p{L}])/iu;
+const SOFT_T_RE = /(?<![\p{L}])(pero|sin embargo|but|however)(?![\p{L}])/iu;
+const YOU_RE = /(?<![\p{L}])(tú|te|ti|tu|tus|usted|ustedes|has|vas|puedes|sabes|sientes|crees|piensas|imagina|imagínate|you|your|you're|you've)(?![\p{L}])/iu;
+const ANA_STRONG = /^[\s«"“¿¡(—-]*(y|e|o|u|esto|eso|esta|este|ese|esa|estos|esos|estas|esas|aquí|ahí|allí|él|ella|ellos|ellas|también|además|entonces|por eso|así que|luego|después|lo|le|les|and|this|that|these|those|it|he|she|they|also|so|then|there|which)(?![\p{L}])/iu;
+const ANA_SOFT = /^[\s«"“¿¡]*(pero|porque|but|because)(?![\p{L}])/iu;
+const PROM_RE = /(?<![\p{L}])(aprender\p{L}*|descubr\p{L}*|entender\p{L}*|verás|verán|te mostraré|les mostraré|al final de|en este episodio|la respuesta|la clave|you'll learn|you'll see|we'll see|learn|discover|by the end|the answer|the key)(?![\p{L}])/iu;
+const FUT_RE = /(?<![\p{L}])(vas a|van a|vamos a|you'll|you will|we'll|we will)(?![\p{L}])/iu;
+const CONNECT_RE = /^[\s«"“¿¡]*(ahora bien|por otro lado|sin embargo|en cambio|por eso|así que|además|en resumen|en conclusión|por lo tanto|now|anyway|however|so|in summary|in short)(?![\p{L}])/iu;
+
+const hasPhrase = (s, list) => findPhrases(s, list, "x").length > 0;
+
+function headingType(title) {
+  const x = norm(title);
+  if (/gancho|hook|apertura|cold open/.test(x)) return "hook";
+  if (/promesa|promise/.test(x)) return "promise";
+  if (/intro/.test(x)) return "intro";
+  if (/cta|llamada|suscrib|call to action|subscribe/.test(x)) return "cta";
+  if (/cierre|final|conclusi|close|outro|despedida|ending/.test(x)) return "close";
+  return "point";
+}
+
+// One unit per spoken sentence, with estimated start/end time in the recording.
+function buildUnits(R, text) {
+  const W = R.words, U = [];
+  const blank = /\n[ \t]*\n/.test(text);
+  const breaks = [];
+  const bre = blank ? /\n[ \t]*\n/g : /\n/g;
+  let m;
+  while ((m = bre.exec(text))) breaks.push(m.index);
+  let wi = 0, bi = 0;
+  for (const s of R.sents) {
+    while (wi < W.length && W[wi].end <= s.start) wi++;
+    const w0 = wi;
+    let w1 = wi;
+    while (w1 < W.length && W[w1].start < s.end) w1++;
+    if (w1 === w0) continue;
+    while (bi < breaks.length && breaks[bi] < s.start) bi++;
+    let syl = 0;
+    for (let k = w0; k < w1; k++) syl += W[k].syl;
+    U.push({ i: U.length, start: s.start, end: s.end, text: s.text, t0: W[w0].t0, t1: W[w1 - 1].t, para: bi, w0, w1, wc: w1 - w0, syl });
+    wi = w1;
+  }
+  return U;
+}
+
+function bagOf(U, a, b) {
+  const bag = {};
+  for (let i = a; i < b; i++) for (const w of wordTokens(U[i].text)) {
+    const x = w.w.toLowerCase();
+    if (x.length > 3 && !STOP.has(x) && !STOP.has(norm(x))) bag[x] = (bag[x] || 0) + 1;
+  }
+  return bag;
+}
+function cosine(A, B) {
+  let dot = 0, a = 0, b = 0;
+  for (const k in A) { a += A[k] * A[k]; if (B[k]) dot += A[k] * B[k]; }
+  for (const k in B) b += B[k] * B[k];
+  return a && b ? dot / Math.sqrt(a * b) : 0;
+}
+
+// Auto-detect sections. Each entry: { first (unit index), anchor, type, conf: "alta"|"media"|"baja", title }.
+function detectLayout(U, R) {
+  if (!U.length) return [];
+  const rank = { baja: 0, media: 1, alta: 2 };
+  const PRI = { hook: 6, close: 5, cta: 4, promise: 3, point: 2, intro: 1, body: 0 };
+  const starts = new Map();
+  const put = (i, type, conf, title) => {
+    if (i < 0 || i >= U.length) return;
+    const cur = starts.get(i);
+    if (!cur || rank[conf] > rank[cur.conf] || (rank[conf] === rank[cur.conf] && PRI[type] > PRI[cur.type])) starts.set(i, { type, conf, title: title || "" });
+  };
+  const unitAt = (pos) => { let lo = 0, hi = U.length - 1, ans = -1; while (lo <= hi) { const mid = (lo + hi) >> 1; if (U[mid].start >= pos) { ans = mid; hi = mid - 1; } else lo = mid + 1; } return ans; };
+
+  // 1. Headings written by the author win.
+  for (const c of (R.cues || []).filter((c) => c.heading)) {
+    const i = unitAt(c.end);
+    if (i >= 0) { const title = c.text.replace(/^#+\s*/, "").trim(); put(i, headingType(title), "alta", title); }
+  }
+  // 2. Opening by position: hook from 0, promise sentence within 90 s, then intro.
+  put(0, "hook", "alta");
+  const pIdx = U.findIndex((u) => u.t0 <= 90 && hasPhrase(u.text, PROMISES));
+  let after;
+  if (pIdx > 0) { put(pIdx, "promise", "alta"); after = pIdx + 1; }
+  else if (pIdx === 0) after = 1;
+  else { after = U.findIndex((u) => u.t0 >= 7); if (after < 1) after = 1; }
+  put(after, "intro", "media");
+  // 3. Ordinal discourse markers open points.
+  U.forEach((u, i) => { if (i > 0 && ORD_RE.test(u.text)) put(i, "point", "alta"); });
+  // 4. Calls to action, grouped when they sit within two sentences of each other.
+  const groups = [];
+  for (const u of U) if (hasPhrase(u.text, CTAS)) { const g = groups[groups.length - 1]; if (g && u.i - g[g.length - 1] <= 2) g.push(u.i); else groups.push([u.i]); }
+  for (const g of groups) { if (g[0] === 0) continue; put(g[0], "cta", "alta"); const nx = g[g.length - 1] + 1; if (nx < U.length) put(nx, "body", "media"); }
+  // 5. Close: the paragraph that announces the next episode, near the end.
+  const total = U[U.length - 1].t1;
+  let nIdx = -1;
+  // Same window as the Results "ending" check: last 90 s, or up to 45 s before a closing prayer or blessing.
+  const closeFrom = Number.isFinite(R.closeFrom) ? Math.min(R.closeFrom, total - 60) : total - 90;
+  for (let i = U.length - 1; i >= 0; i--) if (U[i].t0 >= closeFrom && hasPhrase(U[i].text, NEXT_EP)) { nIdx = i; break; }
+  if (nIdx > 0) {
+    let c = nIdx;
+    while (c - 1 > 0 && U[c - 1].para === U[nIdx].para && nIdx - (c - 1) <= 3 && U[c - 1].t0 >= closeFrom - 30 && !(starts.get(c - 1) && starts.get(c - 1).type === "cta")) c--;
+    if (starts.get(c) && starts.get(c).type === "cta" && c < nIdx) c++;
+    put(c, "close", "alta");
+  }
+  // 6. Split long undifferentiated stretches at the weakest lexical link (TextTiling-style, Hearst 1997).
+  for (let guard = 0; guard < 40; guard++) {
+    const list = [...starts.keys()].sort((a, b) => a - b);
+    let split = null;
+    for (let k = 0; k < list.length && split === null; k++) {
+      const a = list[k], b = (k + 1 < list.length ? list[k + 1] : U.length) - 1;
+      if (!["intro", "point", "body"].includes(starts.get(a).type)) continue;
+      if (U[b].t1 - U[a].t0 <= 300) continue;
+      let best = null;
+      for (let i = a + 1; i <= b; i++) {
+        if (U[i].t0 - U[a].t0 < 60 || U[b].t1 - U[i].t0 < 60) continue;
+        const sim = cosine(bagOf(U, Math.max(a, i - 4), i), bagOf(U, i, Math.min(b + 1, i + 4))) - (U[i].para !== U[i - 1].para ? 0.15 : 0);
+        if (!best || sim < best.sim) best = { i, sim };
+      }
+      if (best) split = best.i;
+    }
+    if (split === null) break;
+    starts.set(split, { type: "body", conf: "baja", title: "" });
+  }
+  // 7. Drop guessed "body" sections shorter than 12 s (e.g. one sentence between a call to action and the close).
+  const keys = [...starts.keys()].sort((a, b) => a - b);
+  keys.forEach((a, k) => {
+    const v = starts.get(a);
+    if (a === 0 || v.type !== "body" || v.conf === "alta") return;
+    const b = k + 1 < keys.length ? keys[k + 1] : U.length;
+    if (U[b - 1].t1 - U[a].t0 < 12) starts.delete(a);
+  });
+  return [...starts.entries()].sort((a, b) => a[0] - b[0]).map(([first, v]) => ({ first, anchor: U[first].text.slice(0, 80), ...v }));
+}
+
+// Keep a hand-edited layout attached to the same sentences after the text changes.
+function remapLayout(layout, U) {
+  if (!U.length) return [];
+  const used = new Set(), out = [];
+  for (const L of layout) {
+    let best = -1, bd = Infinity;
+    U.forEach((u, i) => { if (!used.has(i) && u.text.slice(0, 80) === L.anchor) { const d = Math.abs(i - L.first); if (d < bd) { bd = d; best = i; } } });
+    if (best < 0) { const i = Math.min(L.first, U.length - 1); if (!used.has(i)) best = i; }
+    if (best >= 0) { used.add(best); out.push({ ...L, first: best, anchor: U[best].text.slice(0, 80) }); }
+  }
+  out.sort((a, b) => a.first - b.first);
+  if (!out.length || out[0].first !== 0) out.unshift({ first: 0, anchor: U[0].text.slice(0, 80), type: "hook", conf: "alta", title: "" });
+  return out;
+}
+
+function sectionsFrom(layout, U, runtimeSec) {
+  let pointN = 0, prevEnd = 0;
+  return layout.map((L, k) => {
+    const last = (k + 1 < layout.length ? layout[k + 1].first : U.length) - 1;
+    let wc = 0, syl = 0;
+    for (let i = L.first; i <= last; i++) { wc += U[i].wc; syl += U[i].syl; }
+    if (L.type === "point") pointN++;
+    const t0 = k === 0 ? 0 : prevEnd;
+    const t1 = k + 1 === layout.length ? Math.max(U[last].t1, runtimeSec || 0) : U[last].t1;
+    prevEnd = t1;
+    return { ...L, k, last, t0, t1, dur: t1 - t0, wc, syl, n: L.type === "point" ? pointN : 0 };
+  });
+}
+
+// Rule checks per section; cold = { hook: bool, promise: bool }.
+function sectionFlags(secs, U, R, cold) {
+  const F = secs.map(() => []);
+  if (!secs.length) return F;
+  const hook = secs.find((s) => s.type === "hook");
+  // Same rules as the Results tab: an opening prayer inside the hook section doesn't count against the hook,
+  // and the promise target is 20 s, or 45 s in a series episode.
+  const op = R.openPrayer;
+  const prayIn = hook && op ? Math.max(0, Math.min(op.to, hook.t1) - Math.max(op.from, hook.t0)) : 0;
+  const hookDur = hook ? hook.dur - prayIn : 0;
+  if (!cold.hook && hook && hookDur > 7.5) F[hook.k].push({ id: "hookLong", v: Math.round(hookDur) });
+  if (!cold.hook && hook && U.slice(hook.first, hook.last + 1).some((u) => hasPhrase(u.text, GREETINGS))) F[hook.k].push({ id: "hookGreeting" });
+  if (!cold.promise) {
+    const prom = secs.find((s) => s.type === "promise");
+    if (!prom) { if (!(hook && U.slice(hook.first, hook.last + 1).some((u) => hasPhrase(u.text, PROMISES)))) F[0].push({ id: "noPromise" }); }
+    else if (prom.t1 > (R.promiseDeadline || 20) + 0.5) F[prom.k].push({ id: "promiseLate", v: prom.t1, d: R.promiseDeadline || 20 });
+  }
+  const total = secs[secs.length - 1].t1;
+  // Re-hook gaps: the same teaching points the Results "rehook" row found without a question or teaser.
+  const gapSpans = Array.isArray(R.blocks) ? R.blocks.filter((b) => !b.has).map((b) => [b.from, b.to]) : (() => {
+    const ev = [0, ...(R.qPositions || []).map((p) => R.timeAt(p)), ...(R.loopHits || []).map((x) => R.timeAt(x.start)), total].sort((a, b) => a - b);
+    const out = []; for (let i = 1; i < ev.length; i++) if (ev[i] - ev[i - 1] > 270) out.push([ev[i - 1], ev[i]]); return out;
+  })();
+  for (const [a, b] of gapSpans) {
+    const mid = (a + b) / 2;
+    const s = secs.find((x) => mid >= x.t0 && mid < x.t1) || secs[secs.length - 1];
+    F[s.k].push({ id: "gap", a, b });
+  }
+  const ctas = secs.filter((s) => s.type === "cta");
+  ctas.slice(0, -1).forEach((s) => F[s.k].push({ id: "extraCta" }));
+  if (total > 120 && !secs.some((s) => s.type === "close")) F[secs.length - 1].push({ id: "noClose" });
+  return F;
+}
+
+// Three sentences from the script that can stand alone at the start of the video.
+function coldCandidates(U, R, kind, o = {}) {
+  const kw = o.keyword ? norm(o.keyword) : "";
+  const total = U.length ? U[U.length - 1].t1 : 0;
+  const lvl = (cat) => ((R.preflight || []).find((p) => p.id === cat) || {}).level || "amarillo";
+  const out = [];
+  for (const u of U) {
+    if (u.wc < 4) continue;
+    if (hasPhrase(u.text, CTAS) || hasPhrase(u.text, GREETINGS)) continue;
+    const dur = u.t1 - u.t0, why = [];
+    let s = 0;
+    if (kind === "hook") {
+      if (u.t0 < 7) continue; // already at the start
+      if (/[?¿]/.test(u.text)) { s += 3; why.push("q"); }
+      if (YOU_RE.test(u.text)) { s += 2; why.push("you"); }
+      if (TENSION_RE.test(u.text)) { s += 2; why.push("tension"); } else if (SOFT_T_RE.test(u.text)) s += 1;
+      if (dur <= 7) s += 2; else if (dur > 9) s -= Math.ceil((dur - 9) / 3) * 2;
+      if (u.t0 > total * 0.15) { s += 1; why.push("late"); }
+      if (/\d/.test(u.text)) s += 1;
+    } else {
+      if (hasPhrase(u.text, PROMISES)) { s += 4; why.push("promise"); } else if (PROM_RE.test(u.text)) { s += 3; why.push("promise"); } else if (FUT_RE.test(u.text)) s += 1;
+      if (u.wc > 35) s -= 3; else if (u.wc >= 6) s += 1;
+      if (dur > 12) s -= 2;
+      if (u.t0 < 7) why.push("open");
+    }
+    if (kw && norm(u.text).includes(kw)) { s += 2; why.push("kw"); }
+    if (ANA_STRONG.test(u.text)) s -= 3; else if (CONNECT_RE.test(u.text)) { s -= 2; why.push("connector"); } else if (ANA_SOFT.test(u.text)) s -= 1;
+    if (ORD_RE.test(u.text)) s -= 2; // "Primero, …" depends on what came before
+    if ((R.quotes || []).some((q) => q.start <= u.start + 2 && u.end <= q.end + 2)) { if (kind === "hook") s += 1; why.push("verse"); }
+    const risk = (R.riskHits || []).filter((x) => x.start >= u.start && x.end <= u.end);
+    if (risk.length) { s -= risk.some((x) => lvl(x.cat) !== "verde") ? 6 : 2; why.push("risk"); }
+    out.push({ i: u.i, score: s, why, dur, t0: u.t0, t1: u.t1, text: u.text });
+  }
+  const min = 4;
+  out.sort((a, b) => b.score - a.score || a.dur - b.dur);
+  const pick = [];
+  for (const c of out) {
+    if (c.score < min) break;
+    if (pick.some((p) => Math.abs(p.t0 - c.t0) < 20)) continue;
+    pick.push(c);
+    if (pick.length === 3) break;
+  }
+  return pick;
+}
+
+// Sentence-level LCS, then word-level inside changed runs: keeps long scripts fast.
+function lcsOps(A, B) {
+  const m = A.length, n = B.length;
+  const dp = Array.from({ length: m + 1 }, () => new Uint32Array(n + 1));
+  for (let i = m - 1; i >= 0; i--) for (let j = n - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const ops = [];
+  let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (A[i] === B[j]) { ops.push({ op: "eq", text: A[i] }); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) ops.push({ op: "del", text: A[i++] });
+    else ops.push({ op: "ins", text: B[j++] });
+  }
+  while (i < m) ops.push({ op: "del", text: A[i++] });
+  while (j < n) ops.push({ op: "ins", text: B[j++] });
+  return ops;
+}
+function diffOps(a, b) {
+  const split = (s) => s.match(/[^.!?…\n]*[.!?…]+[ \t]*|[^.!?…\n]+[ \t]*|\n+/g) || [];
+  const A = split(a), B = split(b);
+  if (A.length * B.length > 4e6) return [{ op: "del", text: a }, { op: "ins", text: b }];
+  const top = lcsOps(A, B), out = [];
+  for (let k = 0; k < top.length;) {
+    if (top[k].op === "eq") { out.push(top[k++]); continue; }
+    let d = "", ins = "";
+    while (k < top.length && top[k].op !== "eq") { if (top[k].op === "del") d += top[k].text; else ins += top[k].text; k++; }
+    const wa = d.split(/(\s+)/).filter((x) => x !== ""), wb = ins.split(/(\s+)/).filter((x) => x !== "");
+    if (d && ins && wa.length * wb.length <= 4e6) out.push(...lcsOps(wa, wb));
+    else { if (d) out.push({ op: "del", text: d }); if (ins) out.push({ op: "ins", text: ins }); }
+  }
+  return out;
+}
+
+// ---------- Results: audience-retention import (YouTube Studio CSV or pasted columns) ----------
+const toSec = (s) => { const m = String(s).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})(?:\.\d+)?$/); return m ? (+(m[1] || 0)) * 3600 + +m[2] * 60 + +m[3] : null; };
+const toNum = (s) => { const x = String(s).trim().replace(/%$/, "").replace(/^"|"$/g, ""); if (!/^-?\d+(?:[.,]\d+)?$/.test(x)) return null; return parseFloat(x.replace(",", ".")); };
+function parseRetention(raw, durationSec) {
+  const lines = String(raw || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) return { error: "empty" };
+  const splitRow = (l) => (l.includes("\t") ? l.split("\t") : l.includes(";") ? l.split(";") : l.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)).map((c) => c.trim().replace(/^"|"$/g, ""));
+  let header = null;
+  const rows = [];
+  for (const l of lines) {
+    const cells = splitRow(l);
+    const nums = cells.map((c) => (toSec(c) !== null ? { t: toSec(c) } : toNum(c) !== null ? { n: toNum(c) } : null));
+    if (nums.filter(Boolean).length >= 2) rows.push({ cells, nums });
+    else if (!rows.length) header = cells.map((c) => norm(c));
+  }
+  if (rows.length < 3) return { error: "few" };
+  const width = Math.max(...rows.map((r) => r.nums.length));
+  // Position column: first column with numbers; retention column: header match, else the next numeric column.
+  let posCol = 0;
+  while (posCol < width && !rows.every((r) => r.nums[posCol])) posCol++;
+  let retCol = -1;
+  if (header) {
+    const pick = (re) => header.findIndex((hd, k) => k !== posCol && re.test(hd) && rows.every((r) => r.nums[k] && r.nums[k].n !== undefined));
+    retCol = pick(/absolut/);
+    if (retCol < 0) retCol = pick(/retenc|retention|audienc|audience/);
+  }
+  if (retCol < 0) for (let k = posCol + 1; k < width; k++) if (rows.every((r) => r.nums[k] && r.nums[k].n !== undefined)) { retCol = k; break; }
+  if (posCol >= width || retCol < 0) return { error: "cols" };
+  const isTime = rows.every((r) => r.nums[posCol].t !== undefined);
+  const pos = rows.map((r) => (isTime ? r.nums[posCol].t : r.nums[posCol].n));
+  let ret = rows.map((r) => r.nums[retCol].n);
+  if (Math.max(...ret) <= 1.5) ret = ret.map((x) => x * 100);
+  const hdrPct = header && /%|percent|porcentaje|posici|position/.test(header[posCol] || "");
+  const pctPos = !isTime && (hdrPct || (Math.max(...pos) <= 100 && (!durationSec || durationSec > 110)));
+  if (pctPos && !durationSec) return { error: "duration" };
+  const pts = pos.map((p, k) => [pctPos ? (p / (Math.max(...pos) <= 1.01 ? 1 : 100)) * durationSec : p, ret[k]]).filter((x) => isFinite(x[0]) && isFinite(x[1])).sort((a, b) => a[0] - b[0]);
+  return { points: pts, durationSec: durationSec || pts[pts.length - 1][0], pctPos };
+}
+function retAt(points, t) {
+  if (!points.length) return null;
+  if (t <= points[0][0]) return points[0][1];
+  for (let k = 1; k < points.length; k++) if (t <= points[k][0]) { const [a, ra] = points[k - 1], [b, rb] = points[k]; return ra + (rb - ra) * ((t - a) / Math.max(1e-6, b - a)); }
+  return points[points.length - 1][1];
+}
+// Per-section retention: spans are [{k, a, b}] in real-video seconds.
+function retentionBySection(points, spans) {
+  const rows = spans.map((s) => { const r0 = retAt(points, s.a), r1 = retAt(points, s.b), min = Math.max(0.1, (s.b - s.a) / 60); return { ...s, r0, r1, drop: r0 - r1, perMin: (r0 - r1) / min }; });
+  const ranked = rows.filter((r) => r.b - r.a >= 20).sort((x, y) => y.perMin - x.perMin);
+  ranked.slice(0, 2).forEach((r) => { if (r.perMin > 0) r.worst = true; });
+  return rows;
+}
+function avgViewed(points, dur) {
+  if (points.length < 2) return null;
+  let area = 0;
+  for (let k = 1; k < points.length; k++) { const [a, ra] = points[k - 1], [b, rb] = points[k]; if (a >= dur) break; area += ((ra + rb) / 2) * (Math.min(b, dur) - a); }
+  return area / dur;
+}
+
+// ---------- Packaging gate ----------
+const contentSet = (s) => new Set(wordTokens(s || "").map((w) => norm(w.w)).filter((w) => w.length > 3 && !STOP.has(w)));
+function packagingChecks(o, R, promiseText) {
+  const title = (o.title || "").trim(), thumb = (o.thumb || "").trim(), desc = (o.description || "").trim(), kw = (o.keyword || R.keyword || "").trim();
+  const pk = (label) => (R.packaging || []).find((p) => p.key === label);
+  const tw = contentSet(title), th = contentSet(thumb), pr = contentSet(promiseText);
+  const overlap = th.size ? [...th].filter((w) => tw.has(w)).length / th.size : 0;
+  const shared = [...tw].filter((w) => pr.has(w) || (kw && norm(kw).includes(w)));
+  const thumbWords = wordTokens(thumb).length;
+  // pending: the field the check reads is still empty, so it neither passes nor fails yet.
+  return [
+    { id: "title", req: true, pass: !!title },
+    { id: "titleLen", req: true, pass: !title || title.length <= 60, v: title.length, pending: !title },
+    { id: "titleRisk", req: true, pass: !title || !pk("title") || pk("title").level === "verde", v: pk("title") ? pk("title").issues.join("; ") : "", pending: !title },
+    { id: "thumb", req: true, pass: thumbWords >= 1 && thumbWords <= 4 && thumb.length <= 24, v: thumbWords },
+    { id: "thumbRisk", req: true, pass: !thumb || !pk("thumb") || pk("thumb").level === "verde", v: pk("thumb") ? pk("thumb").issues.join("; ") : "", pending: !thumb },
+    { id: "titleKw", req: false, pass: !kw || norm(title).slice(0, 60).includes(norm(kw)), v: kw, pending: !title },
+    { id: "thumbRepeat", req: false, pass: !thumb || overlap < 0.75, pending: !thumb || !title },
+    { id: "promiseMatch", req: false, pass: !title || !promiseText || shared.length > 0, v: shared.slice(0, 3).join(", "), pending: !title },
+    { id: "descKw", req: false, pass: !desc || !kw || norm(desc.slice(0, 150)).includes(norm(kw)), pending: !desc },
+  ];
+}
+
+// ---------- YouTube chapters from the rundown ----------
+// sections: [{t (video seconds), type, label}] → at least 3 chapters, first at 0:00, each ≥ 10 s.
+function buildChapters(items, total, introLabel) {
+  const ch = [{ t: 0, label: introLabel }];
+  for (const s of items) {
+    if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
+    const last = ch[ch.length - 1];
+    if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
+    ch.push({ t: s.t, label: s.label });
+  }
+  while (ch.length > 1 && total - ch[ch.length - 1].t < 10) ch.pop();
+  return ch;
+}
+
+// ---------- Shorts: self-contained 20–180 s passages ----------
+function clipCandidates(U, R, secs, o = {}) {
+  const kw = o.keyword ? norm(o.keyword) : "";
+  const lvl = (cat) => ((R.preflight || []).find((p) => p.id === cat) || {}).level || "amarillo";
+  const inQuote = (u) => (R.quotes || []).some((q) => q.start <= u.start + 2 && u.end <= q.end + 2);
+  const out = [];
+  for (let a = 0; a < U.length; a++) {
+    const u = U[a];
+    if (u.t0 < 7 || u.wc < 4) continue;
+    if (ANA_STRONG.test(u.text) || CONNECT_RE.test(u.text) || ORD_RE.test(u.text) || ANA_SOFT.test(u.text)) continue;
+    const sec = secs.find((s) => a >= s.first && a <= s.last);
+    if (!sec || ["cta", "close", "hook"].includes(sec.type)) continue;
+    const why = [];
+    let s0 = 0;
+    if (/[?¿]/.test(u.text)) { s0 += 3; why.push("q"); }
+    if (YOU_RE.test(u.text)) { s0 += 2; why.push("you"); }
+    if (TENSION_RE.test(u.text)) { s0 += 2; why.push("tension"); }
+    if (kw && norm(u.text).includes(kw)) { s0 += 1; why.push("kw"); }
+    if (s0 < 3) continue;
+    let best = null;
+    for (let b = a; b <= sec.last; b++) {
+      if (hasPhrase(U[b].text, CTAS) || hasPhrase(U[b].text, GREETINGS)) break;
+      if (b > a && (ORD_RE.test(U[b].text) || CONNECT_RE.test(U[b].text))) break; // a new thought starts
+      const dur = U[b].t1 - u.t0;
+      if (dur > 180) break;
+      if (dur < 20) continue;
+      let e = 0;
+      if (U[b].wc <= 12) e += 1;
+      if (!U[b + 1] || U[b + 1].para !== U[b].para) e += 2; // ends where a paragraph ends
+      if (/[.!»”]\s*$/.test(U[b].text) && !/[?]\s*$/.test(U[b].text)) e += 1;
+      if (dur >= 30 && dur <= 50) e += 1;
+      if (dur > 50 && dur <= 90) e += 1;
+      if (!best || e > best.e || (e === best.e && Math.abs(dur - 45) < Math.abs(best.dur - 45))) best = { b, e, dur };
+    }
+    if (!best) continue;
+    const range = U.slice(a, best.b + 1);
+    const risk = (R.riskHits || []).filter((x) => x.start >= u.start && x.end <= U[best.b].end);
+    if (risk.some((x) => lvl(x.cat) !== "verde")) continue;
+    let score = s0 + best.e - (risk.length ? 1 : 0);
+    if (range.some(inQuote)) { score += 1; why.push("verse"); }
+    out.push({ i0: a, i1: best.b, t0: u.t0, t1: U[best.b].t1, dur: best.dur, score, why, first: u.text, last: U[best.b].text, sec: sec.k });
+  }
+  out.sort((x, y) => y.score - x.score || x.t0 - y.t0);
+  const pick = [];
+  for (const c of out) { if (pick.some((p) => !(c.i1 < p.i0 || c.i0 > p.i1))) continue; pick.push(c); if (pick.length === 5) break; }
+  return pick.sort((x, y) => x.t0 - y.t0);
+}
+
+
+// ---------- Suggested ad-break points ----------
+// A break goes where a teaching point ends: never inside a verse, never next to a prayer or a call to action.
+// Spacing (at least 4 min apart, none in the last 3 min, the first at 40% of the video or later) is advice from creator guides, not a YouTube rule.
+function adBreaks(secs, U, text, R) {
+  if (!secs.length || !U.length) return [];
+  const total = secs[secs.length - 1].t1;
+  const spans = verseSpans(text, R).filter((s) => s.kind !== "ref");
+  const near = [...findPhrases(text, PRAYER_OPEN, "p"), ...findPhrases(text, CTAS, "c")].map((h) => { const u = U.find((x) => h.start >= x.start && h.start < x.end); return u ? u.t0 : null; }).filter((x) => x !== null);
+  const out = [];
+  let prev = 0;
+  for (const s of secs) {
+    if (!["point", "body", "intro"].includes(s.type)) continue;
+    const a = U[s.last], b = U[s.last + 1];
+    if (!a || !b) continue;
+    const t = s.t1;
+    if (t < 240 || t - prev < 240 || total - t < 180) continue;
+    if (!out.length && t < total * 0.4) continue;
+    if (spans.some((v) => (a.start < v.end && a.end > v.start) || (b.start < v.end && b.end > v.start))) continue;
+    if (near.some((x) => Math.abs(x - t) <= 10)) continue;
+    out.push({ t, k: s.k });
+    prev = t;
+  }
+  return out;
+}
+
+// ---------- "What I'd fix first": evidence + concrete, verified proposals (pure) ----------
+const FIX_SKIP = new Set(["runtime"]); // no text change can fix these
+const FIX_GROUPS = [["hook", "promise", "greeting", "content"], ["search", "title"], ["bigidea", "recap"]];
+const upperFirst = (s) => s.replace(/^(\s*[«"“¿¡(]*)(\p{Ll})/u, (m, a, b) => a + b.toUpperCase());
+
+function applyPatches(text, patches) {
+  const ps = [...patches].sort((a, b) => b.start - a.start || b.end - a.end);
+  let out = text, floor = Infinity;
+  for (const p of ps) {
+    if (p.end > floor) continue; // overlapping patch: skip
+    out = out.slice(0, p.start) + p.rep + out.slice(p.end);
+    floor = p.start;
+  }
+  return out;
+}
+function delUnitPatch(text, u) {
+  let e = u.end;
+  while (e < text.length && (text[e] === " " || text[e] === "\t")) e++;
+  if ((u.start === 0 || text[u.start - 1] === "\n") && text[e] === "\n") e++;
+  return { start: u.start, end: e, rep: "" };
+}
+const unitAtPos = (U, pos) => U.find((u) => pos >= u.start && pos < u.end) || null;
+const failIds = (R) => new Set(Object.values(R.sections).flat().filter((r) => !r.passed || r.warn).map((r) => r.id));
+
+// Run the whole review on the proposal and report what it fixes and what it breaks.
+function verifyProposal(text, opts, R, p) {
+  let t2 = text, o2 = { ...opts };
+  if (p.patches && p.patches.length) t2 = applyPatches(text, p.patches);
+  if (p.kind === "cold") o2.coldOpen = { hook: p.hook ? p.hook.text : "", promise: p.promise ? p.promise.text : "", mode: [p.hook, p.promise].filter(Boolean).every((x) => x.mode === "move") ? "move" : "dup" };
+  if (p.kind === "field") o2[p.field] = p.value;
+  const R2 = analyze(t2, o2);
+  const before = failIds(R), after = failIds(R2);
+  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2 };
+}
+
+// Filler removal keeps the sentence grammatical: commas, closing tag questions and capitals.
+function fillerPatch(text, hit) {
+  let s = hit.start, e = hit.end;
+  const before = text.slice(Math.max(0, s - 3), s), after = text.slice(e, e + 2);
+  const atStart = s === 0 || /[.!?…\n]\s*$/.test(text.slice(Math.max(0, s - 3), s)) || /^[¿¡]$/.test(text[s - 1] || "");
+  if (/^[,]?\s*¿/.test(hit.text) || /^¿/.test(text.slice(s, e))) {
+    // tag question at the end of a sentence: "…así, ¿verdad?" → "…así."
+    let s2 = s;
+    while (s2 > 0 && /[\s,]/.test(text[s2 - 1])) s2--;
+    return { start: s2, end: e, rep: "." };
+  }
+  if (atStart) {
+    let e2 = e;
+    while (e2 < text.length && /[\s,…]/.test(text[e2]) && text[e2] !== "\n") e2++;
+    const next = text[e2] || "";
+    return { start: s, end: Math.min(text.length, e2 + (next ? 1 : 0)), rep: next ? next.toUpperCase() : "" };
+  }
+  if (/,\s*$/.test(before) && /^[.!?…]/.test(after)) { let s2 = s; while (s2 > 0 && /\s/.test(text[s2 - 1])) s2--; if (text[s2 - 1] === ",") s2--; return { start: s2, end: e, rep: "" }; }
+  if (/,\s*$/.test(before) && /^\s*,/.test(after)) { let s2 = s; while (s2 > 0 && /[\s]/.test(text[s2 - 1])) s2--; if (text[s2 - 1] === ",") s2--; let e2 = e; if (text[e2] === ",") e2++; return { start: s2, end: e2, rep: "" }; }
+  if (/^,/.test(after)) { let e2 = e + 1; while (text[e2] === " ") e2++; return { start: s, end: e2, rep: "" }; }
+  let e2 = e;
+  if (text[e2] === " ") e2++; else if (text[s - 1] === " ") s--;
+  return { start: s, end: e2, rep: "" };
+}
+
+const WEAK_SAFE = { "muy importante": 1, "súper": 1, "interesante": 1, "bonito": 1, "bonita": 1, "cosas": 1, "very important": 1, "nice": 1, "things": 1, "stuff": 1 };
+function weakPatch(text, hit) {
+  const key = hit.text.toLowerCase();
+  if (!WEAK_SAFE[key]) return null;
+  let alt = hit.alts[0];
+  if (key === "cosas") { const prev = (text.slice(Math.max(0, hit.start - 12), hit.start).match(/(\p{L}+)\s*$/u) || [])[1] || ""; alt = /as$/i.test(prev) ? "verdades" : "aspectos"; if (/as$/i.test(prev) && /^(las|unas|estas|esas|muchas|otras|todas|algunas|tantas)$/i.test(prev)) alt = "verdades"; }
+  if (hit.text[0] === hit.text[0].toUpperCase()) alt = alt[0].toUpperCase() + alt.slice(1);
+  return { start: hit.start, end: hit.end, rep: alt };
+}
+const REG_MAP = { vos: "tú", vosotros: "ustedes", vosotras: "ustedes", sabés: "sabes", tenés: "tienes", querés: "quieres", podés: "puedes", sos: "eres", vení: "ven", mirá: "mira", escuchá: "escucha", ahorita: "en un momento", platicar: "conversar", chévere: "excelente", chido: "excelente", bacán: "excelente", padrísimo: "excelente", pana: "hermano", parcero: "hermano", cuate: "hermano", coger: "tomar", vale: "de acuerdo", };
+function regionalPatch(text, hit) {
+  const k = hit.text.toLowerCase();
+  if (/^(güey|wey|guey|che|tío|tía|en plan)$/.test(k)) return fillerPatch(text, hit);
+  let rep = REG_MAP[k];
+  if (!rep) return null;
+  if (hit.text[0] === hit.text[0].toUpperCase()) rep = rep[0].toUpperCase() + rep.slice(1);
+  return { start: hit.start, end: hit.end, rep };
+}
+// Split a long sentence at the connector nearest its middle, never inside a quote.
+function splitPatch(text, s, quotes) {
+  const re = /(,\s+)(y|pero|porque|así que|entonces|and|but|because|so)\s|(;\s+)/giu;
+  const body = text.slice(s.start, s.end), mid = body.length / 2;
+  let best = null, m;
+  while ((m = re.exec(body))) {
+    const pos = s.start + m.index;
+    if (insideAny(quotes, pos, pos + 1)) continue;
+    const left = wordTokens(body.slice(0, m.index)).length, right = wordTokens(body.slice(m.index)).length;
+    if (left < 8 || right < 8) continue;
+    if (!best || Math.abs(m.index - mid) < Math.abs(best.idx - mid)) best = { idx: m.index, m };
+  }
+  if (!best) return null;
+  const { m: bm, idx } = best;
+  const start = s.start + idx;
+  if (bm[3]) { const nextCh = body[idx + bm[0].length] || ""; return { start, end: start + bm[0].length + 1, rep: ". " + nextCh.toUpperCase() }; }
+  const conj = bm[2];
+  return { start, end: start + bm[1].length + conj.length, rep: ". " + conj[0].toUpperCase() + conj.slice(1) };
+}
+function aiTellPatch(text, hit) {
+  let e = hit.end;
+  const rest = text.slice(e, e + 6);
+  const mq = rest.match(/^,?\s*que\s+/i) || rest.match(/^[,:]?\s+/);
+  if (mq) e += mq[0].length;
+  const atStart = hit.start === 0 || /[.!?…\n]\s*$/.test(text.slice(Math.max(0, hit.start - 3), hit.start));
+  const next = text[e] || "";
+  return atStart && next ? { start: hit.start, end: e + 1, rep: next.toUpperCase() } : { start: hit.start, end: e, rep: "" };
+}
+
+// Spanish article guess for a bare keyword ("ansiedad" → "la ansiedad"); names and phrases with an article stay as they are.
+const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
+const FEMN = new Set([...FEM].map(norm));
+const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
+function esArticle(kw) {
+  const k = norm(kw).trim(), first = k.split(/\s+/)[0];
+  if (/^(el|la|los|las|un|una|lo|mi|tu|su)$/.test(first) || NOART.has(first) || /^[A-ZÁÉÍÓÚÑ]/.test(kw.trim()) && !/^[A-ZÁÉÍÓÚÑ]+$/.test(kw.trim())) return "";
+  const plural = /s$/.test(first) && !/(is|us|sis)$/.test(first);
+  const sing = plural ? first.replace(/es$/, "").replace(/s$/, "") : first;
+  const fem = FEMN.has(k) || FEMN.has(first) || FEMN.has(sing) || (/(a|ion|dad|tad|tud|ez|umbre|sis)$/.test(sing) && !/(ma|pa)$/.test(sing));
+  return plural ? (fem ? "las " : "los ") : fem ? "la " : "el ";
+}
+
+// Build cards in priority order until `max` cards exist.
+function buildFixCards(text, R, opts, failed, max = 3) {
+  const U = buildUnits(R, text), en = R.lang === "en";
+  const L = (es, x) => (en ? x : es);
+  const cards = [], used = new Set();
+  const ev = (u, marks) => ({ start: u.start, end: u.end, t: u.t0, marks: marks || [] });
+  for (const row of failed) {
+    if (cards.length >= max) break;
+    if (used.has(row.id) || FIX_SKIP.has(row.id)) continue;
+    const group = FIX_GROUPS.find((g) => g.includes(row.id));
+    const ids = group ? group.filter((id) => failed.some((r) => r.id === id)) : [row.id];
+    ids.forEach((id) => used.add(id));
+    const card = { id: row.id, ids, sec: row.sec, label: row.label, info: row.info, fix: row.fix, level: row.level, evidence: [], proposals: [], ai: null, field: null };
+    const promU = R.firstPromise ? unitAtPos(U, R.firstPromise.start) : null;
+
+    if (group && group[0] === "hook") {
+      const open = U.filter((u, i) => i < 2 || u.t0 < 8);
+      card.evidence = open.map((u) => ev(u, (R.greetHits || []).filter((g) => g.start >= u.start && g.end <= u.end).map((g) => [g.start, g.end])));
+      const hooks = coldCandidates(U, R, "hook", { keyword: R.keyword }), proms = coldCandidates(U, R, "promise", { keyword: R.keyword });
+      const needProm = ids.includes("promise") || ids.includes("greeting") || ids.includes("content");
+      if (hooks[0]) {
+        const hk = hooks[0], pr = needProm ? (proms.find((c) => c.i !== hk.i) || null) : null;
+        // A clip can't start with "Ahora bien," or "En resumen,": trim the connector in the script too.
+        const hu = U[hk.i], cm = hk.text.match(CONNECT_RE);
+        let hookText = hk.text, patches = [];
+        if (cm) { hookText = upperFirst(hk.text.slice(cm[0].length).replace(/^[\s,;:]+/, "")); patches = [{ start: hu.start, end: hu.end, rep: hookText }]; }
+        card.proposals.push({ kind: "cold", label: L("Apertura en frío con frases del guion", "Cold open from script lines"), patches, trimmed: !!cm, hook: { i: hk.i, text: hookText, mode: hk.t0 < 20 ? "move" : "dup", t0: hk.t0, t1: hk.t1 }, promise: pr ? { i: pr.i, text: pr.text, mode: pr.t0 < 20 ? "move" : "dup", t0: pr.t0, t1: pr.t1 } : null, firstLine: open[0] ? open[0].text : "" });
+      }
+      const greetU = promU ? U.filter((u) => u.i < promU.i && hasPhrase(u.text, GREETINGS)) : [];
+      if (greetU.length) {
+        const patches = greetU.map((u) => delUnitPatch(text, u));
+        patches.push({ start: promU.end, end: promU.end, rep: " " + greetU.map((u) => u.text).join(" ") });
+        card.proposals.push({ kind: "patch", label: L("Pasar el saludo después de la promesa", "Move the greeting after the promise"), patches });
+      }
+      card.ai = open[0] ? { start: open[0].start, end: open[0].end } : null;
+    } else if (group && group[0] === "search") {
+      card.field = { name: "title", value: (opts.title || "").trim() };
+      const kw = (opts.keyword || R.keyword || "").trim();
+      if (kw) {
+        const t = en ? `What does the Bible say about ${kw}?` : `¿Qué dice la Biblia sobre ${esArticle(kw)}${kw}?`;
+        if (t.length <= 60) card.proposals.push({ kind: "field", field: "title", value: t, label: L("Título como la pregunta que la gente busca", "Title as the question people search") });
+      }
+      card.ai = { field: "title" };
+    } else if (row.id === "cta") {
+      const cl = R.clusters || [];
+      if (cl.length > 1) {
+        const keep = cl[cl.length - 1];
+        const drop = cl.slice(0, -1).flatMap((c) => c.items.map((x) => unitAtPos(U, x.start))).filter(Boolean);
+        const dropU = [...new Map(drop.map((u) => [u.i, u])).values()];
+        const keepU = [...new Map(keep.items.map((x) => unitAtPos(U, x.start)).filter(Boolean).map((u) => [u.i, u])).values()];
+        card.evidence = [...dropU.map((u) => ev(u, [[u.start, u.end]])), ...keepU.map((u) => ev(u, []))];
+        card.keepIdx = keepU.map((u) => u.i);
+        card.proposals.push({ kind: "patch", label: L("Quitar las anteriores y dejar la última", "Remove the earlier ones, keep the last"), patches: dropU.map((u) => delUnitPatch(text, u)) });
+        if (dropU.some((u) => /suscr|subscrib/i.test(u.text)) && !keepU.some((u) => /suscr|subscrib/i.test(u.text)) && keepU.length) {
+          const last = keepU[keepU.length - 1];
+          card.proposals.push({ kind: "patch", label: L("Quitarlas y pasar «suscríbete» al final", "Remove them and move \"subscribe\" to the end"), patches: [...dropU.map((u) => delUnitPatch(text, u)), { start: last.end, end: last.end, rep: " " + L("Suscríbete para no perderte el próximo episodio.", "Subscribe so you don't miss the next episode.") }] });
+        }
+      } else if (!cl.length && U.length) {
+        const nx = U.find((u) => u.t0 >= U[U.length - 1].t1 - 60 && hasPhrase(u.text, NEXT_EP)) || U[U.length - 1];
+        card.evidence = [ev(nx, [])];
+        card.proposals.push({ kind: "patch", label: L("Una petición clara antes del cierre", "One clear ask before the close"), patches: [{ start: nx.start, end: nx.start, rep: L("Si este episodio te ayudó, compártelo con alguien que lo necesite. ", "If this episode helped you, share it with someone who needs it. ") }] });
+      }
+    } else if (row.id === "ending") {
+      const tail = U.slice(-2);
+      card.evidence = tail.map((u) => ev(u, []));
+      const last = U[U.length - 1];
+      const nx = (opts.nextEp || "").trim().replace(/[.!?]+$/, "");
+      const line = nx ? L(`La próxima semana veremos ${nx}. Te espero en el siguiente episodio.`, `Next week we'll look at ${nx}. See you in the next episode.`) : L("La próxima semana seguimos con el siguiente episodio de la serie. Te espero.", "Next week we continue with the next episode of the series. See you then.");
+      // With a closing prayer or blessing, the line goes just before it, so the prayer stays the last word.
+      const totalT = last ? last.t1 : 0;
+      const pray = U.find((u) => u.t0 >= totalT - 240 && (isPrayerText(u.text) || hasPhrase(u.text, BLESSINGS)));
+      const patch = pray ? { start: pray.start, end: pray.start, rep: line + " " } : last ? { start: last.end, end: last.end, rep: "\n\n" + line } : null;
+      if (pray) card.evidence = [ev(pray, [])];
+      if (patch) card.proposals.push({ kind: "patch", label: pray ? L("Añadir una línea al próximo episodio antes de la oración final", "Add a line to the next episode before the closing prayer") : L("Añadir una línea al próximo episodio", "Add a line to the next episode"), note: nx ? "" : L("Escribe el tema del próximo episodio en «Tema y próximo episodio» y la frase lo nombrará.", "Enter the next episode's topic under \"Topic and next episode\" and the line will name it."), patches: [patch] });
+      card.ai = last ? { start: last.start, end: last.end } : null;
+    } else if (row.id === "muletillas") {
+      const hits = (R.mulHits || []).slice().sort((a, b) => a.start - b.start);
+      const us = [...new Map(hits.map((x) => unitAtPos(U, x.start)).filter(Boolean).map((u) => [u.i, u])).values()];
+      card.evidence = us.slice(0, 4).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
+      card.more = Math.max(0, us.length - 4);
+      // fillers side by side ("Este, básicamente…") are removed as one piece
+      const merged = [];
+      for (const x of hits) { const p = merged[merged.length - 1]; if (p && !/\?$/.test(p.text) && !/^¿/.test(x.text) && /^[\s,]*$/.test(text.slice(p.end, x.start))) { p.end = x.end; p.text = text.slice(p.start, p.end); } else merged.push({ ...x }); }
+      card.proposals.push({ kind: "patch", label: L("Quitar las muletillas", "Remove the fillers"), patches: merged.map((x) => fillerPatch(text, x)) });
+      card.ai = us[0] ? { start: us[0].start, end: us[0].end } : null;
+    } else if (row.id === "weak") {
+      const hits = (R.weakHits || []).slice().sort((a, b) => a.start - b.start);
+      const us = [...new Map(hits.map((x) => unitAtPos(U, x.start)).filter(Boolean).map((u) => [u.i, u])).values()];
+      card.evidence = us.slice(0, 4).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
+      card.more = Math.max(0, us.length - 4);
+      const ps = hits.map((x) => weakPatch(text, x)).filter(Boolean);
+      if (ps.length) card.proposals.push({ kind: "patch", label: L("Cambiar por palabras precisas", "Swap in precise words"), patches: ps, of: hits.length });
+      card.ai = us[0] ? { start: us[0].start, end: us[0].end } : null;
+    } else if (row.id === "regional") {
+      const hits = (R.regHits || []).slice().sort((a, b) => a.start - b.start);
+      const us = [...new Map(hits.map((x) => unitAtPos(U, x.start)).filter(Boolean).map((u) => [u.i, u])).values()];
+      card.evidence = us.slice(0, 4).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
+      card.more = Math.max(0, us.length - 4);
+      const ps = hits.map((x) => regionalPatch(text, x)).filter(Boolean);
+      if (ps.length) card.proposals.push({ kind: "patch", label: L("Pasar a español neutro", "Switch to neutral Spanish"), patches: ps, of: hits.length });
+      card.ai = us[0] ? { start: us[0].start, end: us[0].end } : null;
+    } else if (row.id === "long") {
+      const ls = R.longSents || [];
+      card.evidence = ls.slice(0, 3).map((s) => ({ start: s.start, end: s.end, t: R.timeAt(s.start), marks: [] }));
+      card.more = Math.max(0, ls.length - 3);
+      const ps = ls.map((s) => splitPatch(text, s, R.quotes || [])).filter(Boolean);
+      if (ps.length) card.proposals.push({ kind: "patch", label: L("Partir en el conector más natural", "Split at the most natural connector"), patches: ps, of: ls.length });
+      card.ai = ls[0] ? { start: ls[0].start, end: ls[0].end } : null;
+    } else if (row.id === "aitell") {
+      const hits = (R.aiHits || []).slice().sort((a, b) => a.start - b.start);
+      const us = [...new Map(hits.map((x) => unitAtPos(U, x.start)).filter(Boolean).map((u) => [u.i, u])).values()];
+      card.evidence = us.slice(0, 4).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
+      card.proposals.push({ kind: "patch", label: L("Quitar las frases de plantilla", "Remove the template phrases"), patches: hits.map((x) => aiTellPatch(text, x)) });
+      card.ai = us[0] ? { start: us[0].start, end: us[0].end } : null;
+    } else if (row.id === "kw") {
+      card.field = { name: "keyword", value: (opts.keyword || "").trim() };
+      if (R.keyword) card.proposals.push({ kind: "field", field: "keyword", value: R.keyword, label: L(`Usar «${R.keyword}», la frase que más repites`, `Use "${R.keyword}", your most repeated phrase`) });
+    } else if (row.id === "readability") {
+      const hard = U.filter((u) => u.wc >= 8).map((u) => ({ u, d: (u.syl / u.wc) * 10 + u.wc })).sort((a, b) => b.d - a.d).slice(0, 3).map((x) => x.u).sort((a, b) => a.i - b.i);
+      card.evidence = hard.map((u) => ev(u, []));
+      card.ai = hard[0] ? { start: hard[0].start, end: hard[0].end } : null;
+    } else if (row.id === "rehook" && R.blocks) {
+      const miss = R.blocks.filter((b) => !b.has);
+      card.evidence = miss.slice(0, 3).map((b) => { const u = U.find((x) => x.t0 >= b.from + (b.to - b.from) / 2) || U[U.length - 1]; return ev(u, []); });
+      card.ai = card.evidence[0] ? { start: card.evidence[0].start, end: card.evidence[0].end, insertQuestion: true } : null;
+    } else if (/^pf-/.test(row.id)) {
+      const cat = row.id.slice(3);
+      const hits = (R.riskHits || []).filter((x) => x.cat === cat).sort((a, b) => a.start - b.start);
+      const us = [...new Map(hits.map((x) => unitAtPos(U, x.start)).filter(Boolean).map((u) => [u.i, u])).values()];
+      card.evidence = us.slice(0, 4).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
+      card.more = Math.max(0, us.length - 4);
+      card.ai = us[0] ? { start: us[0].start, end: us[0].end, keepTerms: true } : null;
+    } else if (row.id === "rhythm") {
+      let best = null;
+      for (let i = 0; i + 4 <= U.length; i++) { const w = U.slice(i, i + 4).map((u) => u.wc), m = w.reduce((a, b) => a + b, 0) / 4, v = w.reduce((a, b) => a + (b - m) ** 2, 0); if (!best || v < best.v) best = { i, v }; }
+      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); card.ai = { start: us[0].start, end: us[3].end }; }
+    } else if (row.id === "openers" && R.inauth) {
+      const op = (R.inauth.repeatedOpeners[0] || [])[0];
+      const us = op ? U.filter((u) => norm(u.text).startsWith(norm(op))) : [];
+      card.evidence = us.slice(0, 4).map((u) => ev(u, [[u.start, u.start + op.length]]));
+      card.more = Math.max(0, us.length - 4);
+      card.ai = us[1] ? { start: us[1].start, end: us[1].end } : null;
+    } else if (row.id === "kwspread" && R.keyword) {
+      const tot = Math.max(1, R.runtimeSec), kw = norm(R.keyword);
+      const has = [0, 1, 2].map((k) => U.some((u) => Math.min(2, Math.floor((u.t0 / tot) * 3)) === k && norm(u.text).includes(kw)));
+      const pick = [0, 1, 2].filter((k) => !has[k]).map((k) => U.find((u) => Math.min(2, Math.floor((u.t0 / tot) * 3)) === k && u.wc >= 6)).filter(Boolean);
+      card.evidence = pick.map((u) => ev(u, []));
+      card.ai = pick[0] ? { start: pick[0].start, end: pick[0].end, keyword: R.keyword } : null;
+    } else if (row.id === "chapters") {
+      const secs = sectionsFrom(detectLayout(U, R), U, R.runtimeSec).filter((x) => x.k > 0 && ["point", "body", "intro"].includes(x.type) && !ORD_RE.test(U[x.first].text));
+      const ords = en ? ["First, ", "Second, ", "Third, ", "Finally, "] : ["Primero, ", "En segundo lugar, ", "En tercer lugar, ", "Por último, "];
+      const use = secs.slice(0, 4), lowerOk = (w) => new RegExp("(?<![\\p{L}])" + esc(w.toLowerCase()) + "(?![\\p{L}])", "u").test(text);
+      card.evidence = use.map((x) => ev(U[x.first], []));
+      const ps = use.map((x, k) => { const u = U[x.first], w = (u.text.match(/^\p{L}+/u) || [""])[0]; const body = w && lowerOk(w) ? u.text[0].toLowerCase() + u.text.slice(1) : u.text; return { start: u.start, end: u.end, rep: (k === use.length - 1 && use.length > 2 ? ords[3] : ords[Math.min(k, 2)]) + body }; });
+      if (ps.length >= 2) card.proposals.push({ kind: "patch", label: L("Marcar cada punto con una transición", "Mark each point with a transition"), patches: ps });
+    } else if (row.id === "refs") {
+      card.evidence = (R.orphanQuotes || []).slice(0, 3).map((q) => ({ start: q.start, end: q.end, t: R.timeAt(q.start), marks: [[q.start, q.end]] }));
+    } else if (row.id === "bigidea" || row.id === "recap" || row.id === "application") {
+      const M = R.msg || {}, idea = (opts.bigIdea || "").trim().replace(/[.\s]+$/, "");
+      // close the teaching right before the first goodbye/CTA of the ending, not after it
+      const isOut = (u) => hasPhrase(u.text, NEXT_EP) || hasPhrase(u.text, CTAS);
+      const tailStart = Math.min(M.lateStart || 0, (U[Math.max(0, U.length - 6)] || { start: 0 }).start);
+      const firstOut = U.findIndex((u) => u.start >= tailStart && isOut(u));
+      const lastU = (firstOut > 0 && U[firstOut - 1].wc >= 4 && !isOut(U[firstOut - 1]) ? U[firstOut - 1] : null) || [...U].reverse().find((u) => u.start >= (M.lateStart || 0) && u.wc >= 4 && !isOut(u)) || null;
+      const firstU = promU || U.find((u) => u.wc >= 6) || U[0];
+      const closeLine = (en ? "If you take one thing from today, let it be this: " : "Si hoy te llevas una sola idea, que sea esta: ") + idea + ".";
+      if (row.id === "bigidea" && !idea) card.field = { name: "bigIdea", value: "" };
+      else if (row.id === "bigidea") {
+        const ps = [];
+        if (!M.ideaEarly && firstU) ps.push({ start: firstU.end, end: firstU.end, rep: " " + (en ? "Here's today's idea: " : "La idea de hoy es esta: ") + idea + "." });
+        if (!M.ideaLate && lastU) ps.push({ start: lastU.end, end: lastU.end, rep: " " + closeLine });
+        card.evidence = [!M.ideaEarly ? firstU : null, !M.ideaLate ? lastU : null].filter(Boolean).map((u) => ev(u, []));
+        if (ps.length) card.proposals.push({ kind: "patch", label: L("Decir tu idea con tus propias palabras", "Say your idea in your own words"), patches: ps });
+      } else {
+        if (lastU) card.evidence = [ev(lastU, [])];
+        if (row.id === "recap" && idea && lastU) card.proposals.push({ kind: "patch", label: L("Cerrar con tu idea central", "Close with your central idea"), patches: [{ start: lastU.end, end: lastU.end, rep: " " + closeLine }] });
+        card.ai = lastU ? { start: lastU.start, end: lastU.end, note: row.id === "application" ? L("Añade al final de este fragmento una sola frase que invite al oyente a una acción concreta que pueda hacer esta semana, usando solo lo que el autor ya enseñó. No inventes doctrina ni datos.", "Add one closing sentence that invites the viewer to one concrete action they can take this week, using only what the author already taught. Do not invent doctrine or facts.") : L("Añade al final una sola frase que resuma la idea principal del episodio, con el mismo contenido que ya dijo el autor.", "Add one closing sentence that sums up the episode's main idea, using only what the author already said.") } : null;
+      }
+    } else if ((row.id === "pulpit" || row.id === "jargon") && R.msg) {
+      const hits = R.msg[row.id] || [];
+      const us = U.filter((u) => hits.some((x) => x.start >= u.start && x.end <= u.end));
+      card.evidence = us.slice(0, 4).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
+      card.more = Math.max(0, us.length - 4);
+      const term = hits[0] ? hits[0].text : "";
+      card.ai = us[0] ? { start: us[0].start, end: us[0].end, note: row.id === "pulpit"
+        ? L("Convierte esta frase de culto en vivo en una frase para alguien que mira el video solo en su teléfono. Conserva exactamente el mismo contenido.", "Turn this live-service sentence into one for someone watching alone on their phone. Keep exactly the same content.")
+        : L(`Conserva el término «${term}» y añade justo después una explicación breve con palabras de todos los días. No cambies la doctrina.`, `Keep the term “${term}” and add right after it a short everyday-words explanation. Don't change the doctrine.`) } : null;
+    } else if (row.id === "onscreen" && R.msg) {
+      const off = R.msg.offscreen.slice(0, 4);
+      card.evidence = off.map((x) => ({ start: x.ref.start, end: Math.min(x.quote.end, x.ref.end + 160), t: R.timeAt(x.ref.start), marks: [[x.ref.start, x.ref.end]] }));
+      const seen = new Set(), ps = [];
+      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[TEXTO: ${x.ref.canonical}]\n` }); }
+      if (ps.length) card.proposals.push({ kind: "patch", label: L("Añadir la señal para el editor", "Add the cue for the editor"), patches: ps });
+    } else if (row.id === "reading" && R.msg) {
+      card.evidence = R.msg.longReads.slice(0, 2).map((q) => ({ start: q.start, end: Math.min(q.end, q.start + 220), t: R.timeAt(q.start), marks: [] }));
+    } else if (/^pack-/.test(row.id) || row.id === "desc") {
+      const f = /Title|Título/.test(row.id) ? "title" : /iniatura|humbnail/.test(row.id) ? "thumb" : "description";
+      card.field = { name: f, value: (opts[f] || "").trim() };
+      card.ai = { field: f };
+    } else {
+      const u = row.id === "kwopen" ? U[0] : null;
+      if (u) { card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword }; }
+    }
+    // keep only proposals that fix at least one of the card's checks and break nothing
+    card.proposals = card.proposals.map((p) => ({ ...p, check: verifyProposal(text, opts, R, p) })).filter((p) => !p.check.broke.length && (p.check.fixed.some((id) => ids.includes(id)) || (p.of && p.patches.length < p.of)));
+    if (!card.evidence.length && !card.proposals.length && !card.ai && !card.field) continue; // nothing to act on
+    cards.push(card);
+  }
+  return cards;
+}
+// ---------- Mensaje en YouTube: from the pulpit to someone watching alone (no theology is judged) ----------
+const PULPIT = [
+  "abran sus biblias", "abran su biblia", "abramos nuestras biblias", "abramos la biblia", "abrid vuestras biblias", "abrid la biblia",
+  "pónganse de pie", "póngase de pie", "poneos de pie", "levanten la mano", "levanten sus manos", "levantad la mano",
+  "díganle a su vecino", "dígale a su hermano", "decidle a vuestro hermano", "¿amén?", "¿me dicen amén?", "¿me decís amén?", "digan amén", "decid amén",
+  "un aplauso", "pueden sentarse", "podéis sentaros", "los que estamos aquí", "estamos reunidos", "nos hemos reunido", "querida congregación",
+  "el domingo pasado", "este domingo en la iglesia", "en el servicio de hoy",
+  "open your bibles", "turn in your bibles", "please stand", "you may be seated", "raise your hand", "turn to your neighbor", "tell your neighbor",
+  "can i get an amen", "say amen", "church family", "dear congregation", "last sunday", "in this service",
+];
+const JARGON = [
+  "propiciación", "expiación", "justificación", "santificación", "glorificación", "regeneración", "imputación", "soteriología", "escatología",
+  "pneumatología", "cristología", "dispensación", "dispensacionalismo", "hermenéutica", "exégesis", "kénosis", "kenosis", "perícopa", "teofanía",
+  "hipóstasis", "parusía", "milenarismo", "premilenial", "amilenial", "postmilenial", "transubstanciación", "monergismo", "sinergismo",
+  "propitiation", "expiation", "justification", "sanctification", "glorification", "regeneration", "imputation", "soteriology", "eschatology",
+  "pneumatology", "christology", "dispensation", "dispensationalism", "hermeneutics", "exegesis", "pericope", "theophany", "hypostatic",
+  "parousia", "premillennial", "amillennial", "postmillennial", "transubstantiation", "monergism", "synergism",
+];
+const EXPLAIN_RE = /(es decir|significa|quiere decir|o sea|en otras palabras|dicho de otro modo|that is|which means|means|in other words|\(|:|—|–)/i;
+const RECAP = ["hoy vimos", "hoy hemos visto", "en resumen", "para resumir", "recuerda", "recuerden", "recordad", "lo que nos llevamos", "si te quedas con", "si os quedáis con", "en pocas palabras", "la idea de hoy",
+  "today we saw", "to sum up", "in summary", "remember", "if you remember one thing", "the big idea", "here's what we learned"];
+// A concrete step for the viewer, said near the end ("esta semana…", "te invito a…", "start by…").
+const APPLY = [
+  "esta semana", "esta noche", "hoy mismo", "a partir de hoy", "desde hoy", "mañana mismo", "te invito a", "te animo a", "te reto", "te desafío", "te propongo", "te pido que",
+  "tu tarea", "tu reto", "primer paso", "da el primer paso", "empieza por", "empieza hoy", "comienza hoy", "decide hoy", "ponlo en práctica", "pon en práctica", "aplica", "practica",
+  "ora por", "ora hoy", "escribe una", "escribe el nombre", "apunta", "anota", "haz esto", "llama a", "perdona a", "habla con", "dedica unos minutos", "cuando te levantes",
+  "this week", "tonight", "today, ", "starting today", "i invite you", "i challenge you", "i encourage you", "your homework", "first step", "take one step", "start by", "put it into practice",
+  "pray for", "pray today", "write down", "write a", "try this", "call someone", "forgive", "set aside a few minutes", "when you wake up",
+];
+const IDEA_STOP = new Set("para porque cuando donde sobre entre desde hasta como pero aunque también solo sólo esta este estos estas tiene tienen nuestro nuestra vuestro vuestra todos todas cada mismo misma puede pueden sino nunca siempre that this with from your about there their when what which have will into they them than then just only also because already today hoy".split(" "));
+
+function ideaWords(s) {
+  return [...new Set(norm(s || "").split(/[^\p{L}]+/u).filter((w) => w.length >= 5 && !IDEA_STOP.has(w)))];
+}
+function shareOf(words, slice) {
+  if (!words.length) return 0;
+  const n = norm(slice);
+  return words.filter((w) => n.includes(w.slice(0, Math.max(5, w.length - 3)))).length / words.length;
+}
+
+// Called from inside analyze(): returns hits for the fix cards and adds the "message" rows.
+function messageChecks(text, opts, ctx) {
+  const { add, L, refs, quotes, pairs, cues, runtimeSec, posAtTime } = ctx;
+  const out = { pulpit: [], jargon: [], offscreen: [], longReads: [], earlyEnd: 0, lateStart: text.length };
+  const early = Math.min(90, Math.max(30, runtimeSec * 0.25)), late = Math.min(90, Math.max(30, runtimeSec * 0.2));
+  out.earlyEnd = posAtTime(early);
+  out.lateStart = posAtTime(Math.max(0, runtimeSec - late));
+  const insideQuote = (p) => quotes.some((q) => p >= q.start && p < q.end);
+
+  // 1. The central idea, in the speaker's own sentence: heard early and again at the close.
+  const idea = (opts.bigIdea || "").trim(), iw = ideaWords(idea);
+  if (!idea) {
+    add("message", { id: "bigidea", label: L("Idea central escrita", "Central idea written down"), passed: false,
+      info: L("Escribe arriba, en «Idea central», tu idea en una frase. La app comprobará que se oiga al principio y al final.", "Write your one-sentence idea in “Central idea” above. The app will check it's heard at the start and at the end."),
+      fix: L("Escribe tu idea central en una frase.", "Write your central idea in one sentence.") });
+  } else {
+    const e = shareOf(iw, text.slice(0, out.earlyEnd)), l = shareOf(iw, text.slice(out.lateStart));
+    out.ideaEarly = e >= 0.5; out.ideaLate = l >= 0.5;
+    const ok = out.ideaEarly && out.ideaLate;
+    add("message", { id: "bigidea", label: L("La idea central se oye al principio y al final", "The central idea is heard at the start and the end"), passed: ok,
+      info: ok ? L("Quien llega se entera pronto de qué va el episodio, y quien se queda se lo lleva al final.", "Newcomers learn early what it's about, and those who stay leave with it.")
+        : L(`Tu idea central ${!out.ideaEarly && !out.ideaLate ? "no se oye ni en el primer minuto ni al cierre" : !out.ideaEarly ? "no se oye en el primer minuto" : "no se repite al cierre"}. ${!out.ideaEarly ? "En YouTube mucha gente decide en el primer minuto si se queda." : "Repetirla al final ayuda a recordarla."}`,
+            `Your central idea ${!out.ideaEarly && !out.ideaLate ? "isn't heard in the first minute or at the close" : !out.ideaEarly ? "isn't heard in the first minute" : "isn't repeated at the close"}. ${!out.ideaEarly ? "On YouTube many people decide in the first minute whether to stay." : "Repeating it at the end helps people remember it."}`),
+      fix: ok ? null : L("Dila con tus palabras en el primer minuto y repítela al cerrar.", "Say it in your own words in the first minute and repeat it at the close.") });
+  }
+
+  // 2. Pulpit phrases: on video each person watches alone.
+  out.pulpit = findPhrases(text, PULPIT, "pulpit").filter((x) => !insideQuote(x.start));
+  add("message", { id: "pulpit", label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
+    info: out.pulpit.length ? L(`Frases de culto en vivo: ${[...new Set(out.pulpit.map((x) => "«" + x.text + "»"))].slice(0, 4).join(", ")}. En video cada persona escucha sola, en su teléfono.`, `Live-service phrases: ${[...new Set(out.pulpit.map((x) => "“" + x.text + "”"))].slice(0, 4).join(", ")}. On video each person listens alone, on their phone.`)
+      : L("Le hablas a una persona, como en una conversación.", "You speak to one person, like a conversation."),
+    fix: out.pulpit.length ? L("Habla a «tú» y muestra el versículo en pantalla con [TEXTO: …] en vez de pedir que abran la Biblia.", "Speak to “you” and show the verse on screen with [TEXTO: …] instead of asking people to open their Bibles.") : null });
+
+  // 3. Technical theology words without a plain explanation nearby.
+  const jhits = findPhrases(text, JARGON, "jargon").filter((x) => !insideQuote(x.start));
+  out.jargon = jhits.filter((x) => !EXPLAIN_RE.test(text.slice(x.end, x.end + 160)) && !EXPLAIN_RE.test(text.slice(Math.max(0, x.start - 40), x.start)));
+  add("message", { id: "jargon", label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
+    info: out.jargon.length ? L(`Sin explicar: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. Tú los conoces bien; quien llega por YouTube quizá no.`, `Not explained: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. You know them well; someone arriving from YouTube may not.`)
+      : L("Ningún término técnico queda sin explicar.", "No technical term is left unexplained."),
+    fix: out.jargon.length ? L("Añade una frase corta que lo explique con palabras de todos los días; no hace falta quitarlo.", "Add a short everyday-words explanation; no need to remove the term.") : null });
+
+  // 4. Every passage read aloud should also appear on screen.
+  const paraStart = (p) => { const i = text.lastIndexOf("\n\n", p); return i < 0 ? 0 : i + 2; };
+  const paraEnd = (p) => { const i = text.indexOf("\n\n", p); return i < 0 ? text.length : i; };
+  for (const pr of pairs || []) {
+    if (!pr.quote || pr.quote.inner.split(/\s+/).length < 6) continue;
+    const a = paraStart(Math.min(pr.ref.start, pr.quote.start)), b = paraEnd(Math.max(pr.ref.end, pr.quote.end));
+    const prev = text.slice(Math.max(0, a - 120), a);
+    const shown = (cues || []).some((c) => (c.start >= a && c.start <= b) || (c.start >= a - 120 && c.start < a && /\[(TEXTO|CITA)/i.test(prev)));
+    if (!shown && /\[(TEXTO|CITA)\s*:/i.test(text.slice(a, b))) continue;
+    if (!shown) out.offscreen.push({ ref: pr.ref, quote: pr.quote, paraStart: a });
+  }
+  add("message", { id: "onscreen", label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
+    info: out.offscreen.length ? L(`${out.offscreen.length} pasaje(s) sin [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Quien escucha sin Biblia a mano lo sigue mejor si lo ve.`, `${out.offscreen.length} passage(s) without [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Viewers without a Bible at hand follow better when they see it.`)
+      : L("Los pasajes que lees tienen su señal para el editor.", "The passages you read have their cue for the editor."),
+    fix: out.offscreen.length ? L("Añade [TEXTO: libro capítulo:versículo] antes del párrafo para que el editor lo ponga en pantalla.", "Add [TEXTO: book chapter:verse] before the paragraph so the editor shows it.") : null });
+
+  // 5. Very long readings without a pause for comment. Reading a whole passage is normal in expository teaching,
+  // so this is advice (·), and only past ~150 words (about 8–10 verses). The 150 is our own target.
+  out.longReads = (quotes || []).filter((q) => q.inner.split(/\s+/).length > 150);
+  add("message", { id: "reading", soft: true, label: L("Lecturas largas con pausas", "Long readings with pauses"), passed: !out.longReads.length,
+    info: out.longReads.length ? L(`${out.longReads.length} lectura(s) de más de 150 palabras seguidas. Leer el pasaje completo está bien; en video ayuda una pausa o el texto en pantalla. Los 150 son meta propia.`, `${out.longReads.length} reading(s) over 150 words in a row. Reading the full passage is fine; on video a pause or on-screen text helps. The 150 is our target.`)
+      : L("Ninguna lectura pasa de 150 palabras seguidas.", "No reading runs over 150 words in a row."),
+    fix: out.longReads.length ? L("No acortes el pasaje: muéstralo en pantalla mientras lees, o haz una pausa breve a la mitad para comentar.", "Don't shorten the passage: show it on screen while reading, or pause briefly halfway to comment.") : null });
+
+  // 6. The close leaves them with the point, not only with the next episode.
+  const tail = text.slice(out.lateStart);
+  const recap = hasPhrase(tail, RECAP) || (iw.length && shareOf(iw, tail) >= 0.5);
+  add("message", { id: "recap", label: L("El cierre resume lo que se llevan", "The close sums up what they take away"), passed: !!recap,
+    info: recap ? L("El final recoge la idea antes de despedirse.", "The ending gathers the idea before saying goodbye.") : L("El final no repite la idea principal. Una frase de resumen ayuda a recordarla y a volver.", "The ending doesn't restate the main idea. One summary sentence helps people remember and come back."),
+    fix: recap ? null : L("Antes de despedirte, di en una frase lo que se llevan hoy.", "Before saying goodbye, say in one sentence what they take away today.") });
+
+  // 7. Teaching that ends in one concrete step for this week, not only in good information.
+  const noQuotes = text.replace(/«[^»]{8,}»|“[^”]{8,}”|"[^"]{8,}"/g, " ");
+  const lastPart = noQuotes.slice(Math.floor(noQuotes.length * 0.5));
+  const applyOk = hasPhrase(lastPart, APPLY);
+  out.noApply = !applyOk;
+  add("message", { id: "application", label: L("El cierre da un paso concreto", "The close gives one concrete step"), passed: applyOk,
+    info: applyOk ? L("En la última parte le pides al oyente algo concreto que hacer.", "In the last part you ask the viewer to do something concrete.")
+      : L("En la última parte no se oye una acción concreta («esta semana…», «te invito a…»). Una enseñanza que termina en información se olvida; la que termina en un paso se recuerda.", "The last part has no concrete action (“this week…”, “I invite you to…”). Teaching that ends in information is forgotten; teaching that ends in a step is remembered."),
+    fix: applyOk ? null : L("Antes del cierre, di una sola acción que puedan hacer esta semana, con tus palabras.", "Before the close, name one action they can take this week, in your own words.") });
+  return out;
+}
+// ---------- Bible-safe AI edits (pure, no DOM) ----------
+// Rule: the AI never gets to write or change Scripture. Verses are swapped for tokens before the AI sees the text,
+// and every answer is checked in code before it can be shown. Nothing here depends on the AI behaving.
+
+function mergeSpans(spans) {
+  const s = spans.filter((x) => x.end > x.start).sort((a, b) => a.start - b.start || b.end - a.end);
+  const out = [];
+  for (const x of s) {
+    const last = out[out.length - 1];
+    if (last && x.start < last.end) { last.end = Math.max(last.end, x.end); if (last.kind !== x.kind) last.kind = last.kind === "ref" ? x.kind : last.kind; }
+    else out.push({ ...x });
+  }
+  return out;
+}
+
+// Verse text that is not between quotation marks but is announced by a reference: "Juan 3:16 dice: Porque de tal manera…".
+const VERSE_LEAD = /^\s*(?:[:\-–—]|dice\b|dijo\b|says\b|said\b|declara\b|escribe\b|afirma\b|ense[ñn]a\b|reads\b|writes\b)/i;
+function verseSpans(text, R) {
+  const quotes = R && R.quotes ? R.quotes : findQuotes(text);
+  const refs = R && R.refs ? R.refs : findReferences(text);
+  const spans = [];
+  for (const q of quotes) spans.push({ start: q.start, end: q.end, kind: "quote" });
+  for (const r of refs) spans.push({ start: r.start, end: r.end, kind: "ref" });
+  for (const r of refs) {
+    if (quotes.some((q) => r.start >= q.start && r.end <= q.end)) continue;
+    if (!VERSE_LEAD.test(text.slice(r.end, r.end + 24))) continue;
+    const tail = text.slice(r.end, r.end + 300);
+    // Best effort: to the end of the first sentence that is at least 40 characters long, or the paragraph end if that comes first.
+    let stop = -1;
+    const m = /[.!?…](?=\s|$)/g; let x;
+    while ((x = m.exec(tail))) if (x.index >= 40) { stop = x.index + 1; break; }
+    const nl = tail.indexOf("\n");
+    if (nl >= 0 && (stop < 0 || nl < stop)) stop = nl;
+    if (stop < 0) stop = tail.length;
+    spans.push({ start: r.end, end: r.end + stop, kind: "unquoted" });
+  }
+  return mergeSpans(spans);
+}
+
+const VTOK = /⟦V\d+⟧/g;
+// Replace every verse (quoted or announced) inside [from, to) by a token. References stay visible but are checked afterwards.
+// A verse that crosses the edge of the range cannot be protected, so the caller must refuse that range.
+function maskVerses(text, spans, from, to) {
+  from = from == null ? 0 : from; to = to == null ? text.length : to;
+  const verse = spans.filter((s) => s.kind !== "ref");
+  for (const s of verse) if (s.start < to && s.end > from && (s.start < from || s.end > to)) return { error: "boundary", span: s };
+  const inside = verse.filter((s) => s.start >= from && s.end <= to).sort((a, b) => a.start - b.start);
+  let out = "", pos = from;
+  const toks = [];
+  inside.forEach((s, i) => {
+    const tok = `⟦V${i + 1}⟧`;
+    out += text.slice(pos, s.start) + tok;
+    toks.push({ tok, text: text.slice(s.start, s.end) });
+    pos = s.end;
+  });
+  out += text.slice(pos, to);
+  return { masked: out, toks };
+}
+
+// Put the verses back. Every token must be present exactly once and in the original order; nothing else of that shape may appear.
+function unmaskCheck(output, toks) {
+  const strays = (output.match(VTOK) || []).filter((x) => !toks.some((t) => t.tok === x));
+  if (strays.length) return { ok: false, reason: "stray" };
+  let last = -1;
+  for (const t of toks) {
+    const first = output.indexOf(t.tok);
+    if (first < 0) return { ok: false, reason: "missing" };
+    if (output.indexOf(t.tok, first + 1) >= 0) return { ok: false, reason: "duplicated" };
+    if (first < last) return { ok: false, reason: "order" };
+    last = first;
+  }
+  let text = output;
+  for (const t of toks) text = text.replace(t.tok, () => t.text);
+  return { ok: true, text };
+}
+
+const refsKey = (text) => findReferences(text).map((r) => r.canonical).sort().join("|");
+
+// A section rewrite is accepted only when Scripture is provably untouched and nothing new that looks like Scripture was added.
+function vetSection(origSlice, toks, aiText, cues) {
+  if (typeof aiText !== "string" || !aiText.trim()) return { ok: false, reason: "empty" };
+  const u = unmaskCheck(aiText.trim(), toks);
+  if (!u.ok) return { ok: false, reason: "verse" };
+  const text = u.text;
+  if (refsKey(text) !== refsKey(origSlice)) return { ok: false, reason: "ref" };
+  if (findQuotes(text).length !== findQuotes(origSlice).length) return { ok: false, reason: "quote" };
+  for (const t of toks) if (text.split(t.text).length - 1 !== 1) return { ok: false, reason: "verse" };
+  for (const c of cues || []) if (c.text && origSlice.includes(c.text) && !text.includes(c.text)) return { ok: false, reason: "cue" };
+  const wa = (origSlice.match(/[\p{L}\p{N}]+/gu) || []).length, wb = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
+  if (wa >= 20 && (wb < wa * 0.55 || wb > wa * 1.6)) return { ok: false, reason: "length" };
+  return { ok: true, text };
+}
+
+// ---- Grammar and wording suggestions ----
+function locateUnique(text, needle) {
+  if (!needle) return -1;
+  const i = text.indexOf(needle);
+  if (i < 0) return -1;
+  return text.indexOf(needle, i + 1) < 0 ? i : -2;
+}
+const POL_KINDS = ["grammar", "spelling", "punctuation", "filler", "clarity", "word"];
+function vetSuggestions(text, spans, items) {
+  const ok = [], drop = { notFound: 0, ambiguous: 0, bible: 0, invalid: 0 };
+  for (const it of items || []) {
+    const o = it && typeof it.original === "string" ? it.original : "", c = it && typeof it.corrected === "string" ? it.corrected : "";
+    if (!o.trim() || o === c || /[⟦⟧]/.test(o + c) || o.length > 600 || c.length > 700) { drop.invalid++; continue; }
+    const i = locateUnique(text, o);
+    if (i === -1) { drop.notFound++; continue; }
+    if (i === -2) { drop.ambiguous++; continue; }
+    if (spans.some((s) => i < s.end && i + o.length > s.start)) { drop.bible++; continue; }
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) { drop.bible++; continue; }
+    ok.push({ start: i, end: i + o.length, original: o, corrected: c, reason: String(it.reason || "").slice(0, 220), kind: POL_KINDS.includes(it.kind) ? it.kind : "clarity" });
+  }
+  ok.sort((a, b) => a.start - b.start);
+  const out = [];
+  let floor = -1;
+  for (const x of ok) { if (x.start < floor) { drop.invalid++; continue; } out.push(x); floor = x.end; }
+  return { items: out, drop };
+}
+// Apply one suggestion to the CURRENT text: it must still be found exactly once and must still be away from Scripture.
+function relocateSuggestion(text, s) {
+  const i = locateUnique(text, s.original);
+  if (i < 0) return null;
+  if (verseSpans(text).some((v) => i < v.end && i + s.original.length > v.start)) return null;
+  return i;
+}
+function applySuggestion(text, s) {
+  const i = relocateSuggestion(text, s);
+  return i == null ? null : text.slice(0, i) + s.corrected + text.slice(i + s.original.length);
+}
+/* ===== Puntuación Script Desk (0–100): banda primero, posición dentro de la banda =====
+   La banda (rojo/amarillo/verde) la decide el mismo criterio que el semáforo de verdictOf(); las revisiones solo mueven
+   el número dentro de esa banda. Las revisiones que el usuario descarta ("no aplica") siguen costando puntos. */
+function scoreOf(R, dismissed) {
+  dismissed = dismissed || new Set();
+  const rows = Object.values(R.sections).flat();
+  const cand = rows.filter((r) => (!r.passed || r.warn) && !FIX_SKIP.has(r.id));
+  const open = cand.filter((r) => !dismissed.has(r.id));
+  const ignored = cand.filter((r) => dismissed.has(r.id));
+  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  const total = Math.max(1, rows.length);
+  const ratio = 1 - (open.length + 0.5 * ignored.length) / total;
+  const pkgPen = R.worst === "amarillo" ? 5 : 0;
+  let score, band;
+  if (red) { band = "rojo"; score = Math.round(69 * Math.max(0, ratio)); score = Math.max(0, Math.min(69, score)); }
+  else if (open.length) { band = "amarillo"; score = Math.max(70, Math.min(89, Math.round(70 + 19 * ratio) - pkgPen)); }
+  else { band = "verde"; score = Math.max(90, Math.min(100, 100 - pkgPen - 2 * ignored.length)); }
+  return { score, band, open, ignored, pkgPen, total: rows.length, passed: R.passed };
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP };
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ===== Script Desk standalone: Supabase stands in for the Claude runtime (db, AI, downloads) ===== */
@@ -3207,8 +5019,27 @@ function applySuggestion(text, s) {
   const i = relocateSuggestion(text, s);
   return i == null ? null : text.slice(0, i) + s.corrected + text.slice(i + s.original.length);
 }
+/* ===== Puntuación Script Desk (0–100): banda primero, posición dentro de la banda =====
+   La banda (rojo/amarillo/verde) la decide el mismo criterio que el semáforo de verdictOf(); las revisiones solo mueven
+   el número dentro de esa banda. Las revisiones que el usuario descarta ("no aplica") siguen costando puntos. */
+function scoreOf(R, dismissed) {
+  dismissed = dismissed || new Set();
+  const rows = Object.values(R.sections).flat();
+  const cand = rows.filter((r) => (!r.passed || r.warn) && !FIX_SKIP.has(r.id));
+  const open = cand.filter((r) => !dismissed.has(r.id));
+  const ignored = cand.filter((r) => dismissed.has(r.id));
+  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  const total = Math.max(1, rows.length);
+  const ratio = 1 - (open.length + 0.5 * ignored.length) / total;
+  const pkgPen = R.worst === "amarillo" ? 5 : 0;
+  let score, band;
+  if (red) { band = "rojo"; score = Math.round(69 * Math.max(0, ratio)); score = Math.max(0, Math.min(69, score)); }
+  else if (open.length) { band = "amarillo"; score = Math.max(70, Math.min(89, Math.round(70 + 19 * ratio) - pkgPen)); }
+  else { band = "verde"; score = Math.max(90, Math.min(100, 100 - pkgPen - 2 * ignored.length)); }
+  return { score, band, open, ignored, pkgPen, total: rows.length, passed: R.passed };
+}
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -3537,11 +5368,12 @@ function renderResults() {
   const R = state.result, text = state.text, sec = R.sections;
   const counts = Object.fromEntries(Object.entries(sec).map(([k, rows]) => [k, [rows.filter((r) => r.passed).length, rows.length]]));
   const meta = sectionMeta();
-  const pct = R.total ? Math.round((R.passed / R.total) * 100) : 0;
-  const ringc = R.worst === "rojo" ? "var(--rojo)" : R.worst === "amarillo" ? "var(--amarillo)" : "var(--verde)";
+  const SCR = scoreOf(R, state.fixDismissed);
+  const pct = SCR.score;
+  const ringc = SCR.band === "rojo" ? "var(--rojo)" : SCR.band === "amarillo" ? "var(--amarillo)" : "var(--verde)";
   const verdict = `<div class="verdict">
-    <div class="ring" style="--p:${pct};--ringc:${ringc}"><span>${R.passed}<small>/ ${R.total}</small></span></div>
-    <div class="vhead"><div class="big">${h(t("checksPass")(R.passed, R.total))}</div>
+    <div class="ring" style="--p:${pct};--ringc:${ringc}"><span>${SCR.score}<small>/ 100</small></span></div>
+    <div class="vhead"><div class="big">${h(t("scTitle"))}: ${SCR.score}</div><div class="hint">${h(t("checksPass")(R.passed, R.total))}</div>
       <div><span class="lamp ${R.worst}">${h(t("lvl")[R.worst])}</span></div>
       <span class="hint">${h(t("langName")[R.lang])} · ${R.wc} ${h(t("words"))}</span></div>
     ${statsHTML(R)}</div>`;
@@ -5516,8 +7348,8 @@ function navHTML(prev, nextLabel, nextAttr) {
   return `<div class="g-nav-steps">${prev ? `<button type="button" data-step="${prev}">← ${h(t("back"))}</button>` : "<span></span>"}${nextLabel ? `<button type="button" class="primary" ${nextAttr}>${h(nextLabel)} →</button>` : ""}</div>`;
 }
 function verdictHTML(R) {
-  const v = verdictOf(R);
-  return `<div class="gv gv-${v.k}"><span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
+  const v = verdictOf(R), S = typeof scoreOf === "function" ? scoreOf(R, state.fixDismissed) : null;
+  return `<div class="gv gv-${v.k}">${S ? `<div class="gv-top"><span class="gv-n">${S.score}<small>/100</small></span><span class="gv-l">${h(t("scTitle"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
 }
 
 function renderGuide() {
@@ -8664,6 +10496,267 @@ function editMarks(R, text) {
   out.sort((a, b) => a.pos - b.pos);
   return (_EM = { text, R, list: out }).list;
 }
+/* ===== Burbuja de puntuación: un número 0–100 que sigue al usuario y se actualiza al cambiar el guion ===== */
+// scoreOf() vive en score_logic.js (banda primero, posición dentro de la banda). El análisis en vivo corre en un
+// Web Worker con el mismo motor que la revisión; si no hay worker, corre en la pausa del navegador con "debounce".
+Object.assign(T.es, {
+  scTitle: "Puntuación Script Desk", scWord: "Puntuación", scBand: { rojo: "Revisa esto primero", amarillo: "Casi listo", verde: "Listo para grabar" },
+  scSince: (a, b) => `Desde que empezaste: ${a} → ${b}`, scTop: "Lo que más sube la nota", scNone: "Nada pendiente.",
+  scIgnored: (n, x) => `Ignoraste ${n} ${n === 1 ? "revisión" : "revisiones"} (${x >= 1 ? `−${x} ${x === 1 ? "punto" : "puntos"}` : "no cuenta como arreglada"})`, scShowAgain: "Volver a mostrar",
+  scNote: "Puntuación de Script Desk según sus propias revisiones. No es la nota de YouTube: sube cuando arreglas lo que la app marca.",
+  scHide: "Ocultar burbuja", scShow: "Mostrar puntuación", scAria: (n) => `Puntuación ${n} de 100`, scChecks: (p, n) => `${p} de ${n} revisiones pasan`, scClose: "Cerrar",
+});
+Object.assign(T.en, {
+  scTitle: "Script Desk score", scWord: "Score", scBand: { rojo: "Check this first", amarillo: "Almost ready", verde: "Ready to record" },
+  scSince: (a, b) => `Since you started: ${a} → ${b}`, scTop: "What raises it most", scNone: "Nothing pending.",
+  scIgnored: (n, x) => `You dismissed ${n} ${n === 1 ? "check" : "checks"} (${x >= 1 ? `−${x} ${x === 1 ? "point" : "points"}` : "not counted as fixed"})`, scShowAgain: "Show again",
+  scNote: "Script Desk's own score, from its checks. It is not YouTube's score: it rises as you fix what the app flags.",
+  scHide: "Hide bubble", scShow: "Show score", scAria: (n) => `Score ${n} out of 100`, scChecks: (p, n) => `${p} of ${n} checks pass`, scClose: "Close",
+});
+if (typeof HELP !== "undefined") {
+  HELP.es.verdictCard = "Resumen de la revisión. El círculo muestra la puntuación de Script Desk (0 a 100): sube cuando arreglas lo que la app marca. No es la nota de YouTube. Debajo ves cuántas revisiones pasan; la etiqueta de color habla solo de los anuncios.";
+  HELP.en.verdictCard = "Review summary. The ring shows the Script Desk score (0 to 100): it rises as you fix what the app flags. It is not YouTube's score. Below it you see how many checks pass; the colored label is about ads only.";
+}
+
+const SC = { w: null, seq: 0, pending: 0, guard: null, timer: null, delay: 700, ms: 0, R: null, S: null, base: null, baseKey: null, shown: null, off: lsGet("sd-bubble") === "off", where: "", pop: false, noWorker: false, liveAt: 0 };
+window.SC = SC;
+const scKey = () => "sd-score-base:" + (G.prodId || "draft");
+const scDemo = () => typeof DEMO !== "undefined" && !!DEMO;
+const scReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---- engine in a worker (embedded as <script type="text/plain" id="engineSrc">) ----
+function scStartWorker() {
+  if (SC.w || SC.noWorker || window.__SD_NO_WORKER || typeof Worker === "undefined") return;
+  try {
+    const el = document.getElementById("engineSrc");
+    if (!el || !el.textContent.trim()) { SC.noWorker = true; return; }
+    const code = el.textContent.replace(/<\\\/script/g, "</script") + `
+;(function(){function slim(s){var o={};for(var k in s)o[k]=s[k].map(function(r){return{id:r.id,label:r.label,passed:r.passed,warn:r.warn,level:r.level}});return o}
+onmessage=function(e){var d=e.data;try{var t0=Date.now();var R=analyze(d.text,d.opts);postMessage({seq:d.seq,ms:Date.now()-t0,R:{worst:R.worst,passed:R.passed,total:R.total,sections:slim(R.sections)}})}catch(err){postMessage({seq:d.seq,error:String(err&&err.message||err)})}}})();`;
+    const w = new Worker(URL.createObjectURL(new Blob([code], { type: "text/javascript" })));
+    w.onmessage = (e) => {
+      const d = e.data || {};
+      if (d.seq !== SC.seq) return; // a newer change already superseded this run
+      SC.pending = 0; clearTimeout(SC.guard);
+      if (d.error || !d.R) { scKillWorker(); scRun(); return; }
+      SC.ms = d.ms; scAdapt(); SC.R = d.R; scApply();
+    };
+    w.onerror = () => { scKillWorker(); if (SC.pending) scRun(); };
+    SC.w = w;
+  } catch (e) { SC.noWorker = true; SC.w = null; }
+}
+function scKillWorker() { try { if (SC.w) SC.w.terminate(); } catch (e) {} SC.w = null; SC.noWorker = true; clearTimeout(SC.guard); }
+function scAdapt() { SC.delay = SC.ms > 250 ? Math.min(2000, SC.delay * 2) : SC.ms < 120 ? Math.max(700, Math.round(SC.delay / 2)) : SC.delay; }
+const scIdle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0));
+function scSlim(R) {
+  const sections = {};
+  for (const k of Object.keys(R.sections)) sections[k] = R.sections[k].map((r) => ({ id: r.id, label: r.label, passed: r.passed, warn: r.warn, level: r.level }));
+  return { worst: R.worst, passed: R.passed, total: R.total, sections };
+}
+
+// ---- scheduling ----
+function scQueue(now) {
+  if (SC.off) return;
+  clearTimeout(SC.timer);
+  const long = ($("script").value || "").length > 60000;
+  SC.timer = setTimeout(scRun, now ? 0 : long ? Math.max(SC.delay, 2000) : SC.delay);
+}
+function scRun() {
+  if (SC.off) return;
+  const text = $("script").value;
+  if (!text.trim()) { SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) {} scPaint(); return; }
+  let opts; try { opts = JSON.parse(JSON.stringify(readOpts())); } catch (e) { return; }
+  const seq = ++SC.seq;
+  scStartWorker();
+  if (!SC.w) SC.delay = Math.max(SC.delay, 1200); // no worker: wait longer so the run lands after the user stops typing
+  if (SC.w) {
+    SC.pending = seq; clearTimeout(SC.guard);
+    SC.guard = setTimeout(() => { if (SC.pending === seq) { scKillWorker(); scRun(); } }, 4000);
+    try { SC.w.postMessage({ seq, text, opts }); } catch (e) { scKillWorker(); scRun(); }
+    return;
+  }
+  scIdle(() => {
+    if (seq !== SC.seq) return;
+    const t0 = performance.now(); let R;
+    try { R = analyze(text, opts); } catch (e) { return; }
+    SC.ms = performance.now() - t0;
+    if (seq !== SC.seq) return;
+    scAdapt(); SC.R = scSlim(R); scApply();
+  });
+}
+
+// ---- state → pill ----
+function scApply() {
+  if (!SC.R) { scPaint(); return; }
+  const S = scoreOf(SC.R, state.fixDismissed);
+  const key = scKey();
+  if (SC.baseKey !== key || SC.base == null) {
+    SC.baseKey = key;
+    let b = null;
+    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number") b = o.score; } catch (e) {} }
+    if (b == null) { b = S.score; if (!scDemo()) lsSet(key, JSON.stringify({ score: b, at: Date.now() })); }
+    SC.base = b;
+  }
+  SC.S = S; scPaint();
+}
+function scEnsure() {
+  let p = $("scorePill");
+  if (p) return p;
+  p = document.createElement("button"); p.type = "button"; p.id = "scorePill"; p.className = "score-pill float"; p.hidden = true;
+  p.setAttribute("aria-haspopup", "dialog"); p.setAttribute("aria-expanded", "false");
+  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-d" id="scD"></span>`;
+  p.addEventListener("click", (e) => { e.stopPropagation(); SC.pop ? scClosePop() : scOpenPop(); });
+  document.body.appendChild(p);
+  const live = document.createElement("div"); live.id = "scLive"; live.className = "vh"; live.setAttribute("role", "status"); live.setAttribute("aria-live", "polite"); document.body.appendChild(live);
+  return p;
+}
+function scPlace() {
+  const pill = scEnsure(), meta = document.querySelector(".meta-line");
+  const dock = typeof SPLIT !== "undefined" && SPLIT.on && !!meta;
+  if (dock) { const tg = $("trToggle"); if (pill.parentNode !== meta) meta.insertBefore(pill, tg || null); }
+  else if (pill.parentNode !== document.body) document.body.appendChild(pill);
+  pill.classList.toggle("docked", dock); pill.classList.toggle("float", !dock);
+  SC.where = dock ? "dock" : "float";
+}
+function scTween(el, from, to) {
+  if (from == null || from === to || scReduced()) { el.textContent = to; return; }
+  const t0 = performance.now(), dur = 400;
+  const step = (now) => { const k = Math.min(1, (now - t0) / dur); el.textContent = Math.round(from + (to - from) * k); if (k < 1 && SC.shown === to) requestAnimationFrame(step); else el.textContent = to; };
+  requestAnimationFrame(step);
+}
+function scPaint() {
+  const pill = scEnsure();
+  scPlace();
+  const on = !SC.off && SC.S && hasScript();
+  pill.hidden = !on;
+  scShowBtn();
+  if (!on) { scClosePop(); return; }
+  const S = SC.S, d = S.score - SC.base;
+  pill.className = `score-pill band-${S.band} ${SC.where === "dock" ? "docked" : "float"}${SC.lift ? " lift" : ""}`;
+  const from = SC.shown; SC.shown = S.score;
+  scTween($("scN"), from, S.score);
+  const dEl = $("scD"); dEl.textContent = d ? (d > 0 ? "▲" : "▼") + Math.abs(d) : ""; dEl.className = "sc-d" + (d > 0 ? " up" : d < 0 ? " down" : "");
+  const lbl = `${t("scAria")(S.score)} · ${t("scBand")[S.band]}`;
+  pill.setAttribute("aria-label", lbl); pill.title = t("scNote");
+  const now = Date.now();
+  if (now - SC.liveAt > 5000) { SC.liveAt = now; $("scLive").textContent = lbl; }
+  if (SC.pop) scRenderPop();
+}
+
+// ---- popover ----
+function scTopRows(S) {
+  return failedRows(SC.R).filter((r) => !FIX_SKIP.has(r.id) && !state.fixDismissed.has(r.id)).slice(0, 3);
+}
+const scLabel = (r) => (typeof plainLabel === "function" ? plainLabel(r.id, r.label) : r.label);
+function scRenderPop() {
+  const pop = $("scPop"); if (!pop || !SC.S) return;
+  const S = SC.S, d = S.score - SC.base;
+  const top = scTopRows(S);
+  let pen = 0;
+  if (S.ignored.length) {
+    const ids = new Set(S.ignored.map((r) => r.id)), sec = {};
+    for (const k of Object.keys(SC.R.sections)) sec[k] = SC.R.sections[k].map((r) => (ids.has(r.id) ? { ...r, passed: true, warn: false } : r));
+    pen = Math.max(0, scoreOf({ ...SC.R, sections: sec }, state.fixDismissed).score - S.score);
+  }
+  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${S.score}<small>/100</small></span><span class="sc-band">${h(t("scBand")[S.band])}</span><button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
+    <p class="hint sc-checks">${h(t("scChecks")(S.passed, S.total))}</p>
+    ${d ? `<p class="sc-since">${h(t("scSince")(SC.base, S.score))}</p>` : ""}
+    <div class="sc-k">${h(t("scTop"))}</div>
+    ${top.length ? `<ul class="sc-rows">${top.map((r) => `<li><button type="button" data-scrow="${h(r.id)}">${h(scLabel(r))}</button></li>`).join("")}</ul>` : `<p class="hint">${h(t("scNone"))}</p>`}
+    ${S.ignored.length ? `<div class="sc-ign"><b>${h(t("scIgnored")(S.ignored.length, pen))}</b><ul>${S.ignored.map((r) => `<li><span>${h(scLabel(r))}</span><button type="button" class="small" data-scshow="${h(r.id)}">${h(t("scShowAgain"))}</button></li>`).join("")}</ul></div>` : ""}
+    <p class="hint sc-note">${h(t("scNote"))}</p>
+    <button type="button" class="linkish sc-hide" id="scHide">${h(t("scHide"))}</button>`;
+  $("scX").addEventListener("click", scClosePop);
+  $("scHide").addEventListener("click", () => scSetOff(true));
+  pop.querySelectorAll("[data-scrow]").forEach((b) => b.addEventListener("click", () => scGoRow(b.dataset.scrow)));
+  pop.querySelectorAll("[data-scshow]").forEach((b) => b.addEventListener("click", () => { state.fixDismissed.delete(b.dataset.scshow); scApply(); scRefreshView(); }));
+}
+function scRefreshView() { try { if (state.result) { if (V.guided) renderGuide(); else renderResults(); } } catch (e) {} }
+function scOpenPop() {
+  if (!SC.S) return;
+  let scrim = $("scScrim");
+  if (!scrim) { scrim = document.createElement("div"); scrim.id = "scScrim"; scrim.className = "sc-scrim"; scrim.addEventListener("click", scClosePop); document.body.appendChild(scrim); }
+  let pop = $("scPop");
+  if (!pop) { pop = document.createElement("div"); pop.id = "scPop"; pop.className = "sc-pop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", t("scTitle")); document.body.appendChild(pop); }
+  SC.pop = true; scrim.hidden = false; pop.hidden = false; $("scorePill").setAttribute("aria-expanded", "true");
+  scRenderPop();
+  if (window.innerWidth >= 900) {
+    const r = $("scorePill").getBoundingClientRect(), w = Math.min(360, window.innerWidth - 24);
+    pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + "px";
+    const below = r.bottom + 8, room = window.innerHeight - below - 12;
+    pop.style.top = (room > 300 ? below : Math.max(12, r.top - 8 - Math.min(pop.offsetHeight, window.innerHeight - 24))) + "px"; pop.style.bottom = "auto"; pop.style.right = "auto"; pop.style.width = w + "px";
+  } else { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = pop.style.width = ""; }
+}
+function scClosePop() {
+  SC.pop = false;
+  const pop = $("scPop"), scrim = $("scScrim"), pill = $("scorePill");
+  if (pop) pop.hidden = true; if (scrim) scrim.hidden = true; if (pill) pill.setAttribute("aria-expanded", "false");
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SC.pop) { scClosePop(); const p = $("scorePill"); if (p) p.focus(); } });
+function scGoRow(id) {
+  scClosePop();
+  if (!ensureReview()) return;
+  if (V.guided) {
+    goStep(2);
+    const card = (state.fixCards || []).find((c) => c.id === id || (c.ids && c.ids.includes(id)));
+    if (card) { state.fixOpen = state.fixOpen || new Set(); state.fixOpen.add(card.id); renderGuide(); }
+    requestAnimationFrame(() => { const li = card && document.querySelector(`[data-fid="${card.id}"]`); (li || $("guide")).scrollIntoView({ block: "start", behavior: scReduced() ? "auto" : "smooth" }); });
+  } else {
+    if (!state.result || $("results").classList.contains("hidden")) $("runBtn").click();
+    $("results").scrollIntoView({ block: "start", behavior: scReduced() ? "auto" : "smooth" });
+  }
+}
+
+// ---- hide / show ----
+function scSetOff(off) {
+  SC.off = off; lsSet("sd-bubble", off ? "off" : "on");
+  if (off) { clearTimeout(SC.timer); clearTimeout(SC.guard); scClosePop(); scPaint(); }
+  else { scQueue(true); scShowBtn(); }
+}
+function scShowBtn() {
+  let b = $("scShowBtn");
+  if (!b) {
+    const sw = document.querySelector(".xswitch"); if (!sw) return;
+    b = document.createElement("button"); b.type = "button"; b.id = "scShowBtn"; b.className = "linkish sc-showbtn"; b.hidden = true;
+    b.addEventListener("click", () => scSetOff(false)); sw.insertAdjacentElement("afterend", b);
+  }
+  b.textContent = t("scShow"); b.hidden = !(SC.off && hasScript());
+}
+
+// ---- keyboard / toast awareness (phones) ----
+(function scViewport() {
+  const vv = window.visualViewport;
+  const upd = () => { const kb = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0; document.documentElement.style.setProperty("--sc-kb", kb > 80 ? kb + "px" : "0px"); };
+  if (vv) { vv.addEventListener("resize", upd); vv.addEventListener("scroll", upd); }
+  let raf = 0;
+  const lift = () => { raf = 0; const on = !!document.querySelector(".cost-toast.on"); if (on !== !!SC.lift) { SC.lift = on; const p = $("scorePill"); if (p) p.classList.toggle("lift", on); } };
+  new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(lift); }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+})();
+
+// ---- triggers ----
+["script", "title", "keyword", "thumb", "description", "bigIdea", "series", "nextEp"].forEach((id) => { const el = $(id); if (el) el.addEventListener("input", () => scQueue(false)); });
+["audience", "translation", "lang"].forEach((id) => { const el = $(id); if (el) el.addEventListener("change", () => scQueue(false)); });
+const _ulSC = updateLive;
+updateLive = function () {
+  _ulSC();
+  if (SC.baseKey && SC.baseKey !== scKey()) { SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; scPaint(); }
+  scQueue(false);
+};
+const _rrSC = renderResults;
+renderResults = function () { _rrSC(); if (SC.R) scApply(); };
+const _rgSC = renderGuide;
+renderGuide = function () { _rgSC(); scPlace(); scShowBtn(); };
+const _alSC = applyLang;
+applyLang = function () { _alSC(); scPaint(); };
+const _gsSC = goStep;
+goStep = function (n) { scClosePop(); _gsSC(n); };
+const _dcSC = doClearScript;
+doClearScript = function () { _dcSC(); SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) {} scPaint(); };
+if (typeof SPLIT !== "undefined" && SPLIT.mq) SPLIT.mq.addEventListener("change", () => setTimeout(scPlace, 0));
+const _opSC = typeof openPrompter === "function" ? openPrompter : null;
+if (_opSC) openPrompter = function (m) { scClosePop(); return _opSC(m); };
+scEnsure(); scPlace(); scShowBtn();
+if (hasScript()) scQueue(true);
 /* ===== Text fields grow to show all their text (no inner scrolling) ===== */
 // Single-line fields (title, topic, thumbnail text, series, central idea…) are rendered as one-row textareas marked data-one:
 // they wrap and grow like a paragraph, but Enter never adds a line break and pasted line breaks become spaces.
