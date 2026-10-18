@@ -625,6 +625,22 @@ main[data-view="guide"]:not([data-step="1"]) #exPick:not(.demo-on){display:none}
 
 /* In an example, after step 1 only the yellow "you are practicing" bar tells the user it is an example */
 main[data-view="guide"]:not([data-step="1"]) #exPick{display:none}
+
+/* Episode line: one quiet row instead of a card; deleting episodes */
+html .ep-strip{padding:2px 2px;margin:0 0 8px;border:0;background:none;border-radius:0;flex-wrap:wrap}
+html .ep-s-t{flex:1 1 0}
+html .ep-wait{border-top:0;padding-top:0;margin:2px 0 4px}
+html .ep-strip[hidden]{display:none}
+html .ep-s-t{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;color:var(--ink-2)}
+html .ep-s-t b{display:inline;font-size:13.5px;color:var(--ink);font-weight:600}
+html .ep-s-t .hint{font-size:13px;display:inline}
+html .ep-strip>button{font-size:13.5px;white-space:nowrap}
+.sr-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.sr-q{flex:1 1 100%;font-size:13.5px;color:var(--ink)}
+.sr-del{color:var(--rojo)}
+.danger{background:var(--rojo);border-color:var(--rojo);color:#fff}
+.sr-clear{margin-top:14px;padding-top:10px;border-top:1px solid var(--rule-2);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+@media (max-width:520px){.sr-list li{grid-template-columns:1fr}.sr-acts{justify-content:flex-start}}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -5608,6 +5624,7 @@ Object.assign(T.es, {
   tpTitle: "Tema y próximo episodio", tpLead: "El tema es la frase que alguien escribiría en YouTube. El próximo episodio se anuncia al final del guion y aparece en el calendario.",
   tpTopic: "¿De qué tema trata?", tpTopicPh: "la ansiedad", tpAuto: (k) => `Si lo dejas vacío, uso «${k}», la frase que más repites.`, tpNext: "¿Qué veremos el próximo episodio?", tpNextPh: "el Salmo 23", tpDate: "Fecha de publicación",
   srTitle: "Calendario de la serie", srLead: "Planea los episodios con su fecha. Toca «Abrir» para trabajar en uno.", srNewTitle: "Título del episodio", srNewPh: "Qué dice la Biblia sobre el perdón", srPlan: "Planear",
+  srDel: "Borrar", srDelQ: (x) => `¿Borrar «${x}»? No se puede deshacer.`, srDelYes: "Sí, borrar", srDelNo: "No", srDelAll: (n) => `Borrar los ${n} episodios`, srDelAllQ: (n) => `¿Borrar los ${n} episodios? No se puede deshacer.`,
   srNoDate: "Sin fecha", srToWrite: "Por escribir", srLate: "Atrasado", srNext: "Próximo", srOpen: "Abrir", srPlanNext: (x) => `Planear: ${x}`, srAll: (n) => `Ver los ${n}`, srLess: "Ver menos",
   srEmpty: "Aún no hay episodios. Escribe el título del primero y su fecha.", srNeedDb: "El calendario y los episodios se guardan al abrir esta página en Claude.", srCurrent: "abierto",
   bkTitle: "Copia de seguridad", bkLead: "Descarga un archivo con todos los episodios, versiones, notas y resultados. Guárdalo en tu computadora o en la nube.",
@@ -5618,6 +5635,7 @@ Object.assign(T.en, {
   tpTitle: "Topic and next episode", tpLead: "The topic is the phrase someone would type on YouTube. The next episode is announced at the end of the script and shows up in the calendar.",
   tpTopic: "What's the topic?", tpTopicPh: "anxiety", tpAuto: (k) => `If you leave it empty, I use "${k}", your most repeated phrase.`, tpNext: "What's next episode about?", tpNextPh: "Psalm 23", tpDate: "Publish date",
   srTitle: "Series calendar", srLead: "Plan episodes with their dates. Tap \"Open\" to work on one.", srNewTitle: "Episode title", srNewPh: "What the Bible says about forgiveness", srPlan: "Plan",
+  srDel: "Delete", srDelQ: (x) => `Delete “${x}”? This can't be undone.`, srDelYes: "Yes, delete", srDelNo: "No", srDelAll: (n) => `Delete all ${n} episodes`, srDelAllQ: (n) => `Delete all ${n} episodes? This can't be undone.`,
   srNoDate: "No date", srToWrite: "To write", srLate: "Late", srNext: "Next up", srOpen: "Open", srPlanNext: (x) => `Plan: ${x}`, srAll: (n) => `See all ${n}`, srLess: "See less",
   srEmpty: "No episodes yet. Write the first one's title and date.", srNeedDb: "The calendar and episodes are saved when this page is opened in Claude.", srCurrent: "open",
   bkTitle: "Backup", bkLead: "Download one file with every episode, version, note and result. Keep it on your computer or in the cloud.",
@@ -5704,6 +5722,16 @@ async function openFromSeries(id) {
     setMode("guion");
   }
 }
+async function deleteProds(ids) {
+  const db = await caps.db;
+  if (!db) return;
+  const wasOpen = ids.includes(G.prodId);
+  for (const id of ids) { try { await db.collection("producciones").doc(id).delete(); } catch (e) { /* keep going; the list reloads below */ } }
+  G.prods = G.prods.filter((p) => !ids.includes(p.id));
+  if (wasOpen) { clearTimeout(saveTimer); applyProd(null, {}); G.snaps = []; resetWorkState(); state.result = null; updateLive(); if (V.guided) goStep(1); else setMode("review"); }
+  try { await loadProds(); } catch (e) {}
+  renderSeriesAll(); if (typeof renderEpStrip === "function") renderEpStrip();
+}
 function renderSeries(cid) {
   const el = $(cid);
   if (!el) return;
@@ -5724,11 +5752,15 @@ function renderSeries(cid) {
       return `<li class="${late ? "late" : ""}${p.id === G.prodId ? " cur" : ""}">
         <input type="date" value="${h(p.pubDate)}" data-srdate="${h(p.id)}" aria-label="${h(t("tpDate"))}">
         <div class="sr-main"><b>${h(p.title || "—")}</b><span class="sr-tags"><span class="chip">${h(chip)}</span>${late ? `<span class="chip sr-late">${h(t("srLate"))}</span>` : ""}${upcoming && upcoming.id === p.id ? `<span class="chip sr-next">${h(t("srNext"))}</span>` : ""}${p.id === G.prodId ? `<span class="hint">· ${h(t("srCurrent"))}</span>` : ""}</span>${nextBtn}</div>
-        <button type="button" class="small" data-sropen="${h(p.id)}">${h(t("srOpen"))}</button></li>`;
+        <span class="sr-acts"><button type="button" class="small" data-sropen="${h(p.id)}">${h(t("srOpen"))}</button><button type="button" class="small linkish sr-del" data-srdel="${h(p.id)}">${h(t("srDel"))}</button></span></li>`;
     };
     el.innerHTML = `${head}<p class="lead">${h(t("srLead"))}</p>
       <div class="sr-new"><input id="${cid}-t" placeholder="${h(t("srNewPh"))}" aria-label="${h(t("srNewTitle"))}" maxlength="100"><input id="${cid}-d" type="date" value="${h(nextFreeDate())}" aria-label="${h(t("tpDate"))}"><button type="button" class="small primary" id="${cid}-p">${h(t("srPlan"))}</button></div>
-      ${list.length ? `<ul class="sr-list">${shown.map(row).join("")}</ul>${list.length > 6 ? `<button type="button" class="small linkish" id="${cid}-all">${h(G.seriesAll ? t("srLess") : t("srAll")(list.length))}</button>` : ""}` : `<p class="hint">${h(t("srEmpty"))}</p>`}`;
+      ${list.length ? `<ul class="sr-list">${shown.map(row).join("")}</ul>${list.length > 6 ? `<button type="button" class="small linkish" id="${cid}-all">${h(G.seriesAll ? t("srLess") : t("srAll")(list.length))}</button>` : ""}<div class="sr-clear"><button type="button" class="small linkish sr-del" id="${cid}-delall">${h(t("srDelAll")(list.length))}</button></div>` : `<p class="hint">${h(t("srEmpty"))}</p>`}`;
+    // Deleting asks first, right in the row, and never touches anything else.
+    const askDel = (box, q, onYes) => { const keep = box.innerHTML; box.innerHTML = `<span class="sr-q">${h(q)}</span><button type="button" class="small danger" data-y>${h(t("srDelYes"))}</button><button type="button" class="small" data-n>${h(t("srDelNo"))}</button>`; box.querySelector("[data-n]").addEventListener("click", () => renderSeriesAll()); box.querySelector("[data-y]").addEventListener("click", async (e) => { e.target.disabled = true; await onYes(); }); };
+    el.querySelectorAll("[data-srdel]").forEach((b) => b.addEventListener("click", () => { const p = G.prods.find((x) => x.id === b.dataset.srdel); askDel(b.closest(".sr-acts"), t("srDelQ")(p ? p.title || "—" : "—"), () => deleteProds([b.dataset.srdel])); }));
+    const da = el.querySelector(`#${cid}-delall`); if (da) da.addEventListener("click", () => askDel(da.closest(".sr-clear"), t("srDelAllQ")(list.length), () => deleteProds(list.map((x) => x.id))));
     el.querySelector(`#${cid}-p`).addEventListener("click", async (e) => { const ti = el.querySelector(`#${cid}-t`).value.trim(); if (!ti) { el.querySelector(`#${cid}-t`).focus(); return; } e.target.disabled = true; await planEpisode(ti, el.querySelector(`#${cid}-d`).value); });
     const all = el.querySelector(`#${cid}-all`); if (all) all.addEventListener("click", () => { G.seriesAll = !G.seriesAll; renderSeriesAll(); });
     el.querySelectorAll("[data-sropen]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; openFromSeries(b.dataset.sropen); }));
@@ -7032,7 +7064,7 @@ renderSeries = function (cid) {
         <button type="button" class="ep-open" data-sropen="${h(p.id)}"${cur ? " disabled" : ""}>${tile}<span class="ep-main"><b>${h(p.title || "—")}</b>
           <span class="ep-meta"><span class="ep-st${!p.hasText ? " todo" : done(p) ? " ok" : ""}">${h(status)}</span> · ${h(when)}${late ? ` · <em>${h(t("epLateM"))}</em>` : ""}</span></span>
           <span class="ep-go">${cur ? h(t("epOpenNow")) : "›"}</span></button>
-        <div class="ep-tools">${tools}</div></li>`;
+        <div class="ep-tools">${tools}<button type="button" class="small linkish sr-del" data-srdel="${h(p.id)}">${h(t("srDel"))}</button></div></li>`;
     };
     const addForm = G.epAdding
       ? `<div class="ep-add"><div class="field"><label for="${cid}-t">${h(t("epAbout"))}</label><input id="${cid}-t" placeholder="${h(t("srNewPh"))}" maxlength="100"></div>
@@ -7042,8 +7074,13 @@ renderSeries = function (cid) {
     el.innerHTML = `${head}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
       ${active.length ? `<ul class="ep-list">${active.map(row).join("")}</ul>` : ""}
       ${past.length ? `<button type="button" class="small linkish" id="${cid}-past">${h(G.epPast ? t("epPastHide") : t("epPast")(past.length))}</button>${G.epPast ? `<ul class="ep-list ep-pastlist">${past.map(row).join("")}</ul>` : ""}` : ""}
-      ${addForm}`;
+      ${addForm}
+      ${G.prods.length ? `<div class="sr-clear"><button type="button" class="small linkish sr-del" id="${cid}-delall">${h(t("srDelAll")(G.prods.length))}</button></div>` : ""}`;
     const q = (s) => el.querySelector(s);
+    // Deleting asks first, right where the button was, and only removes episodes (nothing else).
+    const askDel = (box, msg, onYes) => { box.innerHTML = `<span class="sr-q">${h(msg)}</span><button type="button" class="small danger" data-y>${h(t("srDelYes"))}</button><button type="button" class="small" data-n>${h(t("srDelNo"))}</button>`; box.querySelector("[data-n]").addEventListener("click", () => renderSeriesAll()); box.querySelector("[data-y]").addEventListener("click", async (e) => { e.target.disabled = true; await onYes(); }); };
+    el.querySelectorAll("[data-srdel]").forEach((b) => b.addEventListener("click", () => { const p = G.prods.find((x) => x.id === b.dataset.srdel); askDel(b.closest(".ep-tools"), t("srDelQ")(p ? p.title || "—" : "—"), () => deleteProds([b.dataset.srdel])); }));
+    if (q(`#${cid}-delall`)) q(`#${cid}-delall`).addEventListener("click", () => askDel(q(`#${cid}-delall`).closest(".sr-clear"), t("srDelAllQ")(G.prods.length), () => deleteProds(G.prods.map((x) => x.id))));
     if (q(`#${cid}-a`)) q(`#${cid}-a`).addEventListener("click", () => { G.epAdding = true; renderSeriesAll(); const i = $(`${cid}-t`); if (i) i.focus(); });
     if (q(`#${cid}-x`)) q(`#${cid}-x`).addEventListener("click", () => { G.epAdding = false; renderSeriesAll(); });
     if (q(`#${cid}-d`)) q(`#${cid}-d`).addEventListener("change", (e) => { q(`#${cid}-dh`).textContent = e.target.value ? longDay(e.target.value) : ""; });
@@ -7098,7 +7135,8 @@ function renderEpStrip() {
     // Starting fresh while a planned episode waits: offer it, so Juan doesn't make a duplicate.
     const today = isoToday();
     const waiting = !G.prodId && !$("script").value.trim() && G.prods.filter((x) => !x.hasText && x.status !== "grabado" && (!x.pubDate || x.pubDate >= today)).sort((a, b) => (a.pubDate || "9").localeCompare(b.pubDate || "9"))[0];
-    el.innerHTML = `<span class="ep-s-t"><small>${h(t("epNow"))}</small><b>${h(title)}</b><span class="hint">${h(G.pubDate ? t("epOut")(fmtDay(G.pubDate)) : t("epNoDate"))}</span></span><button type="button" class="small" id="epBtn">${h(t("epBtn"))}</button>
+    el.hidden = !!(typeof DEMO !== "undefined" && DEMO);
+    el.innerHTML = `<span class="ep-s-t"><b>${h(title)}</b><span class="hint"> · ${h(G.pubDate ? t("epOut")(fmtDay(G.pubDate)) : t("epNoDate"))}</span></span><button type="button" class="small linkish" id="epBtn">${h(t("epBtn"))}</button>
       ${waiting ? `<p class="ep-wait">${h(t("epPlanned")(waiting.title, waiting.pubDate ? fmtDay(waiting.pubDate) : ""))} <button type="button" class="small primary" id="epWrite">${h(t("epWriteIt"))}</button></p>` : ""}`;
     $("epBtn").addEventListener("click", openEpSheet);
     if ($("epWrite")) $("epWrite").addEventListener("click", (e) => { e.target.disabled = true; openFromSeries(waiting.id); });
