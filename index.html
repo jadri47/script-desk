@@ -736,7 +736,7 @@ html.sd-split .masthead{padding-bottom:14px}
 html.sd-split .masthead{flex-wrap:wrap;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:16px}
 html.sd-split .masthead h1{font-size:28px;margin-right:6px;white-space:nowrap}
 html.sd-split .masthead>p[data-i18n="tagline"]{display:none}
-html.sd-split .masthead #stepBar{order:1;flex:1 1 auto;min-width:0;margin:0;gap:8px;flex-wrap:nowrap}
+html.sd-split .masthead #stepBar{order:1;flex:1 1 0;min-width:0;overflow:hidden;margin:0;gap:8px;flex-wrap:nowrap}
 html.sd-split .masthead #stepBar .sb{gap:6px}
 html.sd-split .masthead #stepBar .sb button{padding:8px 10px;font-size:14px;min-height:40px}
 html.sd-split .masthead #stepBar .sb-status{white-space:nowrap;font-size:13px}
@@ -757,6 +757,15 @@ html.sd-split .pane-l>.meta-line{grid-column:1;grid-row:1;align-self:center;marg
 html.sd-split .pane-l>.actions{grid-column:2;grid-row:1;align-self:center;margin:0 0 8px}
 html.sd-split .pane-l>.actions #runBtn{min-height:44px;font-size:16px;padding:0 18px}
 html.sd-split .pane-l>.script-field{grid-column:1 / -1;grid-row:2}
+
+/* Top header row must never wrap: shed the least important parts as the window narrows */
+html.sd-split .masthead .mast-tools #exPick,html.sd-split .masthead .mast-tools .auth-bar,html.sd-split .masthead .themebtn,html.sd-split .masthead .langswitch,html.sd-split .masthead h1{flex-shrink:0}
+html.sd-split .masthead #stepBar .sb{flex:1 1 0;min-width:0}
+html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
+@media (max-width:1700px){ html.sd-split .masthead #stepBar .sb-status{display:none} }
+@media (max-width:1480px){ html.sd-split .masthead #exPick summary .hint{display:none} }
+@media (max-width:1320px){ html.sd-split .masthead #stepBar .sb button:not(.on) .sb-l{display:none} html.sd-split .masthead #stepBar .sb button:not(.on){justify-content:center} }
+@media (max-width:1320px){ html.sd-split .masthead .xswitch>span{display:none} }
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
