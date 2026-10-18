@@ -734,14 +734,14 @@ label{font-weight:600}
 }
 /* central idea, welcome card, inline idea in its fix card */
 .idea-field{margin:12px 0 0}
-.idea-field input{font-family:var(--serif);font-size:17px}
+.idea-field input,.idea-field textarea{font-family:var(--serif);font-size:17px}
 .intro-card{margin:10px 0 14px;padding:18px 20px;border-radius:20px;background:var(--sheet);border:1px solid var(--rule);box-shadow:var(--lift);position:relative;overflow:hidden}
 .intro-card::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,var(--j1) 0 20%,var(--j2) 20% 40%,var(--j3) 40% 60%,var(--j4) 60% 80%,var(--j5) 80% 100%)}
 .intro-card h3{font-size:21px;margin:4px 0 6px}
 .intro-card p{margin:0 0 12px;color:var(--ink-2);max-width:62ch}
 .idea-inline{display:grid;grid-template-columns:1fr auto;gap:6px 8px;align-items:end;margin:10px 0 4px}
 .idea-inline label{grid-column:1 / -1;font-size:13.5px}
-.idea-inline input{font-family:var(--serif);font-size:16px}
+.idea-inline input,.idea-inline textarea{font-family:var(--serif);font-size:16px}
 li.fx-idea .fx-lbl,li.fx-idea .fx-lbl + *,li.fx-idea .fx-act [data-fxai]{display:none}
 .gv-note{font-size:12.5px;margin-top:2px !important}
 @media (max-width:620px){ .idea-inline{grid-template-columns:1fr} }
@@ -1017,7 +1017,7 @@ button.icon:hover{color:var(--ink)}
 .pk-top .field{position:relative;margin:0}
 .pk-count{position:absolute;right:10px;bottom:11px;font:500 12px/1 var(--sans);color:var(--ink-2);font-variant-numeric:tabular-nums;pointer-events:none}
 .pk-count.over{color:var(--rojo);font-weight:700}
-.pk-top input{padding-right:70px}
+.pk-top input,.pk-top textarea[data-one]{padding-right:70px}
 .yt-mock{margin:0;padding:12px;border-radius:16px;background:var(--sheet-2);border:1px solid var(--rule)}
 .yt-thumb{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;display:flex;align-items:center;padding:7% 8%;
   background:radial-gradient(120% 90% at 85% 15%,color-mix(in srgb,var(--j3) 55%,transparent),transparent 60%),radial-gradient(90% 90% at 0% 100%,color-mix(in srgb,var(--j5) 70%,transparent),transparent 65%),#141836}
@@ -1128,6 +1128,9 @@ html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.wa
 .tr-det>summary::-webkit-details-marker{display:none}
 .tr-det>summary::after{content:"";margin-left:auto;margin-right:6px;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
 .tr-det[open]>summary::after{transform:rotate(-135deg) translateY(-2px)}
+
+/* One-line fields that wrap and grow instead of scrolling sideways */
+textarea[data-one]{resize:none;overflow:hidden;min-height:0;line-height:1.45;display:block}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -1177,7 +1180,7 @@ html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.wa
       <textarea id="script" data-i18n-ph="scriptPh" placeholder="Pega tu guion aquí…" spellcheck="true"></textarea>
     </div>
     <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span></div>
-    <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><input id="bigIdea" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."><div id="ideaSug" class="idea-sug-box"></div></div>
+    <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><textarea id="bigIdea" rows="1" data-one="1" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."></textarea><div id="ideaSug" class="idea-sug-box"></div></div>
     <div class="vr-row">
     <div class="field aud-field"><label for="audience" data-i18n="audLabel">Público del canal</label>
       <select id="audience"><option value="both" data-i18n="audBoth">Latinoamérica y España (neutro)</option><option value="latam" data-i18n="audLatam">Latinoamérica</option><option value="es" data-i18n="audEs">España</option></select></div>
@@ -1191,13 +1194,13 @@ html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.wa
       <summary data-i18n="extraSummary">Título, palabra clave y descripción (opcional)</summary>
       <div class="inner">
         <div class="grid2">
-          <div class="field"><label for="title" data-i18n="titleLabel">Título de trabajo</label><input id="title" maxlength="100" data-i18n-ph="titlePh" placeholder="¿Qué dice la Biblia sobre…?"></div>
-          <div class="field"><label for="keyword" data-i18n="kwLabel">Palabra clave</label><input id="keyword" data-i18n-ph="kwPh" placeholder="la frase que alguien buscaría"></div>
+          <div class="field"><label for="title" data-i18n="titleLabel">Título de trabajo</label><textarea id="title" rows="1" data-one="1" maxlength="100" data-i18n-ph="titlePh" placeholder="¿Qué dice la Biblia sobre…?"></textarea></div>
+          <div class="field"><label for="keyword" data-i18n="kwLabel">Palabra clave</label><textarea id="keyword" rows="1" data-one="1" data-i18n-ph="kwPh" placeholder="la frase que alguien buscaría"></textarea></div>
         </div>
-        <div class="field"><label for="thumb" data-i18n="thumbLabel">Texto de la miniatura</label><input id="thumb" maxlength="24" data-i18n-ph="thumbPh" placeholder="2 a 4 palabras"></div>
+        <div class="field"><label for="thumb" data-i18n="thumbLabel">Texto de la miniatura</label><textarea id="thumb" rows="1" data-one="1" maxlength="24" data-i18n-ph="thumbPh" placeholder="2 a 4 palabras"></textarea></div>
         <div class="field"><label for="description" data-i18n="descLabel">Descripción</label><textarea id="description" rows="4"></textarea></div>
         <div class="grid2">
-          <div class="field"><label for="series" data-i18n="seriesLabel">Serie o episodio</label><input id="series" data-i18n-ph="seriesPh" placeholder="Ep. 3 · Salmos"></div>
+          <div class="field"><label for="series" data-i18n="seriesLabel">Serie o episodio</label><textarea id="series" rows="1" data-one="1" data-i18n-ph="seriesPh" placeholder="Ep. 3 · Salmos"></textarea></div>
           <div class="field"><label for="lang" data-i18n="scriptLangLabel">Idioma del guion</label>
             <select id="lang"><option value="auto" data-i18n="detect">Detectar</option><option value="es" data-i18n="spanish">Español</option><option value="en" data-i18n="english">Inglés</option></select></div>
         </div>
@@ -4879,8 +4882,8 @@ function renderPack() {
     <div class="pk-top">
       <figure class="yt-mock" id="pkPreview" aria-label="${h(t("pkPrevLbl"))}"></figure>
       <div class="pk-fields">
-        <div class="field"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="2" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
-        <div class="field"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><input id="pkThumbIn" maxlength="24" value="${h($("thumb").value)}" placeholder="${h(t("thumbPh"))}"><span class="pk-count" id="pkThumbN"></span></div>
+        <div class="field"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="1" data-one="1" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
+        <div class="field"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><textarea id="pkThumbIn" rows="1" data-one="1" maxlength="24" placeholder="${h(t("thumbPh"))}">${h($("thumb").value)}</textarea><span class="pk-count" id="pkThumbN"></span></div>
       </div>
     </div>
     <div id="pkSug"></div><p class="status" id="pkStatus"></p>
@@ -5540,8 +5543,8 @@ function renderTopic() {
   const auto = G.R && G.R.keyword && !$("keyword").value.trim() ? G.R.keyword : "";
   el.innerHTML = `<header class="g-h"><h2>${h(t("tpTitle"))}</h2></header><p class="lead">${h(t("tpLead"))}</p>
     <div class="tp-fields">
-      <div class="field"><label for="tpTopic">${h(t("tpTopic"))}</label><input id="tpTopic" value="${h($("keyword").value)}" placeholder="${h(auto || t("tpTopicPh"))}">${auto ? `<span class="hint">${h(t("tpAuto")(auto))}</span>` : ""}</div>
-      <div class="field"><label for="tpNext">${h(t("tpNext"))}</label><input id="tpNext" value="${h(G.nextEp)}" placeholder="${h(t("tpNextPh"))}"></div>
+      <div class="field"><label for="tpTopic">${h(t("tpTopic"))}</label><textarea id="tpTopic" rows="1" data-one="1" placeholder="${h(auto || t("tpTopicPh"))}">${h($("keyword").value)}</textarea>${auto ? `<span class="hint">${h(t("tpAuto")(auto))}</span>` : ""}</div>
+      <div class="field"><label for="tpNext">${h(t("tpNext"))}</label><textarea id="tpNext" rows="1" data-one="1" placeholder="${h(t("tpNextPh"))}">${h(G.nextEp)}</textarea></div>
       <div class="field"><label for="tpDate">${h(t("tpDate"))}</label><input id="tpDate" type="date" value="${h(G.pubDate)}"></div>
     </div>`;
   const after = () => {
@@ -6414,7 +6417,7 @@ wireFixes = function () {
     li.classList.add("fx-idea");
     const box = document.createElement("div");
     box.className = "idea-inline";
-    box.innerHTML = `<label for="ideaInline">${h(t("ideaInline"))}</label><input id="ideaInline" maxlength="200" placeholder="${h(t("ideaPh"))}"><button type="button" class="small primary" id="ideaInlineSave">${h(t("ideaSave"))}</button>`;
+    box.innerHTML = `<label for="ideaInline">${h(t("ideaInline"))}</label><textarea id="ideaInline" rows="1" data-one="1" maxlength="200" placeholder="${h(t("ideaPh"))}"></textarea><button type="button" class="small primary" id="ideaInlineSave">${h(t("ideaSave"))}</button>`;
     const f = li.querySelector(".tf-f");
     (f || li.querySelector(".fx-top")).insertAdjacentElement("afterend", box);
     const save = () => { const v = $("ideaInline").value.trim(); if (!v) { $("ideaInline").focus(); return; } $("bigIdea").value = v; state.fixSel = {}; state.fixAi = {}; rerunReview(t("ideaSaved")); };
@@ -6925,7 +6928,7 @@ function renderNextPlan() {
     }
     const date = G.pubDate ? addDays(G.pubDate, 7) : nextFreeDate();
     el.innerHTML = `${head}<p class="lead">${h(next ? t("npLeadNext")(next) : t("npLead"))}</p>
-      <div class="np-fields"><div class="field"><label for="npT">${h(t("epAbout"))}</label><input id="npT" maxlength="100" value="${h(capFirst(next))}" placeholder="${h(t("srNewPh"))}"></div>
+      <div class="np-fields"><div class="field"><label for="npT">${h(t("epAbout"))}</label><textarea id="npT" rows="1" data-one="1" maxlength="100" placeholder="${h(t("srNewPh"))}">${h(capFirst(next))}</textarea></div>
       <div class="field"><label for="npD">${h(t("epDay"))}</label><input id="npD" type="date" value="${h(date)}"><span class="hint" id="npDh">${h(t("npDateHint")(longDay(date)))}</span></div></div>
       <div class="actions"><button type="button" class="primary small" id="npGo">${h(t("npGo"))}</button><button type="button" class="small linkish" id="npAll">${h(t("npAll"))}</button><span class="status" id="npSt"></span></div>`;
     $("npD").addEventListener("change", (e) => { $("npDh").textContent = e.target.value ? t("npDateHint")(longDay(e.target.value)) : ""; });
@@ -8405,6 +8408,67 @@ new MutationObserver(() => { if (helpQueued) return; helpQueued = true; requestA
 const _gOnLangHelp = gOnLang;
 gOnLang = function () { _gOnLangHelp(); resetHelp(); };
 injectHelp();
+/* ===== Text fields grow to show all their text (no inner scrolling) ===== */
+// Single-line fields (title, topic, thumbnail text, series, central idea…) are rendered as one-row textareas marked data-one:
+// they wrap and grow like a paragraph, but Enter never adds a line break and pasted line breaks become spaces.
+// Every other textarea except the script editor and raw data boxes also grows to fit its content.
+const AUTOSIZE_SKIP = new Set(["script", "rsData"]);
+const autoOk = (el) => el && el.tagName === "TEXTAREA" && !AUTOSIZE_SKIP.has(el.id) && !el.closest(".ed-wrap");
+function autoFit(el) {
+  if (!autoOk(el) || !el.isConnected) return;
+  const cs = getComputedStyle(el);
+  if (cs.display === "none" || !el.offsetWidth) return; // hidden: refit when it becomes visible
+  const border = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+  const pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const prev = el.style.height;
+  el.style.height = "0px"; // measure the content alone, not a stale height or a min-height
+  const want = cs.boxSizing === "border-box" ? el.scrollHeight + border : el.scrollHeight - pad;
+  // Multi-line boxes keep their "rows" as the minimum, so an empty description still looks like a paragraph box.
+  let min = 0;
+  if (!el.dataset.one && el.rows > 1) {
+    const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
+    min = el.rows * lh + (cs.boxSizing === "border-box" ? pad + border : 0);
+  }
+  el.style.height = Math.ceil(Math.max(want, min)) + "px";
+  if (prev !== el.style.height) el.style.overflowY = "hidden";
+}
+function autoFitAll(root) { (root || document).querySelectorAll("textarea").forEach(autoFit); }
+// Values set by code (loading a saved episode, accepting an AI title…) don't fire "input", so wrap the setter.
+(() => {
+  const d = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
+  if (!d || !d.set) return;
+  Object.defineProperty(HTMLTextAreaElement.prototype, "value", {
+    configurable: true, enumerable: d.enumerable, get() { return d.get.call(this); },
+    set(v) { d.set.call(this, v); if (autoOk(this)) requestAnimationFrame(() => autoFit(this)); },
+  });
+})();
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  if (!autoOk(el)) return;
+  if (el.dataset.one && /[\r\n]/.test(el.value)) {
+    const pos = el.selectionStart;
+    el.value = el.value.replace(/\s*[\r\n]+\s*/g, " ");
+    try { el.setSelectionRange(pos, pos); } catch (_) { /* ignore */ }
+  }
+  autoFit(el);
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.isComposing && e.target && e.target.dataset && e.target.dataset.one) e.preventDefault();
+}, true);
+// Width changes (rotation, panels opening) and fields that appear later (tabs, collapsed sections, re-rendered cards).
+const autoRO = typeof ResizeObserver === "function" ? new ResizeObserver((entries) => {
+  for (const en of entries) { const el = en.target, w = Math.round(en.contentRect.width); if (el._autoW !== w) { el._autoW = w; autoFit(el); } }
+}) : null;
+const autoWatch = (el) => { if (autoOk(el) && !el._autoWatched) { el._autoWatched = true; if (autoRO) autoRO.observe(el); autoFit(el); } };
+new MutationObserver((muts) => {
+  for (const m of muts) for (const n of m.addedNodes) {
+    if (n.nodeType !== 1) continue;
+    if (n.tagName === "TEXTAREA") autoWatch(n); else n.querySelectorAll && n.querySelectorAll("textarea").forEach(autoWatch);
+  }
+}).observe(document.body, { childList: true, subtree: true });
+document.addEventListener("toggle", (e) => { if (e.target.open) requestAnimationFrame(() => autoFitAll(e.target)); }, true);
+window.addEventListener("load", () => autoFitAll());
+document.querySelectorAll("textarea").forEach(autoWatch);
 /* ===== Standalone: sign-in bar, wording without Claude, reopen last episode, save on leave ===== */
 Object.assign(T.es, {
   aiOnlyClaude: "La IA funciona al entrar con Google con una cuenta del equipo.",
