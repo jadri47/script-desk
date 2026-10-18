@@ -1390,9 +1390,19 @@ const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten
 
 // F.6 structure, promise, open-loop
 const TRANSITIONS = ["primero", "segundo", "tercero", "en primer lugar", "en segundo lugar", "ahora bien", "por otro lado", "luego", "después", "finalmente", "por último", "en resumen", "para terminar", "first", "second", "next", "finally", "in summary"];
-const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "you'll see", "you'll learn", "by the end of this"];
+const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "vas a descubrir", "vas a aprender", "vas a entender", "vamos a descubrir", "vamos a aprender", "vamos a estudiar", "te voy a mostrar", "les voy a mostrar", "you'll see", "you'll learn", "by the end of this", "you're going to learn", "you're going to see", "we'll look at"];
 const OPEN_LOOPS = ["imaginad", "dejadme contaros", "os voy a contar", "here's what almost nobody notices", "más adelante", "en un momento", "quédate hasta el final", "pero antes", "hay algo más", "la clave está en", "lo que casi nadie nota", "imagínate", "imagina", "déjame contarte", "les voy a contar", "later in this", "stay until the end", "here's the thing", "imagine"];
 const PRAYER_OPEN = ["oremos", "vamos a orar", "quiero orar", "antes de empezar oremos", "padre celestial", "padre amado", "señor te damos gracias", "señor, te damos gracias", "señor te pedimos", "señor, te pedimos", "en el nombre de jesús", "en el nombre de cristo", "en tu nombre", "amén", "let's pray", "heavenly father", "father god", "in jesus' name", "in jesus name", "amen"];
+// A bare "amén" counts as prayer only when it isn't the rhetorical "¿amén?" asked of the audience mid-teaching.
+const PRAYER_CORE = PRAYER_OPEN.filter((p) => !/^amé?n$/i.test(p));
+const BLESSINGS = ["dios les bendiga", "dios te bendiga", "que dios les bendiga", "que dios te bendiga", "bendiciones", "el señor te bendiga", "el señor les bendiga", "god bless", "be blessed"];
+// A sentence is prayer when it uses a prayer phrase, says "amén" (not the rhetorical "¿amén?"), or speaks to God by name ("Señor, …").
+const PRAYER_VOC = /^\s*(señor|padre|dios|jesús|cristo|espíritu santo|lord|father|god|jesus)\s*[,!]/i;
+const isPrayerText = (t) => {
+  const has = (list) => findPhrases(t, list, "x").length > 0;
+  if (has(PRAYER_CORE)) return true;
+  return !/[?¿]/.test(t) && (has(["amén", "amen"]) || PRAYER_VOC.test(t));
+};
 const PREV_EP = ["la semana pasada", "en el episodio anterior", "el episodio pasado", "la última vez", "vimos que", "como vimos", "como veíamos", "seguimos con", "continuamos con", "previously", "last week", "last time", "as we saw", "we continue"];
 const PROMISE_VERBS = /(?<![\p{L}])(cambia|cambiar|cambiará|entender|entenderás|descubrir|descubrirás|aprender|aprenderás|saber|sabrás|vivir|vencer|venceremos|salir|sanar|sanidad|recibir|recibirás|encontrar|encontrarás|conocer|conocerás|libera|liberar|learn|understand|discover|find|know|live|overcome|receive|change|changes)(?![\p{L}])/iu;
 const NEXT_EP = ["próximo episodio", "la próxima semana", "en el siguiente episodio", "siguiente episodio", "en la próxima", "next episode", "next week"];
@@ -1825,7 +1835,7 @@ function analyze(text, opts = {}) {
   // ===== Structure (C.2) =====
   const firstSent = sents[0] ? sents[0].text : "";
   // The hook is judged on the first spoken sentence; an opening prayer is neutral (it has its own row below).
-  const prayerSent = (x) => hasPhrase(x.text, PRAYER_OPEN);
+  const prayerSent = (x) => isPrayerText(x.text);
   const hookS = sents.find((x) => !prayerSent(x)) || sents[0] || { text: "" };
   const hookText = coHook || hookS.text;
   const hookWords = wordTokens(hookText).length;
@@ -1875,12 +1885,21 @@ function analyze(text, opts = {}) {
   if (coHook) earlyFluff.length = 0;
   add("structure", { id: "greeting", label: L("Sin saludos ni pedidos antes del contenido", "No greetings or asks before content"), passed: !earlyFluff.length, info: coHook ? L("La apertura en frío va antes de cualquier saludo.", "The cold open plays before any greeting.") : earlyFluff.length ? L(`Antes de la promesa aparece: ${earlyFluff.map((h) => "«" + h.text + "»").join(", ")}.`, `Before the promise: ${earlyFluff.map((h) => '"' + h.text + '"').join(", ")}.`) : L("La apertura va directo al tema.", "The opening goes straight to the topic."), fix: earlyFluff.length ? L("Mueve el saludo después de la promesa, o quítalo.", "Move the greeting after the promise, or cut it.") : null });
 
-  // Opening prayer: normal in Christian teaching, so it is not a greeting, but a cold viewer still waits through it.
-  const prayerSents = sents.filter((x) => prayerSent(x) && timeAt(x.start) <= 120 && (!firstPromise || x.start < firstPromise.start));
+  // Opening prayer: normal in Christian teaching and never timed. What matters is where it sits: after the hook and the promise,
+  // a viewer from search already knows why to stay. Before the promise it is only a problem if it pushes the promise past its target.
+  const prayerSents = sents.filter((x) => prayerSent(x) && timeAt(x.start) + coSec <= 120);
+  let openPrayer = null;
   if (prayerSents.length) {
     const pA = Math.min(...prayerSents.map((x) => x.start)), pB = Math.max(...prayerSents.map((x) => x.end));
     const prayerSec = Math.max(1, Math.round(timeAt(pB) - timeAt(pA)));
-    add("structure", { id: "prayer", soft: true, label: L("Oración de apertura corta", "Short opening prayer"), passed: prayerSec <= 12, info: L(`La oración de apertura ocupa unos ${prayerSec} s antes de la promesa. A un espectador que llega desde la búsqueda le cuenta contra los primeros 30 s. Los 12 s son meta propia.`, `The opening prayer takes about ${prayerSec} s before the promise. For a viewer arriving from search it counts against the first 30 s. The 12 s is our target.`), fix: L("Acórtala a una frase o muévela después de la promesa.", "Cut it to one sentence or move it after the promise.") });
+    const before = !coProm && (!firstPromise || pA < firstPromise.start) && !(impliedOk && impliedOk.start < pA);
+    openPrayer = { from: timeAt(pA) + coSec, to: timeAt(pB) + coSec, before };
+    const prayerOk = !before || promiseOk;
+    add("structure", { id: "prayer", soft: true, label: L("Oración de apertura después de la promesa", "Opening prayer after the promise"), passed: prayerOk,
+      info: !before ? L(`La oración (unos ${prayerSec} s) va después de la promesa: quien llega desde la búsqueda ya sabe por qué quedarse. Su duración no se mide.`, `The prayer (about ${prayerSec} s) comes after the promise: a viewer from search already knows why to stay. Its length isn't judged.`)
+        : prayerOk ? L(`La oración (unos ${prayerSec} s) va antes de la promesa, pero la promesa aún llega a tiempo. Su duración no se mide.`, `The prayer (about ${prayerSec} s) comes before the promise, but the promise still lands in time. Its length isn't judged.`)
+        : L(`La oración (unos ${prayerSec} s) va antes de la promesa y la retrasa más allá de ${promiseDeadline} s. Quien llega desde la búsqueda aún no sabe qué va a recibir. El orden gancho → promesa → oración es consejo propio.`, `The prayer (about ${prayerSec} s) comes before the promise and pushes it past ${promiseDeadline} s. A viewer from search doesn't yet know what they'll get. The order hook → promise → prayer is our advice.`),
+      fix: prayerOk ? null : L("Deja la oración completa y muévela justo después de la promesa: gancho → promesa → oración → enseñanza.", "Keep the whole prayer and move it right after the promise: hook → promise → prayer → teaching.") });
   }
 
   // Re-hooks: each teaching point (a heading, or a paragraph that opens with a transition) longer than 4 minutes needs a question to the listener or a teaser after its first sentence.
@@ -1916,9 +1935,16 @@ function analyze(text, opts = {}) {
   const ctaOk = clusters.length === 1;
   add("structure", { id: "cta", label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
 
+  // Ending: the next-episode line counts in the last 90 s, or up to 45 s before a closing prayer or blessing (which can run as long as it needs).
+  // YouTube's end screen only uses the last 5–20 s.
   const nextHits = findPhrases(text, NEXT_EP, "next");
-  const endOk = nextHits.some((h) => timeAt(h.start) >= runtimeSec - 45);
-  add("structure", { id: "ending", label: L("Cierre que anuncia el siguiente episodio", "Ending that leads to the next episode"), passed: endOk, info: endOk ? L("Los últimos 45 segundos mencionan el próximo episodio.", "The last 45 seconds mention the next episode.") : L("Los últimos 45 segundos no conducen a otro video; ahí va la pantalla final.", "The last 45 seconds don't lead to another video; that's where the end screen goes."), fix: endOk ? null : L("Termina con una frase que invite al próximo episodio de la serie.", "End with a line inviting viewers to the next episode.") });
+  const closeSents = sents.filter((x) => timeAt(x.start) >= runtimeSec - 240 && (prayerSent(x) || hasPhrase(x.text, BLESSINGS)));
+  const closePrayerT = closeSents.length ? timeAt(closeSents[0].start) : null;
+  const closeFrom = Math.max(0, Math.min(runtimeSec - 90, closePrayerT !== null ? closePrayerT - 45 : Infinity));
+  const nextT = nextHits.map((h) => timeAt(h.start)).filter((t) => t >= closeFrom);
+  const endOk = nextT.length > 0;
+  const closeWhere = closePrayerT !== null ? L(`el cierre (desde ${fmtTime(closeFrom)}, incluida la oración o bendición final en ${fmtTime(closePrayerT)})`, `the close (from ${fmtTime(closeFrom)}, including the closing prayer or blessing at ${fmtTime(closePrayerT)})`) : L("los últimos 90 segundos", "the last 90 seconds");
+  add("structure", { id: "ending", label: L("Cierre que anuncia el siguiente episodio", "Ending that leads to the next episode"), passed: endOk, info: endOk ? L(`El próximo episodio se menciona en ${fmtTime(nextT[0])}, en ${closeWhere}.`, `The next episode is mentioned at ${fmtTime(nextT[0])}, within ${closeWhere}.`) : L(`No se menciona el próximo episodio en ${closeWhere}. La pantalla final de YouTube ocupa los últimos 5–20 s.`, `The next episode isn't mentioned in ${closeWhere}. YouTube's end screen uses the last 5–20 s.`), fix: endOk ? null : L("Antes de la oración o la bendición final, di de qué trata el próximo episodio.", "Before the closing prayer or blessing, say what the next episode is about.") });
 
   // ===== Scripture (C.7, deterministic part) =====
   add("scripture", { id: "refs", label: L("Citas bíblicas con referencia", "Scripture quotes have references"), passed: !orphanQuotes.length, info: L(`${refs.length} referencia(s) y ${quotes.length} cita(s) entre comillas. `, `${refs.length} reference(s), ${quotes.length} quoted passage(s). `) + (orphanQuotes.length ? L(`${orphanQuotes.length} cita(s) sin referencia cercana; si son versículos, añade libro, capítulo y versículo.`, `${orphanQuotes.length} quote(s) without a nearby reference.`) : ""), fix: orphanQuotes.length ? L("Añade la referencia justo antes o después de cada cita.", "Add the reference next to each quote.") : null });
@@ -1946,7 +1972,7 @@ function analyze(text, opts = {}) {
   const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);
   add("spoken", { id: "long", label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
 
-  add("spoken", { id: "runtime", soft: runtimeSec >= 480, label: L("Duración razonable para un episodio de enseñanza", "Reasonable length for a teaching episode"), passed: runtimeSec >= 480 && runtimeSec <= 2700, info: L(`Enseñando: ${fmtTime(runtimeSec)} · leído de corrido: ${fmtTime(readSec)}. Calculado por sílabas (${totalSyl}) a ${readRate.toFixed(2)} sílabas/s (Pellegrino et al., 2011) × factor de ritmo ${k.toFixed(2)}${opts.kCalibrated ? " calibrado con sus episodios" : opts.kReh ? " ajustado con ensayos" : " (supuesto; se calibra con episodios reales)"}.${co ? ` La apertura en frío suma ≈${Math.round(coSec)} s al video${co.mode === "move" ? " si se duplica; al moverla no cambia el total" : ""}.` : ""}`, `Teaching: ${fmtTime(runtimeSec)} · straight read: ${fmtTime(readSec)}. From ${totalSyl} syllables at ${readRate.toFixed(2)} syllables/s (Pellegrino et al., 2011) × pace factor ${k.toFixed(2)}${opts.kCalibrated ? " calibrated from your episodes" : opts.kReh ? " adjusted from rehearsals" : " (assumed; calibrates from real episodes)"}.${co ? ` The cold open adds ≈${Math.round(coSec)} s to the video${co.mode === "move" ? " if duplicated; moved, the total doesn't change" : ""}.` : ""}`), fix: runtimeSec < 480 ? L("Menos de 8 minutos: según guías de creadores, YouTube no permite anuncios intermedios por debajo de 8 min; confírmalo en YouTube Studio → Monetización.", "Under 8 minutes: creator guides say YouTube allows no mid-roll ads below 8 min; confirm it in YouTube Studio → Monetization.") : runtimeSec > 2700 ? L("Más de 45 minutos. Datos de 21.755 videos largos (AIR Media-Tech, 2025): la retención mediana baja de 26 % (15–60 min) a 17 % (más de 1 h), pero los minutos vistos suben. Decide con tu propia retención (pestaña Resultados).", "Over 45 minutes. Data from 21,755 long videos (AIR Media-Tech, 2025): median retention falls from 26% (15–60 min) to 17% (over 1 h), but minutes watched rise. Decide from your own retention (Results tab).") : null });
+  add("spoken", { id: "runtime", soft: runtimeSec >= 480, label: L("Duración razonable para un episodio de enseñanza", "Reasonable length for a teaching episode"), passed: runtimeSec >= 480 && runtimeSec <= 2700, info: L(`Enseñando: ${fmtTime(runtimeSec)} · leído de corrido: ${fmtTime(readSec)}. Calculado por sílabas (${totalSyl}) a ${readRate.toFixed(2)} sílabas/s (Pellegrino et al., 2011) × factor de ritmo ${k.toFixed(2)}${opts.kCalibrated ? " calibrado con sus episodios" : opts.kReh ? " ajustado con ensayos" : " (supuesto; se calibra con episodios reales)"}.${co ? ` La apertura en frío suma ≈${Math.round(coSec)} s al video${co.mode === "move" ? " si se duplica; al moverla no cambia el total" : ""}.` : ""}`, `Teaching: ${fmtTime(runtimeSec)} · straight read: ${fmtTime(readSec)}. From ${totalSyl} syllables at ${readRate.toFixed(2)} syllables/s (Pellegrino et al., 2011) × pace factor ${k.toFixed(2)}${opts.kCalibrated ? " calibrated from your episodes" : opts.kReh ? " adjusted from rehearsals" : " (assumed; calibrates from real episodes)"}.${co ? ` The cold open adds ≈${Math.round(coSec)} s to the video${co.mode === "move" ? " if duplicated; moved, the total doesn't change" : ""}.` : ""}`), fix: runtimeSec < 480 ? L("Menos de 8 minutos: según guías de creadores, YouTube no permite anuncios intermedios por debajo de 8 min; confírmalo en YouTube Studio → Monetización.", "Under 8 minutes: creator guides say YouTube allows no mid-roll ads below 8 min; confirm it in YouTube Studio → Monetization.") : runtimeSec > 2700 ? L("Más de 45 minutos. Las guías de creadores coinciden en que el porcentaje visto baja en los videos más largos, aunque los minutos vistos suben; no encontramos una cifra verificable para enseñanza bíblica. Decide con tu propia retención (pestaña Resultados).", "Over 45 minutes. Creator guides agree that percentage watched falls on longer videos while minutes watched rise; we found no verifiable figure for Bible teaching. Decide from your own retention (Results tab).") : null });
 
   const mulHits = [];
   for (const m of MULETILLAS) {
@@ -2011,7 +2037,7 @@ function analyze(text, opts = {}) {
   const desc = (opts.description || "").trim();
   const searchy = /(¿?qu[eé] dice la biblia|¿?c[oó]mo|¿?por qu[eé]|¿?qu[eé] (es|significa)|¿?qui[eé]n (fue|era)|explicad[oa]|estudio b[ií]blico|how to|what does the bible|why|who was)/i;
   add("seo", { id: "kw", label: L("Palabra clave principal definida", "Primary keyword defined"), passed: !!keyword, info: keyword ? L(`Palabra clave: «${keyword}»${opts.keyword ? " (escrita por ti)" : " (la más repetida; mejor escríbela tú)"}.`, `Keyword: "${keyword}"${opts.keyword ? " (yours)" : " (most repeated; better to set it)"}.`) : L("No hay una palabra clave clara.", "No clear keyword."), fix: keyword ? null : L("Escribe en el campo «Palabra clave» la frase que un oyente buscaría.", "Type the phrase a viewer would search in the Keyword field.") });
-  add("seo", { id: "kwopen", label: L("Palabra clave en los primeros 20 segundos", "Keyword in the first 20 seconds"), passed: kwFirstT !== null && kwFirstT <= 20, info: kwFirstT === null ? L("No aparece en el guion.", "Not in the script.") : L(`Primera mención en ${fmtTime(kwFirstT)}. Los subtítulos automáticos se indexan; el inicio pesa más.`, `First mention at ${fmtTime(kwFirstT)}. Auto-captions are indexed; the opening weighs most.`), fix: kwFirstT !== null && kwFirstT <= 20 ? null : L("Dila en la primera o segunda oración.", "Say it in the first or second sentence.") });
+  add("seo", { id: "kwopen", soft: true, label: L("Palabra clave en los primeros 20 segundos", "Keyword in the first 20 seconds"), passed: kwFirstT !== null && kwFirstT <= 20, info: kwFirstT === null ? L("No aparece en el guion.", "Not in the script.") : L(`Primera mención en ${fmtTime(kwFirstT)}. Los subtítulos automáticos se indexan; que el inicio pese más es una práctica común, no un dato publicado por YouTube.`, `First mention at ${fmtTime(kwFirstT)}. Auto-captions are indexed; that the opening weighs more is common practice, not a figure YouTube publishes.`), fix: kwFirstT !== null && kwFirstT <= 20 ? null : L("Dila en la primera o segunda oración.", "Say it in the first or second sentence.") });
   add("seo", { id: "kwspread", label: L("Palabra clave repartida en todo el episodio", "Keyword spread across the episode"), passed: kwPositions.length >= kwMin && thirds.size >= 2, info: L(`${kwPositions.length} mención(es), en ${thirds.size} de 3 tercios del episodio.`, `${kwPositions.length} mention(s), in ${thirds.size} of 3 thirds.`), fix: kwPositions.length >= kwMin && thirds.size >= 2 ? null : L("Repítela con naturalidad al inicio, a la mitad y al cierre.", "Repeat it naturally at the start, middle and end.") });
   const support = top.find(([w, n]) => n >= 2 && w !== keyword && !keyword.includes(w));
   add("seo", { id: "support", label: L("Términos de apoyo relacionados", "Related supporting terms"), passed: !!support, info: support ? L(`También repites «${support[0]}» (×${support[1]}).`, `Also repeats "${support[0]}" (×${support[1]}).`) : L("Solo una palabra se repite.", "Only one word repeats."), fix: support ? null : L("Usa uno o dos sinónimos del tema, no solo la misma frase.", "Use a synonym or two, not just the same phrase.") });
@@ -2048,7 +2074,7 @@ function analyze(text, opts = {}) {
   const passed = allRows.filter((r) => r.passed).length;
   const worst = preflight.some((p) => p.level === "rojo") || packaging.some((p) => p.level === "rojo") ? "rojo" : preflight.some((p) => p.level === "amarillo") || packaging.some((p) => p.level === "amarillo") ? "amarillo" : "verde";
 
-  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
+  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, promiseDeadline, openPrayer, closeFrom, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
 }
 
 // ---------- Guion: sentence units, sections, cold-open candidates (pure) ----------
@@ -2151,10 +2177,12 @@ function detectLayout(U, R) {
   // 5. Close: the paragraph that announces the next episode, near the end.
   const total = U[U.length - 1].t1;
   let nIdx = -1;
-  for (let i = U.length - 1; i >= 0; i--) if (U[i].t0 >= total - 60 && hasPhrase(U[i].text, NEXT_EP)) { nIdx = i; break; }
+  // Same window as the Results "ending" check: last 90 s, or up to 45 s before a closing prayer or blessing.
+  const closeFrom = Number.isFinite(R.closeFrom) ? Math.min(R.closeFrom, total - 60) : total - 90;
+  for (let i = U.length - 1; i >= 0; i--) if (U[i].t0 >= closeFrom && hasPhrase(U[i].text, NEXT_EP)) { nIdx = i; break; }
   if (nIdx > 0) {
     let c = nIdx;
-    while (c - 1 > 0 && U[c - 1].para === U[nIdx].para && nIdx - (c - 1) <= 3 && U[c - 1].t0 >= total - 90 && !(starts.get(c - 1) && starts.get(c - 1).type === "cta")) c--;
+    while (c - 1 > 0 && U[c - 1].para === U[nIdx].para && nIdx - (c - 1) <= 3 && U[c - 1].t0 >= closeFrom - 30 && !(starts.get(c - 1) && starts.get(c - 1).type === "cta")) c--;
     if (starts.get(c) && starts.get(c).type === "cta" && c < nIdx) c++;
     put(c, "close", "alta");
   }
@@ -2222,19 +2250,28 @@ function sectionFlags(secs, U, R, cold) {
   const F = secs.map(() => []);
   if (!secs.length) return F;
   const hook = secs.find((s) => s.type === "hook");
-  if (!cold.hook && hook && hook.dur > 7.5) F[hook.k].push({ id: "hookLong", v: Math.round(hook.dur) });
+  // Same rules as the Results tab: an opening prayer inside the hook section doesn't count against the hook,
+  // and the promise target is 20 s, or 45 s in a series episode.
+  const op = R.openPrayer;
+  const prayIn = hook && op ? Math.max(0, Math.min(op.to, hook.t1) - Math.max(op.from, hook.t0)) : 0;
+  const hookDur = hook ? hook.dur - prayIn : 0;
+  if (!cold.hook && hook && hookDur > 7.5) F[hook.k].push({ id: "hookLong", v: Math.round(hookDur) });
   if (!cold.hook && hook && U.slice(hook.first, hook.last + 1).some((u) => hasPhrase(u.text, GREETINGS))) F[hook.k].push({ id: "hookGreeting" });
   if (!cold.promise) {
     const prom = secs.find((s) => s.type === "promise");
     if (!prom) { if (!(hook && U.slice(hook.first, hook.last + 1).some((u) => hasPhrase(u.text, PROMISES)))) F[0].push({ id: "noPromise" }); }
-    else if (prom.t1 > 20.5) F[prom.k].push({ id: "promiseLate", v: prom.t1 });
+    else if (prom.t1 > (R.promiseDeadline || 20) + 0.5) F[prom.k].push({ id: "promiseLate", v: prom.t1, d: R.promiseDeadline || 20 });
   }
   const total = secs[secs.length - 1].t1;
-  const ev = [0, ...(R.qPositions || []).map((p) => R.timeAt(p)), ...(R.loopHits || []).map((x) => R.timeAt(x.start)), total].sort((a, b) => a - b);
-  for (let i = 1; i < ev.length; i++) if (ev[i] - ev[i - 1] > 270) {
-    const mid = (ev[i] + ev[i - 1]) / 2;
+  // Re-hook gaps: the same teaching points the Results "rehook" row found without a question or teaser.
+  const gapSpans = Array.isArray(R.blocks) ? R.blocks.filter((b) => !b.has).map((b) => [b.from, b.to]) : (() => {
+    const ev = [0, ...(R.qPositions || []).map((p) => R.timeAt(p)), ...(R.loopHits || []).map((x) => R.timeAt(x.start)), total].sort((a, b) => a - b);
+    const out = []; for (let i = 1; i < ev.length; i++) if (ev[i] - ev[i - 1] > 270) out.push([ev[i - 1], ev[i]]); return out;
+  })();
+  for (const [a, b] of gapSpans) {
+    const mid = (a + b) / 2;
     const s = secs.find((x) => mid >= x.t0 && mid < x.t1) || secs[secs.length - 1];
-    F[s.k].push({ id: "gap", a: ev[i - 1], b: ev[i] });
+    F[s.k].push({ id: "gap", a, b });
   }
   const ctas = secs.filter((s) => s.type === "cta");
   ctas.slice(0, -1).forEach((s) => F[s.k].push({ id: "extraCta" }));
@@ -2676,7 +2713,12 @@ function buildFixCards(text, R, opts, failed, max = 3) {
       const last = U[U.length - 1];
       const nx = (opts.nextEp || "").trim().replace(/[.!?]+$/, "");
       const line = nx ? L(`La próxima semana veremos ${nx}. Te espero en el siguiente episodio.`, `Next week we'll look at ${nx}. See you in the next episode.`) : L("La próxima semana seguimos con el siguiente episodio de la serie. Te espero.", "Next week we continue with the next episode of the series. See you then.");
-      if (last) card.proposals.push({ kind: "patch", label: L("Añadir una línea al próximo episodio", "Add a line to the next episode"), note: nx ? "" : L("Escribe el tema del próximo episodio en «Tema y próximo episodio» y la frase lo nombrará.", "Enter the next episode's topic under \"Topic and next episode\" and the line will name it."), patches: [{ start: last.end, end: last.end, rep: "\n\n" + line }] });
+      // With a closing prayer or blessing, the line goes just before it, so the prayer stays the last word.
+      const totalT = last ? last.t1 : 0;
+      const pray = U.find((u) => u.t0 >= totalT - 240 && (isPrayerText(u.text) || hasPhrase(u.text, BLESSINGS)));
+      const patch = pray ? { start: pray.start, end: pray.start, rep: line + " " } : last ? { start: last.end, end: last.end, rep: "\n\n" + line } : null;
+      if (pray) card.evidence = [ev(pray, [])];
+      if (patch) card.proposals.push({ kind: "patch", label: pray ? L("Añadir una línea al próximo episodio antes de la oración final", "Add a line to the next episode before the closing prayer") : L("Añadir una línea al próximo episodio", "Add a line to the next episode"), note: nx ? "" : L("Escribe el tema del próximo episodio en «Tema y próximo episodio» y la frase lo nombrará.", "Enter the next episode's topic under \"Topic and next episode\" and the line will name it."), patches: [patch] });
       card.ai = last ? { start: last.start, end: last.end } : null;
     } else if (row.id === "muletillas") {
       const hits = (R.mulHits || []).slice().sort((a, b) => a.start - b.start);
@@ -2910,12 +2952,13 @@ function messageChecks(text, opts, ctx) {
       : L("Los pasajes que lees tienen su señal para el editor.", "The passages you read have their cue for the editor."),
     fix: out.offscreen.length ? L("Añade [TEXTO: libro capítulo:versículo] antes del párrafo para que el editor lo ponga en pantalla.", "Add [TEXTO: book chapter:verse] before the paragraph so the editor shows it.") : null });
 
-  // 5. Very long readings without a pause for comment.
-  out.longReads = (quotes || []).filter((q) => q.inner.split(/\s+/).length > 90);
-  add("message", { id: "reading", label: L("Lecturas que no cansan", "Readings that don't tire"), passed: !out.longReads.length,
-    info: out.longReads.length ? L(`${out.longReads.length} lectura(s) de más de 90 palabras seguidas. En video la atención cae durante las lecturas largas.`, `${out.longReads.length} reading(s) over 90 words in a row. On video attention drops during long readings.`)
-      : L("Ninguna lectura pasa de 90 palabras seguidas.", "No reading runs over 90 words in a row."),
-    fix: out.longReads.length ? L("Lee en dos o tres partes y comenta entre ellas, o muestra el texto en pantalla mientras lees.", "Read it in two or three parts with comments in between, or show the text on screen while reading.") : null });
+  // 5. Very long readings without a pause for comment. Reading a whole passage is normal in expository teaching,
+  // so this is advice (·), and only past ~150 words (about 8–10 verses). The 150 is our own target.
+  out.longReads = (quotes || []).filter((q) => q.inner.split(/\s+/).length > 150);
+  add("message", { id: "reading", soft: true, label: L("Lecturas largas con pausas", "Long readings with pauses"), passed: !out.longReads.length,
+    info: out.longReads.length ? L(`${out.longReads.length} lectura(s) de más de 150 palabras seguidas. Leer el pasaje completo está bien; en video ayuda una pausa o el texto en pantalla. Los 150 son meta propia.`, `${out.longReads.length} reading(s) over 150 words in a row. Reading the full passage is fine; on video a pause or on-screen text helps. The 150 is our target.`)
+      : L("Ninguna lectura pasa de 150 palabras seguidas.", "No reading runs over 150 words in a row."),
+    fix: out.longReads.length ? L("No acortes el pasaje: muéstralo en pantalla mientras lees, o haz una pausa breve a la mitad para comentar.", "Don't shorten the passage: show it on screen while reading, or pause briefly halfway to comment.") : null });
 
   // 6. The close leaves them with the point, not only with the next episode.
   const tail = text.slice(out.lateStart);
@@ -3828,7 +3871,7 @@ Object.assign(T.es, {
   escTitle: "Escaleta", escLead: "Tiempos estimados al ritmo del presentador; un ensayo los reemplaza por tiempos reales.",
   thNum: "#", thSec: "Sección", thStart: "Inicio", thEnd: "Fin", thDur: "Dur.", thLeft: "Queda", thLatest: "Empezar antes de", thReh: "Ensayo", thDelta: "Δ", thVideo: "En el video",
   target: "Duración objetivo", targetPh: "mm:ss", totalRec: (a) => `Grabación ≈${a}`, totalVideo: (a) => `video final ≈${a}`, overT: (x) => `${x} sobre el objetivo`, underT: (x) => `${x} bajo el objetivo`, coldRow: "Apertura en frío (clips)",
-  flags: { hookLong: (s) => `El gancho dura ≈${s} s (meta propia: 7 s).`, hookGreeting: "El gancho es un saludo: elige una apertura en frío.", promiseLate: (t) => `La promesa termina en ${t} (meta propia: 20 s).`, noPromise: "No hay promesa en la apertura.", gap: (a, b) => `De ${a} a ${b} sin pregunta ni anticipo (más de 4:30).`, extraCta: "Otra llamada a la acción: deja solo una.", noClose: "No hay cierre que anuncie el próximo episodio." },
+  flags: { hookLong: (s) => `El gancho dura ≈${s} s (meta propia: 7 s).`, hookGreeting: "El gancho es un saludo: elige una apertura en frío.", promiseLate: (t, d) => `La promesa termina en ${t} (meta propia: ${d || 20} s).`, noPromise: "No hay promesa en la apertura.", gap: (a, b) => `De ${a} a ${b}: un punto de más de 4 min sin pregunta ni anticipo (meta propia).`, extraCta: "Otra llamada a la acción: deja solo una.", noClose: "No hay cierre que anuncie el próximo episodio." },
   st: { hook: "Gancho", promise: "Promesa", intro: "Introducción", point: "Punto", body: "Desarrollo", cta: "Llamada a la acción", close: "Cierre" },
   conf: { alta: "detección segura", media: "detección probable", baja: "corte sugerido", manual: "ajustado a mano" },
   secTitle: "Guion por secciones", secLead: "Toca una frase para empezar una sección ahí, editarla o usarla en la apertura. Escribe «## Título» o [B-ROLL: …], [TEXTO: …], [PAUSA] en el guion para marcar secciones y señales.",
@@ -3869,7 +3912,7 @@ Object.assign(T.en, {
   escTitle: "Rundown", escLead: "Times estimated at the host's pace; a rehearsal replaces them with real times.",
   thNum: "#", thSec: "Section", thStart: "Start", thEnd: "End", thDur: "Dur.", thLeft: "Left", thLatest: "Start by", thReh: "Rehearsal", thDelta: "Δ", thVideo: "In the video",
   target: "Target length", targetPh: "mm:ss", totalRec: (a) => `Recording ≈${a}`, totalVideo: (a) => `final video ≈${a}`, overT: (x) => `${x} over target`, underT: (x) => `${x} under target`, coldRow: "Cold open (clips)",
-  flags: { hookLong: (s) => `The hook runs ≈${s} s (our target: 7 s).`, hookGreeting: "The hook is a greeting: pick a cold open.", promiseLate: (t) => `The promise ends at ${t} (our target: 20 s).`, noPromise: "No promise in the opening.", gap: (a, b) => `From ${a} to ${b} with no question or teaser (over 4:30).`, extraCta: "Another call to action: keep only one.", noClose: "No ending that points to the next episode." },
+  flags: { hookLong: (s) => `The hook runs ≈${s} s (our target: 7 s).`, hookGreeting: "The hook is a greeting: pick a cold open.", promiseLate: (t, d) => `The promise ends at ${t} (our target: ${d || 20} s).`, noPromise: "No promise in the opening.", gap: (a, b) => `From ${a} to ${b}: a point over 4 min with no question or teaser (our target).`, extraCta: "Another call to action: keep only one.", noClose: "No ending that points to the next episode." },
   st: { hook: "Hook", promise: "Promise", intro: "Intro", point: "Point", body: "Body", cta: "Call to action", close: "Close" },
   conf: { alta: "confident", media: "likely", baja: "suggested split", manual: "set by hand" },
   secTitle: "Script by section", secLead: "Tap a line to start a section there, edit it or use it in the cold open. Write \"## Title\" or [B-ROLL: …], [TEXT: …], [PAUSE] in the script to mark sections and cues.",
@@ -4221,7 +4264,7 @@ function renderEsc() {
   const showVideo = clips.length > 0;
   const head = `<tr><th>${h(t("thNum"))}</th><th>${h(t("thSec"))}</th><th>${h(t("thStart"))}</th><th>${h(t("thEnd"))}</th><th>${h(t("thDur"))}</th>${showVideo ? `<th>${h(t("thVideo"))}</th>` : ""}<th>${h(tgt ? t("thLatest") : t("thLeft"))}</th><th>${h(t("thReh"))}</th><th>${h(t("thDelta"))}</th></tr>`;
   const fl = t("flags");
-  const flagTxt = (f) => (f.id === "hookLong" ? fl.hookLong(f.v) : f.id === "promiseLate" ? fl.promiseLate(fmtTime(f.v)) : f.id === "gap" ? fl.gap(fmtTime(f.a), fmtTime(f.b)) : fl[f.id]);
+  const flagTxt = (f) => (f.id === "hookLong" ? fl.hookLong(f.v) : f.id === "promiseLate" ? fl.promiseLate(fmtTime(f.v), f.d) : f.id === "gap" ? fl.gap(fmtTime(f.a), fmtTime(f.b)) : fl[f.id]);
   const coldRow = showVideo ? `<tr class="cold"><td>0</td><td><span class="tdot" style="--c:var(--mul)"></span>${h(t("coldRow"))}<div class="hint">${clips.map((c) => `${fmtTime(c.t0)}–${fmtTime(c.t1)}`).join(" + ")}</div></td><td>—</td><td>—</td><td>${fmtTime(cs)}</td><td>0:00</td><td></td><td></td><td></td></tr>` : "";
   const rows = G.secs.map((s) => {
     const lap = lapFor(s), d = lap != null ? lap - s.dur : null;
@@ -4283,7 +4326,7 @@ function renderSecs() {
     return `<div class="gsec" id="gs-${s.k}" style="--c:${SEC_COLOR[s.type]}">
       <div class="gsec-h">${typeSel}<span class="gsec-n">${h(secLabel(s))}</span><span class="gsec-time">${fmtTime(s.t0)}–${fmtTime(s.t1)} · ${fmtTime(s.dur)}</span><span class="gsec-conf">${h(t("conf")[s.conf] || s.conf)}</span>
         ${s.k > 0 ? `<span class="gsec-tools"><button class="icon" data-up="${s.k}" title="${h(t("upOne"))}" aria-label="${h(t("upOne"))}">↑</button><button class="icon" data-down="${s.k}" title="${h(t("downOne"))}" aria-label="${h(t("downOne"))}">↓</button><button class="icon" data-merge="${s.k}" title="${h(t("mergePrev"))}" aria-label="${h(t("mergePrev"))}">×</button></span>` : ""}</div>
-      ${fs.length ? `<div class="gsec-flags">${fs.map((f) => `<span class="flag">${h(f.id === "hookLong" ? t("flags").hookLong(f.v) : f.id === "promiseLate" ? t("flags").promiseLate(fmtTime(f.v)) : f.id === "gap" ? t("flags").gap(fmtTime(f.a), fmtTime(f.b)) : t("flags")[f.id])}</span>`).join("")}</div>` : ""}
+      ${fs.length ? `<div class="gsec-flags">${fs.map((f) => `<span class="flag">${h(f.id === "hookLong" ? t("flags").hookLong(f.v) : f.id === "promiseLate" ? t("flags").promiseLate(fmtTime(f.v), f.d) : f.id === "gap" ? t("flags").gap(fmtTime(f.a), fmtTime(f.b)) : t("flags")[f.id])}</span>`).join("")}</div>` : ""}
       <div class="gsec-body">${html.replace(/^\s+|\s+$/g, "")}</div>
       <details class="gnotes"${ns.length ? "" : ""}><summary>${h(t("notes"))}${ns.length ? ` · ${h(t("openNotes")(open))}` : ""}</summary>
         <ul>${ns.map((n) => `<li class="${n.done ? "done" : ""}"><span class="chip">${h(t("roles")[n.role] || n.role)}</span> ${h(n.text)} <label class="hint"><input type="checkbox" data-done="${h(n.id)}"${n.done ? " checked" : ""}> ${h(t("resolved"))}</label></li>`).join("")}</ul>
@@ -6303,11 +6346,11 @@ Object.assign(T.en, {
 });
 Object.assign(T.es.plain, {
   bigidea: "Tu idea central se oye al principio y al final", pulpit: "Habla a quien te ve, no a una congregación", jargon: "Los términos técnicos se explican",
-  onscreen: "Cada pasaje que lees aparece en pantalla", reading: "Lecturas que no cansan", recap: "El cierre resume lo que se llevan", application: "El cierre da un paso concreto",
+  onscreen: "Cada pasaje que lees aparece en pantalla", reading: "Lecturas largas con pausas", recap: "El cierre resume lo que se llevan", application: "El cierre da un paso concreto",
 });
 Object.assign(T.en.plain, {
   bigidea: "Your central idea is heard at the start and the end", pulpit: "Speak to the viewer, not a congregation", jargon: "Technical terms are explained",
-  onscreen: "Every passage you read appears on screen", reading: "Readings that don't tire", recap: "The close sums up what they take away", application: "The close gives one concrete step",
+  onscreen: "Every passage you read appears on screen", reading: "Long readings with pauses", recap: "The close sums up what they take away", application: "The close gives one concrete step",
 });
 
 // Your order: the message first, then retention, then ads. A red ad risk still leads because it can sink the video.
@@ -8120,7 +8163,7 @@ const HELP = {
     pkReq: "Revisiones que deben pasar para aprobar el guion: que haya título y texto de miniatura, que el título no sea demasiado largo y que ninguno tenga palabras que limiten anuncios.",
     pkRec: "Mejoras que ayudan a que te encuentren, pero no impiden aprobar.",
     chapters: "Copia este texto al final de la descripción en YouTube. Crea los capítulos del video para que la gente salte al punto que busca.",
-    shorts: "Los Shorts son videos verticales de menos de un minuto que llevan gente al episodio completo. Marca los pasajes que te gusten y saldrán en la hoja del editor con su minuto de inicio y fin.",
+    shorts: "Los Shorts son videos verticales de hasta 3 minutos que llevan gente al episodio completo. Marca los pasajes que te gusten y saldrán en la hoja del editor con su minuto de inicio y fin.",
     results: "Muestra en qué parte del guion se fue la gente, sección por sección. Sirve para mejorar el próximo episodio, no para calificar este.",
     rsDur: "Cuánto dura el video ya editado, en minutos y segundos (por ejemplo 18:40). Así los tiempos del guion se ajustan al video real.",
     rsData: "Los datos de retención de YouTube Studio: qué porcentaje de gente sigue viendo en cada momento. Pégalos aquí o sube el archivo CSV que descargas de YouTube Studio.",
@@ -8194,7 +8237,7 @@ const HELP = {
     pkReq: "Checks that must pass to approve the script: there's a title and thumbnail text, the title isn't too long, and neither has words that limit ads.",
     pkRec: "Improvements that help people find you, but don't block approval.",
     chapters: "Copy this text to the end of the YouTube description. It creates the video's chapters so people can jump to the point they want.",
-    shorts: "Shorts are vertical videos under a minute that bring people to the full episode. Mark the passages you like and they'll appear on the editor sheet with start and end times.",
+    shorts: "Shorts are vertical videos up to 3 minutes long that bring people to the full episode. Mark the passages you like and they'll appear on the editor sheet with start and end times.",
     results: "Shows where in the script people left, section by section. It's for improving the next episode, not grading this one.",
     rsDur: "How long the edited video is, in minutes and seconds (e.g. 18:40). The script timings then match the real video.",
     rsData: "Retention data from YouTube Studio: what share of people are still watching at each moment. Paste it here or upload the CSV you download from YouTube Studio.",
