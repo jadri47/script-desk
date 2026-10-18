@@ -1138,6 +1138,21 @@ html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.wa
 /* One-line fields that wrap and grow instead of scrolling sideways */
 textarea[data-one]{resize:none;overflow:hidden;min-height:0;line-height:1.45;display:block}
 #exPick .ex-det[open]{padding-bottom:14px}
+
+/* Settings folded into one line */
+.set-det>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600;color:var(--ink-2);padding:6px 0}
+.set-det>summary::-webkit-details-marker{display:none}
+.set-det>summary .set-cur{font-weight:500;color:var(--ink-2);margin-left:auto;font-size:13.5px;text-align:right}
+.set-det>summary::after{content:"";flex:none;margin-left:8px;margin-right:6px;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.set-det[open]>summary::after{transform:rotate(-135deg) translateY(-2px)}
+.set-det[open]>summary{margin-bottom:6px}
+/* Fix cards after the first start closed */
+li.fx-closed>*:not(.fx-top){display:none}
+li.fx-closed>.fx-top{cursor:pointer}
+li.fx-closed>.fx-top::after{content:"›";margin-left:auto;color:var(--ink-2);font-size:20px;line-height:1}
+/* Sections with nothing to fix sit after the ones that need attention */
+.mods-ok-lead{margin:14px 0 4px;font-size:13px}
+details.mod.mod-ok>summary .mt{color:var(--ink-2)}
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
 <meta name="theme-color" content="#255F7E">
@@ -1188,14 +1203,6 @@ textarea[data-one]{resize:none;overflow:hidden;min-height:0;line-height:1.45;dis
     </div>
     <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span></div>
     <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><textarea id="bigIdea" rows="1" data-one="1" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."></textarea><div id="ideaSug" class="idea-sug-box"></div></div>
-    <div class="vr-row">
-    <div class="field aud-field"><label for="audience" data-i18n="audLabel">Público del canal</label>
-      <select id="audience"><option value="both" data-i18n="audBoth">Latinoamérica y España (neutro)</option><option value="latam" data-i18n="audLatam">Latinoamérica</option><option value="es" data-i18n="audEs">España</option></select></div>
-    <div class="field bible-field"><label for="translation" data-i18n="trLabel">Versión bíblica</label>
-      <select id="translation"><optgroup label="Español"><option value="RVR1960">RVR1960 · Reina-Valera 1960</option><option value="RVR1909">RVR1909 · Reina-Valera 1909 (dominio público)</option><option value="NVI">NVI · Nueva Versión Internacional</option><option value="LBLA">LBLA · La Biblia de las Américas</option><option value="NBLA">NBLA · Nueva Biblia de las Américas</option><option value="NTV">NTV · Nueva Traducción Viviente</option><option value="DHH">DHH · Dios Habla Hoy</option><option value="RVC">RVC · Reina Valera Contemporánea</option></optgroup><optgroup label="English"><option value="KJV">KJV · King James Version</option><option value="NKJV">NKJV · New King James Version</option><option value="NASB">NASB · New American Standard Bible</option><option value="ESV">ESV · English Standard Version</option><option value="NIV">NIV · New International Version</option><option value="NLT">NLT · New Living Translation</option></optgroup></select>
-      <p class="hint" id="bibleHint"></p></div>
-    </div>
-    <div id="trBox" class="tr-box"></div>
 
     <details class="extra" id="extraFields">
       <summary data-i18n="extraSummary">Título, palabra clave y descripción (opcional)</summary>
@@ -1214,6 +1221,16 @@ textarea[data-one]{resize:none;overflow:hidden;min-height:0;line-height:1.45;dis
       </div>
     </details>
 
+    <details class="set-det" id="setDet"><summary><span data-i18n="setTitle">Variante y versión bíblica</span><span class="set-cur" id="setCur"></span></summary>
+    <div class="vr-row">
+    <div class="field aud-field"><label for="audience" data-i18n="audLabel">Público del canal</label>
+      <select id="audience"><option value="both" data-i18n="audBoth">Latinoamérica y España (neutro)</option><option value="latam" data-i18n="audLatam">Latinoamérica</option><option value="es" data-i18n="audEs">España</option></select></div>
+    <div class="field bible-field"><label for="translation" data-i18n="trLabel">Versión bíblica</label>
+      <select id="translation"><optgroup label="Español"><option value="RVR1960">RVR1960 · Reina-Valera 1960</option><option value="RVR1909">RVR1909 · Reina-Valera 1909 (dominio público)</option><option value="NVI">NVI · Nueva Versión Internacional</option><option value="LBLA">LBLA · La Biblia de las Américas</option><option value="NBLA">NBLA · Nueva Biblia de las Américas</option><option value="NTV">NTV · Nueva Traducción Viviente</option><option value="DHH">DHH · Dios Habla Hoy</option><option value="RVC">RVC · Reina Valera Contemporánea</option></optgroup><optgroup label="English"><option value="KJV">KJV · King James Version</option><option value="NKJV">NKJV · New King James Version</option><option value="NASB">NASB · New American Standard Bible</option><option value="ESV">ESV · English Standard Version</option><option value="NIV">NIV · New International Version</option><option value="NLT">NLT · New Living Translation</option></optgroup></select>
+      <p class="hint" id="bibleHint"></p></div>
+    </div>
+    </details>
+    <div id="trBox" class="tr-box"></div>
     <div class="actions">
       <button class="primary" id="runBtn" data-i18n="run">Revisar guion</button>
       <button id="clearBtn" data-i18n="clear">Borrar</button>
@@ -3201,7 +3218,7 @@ const T = {
     pickVersion: "Elige una versión.", durFormat: "Escribe la duración como mm:ss.", savedShort: "Guardado.", saveFailShort: "No se pudo guardar.",
     reviewTitle: "Revisión de guion", refs: "Referencias", fixLabel: "Arreglo", sections: "Secciones",
     topTitle: "Lo primero que arreglaría", topNone: "Nada urgente: todas las revisiones pasan.", seeIn: "Ver en", allGood: "Todo en orden",
-    warnAdvice: "Consejo", chanNeed: (n) => `Tu canal: anota ${n} episodio${n === 1 ? "" : "s"} más en Resultados para comparar estas metas con tus propios datos.`, chanStats: (n, intro, avg) => `Tu canal (${n} episodios): mediana de «Intro» ${intro} %${avg !== null ? `, visto en promedio ${avg} %` : ""}. YouTube llama «por encima de lo típico» a quien conserva 50 % o más a los 30 segundos.`, chanHook: (a, b, na, nb) => Math.abs(a - b) < 3 ? ` Con gancho aprobado: ${a} % (${na} ep.); sin él: ${b} % (${nb} ep.). La diferencia es menor de 3 puntos: el gancho no explica tu retención inicial; mira el cuerpo del episodio.` : ` Con gancho aprobado: ${a} % (${na} ep.); sin él: ${b} % (${nb} ep.).`, statRuntime: "Duración", statRead: "Legibilidad", statFill: "Muletillas", per100: "por cada 100 palabras", ourTarget: "meta propia", targetRange: "8–45 min", moreTxt: "ver más", lessTxt: "ver menos", whyTxt: "¿Por qué?", quick: "Ir a:", summaryHint: "Toca una tarjeta para ver cada revisión.",
+    warnAdvice: "Consejo", modsOkLead: "Sin nada que arreglar:", setTitle: "Variante y versión bíblica", chanNeed: (n) => `Tu canal: anota ${n} episodio${n === 1 ? "" : "s"} más en Resultados para comparar estas metas con tus propios datos.`, chanStats: (n, intro, avg) => `Tu canal (${n} episodios): mediana de «Intro» ${intro} %${avg !== null ? `, visto en promedio ${avg} %` : ""}. YouTube llama «por encima de lo típico» a quien conserva 50 % o más a los 30 segundos.`, chanHook: (a, b, na, nb) => Math.abs(a - b) < 3 ? ` Con gancho aprobado: ${a} % (${na} ep.); sin él: ${b} % (${nb} ep.). La diferencia es menor de 3 puntos: el gancho no explica tu retención inicial; mira el cuerpo del episodio.` : ` Con gancho aprobado: ${a} % (${na} ep.); sin él: ${b} % (${nb} ep.).`, statRuntime: "Duración", statRead: "Legibilidad", statFill: "Muletillas", per100: "por cada 100 palabras", ourTarget: "meta propia", targetRange: "8–45 min", moreTxt: "ver más", lessTxt: "ver menos", whyTxt: "¿Por qué?", quick: "Ir a:", summaryHint: "Toca una tarjeta para ver cada revisión.",
     tip1: "Pega", tip2: "Revisa", tip3: "Exporta",
     outLang: "Escribe todas las explicaciones, notas, razones y resúmenes en español.",
   },
@@ -3271,7 +3288,7 @@ const T = {
     pickVersion: "Pick a version.", durFormat: "Enter the length as mm:ss.", savedShort: "Saved.", saveFailShort: "Couldn't save.",
     reviewTitle: "Script review", refs: "References", fixLabel: "Fix", sections: "Sections",
     topTitle: "What I'd fix first", topNone: "Nothing urgent: every check passes.", seeIn: "See in", allGood: "All good",
-    warnAdvice: "Advice", chanNeed: (n) => `Your channel: log ${n} more episode${n === 1 ? "" : "s"} in Results to compare these targets with your own data.`, chanStats: (n, intro, avg) => `Your channel (${n} episodes): median Intro ${intro}%${avg !== null ? `, average viewed ${avg}%` : ""}. YouTube calls 50% or more still watching at 30 seconds "above typical".`, chanHook: (a, b, na, nb) => Math.abs(a - b) < 3 ? ` With a passing hook: ${a}% (${na} ep.); without: ${b}% (${nb} ep.). The gap is under 3 points: the hook doesn't explain your early retention; look at the body of the episode.` : ` With a passing hook: ${a}% (${na} ep.); without: ${b}% (${nb} ep.).`, statRuntime: "Runtime", statRead: "Readability", statFill: "Fillers", per100: "per 100 words", ourTarget: "our target", targetRange: "8–45 min", moreTxt: "more", lessTxt: "less", whyTxt: "Why?", quick: "Go to:", summaryHint: "Tap a card to see each check.",
+    warnAdvice: "Advice", modsOkLead: "Nothing to fix:", setTitle: "Spanish variant and Bible version", chanNeed: (n) => `Your channel: log ${n} more episode${n === 1 ? "" : "s"} in Results to compare these targets with your own data.`, chanStats: (n, intro, avg) => `Your channel (${n} episodes): median Intro ${intro}%${avg !== null ? `, average viewed ${avg}%` : ""}. YouTube calls 50% or more still watching at 30 seconds "above typical".`, chanHook: (a, b, na, nb) => Math.abs(a - b) < 3 ? ` With a passing hook: ${a}% (${na} ep.); without: ${b}% (${nb} ep.). The gap is under 3 points: the hook doesn't explain your early retention; look at the body of the episode.` : ` With a passing hook: ${a}% (${na} ep.); without: ${b}% (${nb} ep.).`, statRuntime: "Runtime", statRead: "Readability", statFill: "Fillers", per100: "per 100 words", ourTarget: "our target", targetRange: "8–45 min", moreTxt: "more", lessTxt: "less", whyTxt: "Why?", quick: "Go to:", summaryHint: "Tap a card to see each check.",
     tip1: "Paste", tip2: "Review", tip3: "Export",
     outLang: "Write all explanations, notes, reasons and summaries in English.",
   },
@@ -3335,13 +3352,13 @@ $("runBtn").addEventListener("click", () => {
 // ---------- rendering ----------
 const sectionMeta = () => [
   ["money", t("secMoney"), t("leadMoney")],
-  ["message", t("secMessage"), t("leadMessage")],
   ["structure", t("secStructure"), t("leadStructure")],
+  ["message", t("secMessage"), t("leadMessage")],
   ["scripture", t("secScripture"), null],
-  ["facts", t("secFacts"), null],
   ["spoken", state.result && state.result.lang === "en" ? t("secSpokenEn") : t("secSpoken"), null],
-  ["auth", t("secAuth"), t("leadAuth")],
   ["seo", t("secSeo"), t("leadSeo")],
+  ["auth", t("secAuth"), t("leadAuth")],
+  ["facts", t("secFacts"), null],
 ];
 const deg = (d) => t("degree")[d] || d;
 
@@ -3462,9 +3479,9 @@ function renderResults() {
       <span class="hint">${h(t("langName")[R.lang])} · ${R.wc} ${h(t("words"))}</span></div>
     ${statsHTML(R)}</div>`;
 
-  let cards = "";
+  let cards = "", okCards = "";
   for (const [k, name, lead] of meta) {
-    if (k === "facts") { cards += factsCard(); continue; }
+    if (k === "facts") { okCards += factsCard(); continue; }
     const rows = sec[k] || (k === "money" ? [] : null); if (!rows) continue; // the ad-safety table shows even when every category is clean
     const [p, n] = counts[k] || [0, 0];
     const fails = rows.filter((r) => !r.passed || r.warn);
@@ -3480,11 +3497,13 @@ function renderResults() {
     if (k === "seo") extra = seoPanelHTML(R);
     if (k === "structure") extra = channelNote();
     const why = lead ? `<details class="why"><summary>${h(t("whyTxt"))}</summary><p class="lead">${h(lead)}</p></details>` : "";
-    cards += `<details class="mod" id="sec-${k}"><summary><span class="mt">${h(name)}</span><span class="mc">${p} ${h(t("of"))} ${n}</span>
+    const card = `<details class="mod${fails.length ? "" : " mod-ok"}" id="sec-${k}"><summary><span class="mt">${h(name)}</span><span class="mc">${p} ${h(t("of"))} ${n}</span>
       <span class="mv"><i class="dot" style="background:${dotc}"></i>${h(verdictLine)}</span>
       <span class="mbar"><i class="${worst}" style="width:${n ? (p / n) * 100 : 100}%"></i></span></summary>
       <div class="mbody">${why}${extra}${rows.map(rowHTML).join("")}</div></details>`;
+    if (fails.length) cards += card; else okCards += card;
   }
+  if (okCards) cards += `<p class="hint mods-ok-lead">${h(t("modsOkLead"))}</p>` + okCards;
 
   const legend = `<div class="legend">
     <span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span>
@@ -3509,7 +3528,8 @@ function renderResults() {
 
   const quick = `<nav class="quick" aria-label="${h(t("sections"))}">${h(t("quick"))}<a href="#sec-manuscript">${h(t("secMs"))}</a><a href="#sec-ai">${h(t("secAi"))}</a><a href="#sec-save">${h(t("secSave"))}</a><a href="#guion" data-gomode="guion">${h(t("gGoGuion"))}</a></nav>`;
 
-  $("results").innerHTML = verdict + topFixHTML(R) + timelineHTML(R) + `<p class="hint" style="margin:18px 0 -10px">${h(t("summaryHint"))}</p>` + `<div class="mods">${cards}</div>` + quick + manuscript + ai + save;
+  // Most useful first: the score, where to jump, the time map, what to fix, then the detail and the tools.
+  $("results").innerHTML = verdict + quick + timelineHTML(R) + topFixHTML(R) + `<p class="hint" style="margin:18px 0 -10px">${h(t("summaryHint"))}</p>` + `<div class="mods">${cards}</div>` + manuscript + ai + save;
   wireResults();
   $("results").querySelectorAll(".topfix a[data-open]").forEach((a) => a.addEventListener("click", () => { const d = $("sec-" + a.dataset.open); if (d) d.open = true; }));
   const msd = $("sec-manuscript");
@@ -5096,7 +5116,7 @@ function wireRetChart() {
 }
 
 /* ===== Lo primero que arreglaría: evidence, proposal, proof ===== */
-Object.assign(T.es, {
+Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras 3 con IA",
   fxMulti: (n) => `resuelve ${n} revisiones`, fxPartial: (n, m) => `Arregla ${n} de ${m}; el resto, con IA o a mano.`, fxApplied: "Aplicado.", fxUndo: "Deshacer", fxUndone: "Deshecho.",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
@@ -5104,7 +5124,7 @@ Object.assign(T.es, {
   fxField: { title: "Título", keyword: "Palabra clave", thumb: "Miniatura", description: "Descripción" }, fxNotFixed: "No resuelve la revisión todavía.",
   fxSkip: "Ahora no", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
-Object.assign(T.en, {
+Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
   fxMulti: (n) => `fixes ${n} checks`, fxPartial: (n, m) => `Fixes ${n} of ${m}; the rest with AI or by hand.`, fxApplied: "Applied.", fxUndo: "Undo", fxUndone: "Undone.",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
@@ -5190,8 +5210,10 @@ topFixHTML = function (R) {
     const sel = Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1));
     const p = c.proposals[sel];
     const ai = state.fixAi[c.id];
-    return `<li class="fx" data-ci="${ci}">
-      <div class="fx-top"><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
+    // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
+    const open = ci === 0 || (typeof V !== "undefined" && V.guided) || (state.fixOpen && state.fixOpen.has(c.id));
+    return `<li class="fx${open ? "" : " fx-closed"}" data-ci="${ci}" data-fid="${h(c.id)}">
+      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
       ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
       <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
       <div class="fx-lbl">${h(t("fxWould"))}${p && c.proposals.length > 1 ? ` <span class="hint">· ${h(p.label)}</span>` : p ? ` <span class="hint">· ${h(p.label)}</span>` : ""}</div>
@@ -5294,6 +5316,7 @@ function wireAiOptions(root) {
 function wireFixes() {
   const root = document.querySelector("#results .topfix") || document.querySelector("#guide .topfix");
   if (!root) return;
+  root.querySelectorAll("li.fx-closed > .fx-top").forEach((top) => { const go = () => { const li = top.closest("li"); state.fixOpen = state.fixOpen || new Set(); state.fixOpen.add(li.dataset.fid); li.classList.remove("fx-closed"); top.removeAttribute("role"); top.removeAttribute("tabindex"); top.removeAttribute("aria-expanded"); }; top.addEventListener("click", go); top.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }); });
   root.querySelectorAll("[data-fxapply]").forEach((b) => b.addEventListener("click", () => { const ci = +b.dataset.fxapply, c = state.fixCards[ci]; applyProposal(c.proposals[Math.min(state.fixSel[ci] || 0, c.proposals.length - 1)]); }));
   root.querySelectorAll("[data-fxsel]").forEach((b) => b.addEventListener("click", () => { const [ci, k] = b.dataset.fxsel.split(":").map(Number); state.fixSel[ci] = k; const keep = window.scrollY; renderResults(); window.scrollTo(0, keep); }));
   root.querySelectorAll("[data-fxai]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; aiFix(+b.dataset.fxai); }));
@@ -6395,8 +6418,8 @@ const _renderResultsAsk = renderResults;
 renderResults = function () {
   _renderResultsAsk();
   if (V.guided) return;
-  const tf = document.querySelector("#results .topfix");
-  if (tf && tf.nextSibling) mountAsk(tf.nextSibling, true);
+  const ai = $("sec-ai");
+  if (ai && ai.nextSibling) mountAsk(ai.nextSibling, true);
 };
 /* ===== Mensaje en YouTube: idea central, prioridades (mensaje antes que anuncios amarillos), bienvenida ===== */
 // For pastors: the app never touches what is preached, only how it reaches someone watching alone on YouTube.
@@ -6571,6 +6594,8 @@ function renderBibleHint() {
   const bad = $("script").value.trim() && bibleLang(v) !== (scriptLang() === "en" ? "en" : "es");
   el.className = "hint" + (bad ? " warn-t" : "");
   el.textContent = bad ? t("bibleMismatch")(bibleLang(v)) : t("bibleOk")(v);
+  const cur = $("setCur");
+  if (cur) { const a = $("audience"), ao = a && a.options[a.selectedIndex]; cur.textContent = `${ao ? ao.textContent : ""} · ${v}`; cur.classList.toggle("warn-t", !!bad); }
 }
 
 // Every AI request (Ask Claude, quick fixes, hooks, titles, idea) quotes Scripture in the chosen version.
@@ -6768,7 +6793,7 @@ function renderTr() {
   const d = $("trDiscard"); if (d) d.addEventListener("click", () => { TR.res = null; renderTr(); });
   const un = $("trUndo"); if (un) un.addEventListener("click", trUndo);
 }
-$("audience").addEventListener("change", renderTr);
+$("audience").addEventListener("change", () => { renderTr(); if (typeof renderBibleHint === "function") renderBibleHint(); });
 $("lang").addEventListener("change", renderTr);
 
 // ---------- AI-suggested central idea: confirm or ignore ----------
@@ -7616,7 +7641,7 @@ function phaseItems() {
   const flagsN = G.secs.reduce((a, s) => a + ((G.flags[s.k] || []).length), 0);
   const approved = G.status === "aprobado" || G.status === "grabado";
   return {
-    prep: [["cold", !!(G.cold.hook || G.cold.promise)], ["struct", flagsN === 0], ["pack", G.R ? packGateMissing().length === 0 : false], ["approved", approved]],
+    prep: [["struct", flagsN === 0], ["cold", !!(G.cold.hook || G.cold.promise)], ["pack", G.R ? packGateMissing().length === 0 : false], ["approved", approved]],
     rec: [["reh", G.rehearsals.length > 0], ["rec", G.status === "grabado"]],
     after: [["shorts", (G.shorts || []).length > 0], ["res", !!G.retention]],
   };
@@ -7685,7 +7710,7 @@ renderGuion = function () {
   let body = "";
   if (k === "prep") {
     const missing = packGateMissing(), done = G.status === "aprobado" || G.status === "grabado";
-    body = `<section class="g-card" id="gCold"></section><section class="g-card" id="gStruct"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
+    body = `<section class="g-card" id="gStruct"></section><section class="g-card" id="gCold"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
       <div class="g-approve" id="phApprove">${approveInner(missing, done)}</div>`;
   } else if (k === "rec") body = recordCardHTML();
   else body = `${G.status !== "grabado" ? `<p class="ph-note">${h(t("phNotYet"))}</p>` : ""}<section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section><section class="g-card" id="gRev"></section>`;
