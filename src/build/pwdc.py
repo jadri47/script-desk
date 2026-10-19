@@ -23,6 +23,10 @@ async def run(b,ui,vp,ex):
     await pg.mouse.click(pt[0],pt[1]); await pg.wait_for_timeout(500)
     S=await pg.evaluate("({i:WK.i,on:[...ED.el.children].findIndex(e=>e.classList.contains('walk-on')||e.querySelector('.walk-on'))})")
     ok(n+": caret in a paragraph selects it in the review",S["i"]==target,S)
+    isfull=await pg.evaluate("ED.full")
+    ok(n+": tapping the script does not maximize it",not isfull)
+    await pg.evaluate("setFull(true)"); await pg.wait_for_timeout(200)
+    ok(n+": maximizer still works",await pg.evaluate("ED.full"))
     await pg.evaluate("setFull(false)"); await pg.wait_for_timeout(500)
     ok(n+": after Listo the review still shows that paragraph",await pg.evaluate("WK.i")==target)
     # accept on the first paragraph with a patch card

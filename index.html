@@ -9918,9 +9918,6 @@ function onPaste(e) {
   // Typing straight into the box root would leave text outside any paragraph; keep one there.
   ED.el.addEventListener("focus", () => { if (!ED.el.firstElementChild) { ED.el.innerHTML = "<p><br></p>"; const r = document.createRange(); r.setStart(ED.el.firstChild, 0); r.collapse(true); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } });
   ED.el.addEventListener("paste", onPaste);
-  // Only a real tap opens it; buttons that focus the box from code (Borrar, Empezar) don't.
-  ED.el.addEventListener("pointerup", (e) => { if (isPhone() && !ED.full && e.pointerType !== "mouse") setFull(true); });
-  ED.el.addEventListener("click", () => { if (isPhone() && !ED.full) setFull(true); });
   window.addEventListener("popstate", () => { if (ED.full && isPhone()) setFull(false, true); });
   // Desktop: the box keeps the height Juan drags it to.
   const hSaved = +lsGet("sd-edh");

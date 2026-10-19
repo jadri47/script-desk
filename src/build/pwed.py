@@ -44,6 +44,7 @@ async def main():
             print(n, "round trip identical:", await pg.evaluate("domToModel($('ed')).text === $('script').value"))
             # bold "ansiedad" first occurrence via selection
             await pg.evaluate("""()=>{const w=document.createTreeWalker($('ed'),NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){const i=n.nodeValue.indexOf('ansiedad');if(i>=0){const r=document.createRange();r.setStart(n,i);r.setEnd(n,i+8);const s=getSelection();s.removeAllRanges();s.addRange(r);break;}}}""")
+            if w<600: await pg.evaluate("setFull(true)"); await pg.wait_for_timeout(300)
             await pg.click('[data-ed="b"]'); await pg.click('[data-ed="h"]'); await pg.wait_for_timeout(2600)
             v = await pg.evaluate("$('script').value"); L2 = LONG.strip()
             if v != L2:
