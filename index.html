@@ -3327,6 +3327,7 @@ if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz
   }
 
   const sample = {
+    serverRules: true,
     json: async (prompt, opts = {}) => {
       const { data } = await sb.auth.getSession();
       const session = data && data.session;
@@ -3336,7 +3337,7 @@ if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz
         r = await fetch(SB_URL + "/functions/v1/sd-ai", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token, apikey: SB_KEY },
-          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default" }),
+          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible }),
           signal: opts.signal,
         });
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
@@ -8421,13 +8422,12 @@ Reglas:
 - Conserva las señales entre corchetes ([B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA]) y los títulos «## …» si aparecen.
 - Si la petición es una pregunta o pide consejo, responde en "reply" y deja "replacement" en null.
 - Si pide un cambio de texto, pon en "replacement" SOLO el texto nuevo que sustituye al FRAGMENTO completo, listo para pegar.
+Devuelve solo este JSON: {"reply": "respuesta breve, máximo 3 frases, en el idioma del guion", "replacement": "texto nuevo" o null}
 ${prev ? `Conversación previa sobre esta misma parte:\n${prev}\n` : ""}${ctx}
 FRAGMENTO:
 """
 ${frag.text}
-"""
-
-Devuelve solo este JSON: {"reply": "respuesta breve, máximo 3 frases, en el idioma del guion", "replacement": "texto nuevo" o null}`;
+"""`;
 }
 
 async function askRun() {
@@ -8689,7 +8689,12 @@ function bibleRule() {
   const v = $("translation").value || "RVR1960";
   return `VERSIÓN BÍBLICA: si en tu respuesta citas, añades o traduces un versículo, usa el texto de la ${bibleName(v)} palabra por palabra, con su referencia. No cambies las citas que el autor ya tiene en el guion salvo que te lo pida. Si no estás seguro del texto exacto en esa versión, escribe solo la referencia entre corchetes, por ejemplo [Mateo 6:34], para que el autor copie el versículo.`;
 }
-caps.sample = caps.sample.then((s) => s && { ...s, json: (p, o = {}) => s.json(o.bibleRule === false ? p : p + "\n\n" + bibleRule(), o) });
+// With the Script Desk server (s.serverRules) the version travels as a field and goes into the cached system block;
+// elsewhere (the Claude artifact) the rule is put in front of the task so the script text stays last.
+caps.sample = caps.sample.then((s) => s && { ...s, json: (p, o = {}) => {
+  if (s.serverRules) return s.json(p, o.bibleRule === false ? { ...o, noBible: true } : { ...o, bible: $("translation").value || "RVR1960" });
+  return s.json(o.bibleRule === false ? p : bibleRule() + "\n\n" + p, o);
+} });
 
 (function initBible() {
   const sel = $("translation");
