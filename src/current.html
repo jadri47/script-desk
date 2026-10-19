@@ -1,0 +1,1464 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Script Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F6F3; --sheet:#FFFFFF; --ink:#16303A; --ink-2:#4A5D63; --rule:#D5DCD7; --rule-2:#E7ECE8;
+  --accent:#255F7E; --accent-ink:#FFFFFF; --gold:#9A6E14; --gold-bg:#F6EBD2;
+  --verde:#2C7650; --verde-bg:#E1F0E7; --amarillo:#9A6A00; --amarillo-bg:#FBEFCF; --rojo:#A8322A; --rojo-bg:#F7DEDA;
+  --mul-bg:#E6E1F2; --mul:#5B4A8B; --weak-bg:#DDEBF2; --weak:#255F7E; --reg-bg:#F1E3EC; --reg:#8A3C6B; --kw-bg:#FFF2B8;
+  --shadow:0 1px 0 rgba(22,48,58,.06);
+  --serif:"Literata", Georgia, "Times New Roman", serif;
+  --sans:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#0F1C21; --sheet:#152830; --ink:#E6EEEB; --ink-2:#A7B8B6; --rule:#2B4049; --rule-2:#203540;
+  --accent:#6FB3D6; --accent-ink:#0F1C21; --gold:#E2B85A; --gold-bg:#3A3018;
+  --verde:#7CCB9E; --verde-bg:#183B2A; --amarillo:#E8C055; --amarillo-bg:#3D3115; --rojo:#F08A80; --rojo-bg:#47201C;
+  --mul-bg:#2E2843; --mul:#C3B4F0; --weak-bg:#1B3442; --weak:#8CC6E4; --reg-bg:#3B2333; --reg:#E7A6CE; --kw-bg:#4A4116; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --paper:#0F1C21; --sheet:#152830; --ink:#E6EEEB; --ink-2:#A7B8B6; --rule:#2B4049; --rule-2:#203540;
+  --accent:#6FB3D6; --accent-ink:#0F1C21; --gold:#E2B85A; --gold-bg:#3A3018;
+  --verde:#7CCB9E; --verde-bg:#183B2A; --amarillo:#E8C055; --amarillo-bg:#3D3115; --rojo:#F08A80; --rojo-bg:#47201C;
+  --mul-bg:#2E2843; --mul:#C3B4F0; --weak-bg:#1B3442; --weak:#8CC6E4; --reg-bg:#3B2333; --reg:#E7A6CE; --kw-bg:#4A4116; color-scheme:dark; }
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+main{max-width:780px;margin:0 auto;padding:28px 18px 64px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.2;margin:0}
+.masthead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:18px;margin-bottom:22px;border-bottom:1px solid var(--rule)}
+.masthead h1{font-size:30px;letter-spacing:-.01em}
+.masthead p{margin:0;color:var(--ink-2)}
+label{font-weight:600;font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;width:100%}
+textarea#script{font-family:var(--serif);font-size:17px;line-height:1.7;min-height:280px;resize:vertical;padding:16px 18px}
+textarea::placeholder,input::placeholder{color:var(--ink-2);opacity:.7}
+.meta-line{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--ink-2);font-size:14px;margin-top:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:620px){.grid2,.grid3{grid-template-columns:1fr}}
+details.extra{margin-top:16px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+details.extra>summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none}
+details.extra>summary::-webkit-details-marker{display:none}
+details.extra>summary::before{content:"+";display:inline-block;width:18px;color:var(--accent)}
+details.extra[open]>summary::before{content:"–"}
+details.extra .inner{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+button{font:600 15px/1 var(--sans);border-radius:999px;padding:12px 20px;cursor:pointer;border:1px solid var(--rule);background:var(--sheet);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.small{padding:8px 14px;font-size:14px}
+button:disabled{opacity:.55;cursor:default}
+.hint{font-size:13px;color:var(--ink-2)}
+
+/* results */
+#results{margin-top:34px}
+.verdict{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:18px 20px;border-radius:14px;background:var(--sheet);border:1px solid var(--rule)}
+.verdict .big{font-family:var(--serif);font-size:22px}
+.lamp{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:6px 12px;border-radius:999px}
+.lamp::before{content:"";width:10px;height:10px;border-radius:50%;background:currentColor}
+.lamp.verde{color:var(--verde);background:var(--verde-bg)} .lamp.amarillo{color:var(--amarillo);background:var(--amarillo-bg)} .lamp.rojo{color:var(--rojo);background:var(--rojo-bg)}
+
+/* timeline — the one bold element */
+.timeline{margin:22px 0 8px;padding:18px 18px 10px;background:var(--sheet);border:1px solid var(--rule);border-radius:14px}
+.timeline h3{font-size:17px;margin-bottom:12px}
+.tl-track{position:relative;height:58px}
+.tl-bar{position:absolute;left:0;right:0;top:22px;height:14px;border-radius:7px;background:var(--rule-2);overflow:hidden}
+.tl-zone{position:absolute;top:0;bottom:0}
+.tl-tick{position:absolute;top:14px;height:30px;border-left:1.5px solid var(--ink-2);opacity:.7}
+.tl-tick span{position:absolute;top:-14px;left:3px;font-size:11px;color:var(--ink-2);white-space:nowrap}
+.tl-dot{position:absolute;top:24px;width:10px;height:10px;margin-left:-5px;border-radius:50%;border:1.5px solid var(--sheet)}
+.tl-dot.diamond{border-radius:2px;transform:rotate(45deg)}
+.tl-dot.risk{width:8px;height:8px;margin-left:-4px;top:25px}
+.tipbar{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));margin:12px 0 0;padding:12px 14px;border-radius:12px;background:var(--ink);color:var(--paper);font-size:14.5px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.langswitch{margin-left:auto;display:inline-flex;border:1px solid var(--rule);border-radius:999px;overflow:hidden;background:var(--sheet)}
+.langswitch button{border:0;border-radius:0;padding:8px 14px;font-size:14px;background:transparent}
+.langswitch button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tl-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:6px}
+.tl-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.tl-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2)}
+
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px}
+nav.jump a{font-size:13.5px;text-decoration:none;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;background:var(--sheet);color:var(--ink)}
+nav.jump a b{font-weight:600;margin-left:4px}
+
+section.block{margin-top:30px}
+section.block>header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:6px}
+section.block>header h2{font-size:21px}
+section.block>header .count{font-size:14px;color:var(--ink-2)}
+.lead{color:var(--ink-2);font-size:14.5px;margin:8px 0 6px}
+.row{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--rule-2)}
+.row:last-child{border-bottom:none}
+.mark{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:1px}
+.mark.pass{background:var(--verde-bg);color:var(--verde)} .mark.fail{background:var(--amarillo-bg);color:var(--amarillo)} .mark.red{background:var(--rojo-bg);color:var(--rojo)}
+.row .t{font-weight:600}
+.row .i{color:var(--ink-2);font-size:14.5px;margin-top:2px}
+.row .f{margin-top:6px;font-size:14.5px;padding-left:10px;border-left:3px solid var(--accent)}
+.row .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:12.5px;padding:2px 8px;border-radius:6px;background:var(--rule-2);color:var(--ink-2)}
+.row ul{margin:6px 0 0;padding-left:18px;font-size:14px;color:var(--ink-2)}
+
+table.pf{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.tablewrap{overflow-x:auto}
+table.pf th,table.pf td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+table.pf th{font-weight:600;color:var(--ink-2);font-size:13px}
+
+/* manuscript */
+.manuscript{font-family:var(--serif);font-size:17.5px;line-height:1.85;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:22px 24px;white-space:pre-wrap;word-wrap:break-word;max-width:68ch}
+.manuscript mark{background:none;color:inherit;border-radius:3px;padding:0 1px;cursor:help}
+.manuscript .k-risk.l-verde{background:var(--verde-bg);box-shadow:inset 0 -2px var(--verde)}
+.manuscript .k-risk.l-amarillo{background:var(--amarillo-bg);box-shadow:inset 0 -2px var(--amarillo)}
+.manuscript .k-risk.l-rojo{background:var(--rojo-bg);box-shadow:inset 0 -2px var(--rojo)}
+.manuscript .k-muletilla{background:var(--mul-bg);box-shadow:inset 0 -2px var(--mul)}
+.manuscript .k-weak{box-shadow:inset 0 -2px var(--weak)}
+.manuscript .k-regional{background:var(--reg-bg);box-shadow:inset 0 -2px var(--reg)}
+.manuscript .k-aitell{background:var(--rojo-bg)}
+.manuscript .k-greeting,.manuscript .k-cta{text-decoration:underline wavy var(--amarillo);text-underline-offset:4px}
+.manuscript .k-ref{color:var(--gold);font-weight:600}
+.manuscript .k-keyword{background:var(--kw-bg)}
+.manuscript .quote{background:var(--gold-bg);border-radius:3px}
+.manuscript .tick{font-family:var(--sans);font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:1px 5px;margin-right:4px;vertical-align:2px;cursor:default}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:10px 0}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+
+/* AI helpers */
+.helper{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:16px 18px;margin-top:14px}
+.helper h3{font-size:17px}
+.helper p.desc{margin:6px 0 12px;color:var(--ink-2);font-size:14.5px}
+.out{margin-top:14px}
+.status{font-size:14px;color:var(--ink-2)}
+.status.err{color:var(--rojo)}
+.card{border:1px solid var(--rule);border-radius:10px;padding:12px 14px;margin-top:10px;background:var(--paper)}
+.card .k{font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.diff{font-family:var(--serif);font-size:17px;line-height:1.8;white-space:pre-wrap;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.diff ins{text-decoration:none;background:var(--verde-bg);color:var(--ink);box-shadow:inset 0 -2px var(--verde);border-radius:2px}
+.compare{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.verdict-tag{font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:6px}
+.v-ok{background:var(--verde-bg);color:var(--verde)} .v-mid{background:var(--amarillo-bg);color:var(--amarillo)} .v-bad{background:var(--rojo-bg);color:var(--rojo)} .v-na{background:var(--rule-2);color:var(--ink-2)}
+.copyrow{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.saved li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule-2)}
+.saved ul{list-style:none;padding:0;margin:8px 0 0}
+.disclaimer{margin-top:44px;padding-top:14px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-2)}
+.disclaimer p{margin:4px 0}
+.hidden{display:none !important}
+@media (prefers-reduced-motion:no-preference){ #results.reveal{animation:rise .35s ease-out} @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}} }
+@media (max-width:620px){ main{padding:20px 14px 56px} .manuscript{padding:16px} textarea#script{min-height:220px} }
+</style>
+</head>
+<body>
+<main>
+  <header class="masthead">
+    <h1>Script Desk</h1>
+    <p data-i18n="tagline">Revisa el guion antes de grabar.</p>
+    <div class="langswitch" role="group" aria-label="Idioma / Language">
+      <button type="button" data-ui="es" aria-pressed="true">Español</button><button type="button" data-ui="en" aria-pressed="false">English</button>
+    </div>
+  </header>
+
+  <section id="editor" aria-label="Guion">
+    <div class="field">
+      <label for="script" data-i18n="scriptLabel">Guion del episodio</label>
+      <textarea id="script" data-i18n-ph="scriptPh" placeholder="Pega tu guion aquí…" spellcheck="true"></textarea>
+    </div>
+    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span></div>
+
+    <details class="extra" id="extraFields">
+      <summary data-i18n="extraSummary">Título, palabra clave y descripción (opcional)</summary>
+      <div class="inner">
+        <div class="grid2">
+          <div class="field"><label for="title" data-i18n="titleLabel">Título de trabajo</label><input id="title" maxlength="100" data-i18n-ph="titlePh" placeholder="¿Qué dice la Biblia sobre…?"></div>
+          <div class="field"><label for="keyword" data-i18n="kwLabel">Palabra clave</label><input id="keyword" data-i18n-ph="kwPh" placeholder="la frase que alguien buscaría"></div>
+        </div>
+        <div class="field"><label for="thumb" data-i18n="thumbLabel">Texto de la miniatura</label><input id="thumb" maxlength="40" data-i18n-ph="thumbPh" placeholder="2 a 4 palabras"></div>
+        <div class="field"><label for="description" data-i18n="descLabel">Descripción</label><textarea id="description" rows="4"></textarea></div>
+        <div class="grid3">
+          <div class="field"><label for="translation" data-i18n="trLabel">Versión bíblica</label>
+            <select id="translation"><option>RVR1960</option><option>NVI</option><option>LBLA</option><option>NBLA</option><option>NTV</option><option>DHH</option><option>RVC</option></select></div>
+          <div class="field"><label for="series" data-i18n="seriesLabel">Serie o episodio</label><input id="series" data-i18n-ph="seriesPh" placeholder="Ep. 3 · Salmos"></div>
+          <div class="field"><label for="lang" data-i18n="scriptLangLabel">Idioma del guion</label>
+            <select id="lang"><option value="auto" data-i18n="detect">Detectar</option><option value="es" data-i18n="spanish">Español</option><option value="en" data-i18n="english">Inglés</option></select></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="primary" id="runBtn" data-i18n="run">Revisar guion</button>
+      <button id="clearBtn" data-i18n="clear">Borrar</button>
+      <span class="hint" id="runHint"></span>
+    </div>
+  </section>
+
+  <section id="results" class="hidden" aria-live="polite"></section>
+
+  <section class="block" id="historyBlock">
+    <header><h2 data-i18n="historyTitle">Versiones y resultados</h2><span class="count" id="calibNote"></span></header>
+    <p class="lead" id="historyLead" data-i18n="historyLead">Guarda cada versión del guion y, después de publicar, anota cómo le fue al episodio. Con tres episodios anotados, la duración estimada se ajusta al ritmo real del presentador.</p>
+    <div id="historyBody"></div>
+  </section>
+
+  <footer class="disclaimer">
+    <p data-i18n="disc1">YouTube no publica una lista de palabras ni una fórmula; las reglas aquí son nuestra lectura de sus pautas publicadas.</p>
+    <p data-i18n="disc2">Los límites que no indican una fuente (7 s, 20 s, 4 min, 1,5 muletillas, IFSZ 65) son metas propias.</p>
+    <p data-i18n="disc3">El texto no ve la entrega, el tono ni las imágenes del video.</p>
+    <p data-i18n="disc4">La IA aquí no navega por internet: verifica citas y datos con las fuentes enlazadas antes de grabar.</p>
+    <p data-i18n="disc5">La decisión final sobre anuncios es de YouTube.</p>
+  </footer>
+</main>
+<script>
+/* ===== Script Desk — pure analysis logic (no DOM) ===== */
+
+// ---------- Word lists (spec section F) ----------
+const SW_ES = "el la los las un una unos unas y o pero si entonces así para de del al en por con como donde cuando porque este esta estos estas ese esa esos esas es son fue fueron ser estar mi tu su nuestro nuestra sus me te lo nos les no muy solo sobre entre desde hasta más también ya que qué cómo se le lo".split(" ");
+const SW_EN = "a an the and or but if then so to of in on for with as at by from is are was were be been being this that these those it its i you he she we they my your his her our their me him them us do does did not no yes very just about into over under again once here there when where why how all any both each few more most other some such only own same than too can will should now".split(" ");
+const STOP = new Set([...SW_ES, ...SW_EN]);
+
+// F.2 muletillas — patterns, not bare words, so "este libro" or "un buen hombre" never count.
+const MULETILLAS = [
+  { re: /\bo sea\b/gi, label: "o sea" },
+  { re: /\beste(?=\s*(,|\.\.\.|…))/gi, label: "este…" },
+  { re: /(^|[.!?¡¿]\s*)(bueno)(?=,)/gim, label: "bueno,", group: 2 },
+  { re: /(^|[.!?¡¿]\s*)(pues)(?=,)/gim, label: "pues,", group: 2 },
+  { re: /¿verdad\?/gi, label: "¿verdad?" },
+  { re: /,\s*¿no\?/gi, label: "¿no?" },
+  { re: /¿sí\?/gi, label: "¿sí?" },
+  { re: /\b(eh+|em+|mm+)\b/gi, label: "eh / em" },
+  { re: /\bdigamos\b/gi, label: "digamos" },
+  { re: /\bbásicamente\b/gi, label: "básicamente" },
+  { re: /\bliteralmente\b/gi, label: "literalmente" },
+  { re: /\bla verdad es que\b/gi, label: "la verdad es que" },
+  { re: /\bcomo que\b/gi, label: "como que" },
+  { re: /\btipo(?=,)/gi, label: "tipo," },
+  { re: /\by nada\b/gi, label: "y nada" },
+  { re: /¿me explico\?/gi, label: "¿me explico?" },
+  { re: /¿me entienden\?/gi, label: "¿me entienden?" },
+  { re: /\ba ver(?=,)/gi, label: "a ver," },
+  { re: /\b(okay|ok)\b/gi, label: "ok" },
+  // English
+  { re: /\b(um+|uh+)\b/gi, label: "um / uh" },
+  { re: /\byou know\b/gi, label: "you know" },
+  { re: /\b(kind of|sort of)\b/gi, label: "kind of / sort of" },
+  { re: /\bI mean\b/gi, label: "I mean" },
+];
+
+// F.3 greetings and filler openers
+const GREETINGS = ["hola a todos", "hola amigos", "qué tal", "bienvenidos a", "bienvenidos de nuevo", "bienvenidos", "en este episodio vamos a", "en este video voy a", "en este video vamos a", "hoy vamos a hablar de", "antes de empezar", "sin más preámbulos", "what's up guys", "hey guys", "welcome back", "in this video i'm going to", "without further ado"];
+
+// F.5 calls to action
+const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten", "comparte", "compartan", "dale like", "dejen su like", "activa la campanita", "enlace en la descripción", "link en la descripción", "escríbenos", "escríbeme", "únete al grupo", "subscribe", "comment below", "link in the description", "share this"];
+
+// F.6 structure, promise, open-loop
+const TRANSITIONS = ["primero", "segundo", "tercero", "en primer lugar", "en segundo lugar", "ahora bien", "por otro lado", "luego", "después", "finalmente", "por último", "en resumen", "para terminar", "first", "second", "next", "finally", "in summary"];
+const PROMISES = ["vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "you'll see", "you'll learn", "by the end of this"];
+const OPEN_LOOPS = ["más adelante", "en un momento", "quédate hasta el final", "pero antes", "hay algo más", "la clave está en", "lo que casi nadie nota", "imagínate", "imagina", "déjame contarte", "les voy a contar", "later in this", "stay until the end", "here's the thing", "imagine"];
+const NEXT_EP = ["próximo episodio", "la próxima semana", "en el siguiente episodio", "siguiente episodio", "en la próxima", "next episode", "next week"];
+
+// F.4 weak words → alternatives
+const WEAK = {
+  "cosas": ["aspectos", "elementos", "verdades"],
+  "muy importante": ["esencial", "decisivo"],
+  "un montón": ["muchos", "numerosos"],
+  "bonito": ["hermoso", "glorioso"],
+  "bonita": ["hermosa", "gloriosa"],
+  "interesante": ["revelador", "sorprendente"],
+  "súper": ["muy", "realmente"],
+  "hacer una oración": ["orar"],
+  "hacer un estudio": ["estudiar"],
+  "stuff": ["tools", "ideas", "details"],
+  "things": ["truths", "points", "details"],
+  "very important": ["essential", "crucial"],
+  "a lot of": ["many", "much"],
+  "nice": ["beautiful", "good"],
+};
+// "bueno/malo/grande" as adjectives (not "bueno," filler)
+const WEAK_ADJ = { "bueno": ["fiel", "sólido", "provechoso"], "buena": ["fiel", "sólida", "provechosa"], "malo": ["dañino", "engañoso"], "mala": ["dañina", "engañosa"], "grande": ["enorme", "profundo"] };
+
+// F.7 protected phrases
+const PROTECTED = ["palabra de dios", "espíritu santo", "hijo de dios", "cordero de dios", "buenas nuevas", "buena nueva", "buen pastor", "buena voluntad", "buen samaritano", "gran comisión", "gran mandamiento", "gran tribulación", "gran ramera", "cosas nuevas", "todas las cosas", "cosas viejas", "cosas de arriba", "buena obra", "buenas obras", "buen fruto", "mal fruto"];
+
+// F.8 regional → neutral
+const REGIONAL = [
+  { re: /\bvosotr[oa]s\b/gi, fix: "ustedes" },
+  { re: /\b\p{L}+(?:áis|éis)\b/giu, fix: "forma de ustedes (-an / -en)" },
+  { re: /\b(sabés|tenés|querés|podés|sos|vení|mirá|escuchá)\b/gi, fix: "tú / usted (sabes, tienes…)" },
+  { re: /\bvale(?=\s*[,.?!])/gi, fix: "bien, de acuerdo" },
+  { re: /,\s*(tío|tía)\b/gi, fix: "amigo / hermano" },
+  { re: /\ben plan\b/gi, fix: "como, algo así como" },
+  { re: /\b(güey|wey|guey)\b/gi, fix: "(quitar)" },
+  { re: /\bche\b/gi, fix: "(quitar)" },
+  { re: /\b(chévere|chido|bacán|padrísimo)\b/gi, fix: "excelente" },
+  { re: /\b(pana|parcero|cuate)\b/gi, fix: "amigo / hermano" },
+  { re: /\bahorita\b/gi, fix: "en un momento" },
+  { re: /\bplaticar\b/gi, fix: "conversar" },
+  { re: /\bcoger\b/gi, fix: "tomar / agarrar (vulgar en parte de Latinoamérica)" },
+];
+
+// F.11 AI-tell phrases
+const AI_TELLS = ["en este video exploraremos", "sin más preámbulos", "es importante destacar", "cabe mencionar", "cabe destacar", "en el mundo actual", "acompáñame en este viaje", "un tapiz de", "profundicemos", "descubre los secretos", "delve", "tapestry", "in today's fast-paced world", "it's important to note", "let's dive in", "a testament to", "unlock the secrets"];
+
+// ---------- Monetization pre-flight categories (spec C.6 + F.9) ----------
+// level per degree: "verde" | "amarillo" | "rojo". These are this app's reading of YouTube's published
+// advertiser-friendly guidelines as of 2026, not YouTube's decision.
+const PROF_STRONG = ["fuck", "fucking", "motherfucker", "cunt", "hijo de puta", "hijos de puta", "puta", "puto", "joder", "coño", "chingar", "chingada", "chingado", "verga"];
+const PROF_MOD = ["shit", "bitch", "asshole", "mierda", "cabrón", "cabrona", "pendejo", "pendeja", "carajo", "culero", "pinche"];
+const GRAPHIC = ["a borbotones", "desangr", "vísceras", "visceras", "desmembr", "mutil", "decapit", "ahorc", "colgarse", "se colgó", "cortarse las venas", "cortes en", "navaja", "cuchilla", "sobredosis de", "pastillas para morir", "paso a paso", "con detalle", "golpes brutales", "la violó", "lo violó", "gore"];
+const MONEY_CATS = [
+  { id: "lang", label: "Lenguaje inapropiado", label_en: "Inappropriate language", special: true },
+  { id: "adult", label: "Contenido para adultos", label_en: "Adult content", note_en: "Talking about pornography or sexuality without explicit description is teaching; explicit detail limits ads.", terms: ["porno", "pornografía", "pornográfico", "porn", "sexo oral", "sexo anal", "masturbación", "orgasmo", "onlyfans", "desnudos", "nudes"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Hablar de la pornografía o la sexualidad sin descripciones explícitas es enseñanza; los detalles explícitos limitan anuncios." },
+  { id: "violence", label: "Violencia", label_en: "Violence", note_en: "Historical or biblical violence told without graphic detail is fine; graphic description limits ads.", terms: ["asesinato", "asesinar", "asesinó", "masacre", "tiroteo", "torturar", "tortura", "ejecución", "ejecutado", "decapitado", "apuñal", "murder", "massacre", "shooting", "torture", "execution", "beheaded", "stabbing"], mention: "verde", focal: "verde", graphic: "amarillo", note: "La violencia histórica o bíblica narrada sin detalle gráfico es apta; la descripción gráfica limita anuncios." },
+  { id: "harm", label: "Actos peligrosos y promesas garantizadas", label_en: "Harmful acts and guaranteed promises", note_en: "Promising healing or money as a guaranteed outcome falls under medical or financial misinformation; teach faith without promising results or discouraging treatment.", terms: ["dios te sanará si", "dios te va a sanar si", "deja la medicina", "deja tus medicamentos", "no necesitas medicina", "no vayas al médico", "cura el cáncer", "cura milagrosa", "sanidad garantizada", "siembra y recibirás", "multiplica tu dinero", "prosperidad garantizada", "garantizado por dios", "stop taking your medication", "will be healed if", "guaranteed healing", "seed offering"], mention: "amarillo", focal: "amarillo", graphic: "amarillo", note: "Promesas de sanidad o dinero como resultado garantizado caen en desinformación médica o financiera; enseña la fe sin prometer resultados ni desaconsejar tratamiento." },
+  { id: "controversial", label: "Temas controversiales", label_en: "Controversial issues", note_en: "Since January 2026 these topics can earn full ads when discussed without graphic detail. Child abuse and eating disorders remain restricted.", terms: ["aborto", "abortar", "suicidio", "suicidarse", "quitarse la vida", "autolesión", "autolesiones", "violencia doméstica", "abuso sexual", "violación", "acoso sexual", "abortion", "suicide", "self-harm", "domestic abuse", "sexual abuse", "rape", "sexual harassment"], restricted: ["abuso infantil", "abuso de menores", "abusó de un niño", "abusó de una niña", "trastorno alimenticio", "trastornos alimenticios", "anorexia", "bulimia", "child abuse", "eating disorder"], mention: "verde", focal: "verde", graphic: "amarillo", note: "Desde enero de 2026 estos temas son aptos si se tratan sin detalle gráfico. El abuso infantil y los trastornos alimenticios siguen restringidos." },
+  { id: "drugs", label: "Drogas", label_en: "Drugs", note_en: "A testimony of addiction and freedom is fine; a focus on using or obtaining drugs limits ads.", terms: ["cocaína", "heroína", "metanfetamina", "fentanilo", "crack", "marihuana", "drogarse", "inyectarse", "cocaine", "heroin", "meth", "fentanyl"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Un testimonio de adicción y libertad es apto; el enfoque en consumir o conseguir drogas limita anuncios." },
+  { id: "firearms", label: "Armas de fuego", label_en: "Firearms", note_en: "Mentioning weapons in a story is fine; focusing on them limits ads.", terms: ["pistola", "rifle", "arma de fuego", "armas de fuego", "ametralladora", "ar-15", "glock", "gun", "firearm"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Mencionar armas en una historia es apto; centrarse en ellas limita anuncios." },
+  { id: "hate", label: "Odio o contenido despectivo", label_en: "Hateful or derogatory content", note_en: "Calling a protected group a plague, a disease, or something to eliminate is hate, regardless of religious framing. You can teach about sin without dehumanizing people.", special: true, note: "Llamar a un grupo protegido plaga, enfermedad o algo a eliminar es odio, sin importar el marco religioso. Se puede enseñar sobre el pecado sin deshumanizar a personas." },
+  { id: "shocking", label: "Contenido impactante", label_en: "Shocking content", note_en: "Repulsive or graphic descriptions limit ads even in an educational context.", terms: ["cadáver putrefacto", "carne podrida", "vísceras", "intestinos", "gusanos en", "rotting flesh", "gore"], mention: "amarillo", focal: "amarillo", graphic: "amarillo", note: "Descripciones repulsivas o gráficas limitan anuncios incluso en contexto educativo." },
+  { id: "events", label: "Eventos sensibles", label_en: "Sensitive events", note_en: "Mentioning tragedies in a reflection is fine; exploiting them sensationally limits ads.", terms: ["pandemia", "covid", "coronavirus", "ataque terrorista", "tiroteo masivo", "atentado", "pandemic", "terror attack", "mass shooting"], mention: "verde", focal: "amarillo", graphic: "amarillo", note: "Mencionar tragedias en una reflexión es apto; explotarlas de forma sensacionalista limita anuncios." },
+];
+const HATE_GROUPS = ["judíos", "musulmanes", "católicos", "evangélicos", "cristianos", "mormones", "testigos de jehová", "ateos", "homosexuales", "gays", "lesbianas", "trans", "transgénero", "inmigrantes", "negros", "indígenas", "mexicanos", "hondureños", "árabes", "jews", "muslims", "catholics", "gays", "immigrants"];
+const HATE_WORDS = ["plaga", "cáncer de", "son un cáncer", "basura", "animales", "ratas", "alimañas", "exterminar", "eliminarlos", "infrahumanos", "no son humanos", "parásitos", "vermin", "subhuman", "exterminate", "plague"];
+
+// ---------- Bible books (F.10) ----------
+const BOOKS = [
+  ["Génesis|Genesis|Gén|Gn", "GEN", "Génesis"], ["Éxodo|Exodo|Éx|Ex", "EXO", "Éxodo"], ["Levítico|Levitico|Lv", "LEV", "Levítico"], ["Números|Numeros|Núm|Nm", "NUM", "Números"], ["Deuteronomio|Dt", "DEU", "Deuteronomio"], ["Josué|Josue|Jos", "JOS", "Josué"], ["Jueces|Jue", "JDG", "Jueces"], ["Rut", "RUT", "Rut"],
+  ["1\\s?Samuel|1\\s?S|1\\s?Sm", "1SA", "1 Samuel"], ["2\\s?Samuel|2\\s?S|2\\s?Sm", "2SA", "2 Samuel"], ["1\\s?Reyes|1\\s?R", "1KI", "1 Reyes"], ["2\\s?Reyes|2\\s?R", "2KI", "2 Reyes"], ["1\\s?Crónicas|1\\s?Cronicas|1\\s?Cr", "1CH", "1 Crónicas"], ["2\\s?Crónicas|2\\s?Cronicas|2\\s?Cr", "2CH", "2 Crónicas"],
+  ["Esdras|Esd", "EZR", "Esdras"], ["Nehemías|Nehemias|Neh", "NEH", "Nehemías"], ["Ester|Est", "EST", "Ester"], ["Job", "JOB", "Job"], ["Salmos|Salmo|Sal", "PSA", "Salmos"], ["Proverbios|Prov|Pr", "PRO", "Proverbios"], ["Eclesiastés|Eclesiastes|Ec", "ECC", "Eclesiastés"], ["Cantar de los Cantares|Cantares|Cnt", "SNG", "Cantares"],
+  ["Isaías|Isaias|Is", "ISA", "Isaías"], ["Jeremías|Jeremias|Jer", "JER", "Jeremías"], ["Lamentaciones|Lm", "LAM", "Lamentaciones"], ["Ezequiel|Ez", "EZK", "Ezequiel"], ["Daniel|Dn", "DAN", "Daniel"], ["Oseas|Os", "HOS", "Oseas"], ["Joel|Jl", "JOL", "Joel"], ["Amós|Amos|Am", "AMO", "Amós"], ["Abdías|Abdias|Abd", "OBA", "Abdías"], ["Jonás|Jonas|Jon", "JON", "Jonás"], ["Miqueas|Mi", "MIC", "Miqueas"], ["Nahúm|Nahum|Nah", "NAM", "Nahúm"], ["Habacuc|Hab", "HAB", "Habacuc"], ["Sofonías|Sofonias|Sof", "ZEP", "Sofonías"], ["Hageo|Hag", "HAG", "Hageo"], ["Zacarías|Zacarias|Zac", "ZEC", "Zacarías"], ["Malaquías|Malaquias|Mal", "MAL", "Malaquías"],
+  ["Mateo|Mt", "MAT", "Mateo"], ["Marcos|Mr|Mc", "MRK", "Marcos"], ["Lucas|Lc", "LUK", "Lucas"], ["Juan|Jn", "JHN", "Juan"], ["Hechos|Hch", "ACT", "Hechos"], ["Romanos|Rom|Ro", "ROM", "Romanos"], ["1\\s?Corintios|1\\s?Co", "1CO", "1 Corintios"], ["2\\s?Corintios|2\\s?Co", "2CO", "2 Corintios"], ["Gálatas|Galatas|Gál|Gá|Gal", "GAL", "Gálatas"], ["Efesios|Ef", "EPH", "Efesios"], ["Filipenses|Flp|Fil", "PHP", "Filipenses"], ["Colosenses|Col", "COL", "Colosenses"],
+  ["1\\s?Tesalonicenses|1\\s?Ts", "1TH", "1 Tesalonicenses"], ["2\\s?Tesalonicenses|2\\s?Ts", "2TH", "2 Tesalonicenses"], ["1\\s?Timoteo|1\\s?Ti", "1TI", "1 Timoteo"], ["2\\s?Timoteo|2\\s?Ti", "2TI", "2 Timoteo"], ["Tito|Tit", "TIT", "Tito"], ["Filemón|Filemon|Flm", "PHM", "Filemón"], ["Hebreos|Heb|He", "HEB", "Hebreos"], ["Santiago|Stg", "JAS", "Santiago"],
+  ["1\\s?Pedro|1\\s?P", "1PE", "1 Pedro"], ["2\\s?Pedro|2\\s?P", "2PE", "2 Pedro"], ["1\\s?Juan|1\\s?Jn", "1JN", "1 Juan"], ["2\\s?Juan|2\\s?Jn", "2JN", "2 Juan"], ["3\\s?Juan|3\\s?Jn", "3JN", "3 Juan"], ["Judas|Jud", "JUD", "Judas"], ["Apocalipsis|Ap", "REV", "Apocalipsis"],
+];
+const BOOK_ALTS = BOOKS.flatMap(([alts, code, name]) => alts.split("|").map((a) => ({ a, code, name }))).sort((x, y) => y.a.length - x.a.length);
+// Numbered chapter required (":" verse optional) so "Juan dijo" or "Job perdió" never match.
+const REF_RE = new RegExp("(?<![\\p{L}\\d])(" + BOOK_ALTS.map((b) => b.a).join("|") + ")\\.?\\s+(\\d{1,3})(?:\\s?[:.]\\s?(\\d{1,3})(?:\\s?[-–]\\s?(\\d{1,3}))?)?(?![\\p{L}])", "gu");
+
+// ---------- Text helpers ----------
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function wordTokens(text) {
+  const out = [];
+  const re = /[\p{L}\p{N}'’-]+/gu;
+  let m;
+  while ((m = re.exec(text))) out.push({ w: m[0], start: m.index, end: m.index + m[0].length });
+  return out;
+}
+
+function sentences(text) {
+  const out = [];
+  // Protect verse colons/periods ("Juan 3.16") from splitting by only splitting on ., !, ?, … followed by space/newline, or newlines.
+  const re = /[^.!?…\n]+(?:[.!?…]+(?=\s|$)|\n|$)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const s = m[0];
+    if (s.trim().length === 0) { if (m[0].length === 0) re.lastIndex++; continue; }
+    out.push({ text: s.trim(), start: m.index + (s.length - s.trimStart().length), end: m.index + s.trimEnd().length });
+  }
+  return out;
+}
+
+function detectLanguage(text) {
+  const words = norm(text).match(/[a-zñ]+/g) || [];
+  const es = new Set(SW_ES.map(norm)), en = new Set(SW_EN);
+  let a = 0, b = 0;
+  for (const w of words) { if (es.has(w)) a++; if (en.has(w)) b++; }
+  return b > a ? "en" : "es";
+}
+
+// Spanish syllables: nuclei per vowel group = number of strong vowels (a e o, or an accented í ú), min 1.
+// "qu"/"gu" before e/i drop the u; a final "y" acts as a weak vowel.
+function syllablesES(word) {
+  let w = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
+  if (!w) return /\d/.test(word) ? 2 : 0;
+  w = w.replace(/qu(?=[eiéí])/g, "q").replace(/gu(?=[eiéí])/g, "g");
+  if (w.endsWith("y")) w = w.slice(0, -1) + "i";
+  const strong = new Set(["a", "e", "o", "á", "é", "ó", "í", "ú"]);
+  const vowel = new Set(["a", "e", "i", "o", "u", "á", "é", "í", "ó", "ú", "ü"]);
+  let count = 0, i = 0;
+  while (i < w.length) {
+    if (vowel.has(w[i])) {
+      let s = 0;
+      while (i < w.length && vowel.has(w[i])) { if (strong.has(w[i])) s++; i++; }
+      count += Math.max(1, s);
+    } else i++;
+  }
+  return Math.max(1, count);
+}
+function syllablesEN(word) {
+  const w = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!w) return /\d/.test(word) ? 2 : 0;
+  const m = w.match(/[aeiouy]+/g);
+  let c = m ? m.length : 1;
+  if (w.endsWith("e") && !w.endsWith("le") && c > 1) c--;
+  return Math.max(1, c);
+}
+
+// IFSZ (Flesch-Szigriszt) and INFLESZ band — Barrio-Cantalejo et al. 2008.
+function ifsz(syl, words, sents) { return 206.835 - 62.3 * (syl / words) - words / sents; }
+function inflesz(score, ui) {
+  const en = ui === "en";
+  if (score < 40) return en ? "Very difficult" : "Muy difícil";
+  if (score < 55) return en ? "Somewhat difficult" : "Algo difícil";
+  if (score < 65) return en ? "Normal" : "Normal";
+  if (score <= 80) return en ? "Fairly easy" : "Bastante fácil";
+  return en ? "Very easy" : "Muy fácil";
+}
+function fernandezHuerta(syl, words, sents) { return 206.84 - 0.6 * (100 * syl / words) - 1.02 * (words / sents); }
+function fkGrade(syl, words, sents) { return 0.39 * (words / sents) + 11.8 * (syl / words) - 15.59; }
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function findPhrases(text, phrases, kind, extra) {
+  const out = [];
+  for (const p of phrases) {
+    const re = new RegExp("(?<![\\p{L}])" + esc(p) + "(?![\\p{L}])", "giu");
+    let m;
+    while ((m = re.exec(text))) out.push({ start: m.index, end: m.index + m[0].length, text: m[0], phrase: p, kind, ...(extra ? extra(p) : {}) });
+  }
+  return out;
+}
+
+function insideAny(spans, start, end) { return spans.some((s) => start >= s.start && end <= s.end); }
+
+function median(xs) { const a = [...xs].sort((x, y) => x - y); const n = a.length; return n ? (n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2) : null; }
+
+// ---------- Scripture ----------
+function findReferences(text) {
+  const out = [];
+  let m;
+  REF_RE.lastIndex = 0;
+  while ((m = REF_RE.exec(text))) {
+    const alt = BOOK_ALTS.find((b) => new RegExp("^" + b.a + "$", "iu").test(m[1]));
+    if (!alt) continue;
+    // Single-letter-ish abbreviations ("Is", "Am", "He", "Os", "Ex", "Ro"...) only count with a verse number, to avoid "He 3" noise.
+    if (alt.a.replace(/\\s\?/g, "").length <= 2 && !m[3]) continue;
+    const ch = m[2], v1 = m[3], v2 = m[4];
+    out.push({ start: m.index, end: m.index + m[0].length, text: m[0], code: alt.code, book: alt.name, chapter: +ch, verse: v1 ? +v1 : null, verseEnd: v2 ? +v2 : null, canonical: `${alt.name} ${ch}${v1 ? ":" + v1 + (v2 ? "-" + v2 : "") : ""}` });
+  }
+  return out;
+}
+function findQuotes(text) {
+  const out = [];
+  const re = /«([^»]{8,})»|“([^”]{8,})”|"([^"]{8,})"/g;
+  let m;
+  while ((m = re.exec(text))) out.push({ start: m.index, end: m.index + m[0].length, inner: (m[1] || m[2] || m[3]).trim() });
+  return out;
+}
+function pairQuotes(refs, quotes) {
+  const pairs = [];
+  const usedQ = new Set();
+  for (const r of refs) {
+    let best = null, bestD = 160;
+    quotes.forEach((q, i) => {
+      if (usedQ.has(i)) return;
+      const d = q.start >= r.end ? q.start - r.end : r.start >= q.end ? r.start - q.end : 0;
+      if (d < bestD) { best = i; bestD = d; }
+    });
+    if (best !== null) usedQ.add(best);
+    pairs.push({ ref: r, quote: best !== null ? quotes[best] : null });
+  }
+  const orphanQuotes = quotes.filter((_, i) => !usedQ.has(i));
+  return { pairs, orphanQuotes };
+}
+function bibleGatewayUrl(canonical, translation) {
+  return "https://www.biblegateway.com/passage/?search=" + encodeURIComponent(canonical) + "&version=" + encodeURIComponent(translation || "RVR1960");
+}
+
+// ---------- Diff (word-level LCS) ----------
+function wordDiff(a, b) {
+  const A = a.split(/(\s+)/), B = b.split(/(\s+)/);
+  const m = A.length, n = B.length;
+  if (m * n > 30e6) return B.map((t) => ({ text: t, changed: true }));
+  const dp = Array.from({ length: m + 1 }, () => new Uint32Array(n + 1));
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) dp[i][j] = A[i - 1] === B[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  const kept = new Set();
+  let i = m, j = n;
+  while (i > 0 && j > 0) {
+    if (A[i - 1] === B[j - 1]) { kept.add(j - 1); i--; j--; }
+    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
+  }
+  return B.map((t, k) => ({ text: t, changed: !kept.has(k) && t.trim() !== "" }));
+}
+
+// ---------- Main analysis ----------
+// opts: { lang: "auto"|"es"|"en", title, thumb, description, translation, k }
+function analyze(text, opts = {}) {
+  const lang = opts.lang && opts.lang !== "auto" ? opts.lang : detectLanguage(text);
+  const ui = opts.uiLang || lang;
+  const L = (es, en) => (ui === "en" ? en : es);
+  const cl = (c) => L(c.label, c.label_en || c.label);
+  const cn = (c) => L(c.note || "", c.note_en || c.note || "");
+  const k = opts.k || 0.65; // ≈150 words/min in Spanish; calibrated from real episodes
+  const rate = (lang === "en" ? 6.19 : 7.82) * k; // syllables per second when teaching
+  const readRate = lang === "en" ? 6.19 : 7.82;
+  const syl = lang === "en" ? syllablesEN : syllablesES;
+
+  const words = wordTokens(text);
+  const sents = sentences(text);
+  let cum = 0;
+  for (const w of words) { w.syl = syl(w.w); cum += w.syl; w.t = cum / rate; }
+  const totalSyl = cum;
+  const wc = words.length;
+  const sc = Math.max(1, sents.length);
+  const runtimeSec = totalSyl / rate;
+  const readSec = totalSyl / readRate;
+  // time at a character offset
+  const timeAt = (pos) => {
+    let lo = 0, hi = words.length - 1, ans = 0;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (words[mid].start <= pos) { ans = words[mid].t; lo = mid + 1; } else hi = mid - 1; }
+    return ans;
+  };
+  const posAtTime = (sec) => { const w = words.find((x) => x.t >= sec); return w ? w.start : text.length; };
+
+  const refs = findReferences(text);
+  const quotes = findQuotes(text);
+  const { pairs, orphanQuotes } = pairQuotes(refs, quotes);
+  const protectedSpans = [...quotes, ...findPhrases(text, PROTECTED, "protected")];
+
+  const marks = []; // highlight spans
+  const sections = {};
+  const add = (sec, row) => { (sections[sec] = sections[sec] || []).push(row); };
+
+  // ===== Monetization pre-flight =====
+  const lower = text.toLowerCase();
+  const per1000 = (n) => (wc ? (n * 1000) / wc : 0);
+  const riskHits = [];
+  const strongP = findPhrases(text, PROF_STRONG, "risk", () => ({ cat: "lang", tier: "strong" }));
+  const modP = findPhrases(text, PROF_MOD, "risk", () => ({ cat: "lang", tier: "moderate" }));
+  riskHits.push(...strongP, ...modP);
+  const graphicHits = findPhrases(text, GRAPHIC.filter((g) => !g.endsWith("r") || true), "graphic");
+  // stems like "desangr" need prefix matching
+  const graphicStem = [];
+  for (const g of GRAPHIC) {
+    const re = new RegExp("(?<![\\p{L}])" + esc(g), "giu");
+    let m; while ((m = re.exec(text))) graphicStem.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+  }
+  const nearGraphic = (pos) => {
+    const wi = words.findIndex((w) => w.start >= pos);
+    if (wi < 0) return false;
+    const lo = words[Math.max(0, wi - 15)].start, hi = words[Math.min(words.length - 1, wi + 15)].end;
+    return graphicStem.some((g) => g.start >= lo && g.end <= hi);
+  };
+
+  const preflight = [];
+  // Language: frequency-based (July 2025 rule), body only.
+  {
+    const s = strongP.length, mo = modP.length, dens = per1000(s + mo);
+    let level = "verde", degree = "ninguno";
+    if (s + mo > 0) degree = "mencionado";
+    if ((dens >= 4 && s + mo >= 3) || s >= 6) { level = "amarillo"; degree = "frecuente"; }
+    preflight.push({ id: "lang", label: L("Lenguaje inapropiado", "Inappropriate language"), count: s + mo, hits: [...strongP, ...modP], degree, level,
+      note: s + mo === 0 ? L("Sin groserías en el guion.", "No profanity in the script.") : L(`${s} fuerte(s), ${mo} moderada(s); ${dens.toFixed(1)} por cada 1.000 palabras. Desde julio de 2025 una grosería aislada, incluso al inicio, no limita anuncios; la frecuencia alta sí. En el título o la miniatura cualquiera limita anuncios.`, `${s} strong, ${mo} moderate; ${dens.toFixed(1)} per 1,000 words. Since July 2025 an occasional word, even at the start, doesn't limit ads; high frequency does. Any profanity in the title or thumbnail does.`),
+      fix: level === "verde" ? null : L("Quita o espacia las groserías; no las conviertas en eufemismos.", "Remove or space out the profanity; don't swap in euphemisms.") });
+  }
+  for (const cat of MONEY_CATS) {
+    if (cat.special) continue;
+    const hits = findPhrases(text, cat.terms, "risk", () => ({ cat: cat.id }));
+    const restricted = cat.restricted ? findPhrases(text, cat.restricted, "risk", () => ({ cat: cat.id, restricted: true })) : [];
+    const all = [...hits, ...restricted];
+    riskHits.push(...all);
+    if (!all.length) { preflight.push({ id: cat.id, label: cl(cat), count: 0, hits: [], degree: "ninguno", level: "verde", note: L("No aparece.", "Not present."), fix: null }); continue; }
+    const graphic = all.some((h) => nearGraphic(h.start));
+    const focal = all.length >= 5 || (per1000(all.length) >= 4 && all.length >= 3);
+    let degree = graphic ? "gráfico" : focal ? "central" : "mencionado";
+    let level = graphic ? cat.graphic : focal ? cat.focal : cat.mention;
+    if (restricted.length) { level = "amarillo"; }
+    preflight.push({ id: cat.id, label: cl(cat), count: all.length, hits: all, degree, level,
+      note: cn(cat) + (restricted.length ? L(" Aparece un tema que sigue restringido.", " A still-restricted topic appears.") : ""),
+      fix: level === "verde" ? null : graphic ? L("Quita el detalle gráfico cerca de estos términos; el tema puede quedarse.", "Remove the graphic detail near these terms; the topic can stay.") : L("Reduce el énfasis o reformula sin cambiar el mensaje.", "Reduce the emphasis or reframe without changing the message.") });
+  }
+  // Hate: dehumanizing words near a group word (±8 words)
+  {
+    const groupHits = findPhrases(text, HATE_GROUPS, "group");
+    const hateHits = [];
+    for (const hw of HATE_WORDS) {
+      const re = new RegExp("(?<![\\p{L}])" + esc(hw), "giu");
+      let m; while ((m = re.exec(text))) {
+        const wi = words.findIndex((w) => w.start >= m.index);
+        if (wi < 0) continue;
+        const lo = words[Math.max(0, wi - 8)].start, hi = words[Math.min(words.length - 1, wi + 8)].end;
+        if (groupHits.some((g) => g.start >= lo && g.end <= hi)) hateHits.push({ start: m.index, end: m.index + m[0].length, text: m[0], kind: "risk", cat: "hate" });
+      }
+    }
+    riskHits.push(...hateHits);
+    const cat = MONEY_CATS.find((c) => c.id === "hate");
+    preflight.push({ id: "hate", label: cl(cat), count: hateHits.length, hits: hateHits, degree: hateHits.length ? "deshumanizante" : "ninguno", level: hateHits.length ? "rojo" : "verde",
+      note: hateHits.length ? cn(cat) : L("Ningún lenguaje deshumanizante hacia un grupo.", "No dehumanizing language toward a group."), fix: hateHits.length ? L("Reformula para hablar de ideas o conductas, no de personas como algo menos que humanas.", "Reframe to address ideas or conduct, not people as less than human.") : null });
+  }
+  // Densest 2-minute windows
+  const sortedHits = riskHits.map((h) => ({ ...h, t: timeAt(h.start) })).sort((a, b) => a.t - b.t);
+  const windows = [];
+  for (let i = 0; i < sortedHits.length; i++) {
+    let j = i; while (j + 1 < sortedHits.length && sortedHits[j + 1].t - sortedHits[i].t <= 120) j++;
+    if (j - i + 1 >= 2) windows.push({ from: sortedHits[i].t, to: sortedHits[i].t + 120, n: j - i + 1 });
+  }
+  windows.sort((a, b) => b.n - a.n);
+  const dense = [];
+  for (const w of windows) if (!dense.some((d) => Math.abs(d.from - w.from) < 120)) dense.push(w);
+
+  // Packaging scan (title, thumbnail, description) — stricter
+  const packaging = [];
+  const scanPack = (label, s, strict) => {
+    if (!s || !s.trim()) return;
+    const hits = [...findPhrases(s, [...PROF_STRONG, ...PROF_MOD], "x"), ...MONEY_CATS.filter((c) => !c.special).flatMap((c) => findPhrases(s, [...c.terms, ...(c.restricted || [])], "x"))];
+    const caps = (s.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length;
+    const issues = [];
+    if (hits.length) issues.push(L(`contiene ${hits.map((h) => "«" + h.text + "»").join(", ")}`, `contains ${hits.map((h) => '"' + h.text + '"').join(", ")}`));
+    if (strict === "title" && caps >= 2) issues.push(L("varias palabras en mayúsculas sostenidas (lee como clickbait)", "several all-caps words (reads as clickbait)"));
+    const level = issues.length ? "amarillo" : "verde";
+    packaging.push({ label, level, issues });
+  };
+  scanPack(L("Título", "Title"), opts.title, "title");
+  scanPack(L("Texto de miniatura", "Thumbnail text"), opts.thumb, "thumb");
+  scanPack(L("Descripción", "Description"), opts.description, false);
+  for (const p of packaging) add("money", { id: "pack-" + p.label, label: L(`${p.label} sin términos de riesgo`, `${p.label} free of risk terms`), passed: p.level === "verde", info: p.level === "verde" ? L("Limpio.", "Clean.") : L("En el empaque YouTube es más estricto: ", "YouTube is strictest on packaging: ") + p.issues.join("; ") + ".", fix: p.level === "verde" ? null : L("Quita esos términos del empaque; pueden quedarse en el cuerpo del guion si no son gráficos.", "Remove those terms from the packaging; they can stay in the script body if not graphic.") });
+  for (const p of preflight.filter((p) => p.count > 0 || p.level !== "verde")) add("money", { id: "pf-" + p.id, label: p.label, passed: p.level === "verde", level: p.level, info: p.note, fix: p.fix, degree: p.degree, count: p.count, times: p.hits.slice(0, 6).map((h) => fmtTime(timeAt(h.start))) });
+
+  // Inauthentic content (C.9)
+  const sentLens = sents.map((s) => wordTokens(s.text).length).filter((n) => n > 0);
+  const mean = sentLens.reduce((a, b) => a + b, 0) / Math.max(1, sentLens.length);
+  const sd = Math.sqrt(sentLens.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, sentLens.length));
+  const openerCount = {};
+  sents.forEach((s) => { const ws = wordTokens(s.text).slice(0, 2).map((x) => x.w.toLowerCase()).join(" "); if (ws.split(" ").length === 2) openerCount[ws] = (openerCount[ws] || 0) + 1; });
+  const repeatedOpeners = Object.entries(openerCount).filter(([, n]) => n > 3).sort((a, b) => b[1] - a[1]);
+  const aiHits = findPhrases(text, AI_TELLS, "aitell");
+  const monotone = sentLens.length >= 10 && sd < 4;
+  const inauth = { monotone, sd, repeatedOpeners, aiHits };
+  add("auth", { id: "rhythm", label: L("Ritmo variado de oraciones", "Varied sentence rhythm"), passed: !monotone, info: sentLens.length < 10 ? L("Muy pocas oraciones para medir el ritmo.", "Too few sentences to measure rhythm.") : L(`Desviación de largo de oración: ${sd.toFixed(1)} palabras (meta propia: 4 o más).`, `Sentence-length spread: ${sd.toFixed(1)} words (our cutoff: 4 or more).`), fix: monotone ? L("Mezcla oraciones cortas con algunas largas; el texto plano suena a plantilla.", "Mix short and long sentences; flat rhythm sounds templated.") : null });
+  add("auth", { id: "openers", label: L("Inicios de oración variados", "Varied sentence openings"), passed: !repeatedOpeners.length, info: repeatedOpeners.length ? L(`Se repiten: ${repeatedOpeners.map(([w, n]) => `«${w}…» ×${n}`).join(", ")}.`, `Repeated: ${repeatedOpeners.map(([w, n]) => `"${w}…" ×${n}`).join(", ")}.`) : L("Ningún inicio se repite más de 3 veces.", "No opening repeats more than 3 times."), fix: repeatedOpeners.length ? L("Varía cómo empiezas las oraciones.", "Vary how sentences start.") : null });
+  add("auth", { id: "aitell", label: L("Sin frases típicas de texto generado por IA", "No typical AI-generated phrases"), passed: !aiHits.length, info: aiHits.length ? L(`Encontradas: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube llama a esto contenido no auténtico desde julio de 2025 cuando es masivo o repetitivo.`, `Found: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube calls mass-produced text inauthentic content since July 2025.`) : L("Ninguna.", "None."), fix: aiHits.length ? L("Dilo con tus propias palabras.", "Say it in your own words.") : null });
+
+  // ===== Structure (C.2) =====
+  const firstSent = sents[0] ? sents[0].text : "";
+  const hookRe = /[?¿]|(?<![\p{L}])(tú|te|ti|tu|usted|ustedes|les|imagina|imagínate|escucha|mira|piensa|recuerda|has |alguna vez|you|your|imagine|listen|think|have you)(?![\p{L}])/iu;
+  const hookPass = hookRe.test(firstSent);
+  add("structure", { id: "hook", label: L("Gancho en los primeros 7 segundos", "Hook in the first 7 seconds"), passed: hookPass, info: L(`Primera oración: «${firstSent.slice(0, 160)}». Se revisa que abra con una pregunta, una tensión o algo dirigido al oyente. Los 7 segundos son nuestra meta, no un dato de YouTube.`, `First sentence: "${firstSent.slice(0, 160)}". Checks for a question, tension, or something addressed to the viewer. 7 seconds is our target, not YouTube data.`), fix: hookPass ? null : L("Abre con la pregunta o el problema que el episodio responde, antes de cualquier saludo.", "Open with the question or problem the episode answers, before any greeting.") });
+
+  const promiseHits = findPhrases(text, PROMISES, "promise");
+  const firstPromise = promiseHits.sort((a, b) => a.start - b.start)[0];
+  const promiseT = firstPromise ? timeAt(firstPromise.start) : null;
+  add("structure", { id: "promise", label: L("Promesa clara antes de 20 segundos", "Clear promise by 20 seconds"), passed: promiseT !== null && promiseT <= 20, info: promiseT === null ? L("No se encontró una frase que diga qué va a aprender el oyente («hoy veremos», «vas a descubrir»…).", "No sentence says what the viewer will learn (\"you'll see\", \"today we'll\"…).") : L(`Primera promesa en ${fmtTime(promiseT)}: «${firstPromise.text}».`, `First promise at ${fmtTime(promiseT)}: "${firstPromise.text}".`), fix: promiseT !== null && promiseT <= 20 ? null : L("Di en una frase qué se llevará el oyente y ponla dentro de los primeros 20 segundos.", "Say in one sentence what the viewer gets and place it within the first 20 seconds.") });
+
+  const transHits = findPhrases(text, TRANSITIONS, "transition");
+  const contentStarts = [...refs.map((r) => r.start), ...transHits.map((h) => h.start), ...(firstPromise ? [firstPromise.start] : [])];
+  const contentT = contentStarts.length ? timeAt(Math.min(...contentStarts)) : null;
+  add("structure", { id: "content", label: L("La enseñanza empieza antes de 30 segundos", "Teaching starts within 30 seconds"), passed: contentT !== null && contentT <= 30, info: L("YouTube mide oficialmente cuántos siguen viendo a los 30 segundos (métrica «Intro» en Analytics). ", "YouTube officially reports how many viewers remain at 30 seconds (the Intro metric in Analytics). ") + (contentT === null ? L("No se detectó el inicio del contenido.", "No content start detected.") : L(`El contenido empieza en ${fmtTime(contentT)}.`, `Content starts at ${fmtTime(contentT)}.`)), fix: contentT !== null && contentT <= 30 ? null : L("Lleva el primer versículo o el primer punto antes del segundo 30.", "Bring the first verse or first point before second 30.") });
+
+  const greetHits = findPhrases(text, GREETINGS, "greeting");
+  const ctaHits = findPhrases(text, CTAS, "cta");
+  const promiseCut = firstPromise ? firstPromise.start : posAtTime(30);
+  const earlyFluff = [...greetHits, ...ctaHits].filter((h) => h.start < promiseCut && timeAt(h.start) <= 30);
+  add("structure", { id: "greeting", label: L("Sin saludos ni pedidos antes del contenido", "No greetings or asks before content"), passed: !earlyFluff.length, info: earlyFluff.length ? L(`Antes de la promesa aparece: ${earlyFluff.map((h) => "«" + h.text + "»").join(", ")}.`, `Before the promise: ${earlyFluff.map((h) => '"' + h.text + '"').join(", ")}.`) : L("La apertura va directo al tema.", "The opening goes straight to the topic."), fix: earlyFluff.length ? L("Mueve el saludo después de la promesa, o quítalo.", "Move the greeting after the promise, or cut it.") : null });
+
+  // Re-hooks per 4-minute block
+  const loopHits = findPhrases(text, OPEN_LOOPS, "loop");
+  const qPositions = [];
+  for (let i = 0; i < text.length; i++) if (text[i] === "?") qPositions.push(i);
+  const blocks = [];
+  if (runtimeSec > 300) {
+    for (let b = 0; b * 240 < runtimeSec; b++) {
+      const from = b * 240, to = Math.min(runtimeSec, (b + 1) * 240);
+      if (to - from < 60) continue;
+      const has = [...loopHits.map((h) => h.start), ...qPositions].some((p) => { const t = timeAt(p); return t >= from && t < to; });
+      blocks.push({ from, to, has });
+    }
+  }
+  const missing = blocks.filter((b) => !b.has);
+  add("structure", { id: "rehook", label: L("Re-enganches cada 4 minutos", "Re-hooks every 4 minutes"), passed: !missing.length, info: runtimeSec <= 300 ? L("Episodio corto: no aplica.", "Short episode: not applicable.") : missing.length ? L(`Sin pregunta ni anticipo entre ${missing.map((b) => fmtTime(b.from) + "–" + fmtTime(b.to)).join(", ")}. Intervalo de 4 minutos: meta propia.`, `No question or teaser between ${missing.map((b) => fmtTime(b.from) + "–" + fmtTime(b.to)).join(", ")}. 4-minute interval: our cutoff.`) : L("Cada bloque tiene una pregunta o un anticipo.", "Every block has a question or teaser."), fix: missing.length ? L("Añade una pregunta al oyente o un anticipo («más adelante veremos…») en esos tramos.", "Add a question or a teaser (\"later we'll see…\") in those stretches.") : null });
+
+  // Single CTA
+  const ctaSorted = ctaHits.sort((a, b) => a.start - b.start);
+  const clusters = [];
+  for (const c of ctaSorted) { const t = timeAt(c.start); const last = clusters[clusters.length - 1]; if (last && t - last.t <= 30) last.items.push(c); else clusters.push({ t, items: [c] }); }
+  const ctaOk = clusters.length === 1;
+  add("structure", { id: "cta", label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
+
+  const nextHits = findPhrases(text, NEXT_EP, "next");
+  const endOk = nextHits.some((h) => timeAt(h.start) >= runtimeSec - 45);
+  add("structure", { id: "ending", label: L("Cierre que anuncia el siguiente episodio", "Ending that leads to the next episode"), passed: endOk, info: endOk ? L("Los últimos 45 segundos mencionan el próximo episodio.", "The last 45 seconds mention the next episode.") : L("Los últimos 45 segundos no conducen a otro video; ahí va la pantalla final.", "The last 45 seconds don't lead to another video; that's where the end screen goes."), fix: endOk ? null : L("Termina con una frase que invite al próximo episodio de la serie.", "End with a line inviting viewers to the next episode.") });
+
+  // ===== Scripture (C.7, deterministic part) =====
+  add("scripture", { id: "refs", label: L("Citas bíblicas con referencia", "Scripture quotes have references"), passed: !orphanQuotes.length, info: L(`${refs.length} referencia(s) y ${quotes.length} cita(s) entre comillas. `, `${refs.length} reference(s), ${quotes.length} quoted passage(s). `) + (orphanQuotes.length ? L(`${orphanQuotes.length} cita(s) sin referencia cercana; si son versículos, añade libro, capítulo y versículo.`, `${orphanQuotes.length} quote(s) without a nearby reference.`) : ""), fix: orphanQuotes.length ? L("Añade la referencia justo antes o después de cada cita.", "Add the reference next to each quote.") : null });
+
+  // ===== Spoken Spanish quality (C.3–C.5) =====
+  let readability;
+  if (lang === "es") {
+    const v = ifsz(totalSyl, Math.max(1, wc), sc), fh = fernandezHuerta(totalSyl, Math.max(1, wc), sc);
+    readability = { kind: "IFSZ", value: v, band: inflesz(v, ui), fh };
+    add("spoken", { id: "readability", label: L("Legibilidad (Flesch-Szigriszt / INFLESZ)", "Readability (Flesch-Szigriszt / INFLESZ)"), passed: v >= 65, info: L(`IFSZ ${v.toFixed(1)}: «${inflesz(v, ui)}». Fernández Huerta ${fh.toFixed(1)}. La escala INFLESZ es validada; exigir 65 o más para un guion hablado es nuestra meta (la investigación en salud pide 55 para lectura).`, `IFSZ ${v.toFixed(1)}: "${inflesz(v, ui)}". Fernández Huerta ${fh.toFixed(1)}. The INFLESZ scale is validated for Spanish; requiring 65 or more for a spoken script is our cutoff (health research asks 55 for reading).`), fix: v >= 65 ? null : L("Acorta oraciones y cambia palabras largas por otras más simples.", "Shorten sentences and swap long words for simpler ones.") });
+  } else {
+    const g = fkGrade(totalSyl, Math.max(1, wc), sc);
+    readability = { kind: "FK", value: g, band: L(`nivel escolar ${g.toFixed(1)}`, `grade ${g.toFixed(1)}`) };
+    add("spoken", { id: "readability", label: L("Legibilidad (Flesch-Kincaid)", "Readability (Flesch-Kincaid)"), passed: g <= 9, info: L(`Nivel escolar ${g.toFixed(1)}. La fórmula es estándar; el límite de 9 es nuestra meta.`, `Grade level ${g.toFixed(1)}. The formula is standard; the grade-9 bar is our cutoff.`), fix: g <= 9 ? null : L("Acorta oraciones y simplifica palabras largas.", "Shorten sentences and simplify long words.") });
+  }
+  const longSents = sents.filter((s) => wordTokens(s.text).length > 30);
+  add("spoken", { id: "long", label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
+
+  add("spoken", { id: "runtime", label: L("Duración razonable para un episodio de enseñanza", "Reasonable length for a teaching episode"), passed: runtimeSec >= 360 && runtimeSec <= 2700, info: L(`Enseñando: ${fmtTime(runtimeSec)} · leído de corrido: ${fmtTime(readSec)}. Calculado por sílabas (${totalSyl}) a ${readRate.toFixed(2)} sílabas/s (Pellegrino et al., 2011) × factor de ritmo ${k.toFixed(2)}${opts.kCalibrated ? " calibrado con sus episodios" : " (supuesto; se calibra con episodios reales)"}.`, `Teaching: ${fmtTime(runtimeSec)} · straight read: ${fmtTime(readSec)}. From ${totalSyl} syllables at ${readRate.toFixed(2)} syllables/s (Pellegrino et al., 2011) × pace factor ${k.toFixed(2)}${opts.kCalibrated ? " calibrated from your episodes" : " (assumed; calibrates from real episodes)"}.`), fix: runtimeSec < 360 ? L("Menos de 6 minutos suele quedar corto para enseñar (meta propia).", "Under 6 minutes is usually short for teaching (our cutoff).") : runtimeSec > 2700 ? L("Más de 45 minutos: asegúrate de que pasen los re-enganches.", "Over 45 minutes: make sure the re-hooks pass.") : null });
+
+  const mulHits = [];
+  for (const m of MULETILLAS) {
+    m.re.lastIndex = 0; let x;
+    while ((x = m.re.exec(text))) {
+      const g = m.group ? x[m.group] : x[0];
+      const start = m.group ? x.index + x[0].lastIndexOf(g) : x.index;
+      mulHits.push({ start, end: start + g.length, text: g, label: m.label, kind: "muletilla" });
+      if (x[0].length === 0) m.re.lastIndex++;
+    }
+  }
+  const mulRate = wc ? (mulHits.length * 100) / wc : 0;
+  const mulCount = {}; mulHits.forEach((h) => (mulCount[h.label] = (mulCount[h.label] || 0) + 1));
+  const topMul = Object.entries(mulCount).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  add("spoken", { id: "muletillas", label: L("Muletillas bajo control", "Filler words under control"), passed: mulRate <= 1.5, info: L(`${mulHits.length} muletilla(s), ${mulRate.toFixed(1)} por cada 100 palabras (meta propia: 1,5 o menos).`, `${mulHits.length} filler(s), ${mulRate.toFixed(1)} per 100 words (our cutoff: 1.5).`) + (topMul.length ? L(" Más frecuentes: ", " Most frequent: ") + topMul.map(([w, n]) => `${w} ×${n}`).join(", ") + "." : ""), fix: mulRate <= 1.5 ? null : L("Quítalas del guion; en la grabación tienden a aumentar, no a bajar.", "Cut them in the script; they increase on camera, not decrease.") });
+
+  const weakHits = [];
+  for (const [w, alts] of Object.entries(WEAK)) for (const h of findPhrases(text, [w], "weak")) if (!insideAny(protectedSpans, h.start, h.end)) weakHits.push({ ...h, alts });
+  for (const [w, alts] of Object.entries(WEAK_ADJ)) {
+    const re = new RegExp("(?<![\\p{L}])" + esc(w) + "(?![\\p{L}])(?!\\s*,)", "giu"); let m;
+    while ((m = re.exec(text))) if (!insideAny(protectedSpans, m.index, m.index + m[0].length)) {
+      const before = text.slice(Math.max(0, m.index - 3), m.index);
+      if (/[.!?¡¿]\s*$/.test(before) || m.index === 0) continue; // sentence-initial "Bueno" is a filler, handled above
+      weakHits.push({ start: m.index, end: m.index + m[0].length, text: m[0], kind: "weak", alts });
+    }
+  }
+  add("spoken", { id: "weak", label: L("Palabras precisas", "Precise words"), passed: weakHits.length <= Math.max(2, Math.ceil(wc / 150)), info: weakHits.length ? L(`${weakHits.length} palabra(s) genérica(s); las expresiones fijas («Buen Pastor», «todas las cosas») y las citas bíblicas no se marcan.`, `${weakHits.length} generic word(s); fixed phrases and scripture quotes are skipped.`) : L("Vocabulario específico.", "Specific vocabulary."), fix: weakHits.length > Math.max(2, Math.ceil(wc / 150)) ? L("Toca cada palabra marcada en el guion para ver alternativas.", "Tap each marked word in the script for alternatives.") : null });
+
+  const regHits = [];
+  if (lang === "es") for (const r of REGIONAL) { r.re.lastIndex = 0; let m; while ((m = r.re.exec(text))) if (!insideAny(quotes, m.index, m.index + m[0].length)) regHits.push({ start: m.index + (m[0].length - m[0].trimStart().replace(/^,\s*/, "").length), end: m.index + m[0].length, text: m[0].replace(/^,\s*/, ""), kind: "regional", fix: r.fix }); }
+  if (lang === "es") add("spoken", { id: "regional", label: L("Español neutro", "Neutral Spanish"), passed: !regHits.length, info: regHits.length ? L(`${regHits.length} regionalismo(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. La audiencia va de Centroamérica a España; las citas bíblicas (que usan «vosotros» en la RVR1960) no se marcan.`, `${regHits.length} regional form(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. The audience spans Central America to Spain; Bible quotes (RVR1960 uses "vosotros") are not marked.`) : L("Sin regionalismos marcados.", "No regional forms marked."), fix: regHits.length ? L("Toca cada palabra marcada en el guion para ver la forma neutra.", "Tap each marked word in the script to see the neutral form.") : null });
+
+  // ===== Discoverability (C.10) =====
+  const contentWords = words.map((w) => w.w.toLowerCase()).filter((w) => w.length > 3 && !STOP.has(w) && !STOP.has(norm(w)));
+  const freq = {}; contentWords.forEach((w) => (freq[w] = (freq[w] || 0) + 1));
+  const top = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  // Auto keyword: prefer a repeated 2–3 word phrase ("silencio de dios"); single words skip ubiquitous faith words.
+  const COMMON = new Set(["dios", "señor", "jesús", "jesus", "cristo", "biblia", "palabra", "hermanos", "god", "lord", "jesus", "christ", "bible"]);
+  const lw = words.map((w) => w.w.toLowerCase());
+  const isContent = (w) => w.length > 2 && !STOP.has(w) && !STOP.has(norm(w));
+  const grams = {};
+  for (let n = 2; n <= 3; n++) for (let i = 0; i + n <= lw.length; i++) {
+    const g = lw.slice(i, i + n);
+    if (!isContent(g[0]) || !isContent(g[n - 1])) continue;
+    if (g.every((x) => COMMON.has(x) || !isContent(x))) continue;
+    const key = g.join(" "); grams[key] = (grams[key] || 0) + 1;
+  }
+  const bestGram = Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0];
+  const bestWord = top.find(([w, c]) => c > 1 && !COMMON.has(w));
+  const keyword = (opts.keyword || "").trim().toLowerCase() || (bestGram ? bestGram[0] : bestWord ? bestWord[0] : "");
+  const kwRe = keyword ? new RegExp("(?<![\\p{L}])" + esc(norm(keyword)) + "(?![\\p{L}])", "giu") : null;
+  const normText = norm(text);
+  const kwPositions = []; if (kwRe) { let m; while ((m = kwRe.exec(normText))) kwPositions.push(m.index); }
+  const kwFirstT = kwPositions.length ? timeAt(kwPositions[0]) : null;
+  const thirds = new Set(kwPositions.map((p) => Math.min(2, Math.floor((timeAt(p) / Math.max(1, runtimeSec)) * 3))));
+  const title = (opts.title || "").trim();
+  const desc = (opts.description || "").trim();
+  const searchy = /(¿?qu[eé] dice la biblia|¿?c[oó]mo|¿?por qu[eé]|¿?qu[eé] (es|significa)|¿?qui[eé]n (fue|era)|explicad[oa]|estudio b[ií]blico|how to|what does the bible|why|who was)/i;
+  add("seo", { id: "kw", label: L("Palabra clave principal definida", "Primary keyword defined"), passed: !!keyword, info: keyword ? L(`Palabra clave: «${keyword}»${opts.keyword ? " (escrita por ti)" : " (la más repetida; mejor escríbela tú)"}.`, `Keyword: "${keyword}"${opts.keyword ? " (yours)" : " (most repeated; better to set it)"}.`) : L("No hay una palabra clave clara.", "No clear keyword."), fix: keyword ? null : L("Escribe en el campo «Palabra clave» la frase que un oyente buscaría.", "Type the phrase a viewer would search in the Keyword field.") });
+  add("seo", { id: "kwopen", label: L("Palabra clave en los primeros 20 segundos", "Keyword in the first 20 seconds"), passed: kwFirstT !== null && kwFirstT <= 20, info: kwFirstT === null ? L("No aparece en el guion.", "Not in the script.") : L(`Primera mención en ${fmtTime(kwFirstT)}. Los subtítulos automáticos se indexan; el inicio pesa más.`, `First mention at ${fmtTime(kwFirstT)}. Auto-captions are indexed; the opening weighs most.`), fix: kwFirstT !== null && kwFirstT <= 20 ? null : L("Dila en la primera o segunda oración.", "Say it in the first or second sentence.") });
+  add("seo", { id: "kwspread", label: L("Palabra clave repartida en todo el episodio", "Keyword spread across the episode"), passed: kwPositions.length >= 3 && thirds.size >= 2, info: L(`${kwPositions.length} mención(es), en ${thirds.size} de 3 tercios del episodio.`, `${kwPositions.length} mention(s), in ${thirds.size} of 3 thirds.`), fix: kwPositions.length >= 3 && thirds.size >= 2 ? null : L("Repítela con naturalidad al inicio, a la mitad y al cierre.", "Repeat it naturally at the start, middle and end.") });
+  const support = top.find(([w, n]) => n >= 2 && w !== keyword && !keyword.includes(w));
+  add("seo", { id: "support", label: L("Términos de apoyo relacionados", "Related supporting terms"), passed: !!support, info: support ? L(`También repites «${support[0]}» (×${support[1]}).`, `Also repeats "${support[0]}" (×${support[1]}).`) : L("Solo una palabra se repite.", "Only one word repeats."), fix: support ? null : L("Usa uno o dos sinónimos del tema, no solo la misma frase.", "Use a synonym or two, not just the same phrase.") });
+  add("seo", { id: "search", label: L("Frase con forma de búsqueda", "Search-shaped phrasing"), passed: searchy.test(title) || searchy.test(firstSent), info: L("Por ejemplo «¿Qué dice la Biblia sobre…?», «¿Por qué…?», «¿Quién fue…?» en el título o la primera oración.", "E.g. \"What does the Bible say about…?\" in the title or first sentence."), fix: searchy.test(title) || searchy.test(firstSent) ? null : L("Formula el título como la pregunta que la gente escribe en YouTube.", "Phrase the title as the question people type.") });
+  if (title) add("seo", { id: "title", label: L("Título de 60 caracteres o menos, con la palabra clave visible", "Title ≤ 60 characters, keyword visible"), passed: title.length <= 60 && (!keyword || norm(title).slice(0, 60).includes(norm(keyword))), info: L(`${title.length} caracteres. YouTube permite 100, pero en móvil se corta cerca de 60.`, `${title.length} characters. YouTube allows 100; mobile truncates near 60.`), fix: title.length > 60 ? L("Acórtalo.", "Shorten it.") : keyword && !norm(title).slice(0, 60).includes(norm(keyword)) ? L("Pon la palabra clave dentro de los primeros 60 caracteres.", "Put the keyword within the first 60 characters.") : null });
+  if (desc) add("seo", { id: "desc", label: L("Descripción: palabra clave en los primeros 150 caracteres", "Description: keyword in first 150 characters"), passed: !!keyword && norm(desc.slice(0, 150)).includes(norm(keyword)), info: L("Es lo que se ve antes de «más».", "That's what shows before \"more\"."), fix: keyword && norm(desc.slice(0, 150)).includes(norm(keyword)) ? null : L("Reescribe el inicio de la descripción con la promesa y la palabra clave.", "Rewrite the description opening with the promise and keyword.") });
+  const chapterMarks = [...transHits, ...refs].map((h) => timeAt(h.start)).sort((a, b) => a - b);
+  const chapterPts = []; for (const t of chapterMarks) if (!chapterPts.length || t - chapterPts[chapterPts.length - 1] >= 60) chapterPts.push(t);
+  add("seo", { id: "chapters", label: L("Transiciones habladas para capítulos automáticos", "Spoken transitions for automatic chapters"), passed: transHits.length >= 2 || runtimeSec < 300, info: L(`${transHits.length} transición(es) («primero», «ahora bien», «por último»…). YouTube detecta capítulos a partir del habla y la transcripción.`, `${transHits.length} transition(s). YouTube detects chapters from speech and transcript cues.`), fix: transHits.length >= 2 || runtimeSec < 300 ? null : L("Marca cada punto principal con una transición clara.", "Mark each main point with a clear transition.") });
+
+  // ===== Highlight spans =====
+  for (const h of riskHits) marks.push({ start: h.start, end: h.end, kind: "risk", level: (preflight.find((p) => p.id === h.cat) || {}).level || "amarillo", tip: `${(() => { const c = MONEY_CATS.find((c) => c.id === h.cat); return c ? cl(c) : L("Riesgo", "Risk"); })()}${h.restricted ? L(" (tema restringido)", " (restricted topic)") : ""}` });
+  for (const h of mulHits) marks.push({ start: h.start, end: h.end, kind: "muletilla", tip: L("Muletilla", "Filler") });
+  for (const h of weakHits) marks.push({ start: h.start, end: h.end, kind: "weak", tip: L("Alternativas: ", "Alternatives: ") + h.alts.join(", ") });
+  for (const h of regHits) marks.push({ start: h.start, end: h.end, kind: "regional", tip: L("Neutro: ", "Neutral form: ") + h.fix });
+  for (const h of aiHits) marks.push({ start: h.start, end: h.end, kind: "aitell", tip: L("Suena a texto generado", "Sounds generated") });
+  for (const h of [...greetHits, ...ctaHits]) marks.push({ start: h.start, end: h.end, kind: h.kind === "cta" ? "cta" : "greeting", tip: h.kind === "cta" ? L("Llamada a la acción", "Call to action") : L("Saludo / relleno", "Greeting / filler") });
+  for (const r of refs) marks.push({ start: r.start, end: r.end, kind: "ref", tip: r.canonical });
+  for (const q of quotes) marks.push({ start: q.start, end: q.end, kind: "quote", tip: L("Cita", "Quote") });
+  if (kwRe) for (const p of kwPositions) marks.push({ start: p, end: p + keyword.length, kind: "keyword", tip: L("Palabra clave", "Keyword") });
+  const prio = { risk: 9, aitell: 8, muletilla: 7, cta: 6, greeting: 6, regional: 5, weak: 4, ref: 3, keyword: 2, quote: 1 };
+  // quotes are long containers: lay them out as background, everything else resolves by priority without overlap
+  const flat = marks.filter((m) => m.kind !== "quote").sort((a, b) => a.start - b.start || prio[b.kind] - prio[a.kind]);
+  const resolved = []; let lastEnd = -1;
+  for (const m of flat) if (m.start >= lastEnd) { resolved.push(m); lastEnd = m.end; }
+
+  const ticks = [7, 20, 30];
+  for (let t = 240; t < runtimeSec; t += 240) ticks.push(t);
+  const tickPos = ticks.filter((t) => t < runtimeSec).map((t) => ({ t, pos: posAtTime(t) }));
+
+  // count summary
+  const allRows = Object.values(sections).flat();
+  const passed = allRows.filter((r) => r.passed).length;
+  const worst = preflight.some((p) => p.level === "rojo") || packaging.some((p) => p.level === "rojo") ? "rojo" : preflight.some((p) => p.level === "amarillo") || packaging.some((p) => p.level === "amarillo") ? "amarillo" : "verde";
+
+  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits };
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences };
+
+/* ===== Script Desk — UI (bilingual) ===== */
+const $ = (id) => document.getElementById(id);
+const h = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const T = {
+  es: {
+    tagline: "Revisa el guion antes de grabar.", scriptLabel: "Guion del episodio", scriptPh: "Pega tu guion aquí…",
+    extraSummary: "Título, palabra clave y descripción (opcional)", titleLabel: "Título de trabajo", titlePh: "¿Qué dice la Biblia sobre…?",
+    kwLabel: "Palabra clave", kwPh: "la frase que alguien buscaría", thumbLabel: "Texto de la miniatura", thumbPh: "2 a 4 palabras",
+    descLabel: "Descripción", trLabel: "Versión bíblica", seriesLabel: "Serie o episodio", seriesPh: "Ep. 3 · Salmos",
+    scriptLangLabel: "Idioma del guion", detect: "Detectar", spanish: "Español", english: "Inglés",
+    run: "Revisar guion", clear: "Borrar", needText: "Pega un guion para revisarlo.",
+    historyTitle: "Versiones y resultados",
+    historyLead: "Guarda cada versión del guion y, después de publicar, anota cómo le fue al episodio. Con tres episodios anotados, la duración estimada se ajusta al ritmo real del presentador.",
+    disc1: "YouTube no publica una lista de palabras ni una fórmula; las reglas aquí son nuestra lectura de sus pautas publicadas.",
+    disc2: "Los límites que no indican una fuente (7 s, 20 s, 4 min, 1,5 muletillas, IFSZ 65) son metas propias.",
+    disc3: "El texto no ve la entrega, el tono ni las imágenes del video.",
+    disc4: "La IA aquí no navega por internet: verifica citas y datos con las fuentes enlazadas antes de grabar.",
+    disc5: "La decisión final sobre anuncios es de YouTube.",
+    word: "palabra", words: "palabras", teaching: "enseñando",
+    secMoney: "Monetización", secStructure: "Estructura y apertura", secScripture: "Citas bíblicas", secFacts: "Datos y hechos", secSpoken: "Español hablado", secSpokenEn: "Inglés hablado", secAuth: "Autenticidad", secSeo: "Descubrimiento", secMs: "Guion marcado", secAi: "Ayuda con IA", secSave: "Guardar y exportar",
+    leadMoney: "Revisión previa con las categorías del cuestionario de autocertificación de YouTube. Responde ese cuestionario con lo que dice esta tabla al subir el video.",
+    leadStructure: "YouTube solo mide oficialmente el segundo 30 (métrica «Intro» de Analytics); 7 y 20 segundos son metas propias.",
+    leadAuth: "Desde julio de 2025 YouTube no monetiza contenido «no auténtico»: masivo, repetitivo o con plantilla. Esto revisa que el guion suene a una persona.",
+    leadSeo: "Sin datos de volumen de búsqueda: son señales de redacción, no una predicción de posición.",
+    of: "de", checksPass: (a, b) => `${a} de ${b} revisiones pasan`,
+    lvl: { verde: "Probable verde", amarillo: "Riesgo de anuncios limitados", rojo: "Riesgo alto" },
+    icon: { verde: "verde", amarillo: "limitado", rojo: "rojo" },
+    degree: { ninguno: "ninguno", mencionado: "mencionado", central: "central", "gráfico": "gráfico", frecuente: "frecuente", deshumanizante: "deshumanizante" },
+    langName: { es: "Español", en: "Inglés" },
+    thCat: "Categoría", thCount: "Apariciones", thIcon: "Ícono probable",
+    denseWin: "Tramos de 2 minutos con más términos sensibles: ",
+    pass: "pasa", fail: "no pasa",
+    tlTitle: "Línea de tiempo del episodio", tlZones: "0–7 s gancho · 20 s promesa · 30 s intro", tlPromise: "promesa", tlRef: "cita bíblica", tlCta: "llamada a la acción", tlRisk: "término de riesgo", tlGap: "tramo sin re-enganche", tlNoHook: "Sin re-enganche", tlPromiseT: "Promesa", tlCtaT: "Llamada a la acción", tickTip: "Aproximadamente aquí",
+    lgRisk: "riesgo de anuncios", lgMul: "muletilla", lgWeak: "palabra genérica", lgReg: "regionalismo", lgQuote: "cita bíblica", lgKw: "palabra clave", lgTick: "marca de tiempo", tapNote: "toca una marca para ver la nota",
+    noRefs: "No se detectaron referencias bíblicas (libro + capítulo).", refNoQuote: "Referenciada, sin cita textual.", readIn: (t) => `Leer en ${t} (Bible Gateway)`,
+    scriptureLead: (t) => `Compara cada cita con la ${t}. La IA no tiene el texto oficial a mano: marca lo que no coincide según su conocimiento y te da el enlace para confirmar.`,
+    reviewQuotes: (n) => `Revisar ${n} cita(s) con IA`,
+    factsLead: "Separa hechos comprobables (fechas, nombres, cifras, citas de autores) de interpretaciones doctrinales, que no se califican. La IA aquí no navega: cada hecho trae una búsqueda sugerida para confirmarlo.",
+    withAi: "con IA", reviewFacts: "Revisar hechos",
+    aiLead: "Nada se aplica solo. Cada propuesta se revisa con las mismas reglas antes de mostrarse.",
+    rwTitle: "Reescribir el guion", rwDesc: "Corrige gramática, muletillas y palabras genéricas, y trabaja las revisiones que fallaron. No toca citas bíblicas, términos sensibles ni el argumento.", rwBtn: "Reescribir", stop: "Detener",
+    hkTitle: "Tres aperturas", hkDesc: "Tres formas de abrir en 7 segundos, usando solo material del guion.", hkBtn: "Proponer aperturas",
+    ttTitle: "Títulos, miniatura y descripción", ttDesc: "Cinco títulos, textos de miniatura y una descripción con capítulos estimados.", ttBtn: "Generar",
+    saveBtn: "Guardar esta versión", tpBtn: "Teleprompter (.txt)", mdBtn: "Revisión (.md)",
+    aiUnavailable: "no disponible fuera de Claude", aiOnlyClaude: "La IA solo funciona dentro de Claude.", saveNeedsClaude: "Guardar requiere abrir la página en Claude.",
+    thinking: "Pensando… puede tardar hasta un minuto.",
+    err: { not_granted: "Permiso denegado. Vuelve a cargar la página para intentarlo de nuevo.", rate_limited: "Demasiadas solicitudes seguidas; espera un minuto.", cancelled: "Detenido.", invalid_json: "La respuesta llegó incompleta; prueba de nuevo o con un guion más corto." },
+    errGeneric: (m) => `No se pudo completar: ${m}.`, unknownErr: "error desconocido",
+    before: "antes", after: "después", quotesChanged: (n) => `Atención: ${n} cita(s) bíblica(s) cambiaron en la propuesta. Revísalas antes de usarla.`,
+    diffHint: "Lo resaltado es nuevo o distinto a tu guion.", changes: "Cambios", grammar: "Gramática", unresolved: "Sin resolver",
+    useVersion: "Usar esta versión", copyText: "Copiar texto", copy: "Copiar", copied: "Copiado",
+    authRefused: "La propuesta sonaba más a plantilla que tu original (revisión de autenticidad), así que no se muestra. Prueba de nuevo.",
+    option: "opción", from: "Sale de: ", titles: "Títulos", chars: "caracteres", ok: "apto", review: "revisar", thumbText: "Texto de miniatura", description: "Descripción",
+    chaptersNote: "Capítulos estimados por el ritmo de lectura: corrígelos después de editar el video. YouTube necesita al menos tres, desde 0:00, de 10 segundos o más.",
+    copyDesc: "Copiar descripción", useDesc: "Pasar a los campos y revisar", search: "Buscar: ", noClaims: "No se encontraron afirmaciones comprobables.",
+    scriptureDone: (n) => `Revisadas ${n} cita(s). Confirma con el enlace de cada una.`, noResults: "Sin resultados.",
+    downloadNeeds: "Descargar requiere abrir la página en Claude.", downloaded: "Descargado.", downloadFail: "No se pudo descargar.",
+    saved: "Versión guardada.", quotaFull: "Espacio lleno: borra versiones antiguas.", saveFail: "No se pudo guardar (puede que solo tengas permiso de lectura).",
+    histNeedsClaude: "Guardar versiones y anotar resultados funciona al abrir esta página en Claude.", histReadFail: "No se pudo leer el historial.",
+    calibrated: (n) => `ritmo calibrado con ${n} episodios`, calibProgress: (n) => `${n} de 3 episodios para calibrar el ritmo`,
+    open: "Abrir", compare: "Comparar", noSaved: "Aún no hay versiones guardadas.",
+    epTitle: "Anotar un episodio publicado", epDesc: "Datos de YouTube Studio → Analytics → Participación. La métrica «Intro» es el porcentaje que sigue viendo a los 30 segundos.",
+    epScript: "Versión grabada", epDur: "Duración real (mm:ss)", epIntro: "Intro (%)", epAvg: "Porcentaje visto (%)", epIcon: "Ícono de monetización",
+    iconOpts: { verde: "Verde", amarillo: "Amarillo", rojo: "Rojo", ninguno: "Aún sin monetizar" }, epSave: "Guardar resultado",
+    learnTitle: "Lo que dicen tus episodios", episodes: "Episodios", yellowRed: "Ícono amarillo o rojo", withFlags: "Con alertas de monetización", noFlags: "Sin alertas",
+    introNote: (a, b) => `Intro promedio con gancho aprobado: ${a} · sin gancho: ${b}. Con diez episodios esto empieza a decir si las reglas de apertura sirven para tu audiencia.`,
+    cmpTitle: (t) => `Cambios desde «${t}»`, cmpDesc: "Resaltado: lo que el guion actual tiene distinto.", cmpNeed: "Pega o abre un guion arriba para comparar.",
+    pickVersion: "Elige una versión.", durFormat: "Escribe la duración como mm:ss.", savedShort: "Guardado.", saveFailShort: "No se pudo guardar.",
+    reviewTitle: "Revisión de guion", refs: "Referencias", fixLabel: "Arreglo", sections: "Secciones",
+    outLang: "Escribe todas las explicaciones, notas, razones y resúmenes en español.",
+  },
+  en: {
+    tagline: "Review the script before you record.", scriptLabel: "Episode script", scriptPh: "Paste your script here…",
+    extraSummary: "Title, keyword and description (optional)", titleLabel: "Working title", titlePh: "What does the Bible say about…?",
+    kwLabel: "Keyword", kwPh: "the phrase someone would search", thumbLabel: "Thumbnail text", thumbPh: "2 to 4 words",
+    descLabel: "Description", trLabel: "Bible translation", seriesLabel: "Series or episode", seriesPh: "Ep. 3 · Psalms",
+    scriptLangLabel: "Script language", detect: "Detect", spanish: "Spanish", english: "English",
+    run: "Review script", clear: "Clear", needText: "Paste a script to review it.",
+    historyTitle: "Versions and results",
+    historyLead: "Save each version of the script and, after publishing, record how the episode did. After three recorded episodes, the runtime estimate adjusts to the host's real pace.",
+    disc1: "YouTube publishes no word list or formula; the rules here are our reading of its published guidelines.",
+    disc2: "Limits that don't cite a source (7 s, 20 s, 4 min, 1.5 fillers, IFSZ 65) are our own targets.",
+    disc3: "Text can't see the delivery, tone or visuals of the video.",
+    disc4: "The AI here doesn't browse the web: confirm quotes and facts with the linked sources before recording.",
+    disc5: "The final decision on ads is YouTube's.",
+    word: "word", words: "words", teaching: "teaching",
+    secMoney: "Monetization", secStructure: "Structure and opening", secScripture: "Scripture quotes", secFacts: "Facts", secSpoken: "Spoken Spanish", secSpokenEn: "Spoken English", secAuth: "Authenticity", secSeo: "Discoverability", secMs: "Marked-up script", secAi: "AI help", secSave: "Save and export",
+    leadMoney: "Pre-check using the categories of YouTube's self-certification questionnaire. Answer that questionnaire with what this table says when you upload.",
+    leadStructure: "YouTube only officially measures second 30 (the Intro metric in Analytics); 7 and 20 seconds are our targets.",
+    leadAuth: "Since July 2025 YouTube doesn't monetize \"inauthentic\" content: mass-produced, repetitive or templated. This checks that the script sounds like a person.",
+    leadSeo: "No search-volume data: these are writing signals, not a ranking prediction.",
+    of: "of", checksPass: (a, b) => `${a} of ${b} checks pass`,
+    lvl: { verde: "Likely green", amarillo: "Limited-ads risk", rojo: "High risk" },
+    icon: { verde: "green", amarillo: "limited", rojo: "red" },
+    degree: { ninguno: "none", mencionado: "mentioned", central: "focal", "gráfico": "graphic", frecuente: "frequent", deshumanizante: "dehumanizing" },
+    langName: { es: "Spanish", en: "English" },
+    thCat: "Category", thCount: "Occurrences", thIcon: "Likely icon",
+    denseWin: "2-minute stretches with the most sensitive terms: ",
+    pass: "passes", fail: "fails",
+    tlTitle: "Episode timeline", tlZones: "0–7 s hook · 20 s promise · 30 s intro", tlPromise: "promise", tlRef: "Bible quote", tlCta: "call to action", tlRisk: "risk term", tlGap: "stretch without a re-hook", tlNoHook: "No re-hook", tlPromiseT: "Promise", tlCtaT: "Call to action", tickTip: "Approximately here",
+    lgRisk: "ad risk", lgMul: "filler", lgWeak: "generic word", lgReg: "regional form", lgQuote: "Bible quote", lgKw: "keyword", lgTick: "time mark", tapNote: "tap a mark to see the note",
+    noRefs: "No Bible references detected (book + chapter).", refNoQuote: "Referenced, not quoted.", readIn: (t) => `Read in ${t} (Bible Gateway)`,
+    scriptureLead: (t) => `Compares each quote with the ${t}. The AI doesn't have the official text on hand: it flags what doesn't match from its own knowledge and gives you the link to confirm.`,
+    reviewQuotes: (n) => `Check ${n} quote(s) with AI`,
+    factsLead: "Separates checkable facts (dates, names, numbers, quotes from authors) from doctrinal interpretations, which aren't graded. The AI here doesn't browse: each fact comes with a suggested search to confirm it.",
+    withAi: "with AI", reviewFacts: "Check facts",
+    aiLead: "Nothing is applied automatically. Every suggestion is re-checked with the same rules before it's shown.",
+    rwTitle: "Rewrite the script", rwDesc: "Fixes grammar, fillers and generic words, and works on the checks that failed. Doesn't touch Bible quotes, sensitive terms or the argument.", rwBtn: "Rewrite", stop: "Stop",
+    hkTitle: "Three openings", hkDesc: "Three ways to open in 7 seconds, using only material from the script.", hkBtn: "Suggest openings",
+    ttTitle: "Titles, thumbnail and description", ttDesc: "Five titles, thumbnail texts and a description with estimated chapters.", ttBtn: "Generate",
+    saveBtn: "Save this version", tpBtn: "Teleprompter (.txt)", mdBtn: "Review (.md)",
+    aiUnavailable: "unavailable outside Claude", aiOnlyClaude: "AI only works inside Claude.", saveNeedsClaude: "Saving requires opening the page in Claude.",
+    thinking: "Thinking… this can take up to a minute.",
+    err: { not_granted: "Permission denied. Reload the page to try again.", rate_limited: "Too many requests in a row; wait a minute.", cancelled: "Stopped.", invalid_json: "The answer came back incomplete; try again or with a shorter script." },
+    errGeneric: (m) => `Couldn't finish: ${m}.`, unknownErr: "unknown error",
+    before: "before", after: "after", quotesChanged: (n) => `Warning: ${n} Bible quote(s) changed in the suggestion. Check them before using it.`,
+    diffHint: "Highlighted text is new or different from your script.", changes: "Changes", grammar: "Grammar", unresolved: "Not resolved",
+    useVersion: "Use this version", copyText: "Copy text", copy: "Copy", copied: "Copied",
+    authRefused: "The suggestion sounded more templated than your original (authenticity check), so it isn't shown. Try again.",
+    option: "option", from: "From: ", titles: "Titles", chars: "characters", ok: "ok", review: "check", thumbText: "Thumbnail text", description: "Description",
+    chaptersNote: "Chapters are estimated from reading pace: correct them after editing the video. YouTube needs at least three, starting at 0:00, each 10 seconds or longer.",
+    copyDesc: "Copy description", useDesc: "Move to the fields and re-check", search: "Search: ", noClaims: "No checkable claims found.",
+    scriptureDone: (n) => `Checked ${n} quote(s). Confirm each one with its link.`, noResults: "No results.",
+    downloadNeeds: "Downloading requires opening the page in Claude.", downloaded: "Downloaded.", downloadFail: "Couldn't download.",
+    saved: "Version saved.", quotaFull: "Storage full: delete old versions.", saveFail: "Couldn't save (you may only have read access).",
+    histNeedsClaude: "Saving versions and recording results works when this page is opened in Claude.", histReadFail: "Couldn't read the history.",
+    calibrated: (n) => `pace calibrated from ${n} episodes`, calibProgress: (n) => `${n} of 3 episodes needed to calibrate pace`,
+    open: "Open", compare: "Compare", noSaved: "No saved versions yet.",
+    epTitle: "Record a published episode", epDesc: "From YouTube Studio → Analytics → Engagement. The Intro metric is the share still watching at 30 seconds.",
+    epScript: "Recorded version", epDur: "Real length (mm:ss)", epIntro: "Intro (%)", epAvg: "Percentage viewed (%)", epIcon: "Monetization icon",
+    iconOpts: { verde: "Green", amarillo: "Yellow", rojo: "Red", ninguno: "Not monetized yet" }, epSave: "Save result",
+    learnTitle: "What your episodes say", episodes: "Episodes", yellowRed: "Yellow or red icon", withFlags: "With monetization flags", noFlags: "Without flags",
+    introNote: (a, b) => `Average Intro with a passing hook: ${a} · without: ${b}. After ten episodes this starts to show whether the opening rules work for your audience.`,
+    cmpTitle: (t) => `Changes since "${t}"`, cmpDesc: "Highlighted: what the current script has that's different.", cmpNeed: "Paste or open a script above to compare.",
+    pickVersion: "Pick a version.", durFormat: "Enter the length as mm:ss.", savedShort: "Saved.", saveFailShort: "Couldn't save.",
+    reviewTitle: "Script review", refs: "References", fixLabel: "Fix", sections: "Sections",
+    outLang: "Write all explanations, notes, reasons and summaries in English.",
+  },
+};
+
+let UI = (() => { try { return localStorage.getItem("sd-ui") === "en" ? "en" : "es"; } catch (e) { return "es"; } })();
+const t = (k) => T[UI][k];
+
+function applyLang() {
+  document.documentElement.lang = UI;
+  document.querySelectorAll("[data-i18n]").forEach((el) => { const v = t(el.dataset.i18n); if (typeof v === "string") el.textContent = v; });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => { const v = t(el.dataset.i18nPh); if (typeof v === "string") el.placeholder = v; });
+  document.querySelectorAll(".langswitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ui === UI)));
+  updateLive();
+  if (state.result) { state.opts.uiLang = UI; state.result = analyze(state.text, state.opts); renderResults(); }
+  renderHistory();
+}
+document.querySelectorAll(".langswitch button").forEach((b) => b.addEventListener("click", () => {
+  UI = b.dataset.ui; try { localStorage.setItem("sd-ui", UI); } catch (e) {}
+  applyLang();
+}));
+
+const cap = (name) => (window.claude && typeof window.claude.use === "function" ? window.claude.use(name).catch(() => null) : Promise.resolve(null));
+const caps = { sample: cap("sample"), db: cap("db"), downloads: cap("downloads") };
+
+const state = { result: null, text: "", opts: null, k: 0.65, kCalibrated: false, kN: 0, rewrite: null, saved: [], episodes: [], historyReady: false, historyError: null };
+
+function readOpts() {
+  return { title: $("title").value, keyword: $("keyword").value, thumb: $("thumb").value, description: $("description").value, translation: $("translation").value, series: $("series").value, lang: $("lang").value, k: state.k, kCalibrated: state.kCalibrated, uiLang: UI };
+}
+
+function updateLive() {
+  const text = $("script").value;
+  const ws = text.match(/[\p{L}\p{N}'’-]+/gu) || [];
+  $("liveCount").textContent = ws.length + " " + (ws.length === 1 ? t("word") : t("words"));
+  if (!ws.length) { $("liveTime").textContent = ""; return; }
+  const lang = $("lang").value === "auto" ? detectLanguage(text) : $("lang").value;
+  const syl = ws.reduce((a, w) => a + (lang === "en" ? syllablesEN(w) : syllablesES(w)), 0);
+  $("liveTime").textContent = "≈ " + fmtTime(syl / ((lang === "en" ? 6.19 : 7.82) * state.k)) + " " + t("teaching");
+}
+$("script").addEventListener("input", updateLive);
+$("lang").addEventListener("change", updateLive);
+
+$("clearBtn").addEventListener("click", () => {
+  $("script").value = ""; ["title", "keyword", "thumb", "description", "series"].forEach((id) => ($(id).value = ""));
+  $("results").classList.add("hidden"); $("results").innerHTML = ""; state.result = null; state.rewrite = null; updateLive(); $("script").focus();
+});
+
+$("runBtn").addEventListener("click", () => {
+  const text = $("script").value;
+  if (!text.trim()) { $("runHint").textContent = t("needText"); $("script").focus(); return; }
+  $("runHint").textContent = "";
+  state.text = text; state.opts = readOpts(); state.rewrite = null;
+  state.result = analyze(text, state.opts);
+  renderResults();
+  const r = $("results"); r.classList.remove("hidden"); r.classList.remove("reveal"); void r.offsetWidth; r.classList.add("reveal");
+  r.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+});
+
+// ---------- rendering ----------
+const sectionMeta = () => [
+  ["money", t("secMoney"), t("leadMoney")],
+  ["structure", t("secStructure"), t("leadStructure")],
+  ["scripture", t("secScripture"), null],
+  ["facts", t("secFacts"), null],
+  ["spoken", state.result && state.result.lang === "en" ? t("secSpokenEn") : t("secSpoken"), null],
+  ["auth", t("secAuth"), t("leadAuth")],
+  ["seo", t("secSeo"), t("leadSeo")],
+];
+const deg = (d) => t("degree")[d] || d;
+
+function rowHTML(r) {
+  const cls = r.passed ? "pass" : r.level === "rojo" ? "red" : "fail";
+  const sym = r.passed ? "✓" : r.level === "rojo" ? "!" : "✕";
+  return `<div class="row"><div class="mark ${cls}" aria-label="${r.passed ? t("pass") : t("fail")}">${sym}</div><div>
+    <div class="t">${h(r.label)}</div>
+    ${r.info ? `<div class="i">${h(r.info)}</div>` : ""}
+    ${r.times && r.times.length && r.count ? `<div class="chips">${r.times.map((x) => `<span class="chip">${h(x)}</span>`).join("")}</div>` : ""}
+    ${r.samples && r.samples.length ? `<ul>${r.samples.map((s) => `<li>${h(s)}</li>`).join("")}</ul>` : ""}
+    ${!r.passed && r.fix ? `<div class="f">${h(r.fix)}</div>` : ""}
+  </div></div>`;
+}
+
+function timelineHTML(R) {
+  const Tt = Math.max(R.runtimeSec, 1);
+  const pct = (x) => Math.min(100, Math.max(0, (x / Tt) * 100)).toFixed(2) + "%";
+  const zones = [[0, 7, 0.55], [7, 20, 0.32], [20, 30, 0.16]];
+  const missing = R.blocks.filter((b) => !b.has);
+  let html = `<div class="timeline"><h3>${h(t("tlTitle"))} · ${h(fmtTime(R.runtimeSec))} ${h(t("teaching"))}</h3><div class="tl-track"><div class="tl-bar">`;
+  for (const [a, b, o] of zones) if (a < Tt) html += `<div class="tl-zone" style="left:${pct(a)};width:calc(${pct(Math.min(b, Tt))} - ${pct(a)});background:var(--accent);opacity:${o}"></div>`;
+  for (const b of missing) html += `<div class="tl-zone" style="left:${pct(b.from)};width:calc(${pct(b.to)} - ${pct(b.from)});background:var(--amarillo);opacity:.28" title="${h(t("tlNoHook"))}"></div>`;
+  html += `</div>`;
+  const ticks = [7, 20, 30].filter((x) => x < Tt);
+  for (let x = 240; x < Tt; x += 240) ticks.push(x);
+  const every = Tt > 1800 ? 2 : 1;
+  ticks.forEach((x, i) => { const show = x <= 30 ? x === 30 || Tt < 240 : i % every === 0; html += `<div class="tl-tick" style="left:${pct(x)}">${show ? `<span>${fmtTime(x)}</span>` : ""}</div>`; });
+  const dot = (x, color, title, shape) => `<div class="tl-dot${shape ? " " + shape : ""}" style="left:${pct(x)};background:${color}" title="${h(title)}"></div>`;
+  for (const r of R.refs) html += dot(R.timeAt(r.start), "var(--gold)", r.canonical + " · " + fmtTime(R.timeAt(r.start)), "diamond");
+  for (const c of R.clusters) html += dot(c.t, "var(--accent)", t("tlCtaT") + " · " + fmtTime(c.t));
+  for (const x of R.riskHits) { const lvl = (R.preflight.find((p) => p.id === x.cat) || {}).level || "amarillo"; if (lvl !== "verde") html += dot(R.timeAt(x.start), "var(--rojo)", x.text + " · " + fmtTime(R.timeAt(x.start)), "risk"); }
+  if (R.firstPromiseT !== null) html += dot(R.firstPromiseT, "var(--verde)", t("tlPromiseT") + " · " + fmtTime(R.firstPromiseT));
+  html += `</div><div class="tl-ends"><span>0:00</span><span>${fmtTime(Tt)}</span></div>
+  <div class="tl-legend"><span><i style="background:var(--accent);opacity:.55"></i>${h(t("tlZones"))}</span><span><i style="background:var(--verde)"></i>${h(t("tlPromise"))}</span><span><i style="background:var(--gold);border-radius:1px;transform:rotate(45deg)"></i>${h(t("tlRef"))}</span><span><i style="background:var(--accent)"></i>${h(t("tlCta"))}</span><span><i style="background:var(--rojo)"></i>${h(t("tlRisk"))}</span>${missing.length ? `<span><i style="background:var(--amarillo);border-radius:2px"></i>${h(t("tlGap"))}</span>` : ""}</div></div>`;
+  return html;
+}
+
+function preflightTable(R) {
+  const rows = R.preflight.map((p) => `<tr><td>${h(p.label)}</td><td>${p.count ? p.count + " · " + h(deg(p.degree)) : "—"}</td><td><span class="lamp ${p.level}">${h(t("icon")[p.level])}</span></td></tr>`).join("");
+  return `<div class="tablewrap"><table class="pf"><thead><tr><th>${h(t("thCat"))}</th><th>${h(t("thCount"))}</th><th>${h(t("thIcon"))}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function manuscriptHTML(R, text) {
+  const pieces = [];
+  const ticksAt = new Map(); R.tickPos.forEach((x) => ticksAt.set(x.pos, (ticksAt.get(x.pos) || []).concat(x.t)));
+  const bounds = new Set([0, text.length]);
+  R.marks.forEach((m) => { bounds.add(m.start); bounds.add(m.end); });
+  R.quoteSpans.forEach((q) => { bounds.add(q.start); bounds.add(q.end); });
+  R.tickPos.forEach((x) => bounds.add(x.pos));
+  const pts = [...bounds].filter((x) => x >= 0 && x <= text.length).sort((a, b) => a - b);
+  const markAt = (s) => R.marks.find((m) => m.start <= s && s < m.end);
+  const inQuote = (s) => R.quoteSpans.some((q) => q.start <= s && s < q.end);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    if (ticksAt.has(a)) ticksAt.get(a).forEach((x) => pieces.push(`<span class="tick" title="${h(t("tickTip"))}">${fmtTime(x)}</span>`));
+    let seg = h(text.slice(a, b));
+    const m = markAt(a);
+    if (m) seg = `<mark class="k-${m.kind}${m.level ? " l-" + m.level : ""}" title="${h(m.tip)}">${seg}</mark>`;
+    if (inQuote(a)) seg = `<span class="quote">${seg}</span>`;
+    pieces.push(seg);
+  }
+  return pieces.join("");
+}
+
+function renderResults() {
+  const R = state.result, text = state.text, sec = R.sections;
+  const counts = Object.fromEntries(Object.entries(sec).map(([k, rows]) => [k, [rows.filter((r) => r.passed).length, rows.length]]));
+  const meta = sectionMeta();
+  const verdict = `<div class="verdict"><div class="big">${h(t("checksPass")(R.passed, R.total))}</div>
+    <span class="lamp ${R.worst}">${h(t("lvl")[R.worst])}</span>
+    <span class="hint">${h(t("langName")[R.lang])} · ${R.wc} ${h(t("words"))} · ${fmtTime(R.runtimeSec)} ${h(t("teaching"))} · ${h(R.readability.kind === "IFSZ" ? "INFLESZ " + R.readability.band.toLowerCase() : R.readability.band)}</span></div>`;
+  const nav = `<nav class="jump" aria-label="${h(t("sections"))}">${meta.filter(([k]) => sec[k] || k === "facts").map(([k, name]) => `<a href="#sec-${k}">${h(name)}${counts[k] ? `<b>${counts[k][0]}/${counts[k][1]}</b>` : ""}</a>`).join("")}<a href="#sec-manuscript">${h(t("secMs"))}</a><a href="#sec-ai">${h(t("secAi"))}</a></nav>`;
+
+  let body = "";
+  for (const [k, name, lead] of meta) {
+    if (k === "facts") { body += factsBlock(); continue; }
+    const rows = sec[k]; if (!rows) continue;
+    let extra = "";
+    if (k === "money") {
+      extra = preflightTable(R);
+      if (R.dense.length) extra += `<p class="lead">${h(t("denseWin"))}${R.dense.slice(0, 3).map((d) => `${fmtTime(d.from)}–${fmtTime(d.to)} (${d.n})`).join(", ")}.</p>`;
+    }
+    if (k === "scripture") extra = scriptureBlock(R);
+    body += `<section class="block" id="sec-${k}"><header><h2>${h(name)}</h2><span class="count">${counts[k][0]} ${h(t("of"))} ${counts[k][1]}</span></header>${lead ? `<p class="lead">${h(lead)}</p>` : ""}${extra}${rows.map(rowHTML).join("")}</section>`;
+  }
+
+  const legend = `<div class="legend">
+    <span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span>
+    <span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}
+    <span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span>
+    <span style="--c:var(--accent)">${h(t("lgTick"))}</span></div>`;
+  const manuscript = `<section class="block" id="sec-manuscript"><header><h2>${h(t("secMs"))}</h2><span class="count">${h(t("tapNote"))}</span></header>${legend}<div class="manuscript" id="ms">${manuscriptHTML(R, text)}</div><p class="tipbar hidden" id="tipbar" role="status"></p></section>`;
+
+  const ai = `<section class="block" id="sec-ai"><header><h2>${h(t("secAi"))}</h2><span class="count" id="aiAvail"></span></header>
+    <p class="lead">${h(t("aiLead"))}</p>
+    <div class="helper"><h3>${h(t("rwTitle"))}</h3><p class="desc">${h(t("rwDesc"))}</p>
+      <div class="actions"><button class="primary small" data-ai="rewrite">${h(t("rwBtn"))}</button><button class="small hidden" data-stop>${h(t("stop"))}</button></div><div class="out" id="out-rewrite"></div></div>
+    <div class="helper"><h3>${h(t("hkTitle"))}</h3><p class="desc">${h(t("hkDesc"))}</p>
+      <div class="actions"><button class="primary small" data-ai="hooks">${h(t("hkBtn"))}</button></div><div class="out" id="out-hooks"></div></div>
+    <div class="helper"><h3>${h(t("ttTitle"))}</h3><p class="desc">${h(t("ttDesc"))}</p>
+      <div class="actions"><button class="primary small" data-ai="titles">${h(t("ttBtn"))}</button></div><div class="out" id="out-titles"></div></div>
+  </section>`;
+
+  const save = `<section class="block" id="sec-save"><header><h2>${h(t("secSave"))}</h2></header>
+    <div class="actions"><button class="primary small" id="saveBtn">${h(t("saveBtn"))}</button><button class="small" id="tpBtn">${h(t("tpBtn"))}</button><button class="small" id="mdBtn">${h(t("mdBtn"))}</button><span class="status" id="saveStatus"></span></div></section>`;
+
+  $("results").innerHTML = verdict + timelineHTML(R) + nav + body + manuscript + ai + save;
+  wireResults();
+}
+
+function scriptureBlock(R) {
+  if (!R.refs.length) return `<p class="lead">${h(t("noRefs"))}</p>`;
+  const tr = state.opts.translation;
+  const items = R.pairs.map((p, i) => `<div class="row"><div class="mark pass" style="background:var(--gold-bg);color:var(--gold)">✦</div><div>
+    <div class="t">${h(p.ref.canonical)} <span class="hint">· ${fmtTime(R.timeAt(p.ref.start))}</span> <span id="sv-${i}"></span></div>
+    <div class="i">${p.quote ? "«" + h(p.quote.inner.slice(0, 220)) + (p.quote.inner.length > 220 ? "…" : "") + "»" : h(t("refNoQuote"))}</div>
+    <div class="i"><a href="${bibleGatewayUrl(p.ref.canonical, tr)}" target="_blank" rel="noopener">${h(t("readIn")(tr))}</a><span id="svn-${i}"></span></div></div></div>`).join("");
+  const quoted = R.pairs.filter((p) => p.quote).length;
+  return `<p class="lead">${h(t("scriptureLead")(tr))}</p>
+    <div class="actions" style="margin-top:6px"><button class="small" data-ai="scripture" ${quoted ? "" : "disabled"}>${h(t("reviewQuotes")(quoted))}</button><span class="status" id="out-scripture"></span></div>${items}`;
+}
+
+function factsBlock() {
+  return `<section class="block" id="sec-facts"><header><h2>${h(t("secFacts"))}</h2><span class="count">${h(t("withAi"))}</span></header>
+    <p class="lead">${h(t("factsLead"))}</p>
+    <div class="actions" style="margin-top:6px"><button class="small" data-ai="facts">${h(t("reviewFacts"))}</button></div><div class="out" id="out-facts"></div></section>`;
+}
+
+// ---------- AI ----------
+let aiCtl = null;
+function wireResults() {
+  const ms = $("ms"), tb = $("tipbar");
+  ms.addEventListener("click", (ev) => { const m = ev.target.closest("mark"); if (!m) { tb.classList.add("hidden"); return; } tb.textContent = "«" + m.textContent + "» — " + m.title; tb.classList.remove("hidden"); });
+  document.querySelectorAll("[data-ai]").forEach((b) => b.addEventListener("click", () => runAI(b.dataset.ai, b)));
+  document.querySelectorAll("[data-stop]").forEach((b) => b.addEventListener("click", () => aiCtl && aiCtl.abort()));
+  $("saveBtn").addEventListener("click", saveVersion);
+  $("tpBtn").addEventListener("click", exportTeleprompter);
+  $("mdBtn").addEventListener("click", exportReview);
+  caps.sample.then((s) => { if (!s) { $("aiAvail").textContent = t("aiUnavailable"); document.querySelectorAll("[data-ai]").forEach((b) => (b.disabled = true)); } });
+  caps.db.then((d) => { if (!d) { $("saveBtn").disabled = true; $("saveStatus").textContent = t("saveNeedsClaude"); } });
+}
+
+const errText = (e) => (e && t("err")[e.code]) || t("errGeneric")((e && e.message) || t("unknownErr"));
+
+async function runAI(kind, btn) {
+  const sample = await caps.sample;
+  const out = $(kind === "scripture" ? "out-scripture" : "out-" + kind);
+  if (!sample) { out.innerHTML = `<p class="status err">${h(t("aiOnlyClaude"))}</p>`; return; }
+  aiCtl = new AbortController();
+  const stopBtn = btn.parentElement.querySelector("[data-stop]");
+  btn.disabled = true; if (stopBtn) stopBtn.classList.remove("hidden");
+  out.innerHTML = `<p class="status">${h(t("thinking"))}</p>`;
+  try {
+    if (kind === "rewrite") await doRewrite(sample, out);
+    if (kind === "hooks") await doHooks(sample, out);
+    if (kind === "titles") await doTitles(sample, out);
+    if (kind === "facts") await doFacts(sample, out);
+    if (kind === "scripture") await doScripture(sample, out, state.result);
+  } catch (e) {
+    out.innerHTML = `<p class="status err">${h(errText(e))}</p>`;
+  } finally { btn.disabled = false; if (stopBtn) stopBtn.classList.add("hidden"); }
+}
+
+function failedChecks(R) {
+  return Object.values(R.sections).flat().filter((r) => !r.passed).map((r) => `- ${r.label}: ${r.info}${r.fix ? " → " + r.fix : ""}`).join("\n") || "—";
+}
+function protectedList(R) {
+  return { q: R.quotes.map((x) => `«${x.inner}»`).join("\n") || "—", risk: [...new Set(R.riskHits.map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—" };
+}
+const scriptLangName = () => (state.result.lang === "en" ? "inglés" : "español");
+const voice = () => (state.result.lang === "en" ? "El guion está en inglés: mantén el inglés en todo el texto del guion." : `El guion está en español neutro para Centroamérica, Latinoamérica y España: "ustedes", nunca "vosotros" ni voseo, salvo dentro de citas bíblicas.`);
+
+async function doRewrite(sample, out) {
+  const R = state.result, P = protectedList(R);
+  const prompt = `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube que va a monetizar con anuncios. El autor es el presentador: su voz, su argumento y su teología no se tocan. ${voice()}
+${t("outLang")} El texto reescrito queda en ${scriptLangName()}.
+
+FALLOS DETECTADOS (trabaja estos):
+${failedChecks(R)}
+
+TEXTO PROTEGIDO — cópialo exacto, sin parafrasear ni suavizar:
+Citas bíblicas:
+${P.q}
+Términos sensibles (no los cambies por eufemismos; si un fallo de monetización pide quitar detalle gráfico, quita la frase gráfica, no el término): ${P.risk}
+
+Tareas, en orden:
+1. Corrige gramática, ortografía y puntuación.
+2. Quita o integra las muletillas sin cambiar el sentido.
+3. Cambia las palabras genéricas por una alternativa que encaje; si ninguna encaja, déjala.
+4. Si falló el gancho, reescribe solo la primera oración para abrir con la pregunta, la tensión o la promesa que YA está en el guion.
+5. Si falló la promesa, adelanta la frase del guion que dice qué aprenderá el oyente.
+6. Si faltan transiciones, añade una palabra de transición natural en los cambios de punto que ya existen.
+7. Si hay más de una llamada a la acción, conserva la última.
+8. Si hay promesas de sanidad o dinero garantizados, reformúlalas como esperanza o testimonio sin garantizar resultados.
+9. Mantén la longitud y el tono. No añadas párrafos, ilustraciones, datos ni citas nuevas. No uses frases de plantilla como "sin más preámbulos" o "profundicemos".
+
+Responde solo con JSON: {"rewritten_text": "...", "grammar_fixes": [{"original": "...", "corrected": "...", "reason": "..."}], "changes_summary": ["..."], "not_changed": ["..."]}
+
+GUION:
+"""
+${state.text}
+"""`;
+  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "complex" });
+  if (!res || typeof res.rewritten_text !== "string" || !res.rewritten_text.trim()) throw { code: "invalid_json" };
+  const after = analyze(res.rewritten_text, state.opts);
+  const authFails = (x) => x.sections.auth.filter((r) => !r.passed).length;
+  const lostQuotes = R.quotes.filter((q) => !res.rewritten_text.includes(q.inner.slice(0, 40)));
+  if (authFails(after) > authFails(R)) { out.innerHTML = `<p class="status err">${h(t("authRefused"))}</p>`; return; }
+  state.rewrite = { text: res.rewritten_text, after };
+  const diff = wordDiff(state.text, res.rewritten_text).map((x) => (x.changed ? `<ins>${h(x.text)}</ins>` : h(x.text))).join("");
+  const list = (title, items, fn) => (items || []).length ? `<div class="card"><div class="k">${h(title)}</div><ul>${items.slice(0, 20).map(fn).join("")}</ul></div>` : "";
+  out.innerHTML = `<div class="compare"><span class="lamp ${R.worst}">${h(t("before"))}: ${R.passed}/${R.total}</span><span>→</span><span class="lamp ${after.worst}">${h(t("after"))}: ${after.passed}/${after.total}</span></div>
+    ${lostQuotes.length ? `<p class="status err">${h(t("quotesChanged")(lostQuotes.length))}</p>` : ""}
+    <p class="hint">${h(t("diffHint"))}</p><div class="diff">${diff}</div>
+    ${list(t("changes"), res.changes_summary, (c) => `<li>${h(c)}</li>`)}
+    ${list(t("grammar"), res.grammar_fixes, (g) => `<li><s>${h(g.original)}</s> → ${h(g.corrected)} <span class="hint">${h(g.reason)}</span></li>`)}
+    ${list(t("unresolved"), res.not_changed, (c) => `<li>${h(c)}</li>`)}
+    <div class="actions"><button class="primary small" id="useRewrite">${h(t("useVersion"))}</button><button class="small" id="copyRewrite">${h(t("copyText"))}</button></div>`;
+  $("useRewrite").addEventListener("click", () => { $("script").value = res.rewritten_text; updateLive(); $("runBtn").click(); });
+  $("copyRewrite").addEventListener("click", (e) => copyText(res.rewritten_text, e.target));
+}
+
+async function doHooks(sample, out) {
+  const prompt = `Escribe tres aperturas en frío para este guion de enseñanza bíblica en YouTube. Cada una: de 1 a 3 oraciones, lo que se diga en unos 7 segundos (máximo 18 palabras). ${voice()} Las aperturas van en ${scriptLangName()}; ${t("outLang")}
+Cada opción usa un mecanismo distinto: (a) una pregunta directa al oyente, (b) una afirmación que crea tensión o contradice una idea común, (c) una escena o historia breve que YA esté en el guion. Todas terminan apuntando a la promesa del episodio. No inventes datos, nombres ni citas: usa solo material del guion. Sin saludos, sin nombre del canal, sin pedir suscripción, sin groserías.
+Responde solo con JSON: {"options": [{"type": "nombre corto del mecanismo", "text": "...", "source_in_script": "frase del guion de donde sale"}]}
+
+GUION:
+"""
+${state.text.slice(0, 12000)}
+"""`;
+  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "default" });
+  const opts = (res && res.options) || [];
+  if (!opts.length) throw { code: "invalid_json" };
+  out.innerHTML = opts.map((o, i) => `<div class="card"><div class="k">${h(o.type || t("option") + " " + (i + 1))}</div><div class="copyrow"><div style="font-family:var(--serif);font-size:17px">${h(o.text)}</div><button class="small" data-copy="${i}">${h(t("copy"))}</button></div>${o.source_in_script ? `<div class="hint" style="margin-top:6px">${h(t("from"))}«${h(o.source_in_script)}»</div>` : ""}</div>`).join("");
+  out.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => copyText(opts[+b.dataset.copy].text, b)));
+}
+
+async function doTitles(sample, out) {
+  const R = state.result;
+  const chapters = [{ t: 0, label: "inicio" }, ...R.transHits.map((x) => ({ t: R.timeAt(x.start), label: state.text.slice(x.start, Math.min(state.text.length, x.start + 80)).split(/[.!?\n]/)[0] }))]
+    .filter((c, i, a) => i === 0 || c.t - a[i - 1].t >= 30).slice(0, 8).map((c) => `${fmtTime(c.t)} — ${c.label}`).join("\n");
+  const prompt = `Para este episodio de un pódcast cristiano de enseñanza bíblica en YouTube que se va a monetizar, genera en ${scriptLangName()} (el idioma del guion):
+1. Cinco títulos de 60 caracteres o menos, con la palabra clave "${R.keyword || "(elige la del tema)"}" dentro de los primeros 60 caracteres; al menos dos como la pregunta que alguien escribiría en YouTube. Sin mayúsculas sostenidas, sin groserías, sin términos gráficos, sin prometer sanidad o dinero, sin prometer nada que el guion no entregue.
+2. Tres textos de miniatura de 2 a 4 palabras (20 caracteres o menos) tomados de la promesa del episodio.
+3. Una descripción: los primeros 150 caracteres repiten la promesa con la palabra clave; luego capítulos usando EXACTAMENTE estos tiempos estimados (puedes mejorar el título de cada capítulo); luego las referencias bíblicas (${R.refs.map((r) => r.canonical).join(", ") || "ninguna"}); luego UNA llamada a la acción.
+${voice()}
+Tiempos estimados de capítulos:
+${chapters}
+
+Responde solo con JSON: {"titles": ["..."], "thumbnail_text": ["..."], "description": "...", "chapters": [{"time": "0:00", "title": "..."}]}
+
+GUION:
+"""
+${state.text.slice(0, 15000)}
+"""`;
+  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "default" });
+  if (!res || !Array.isArray(res.titles)) throw { code: "invalid_json" };
+  const titleRows = res.titles.map((x, i) => {
+    const pk = analyze("x", { title: x, lang: R.lang, uiLang: UI }).packaging[0];
+    const ok = x.length <= 60 && pk.level === "verde";
+    return `<div class="card"><div class="copyrow"><div><span style="font-family:var(--serif);font-size:17px">${h(x)}</span><div class="hint">${x.length} ${h(t("chars"))}${pk.level !== "verde" ? " · " + h(pk.issues.join("; ")) : ""}</div></div><span class="verdict-tag ${ok ? "v-ok" : "v-mid"}">${h(ok ? t("ok") : t("review"))}</span><button class="small" data-ct="${i}">${h(t("copy"))}</button></div></div>`;
+  }).join("");
+  out.innerHTML = `<h3 style="font-size:16px;margin-top:6px">${h(t("titles"))}</h3>${titleRows}
+    <h3 style="font-size:16px;margin-top:16px">${h(t("thumbText"))}</h3><div class="chips" style="margin-top:8px">${(res.thumbnail_text || []).map((x) => `<span class="chip" style="font-size:15px;padding:6px 10px">${h(x)}</span>`).join("")}</div>
+    <h3 style="font-size:16px;margin-top:16px">${h(t("description"))}</h3><p class="hint">${h(t("chaptersNote"))}</p>
+    <textarea id="descOut" rows="9">${h(String(res.description || ""))}</textarea><div class="actions"><button class="small" id="copyDesc">${h(t("copyDesc"))}</button><button class="small" id="useDesc">${h(t("useDesc"))}</button></div>`;
+  out.querySelectorAll("[data-ct]").forEach((b) => b.addEventListener("click", () => copyText(res.titles[+b.dataset.ct], b)));
+  $("copyDesc").addEventListener("click", (e) => copyText($("descOut").value, e.target));
+  $("useDesc").addEventListener("click", () => { $("description").value = $("descOut").value; if (!$("title").value && res.titles[0]) $("title").value = res.titles[0]; if (!$("thumb").value && res.thumbnail_text && res.thumbnail_text[0]) $("thumb").value = res.thumbnail_text[0]; $("extraFields").open = true; $("runBtn").click(); });
+}
+
+async function doFacts(sample, out) {
+  const en = UI === "en";
+  const prompt = `Revisa este guion de enseñanza bíblica para YouTube. No tienes acceso a internet: responde con lo que sabes y sé honesto cuando no estés seguro. ${t("outLang")}
+Extrae hasta 8 afirmaciones, priorizando las que tienen números, fechas, nombres, lugares, estadísticas, significados de palabras hebreas o griegas, o frases atribuidas a una persona (a predicadores y escritores famosos se les atribuyen citas que nunca dijeron). No revises el texto de las citas bíblicas; eso lo hace otro módulo.
+Clasifica cada una con "class" exactamente igual a uno de: "fact", "interpretation", "quote".
+- "fact": hechos históricos, arqueológicos, estadísticos, lingüísticos o biográficos. "verdict" exactamente uno de: "correct", "incorrect", "partial", "unsure".
+- "interpretation": qué significa un pasaje, si una profecía se cumplió, posiciones doctrinales. "verdict": "not_graded".
+- "quote": si la persona realmente lo dijo o escribió. "verdict" exactamente uno de: "correct", "doubtful", "incorrect", "unsure".
+Si una afirmación es médica, dilo en la explicación y recuerda que no es consejo médico.
+Para cada una da "claim" (la afirmación como aparece en el guion), "explanation" de 1–2 oraciones y "search" (palabras para buscar en Google). No inventes URLs.
+Responde solo con JSON: {"claims": [{"claim": "...", "class": "...", "verdict": "...", "explanation": "...", "search": "..."}], "notes": "..."}
+
+GUION:
+"""
+${state.text.slice(0, 20000)}
+"""`;
+  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "complex" });
+  const cl = (res && res.claims) || [];
+  const CLS = en ? { fact: "fact", interpretation: "interpretation", quote: "attributed quote" } : { fact: "hecho", interpretation: "interpretación", quote: "cita atribuida" };
+  const VER = en ? { correct: "correct", incorrect: "incorrect", partial: "partly correct", unsure: "not sure", doubtful: "doubtful", not_graded: "not graded" } : { correct: "correcto", incorrect: "incorrecto", partial: "parcial", unsure: "no seguro", doubtful: "dudosa", not_graded: "no se califica" };
+  const tag = (v) => (v === "correct" ? "v-ok" : v === "incorrect" ? "v-bad" : v === "partial" || v === "doubtful" ? "v-mid" : "v-na");
+  out.innerHTML = (res && res.notes ? `<p class="hint">${h(res.notes)}</p>` : "") + (cl.length ? cl.map((c) => `<div class="card"><div class="k">${h(CLS[c.class] || c.class || "")} <span class="verdict-tag ${tag(c.verdict)}">${h(VER[c.verdict] || c.verdict || "")}</span></div>
+    <div style="font-weight:600">${h(c.claim)}</div><div class="hint" style="margin-top:4px">${h(c.explanation)}</div>
+    ${c.search ? `<div style="margin-top:6px;font-size:14px"><a href="https://www.google.com/search?q=${encodeURIComponent(c.search)}" target="_blank" rel="noopener">${h(t("search"))}${h(c.search)}</a></div>` : ""}</div>`).join("") : `<p class="status">${h(t("noClaims"))}</p>`);
+}
+
+async function doScripture(sample, out, R) {
+  const pairs = R.pairs.map((p, i) => ({ i, p })).filter((x) => x.p.quote);
+  const tr = state.opts.translation, en = UI === "en";
+  const prompt = `Compara cada cita del guion con el texto de la versión bíblica ${tr}. No tienes el texto oficial a mano: usa lo que sabes y, si no estás seguro de la redacción exacta de esa versión, responde "unsure". Nunca inventes el texto de un versículo. ${t("outLang")}
+"verdict" exactamente uno de:
+- "match": la redacción corresponde a ${tr} (diferencias mínimas de puntuación).
+- "paraphrase": el sentido es el del versículo pero la redacción no es la de ${tr}; debe presentarse como paráfrasis o citarse exacto.
+- "mismatch": la cita no corresponde a esa referencia (otro versículo, otro libro o algo que el pasaje no dice).
+- "unsure".
+Añade "note" de una oración (por ejemplo, la referencia correcta si está mal atribuida). No copies el versículo completo.
+Responde solo con JSON: {"results": [{"id": 0, "verdict": "...", "note": "..."}]}
+
+CITAS:
+${pairs.map(({ i, p }) => `id ${i}: ${p.ref.canonical} — «${p.quote.inner}»`).join("\n")}`;
+  const res = await sample.json(prompt, { signal: aiCtl.signal, modelTier: "default" });
+  const rs = (res && res.results) || [];
+  const VER = en ? { match: "matches", paraphrase: "paraphrase", mismatch: "doesn't match", unsure: "not sure" } : { match: "coincide", paraphrase: "paráfrasis", mismatch: "no coincide", unsure: "no seguro" };
+  const cls = { match: "v-ok", paraphrase: "v-mid", mismatch: "v-bad", unsure: "v-na" };
+  for (const r of rs) {
+    const el = $("sv-" + r.id), note = $("svn-" + r.id);
+    if (el) el.innerHTML = `<span class="verdict-tag ${cls[r.verdict] || "v-na"}">${h(VER[r.verdict] || r.verdict)}</span>`;
+    if (note && r.note) note.innerHTML = ` · <span>${h(r.note)}</span>`;
+  }
+  out.textContent = rs.length ? t("scriptureDone")(rs.length) : t("noResults");
+}
+
+function copyText(x, btn) {
+  const done = () => { const o = btn.textContent; btn.textContent = t("copied"); setTimeout(() => (btn.textContent = o), 1400); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(x).then(done, () => fallbackCopy(x, done));
+  else fallbackCopy(x, done);
+}
+function fallbackCopy(x, done) { const ta = document.createElement("textarea"); ta.value = x; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) {} ta.remove(); }
+
+// ---------- exports ----------
+async function offerFile(filename, data) {
+  const d = await caps.downloads, st = $("saveStatus");
+  if (!d) { st.textContent = t("downloadNeeds"); return; }
+  try { await d.save({ filename, data }); st.textContent = t("downloaded"); }
+  catch (e) { st.textContent = e && e.code === "declined" ? "" : t("downloadFail"); }
+}
+function slug(s) { return (s || "guion").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "guion"; }
+function exportTeleprompter() {
+  const R = state.result, breakAt = R.transHits.map((x) => x.start), lines = [];
+  for (const s of R.sents) { if (breakAt.some((b) => b >= s.start && b < s.end)) lines.push(""); lines.push(s.text); }
+  offerFile(slug(state.opts.title || state.opts.series) + "-teleprompter.txt", lines.join("\n").replace(/^\n+/, "") + "\n");
+}
+function exportReview() {
+  const R = state.result, o = state.opts;
+  let md = `# ${t("reviewTitle")}${o.title ? ": " + o.title : ""}\n\n${t("checksPass")(R.passed, R.total)} · ${t("lvl")[R.worst]} · ${R.wc} ${t("words")} · ${fmtTime(R.runtimeSec)} ${t("teaching")}\n\n`;
+  md += `## ${t("secMoney")}\n\n| ${t("thCat")} | ${t("thCount")} | ${t("thIcon")} |\n|---|---|---|\n` + R.preflight.map((p) => `| ${p.label} | ${p.count ? p.count + " · " + deg(p.degree) : "—"} | ${t("icon")[p.level]} |`).join("\n") + "\n\n";
+  for (const [k, name] of sectionMeta()) { const rows = R.sections[k]; if (!rows) continue; md += `## ${name}\n\n` + rows.map((r) => `- ${r.passed ? "✓" : "✕"} **${r.label}** — ${r.info}${!r.passed && r.fix ? ` _${t("fixLabel")}: ${r.fix}_` : ""}`).join("\n") + "\n\n"; }
+  if (R.refs.length) md += `## ${t("refs")}\n\n` + R.refs.map((r) => `- ${r.canonical} — ${bibleGatewayUrl(r.canonical, o.translation)}`).join("\n") + "\n";
+  offerFile(slug(o.title || o.series) + (UI === "en" ? "-review.md" : "-revision.md"), md);
+}
+
+// ---------- saved versions & outcomes (db) ----------
+async function saveVersion() {
+  const db = await caps.db, st = $("saveStatus");
+  if (!db) return;
+  const R = state.result, o = state.opts;
+  try {
+    await db.collection("guiones").add({ title: o.title || o.series || state.text.slice(0, 60), series: o.series || "", keyword: o.keyword || "", translation: o.translation, lang: R.lang, text: state.text, syllables: R.totalSyl, runtimeSec: Math.round(R.runtimeSec), passed: R.passed, total: R.total, worst: R.worst, flags: R.preflight.filter((p) => p.level !== "verde").map((p) => p.id), createdAt: Date.now() });
+    st.textContent = t("saved");
+    loadHistory();
+  } catch (e) { st.textContent = e && e.code === "quota_exceeded" ? t("quotaFull") : t("saveFail"); }
+}
+
+async function loadHistory() {
+  const db = await caps.db;
+  if (!db) { state.historyError = "needs"; renderHistory(); return; }
+  try {
+    const [g, e] = await Promise.all([db.collection("guiones").orderBy("createdAt", "desc").limit(30).get(), db.collection("episodios").orderBy("createdAt", "desc").limit(60).get()]);
+    state.saved = g.docs.map((d) => ({ id: d.id, ...d.data() }));
+    state.episodes = e.docs.map((d) => ({ id: d.id, ...d.data() }));
+    state.historyError = null; state.historyReady = true;
+  } catch (err) { state.historyError = "read"; }
+  calibrate();
+  renderHistory();
+}
+
+function calibrate() {
+  const ks = state.episodes.filter((x) => x.realSec > 30 && x.syllables > 0).map((x) => x.syllables / ((x.lang === "en" ? 6.19 : 7.82) * x.realSec)).filter((k) => k > 0.3 && k < 1.2);
+  state.kN = ks.length;
+  if (ks.length >= 3) { state.k = median(ks); state.kCalibrated = true; } else { state.k = 0.65; state.kCalibrated = false; }
+  updateLive();
+}
+
+function renderHistory() {
+  const body = $("historyBody");
+  $("calibNote").textContent = state.kCalibrated ? t("calibrated")(state.kN) : state.kN ? t("calibProgress")(state.kN) : "";
+  if (state.historyError === "needs") { body.innerHTML = `<p class="hint">${h(t("histNeedsClaude"))}</p>`; return; }
+  if (state.historyError === "read") { body.innerHTML = `<p class="hint">${h(t("histReadFail"))}</p>`; return; }
+  if (!state.historyReady) { body.innerHTML = ""; return; }
+  const fmtDate = (x) => new Date(x).toLocaleDateString(UI, { day: "numeric", month: "short" });
+  const list = state.saved.length ? `<div class="saved"><ul>${state.saved.map((s) => `<li><div><div style="font-weight:600">${h(s.title)}</div><div class="hint">${fmtDate(s.createdAt)} · ${s.passed}/${s.total} · ${fmtTime(s.runtimeSec)} · <span class="lamp ${h(s.worst)}" style="padding:1px 8px">${h(t("icon")[s.worst] || s.worst)}</span></div></div>
+    <div class="actions" style="margin:0"><button class="small" data-open="${h(s.id)}">${h(t("open"))}</button><button class="small" data-cmp="${h(s.id)}">${h(t("compare"))}</button></div></li>`).join("")}</ul></div><div id="cmpOut"></div>` : `<p class="hint">${h(t("noSaved"))}</p>`;
+  const opts = state.saved.map((s) => `<option value="${h(s.id)}">${h(s.title)} · ${fmtDate(s.createdAt)}</option>`).join("");
+  const io = t("iconOpts");
+  const form = state.saved.length ? `<div class="helper"><h3>${h(t("epTitle"))}</h3><p class="desc">${h(t("epDesc"))}</p>
+    <div class="grid2"><div class="field"><label for="epScript">${h(t("epScript"))}</label><select id="epScript">${opts}</select></div>
+    <div class="field"><label for="epDur">${h(t("epDur"))}</label><input id="epDur" placeholder="24:30" inputmode="numeric"></div></div>
+    <div class="grid3" style="margin-top:12px"><div class="field"><label for="epIntro">${h(t("epIntro"))}</label><input id="epIntro" inputmode="decimal" placeholder="68"></div>
+    <div class="field"><label for="epAvg">${h(t("epAvg"))}</label><input id="epAvg" inputmode="decimal" placeholder="35"></div>
+    <div class="field"><label for="epIcon">${h(t("epIcon"))}</label><select id="epIcon">${Object.entries(io).map(([v, l]) => `<option value="${v}">${h(l)}</option>`).join("")}</select></div></div>
+    <div class="actions"><button class="primary small" id="epSave">${h(t("epSave"))}</button><span class="status" id="epStatus"></span></div></div>` : "";
+  const eps = state.episodes;
+  const learn = eps.length ? (() => {
+    const flagged = eps.filter((e) => (e.flags || []).length), clean = eps.filter((e) => !(e.flags || []).length);
+    const yel = (arr) => arr.filter((e) => e.icon === "amarillo" || e.icon === "rojo").length;
+    const intro = (pass) => { const v = eps.filter((e) => e.hookPassed === pass && e.intro != null).map((e) => e.intro); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(0) + "% (" + v.length + ")" : "—"; };
+    return `<div class="helper"><h3>${h(t("learnTitle"))}</h3>
+      <div class="tablewrap"><table class="pf"><thead><tr><th></th><th>${h(t("episodes"))}</th><th>${h(t("yellowRed"))}</th></tr></thead><tbody>
+      <tr><td>${h(t("withFlags"))}</td><td>${flagged.length}</td><td>${yel(flagged)}</td></tr>
+      <tr><td>${h(t("noFlags"))}</td><td>${clean.length}</td><td>${yel(clean)}</td></tr></tbody></table></div>
+      <p class="hint" style="margin-top:10px">${h(t("introNote")(intro(true), intro(false)))}</p></div>`;
+  })() : "";
+  body.innerHTML = list + form + learn;
+  body.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => {
+    const s = state.saved.find((x) => x.id === b.dataset.open); if (!s) return;
+    $("script").value = s.text; $("title").value = s.title || ""; $("keyword").value = s.keyword || ""; $("series").value = s.series || ""; if (s.translation) $("translation").value = s.translation;
+    updateLive(); window.scrollTo({ top: 0, behavior: "smooth" });
+  }));
+  body.querySelectorAll("[data-cmp]").forEach((b) => b.addEventListener("click", () => {
+    const s = state.saved.find((x) => x.id === b.dataset.cmp); if (!s) return;
+    const cur = $("script").value;
+    $("cmpOut").innerHTML = cur.trim() ? `<div class="helper"><h3>${h(t("cmpTitle")(s.title))}</h3><p class="desc">${h(t("cmpDesc"))}</p><div class="diff">${wordDiff(s.text, cur).map((x) => (x.changed ? `<ins>${h(x.text)}</ins>` : h(x.text))).join("")}</div></div>` : `<p class="hint">${h(t("cmpNeed"))}</p>`;
+  }));
+  const sv = $("epSave"); if (sv) sv.addEventListener("click", saveEpisode);
+}
+
+async function saveEpisode() {
+  const db = await caps.db, st = $("epStatus");
+  const s = state.saved.find((x) => x.id === $("epScript").value);
+  const m = $("epDur").value.trim().match(/^(\d{1,3}):(\d{2})$/);
+  if (!s) { st.textContent = t("pickVersion"); return; }
+  if (!m) { st.textContent = t("durFormat"); return; }
+  const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
+  const hookPassed = (() => { try { return analyze(s.text, { lang: s.lang }).sections.structure.find((r) => r.id === "hook").passed; } catch (e) { return null; } })();
+  try {
+    await db.collection("episodios").add({ scriptId: s.id, title: s.title, lang: s.lang, syllables: s.syllables, estimatedSec: s.runtimeSec, realSec: +m[1] * 60 + +m[2], intro: num($("epIntro").value), avgViewed: num($("epAvg").value), icon: $("epIcon").value, flags: s.flags || [], hookPassed, createdAt: Date.now() });
+    st.textContent = t("savedShort");
+    loadHistory();
+  } catch (e) { st.textContent = t("saveFailShort"); }
+}
+
+applyLang();
+loadHistory();
+
+</script>
+</body>
+</html>

@@ -9,20 +9,56 @@ Object.assign(T.es, {
   wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Preparar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
   wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
   wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
-  wkLgR: "Puede limitar anuncios", wkLgA: "Ajuste", wkLgD: "Se quitaría", wkEnd: "Terminaste el recorrido del guion.",
+  wkEnd: "Terminaste el recorrido del guion.",
+  cat_hi: "Puede quitar anuncios", cat_mid: "Puede limitar anuncios", cat_cut: "Se quitaría", cat_fill: "Muletillas y relleno", cat_pol: "Para pulir",
+  cat_hi_t: "Rojo: puede quitar los anuncios del video.", cat_mid_t: "Naranja: puede limitar los anuncios.", cat_cut_t: "Tachado: lo que borraría el arreglo propuesto.", cat_fill_t: "Morado: muletillas y palabras de relleno.", cat_pol_t: "Azul ondulado: palabra genérica, regional o que suena generada.", catShow: "Mostrar", catHide: "Ocultar",
 });
 Object.assign(T.en, {
   wkTitle: "Paragraph-by-paragraph review", wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
   wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Prepare", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
   wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
   wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
-  wkLgR: "Can limit ads", wkLgA: "Tweak", wkLgD: "Would be removed", wkEnd: "You've been through the whole script.",
+  wkEnd: "You've been through the whole script.",
+  cat_hi: "Can remove ads", cat_mid: "Can limit ads", cat_cut: "Would be removed", cat_fill: "Fillers", cat_pol: "To polish",
+  cat_hi_t: "Red: can remove ads from the video.", cat_mid_t: "Orange: can limit ads.", cat_cut_t: "Struck through: what the proposed fix would delete.", cat_fill_t: "Purple: filler words.", cat_pol_t: "Blue wavy: generic, regional or generated-sounding word.", catShow: "Show", catHide: "Hide",
 });
 
 const WK = { i: -1, key: "", R: null, map: [], blocks: [], per: [], glob: [], list: [], ranges: null, pending: false, flashT: 0, ok: false };
 const wkReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wkHL = () => (typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function" ? CSS.highlights : null);
-const WK_NAMES = ["sd-r", "sd-a", "sd-ru", "sd-au", "sd-del", "sd-flash"];
+const WK_FAMS = ["hi", "mid", "fill", "pol"];
+const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-flash"];
+// families the person switched off from the legend (kept on this device only)
+const CATOFF = new Set();
+try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) {}
+function catApplyOff() {
+  CATS.forEach((c) => document.documentElement.classList.toggle("cat-off-" + c.id, CATOFF.has(c.id)));
+  try { localStorage.setItem("sd-cats-off", JSON.stringify([...CATOFF])); } catch (e) {}
+}
+catApplyOff();
+function catCounts() {
+  const n = { hi: 0, mid: 0, fill: 0, pol: 0, cut: 0 };
+  if (!WK.ok) return n;
+  for (const g of WK.per) for (const { card, evs } of g) n[catOfCard(card)] += evs.length;
+  // "cut" = deletions the fixes shown for this paragraph would make
+  (state.fixCards || []).forEach((c, ci) => {
+    const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
+    if (p && p.kind === "patch") for (const x of p.patches) if (x.end > x.start) n.cut++;
+  });
+  return n;
+}
+// legend chips double as filters: tap one to hide or show that family in the script
+function catLegendHTML(interactive, counts) {
+  const c = interactive ? counts || null : null;
+  return `<div class="cat-legend" role="group">` + CATS.map((f) => {
+    const off = CATOFF.has(f.id), n = c ? c[f.id] : null;
+    const inner = `<i class="cat-sw cat-${f.id}" aria-hidden="true"><b>Aa</b></i><span>${h(t("cat_" + f.id))}</span>${n != null ? `<em>${n}</em>` : ""}`;
+    return interactive
+      ? `<button type="button" class="cat-chip${off ? " off" : ""}" data-cat="${f.id}" aria-pressed="${off ? "false" : "true"}" title="${h(t("cat_" + f.id + "_t"))}">${inner}</button>`
+      : `<span class="cat-chip static" title="${h(t("cat_" + f.id + "_t"))}">${inner}</span>`;
+  }).join("") + `</div>`;
+}
+
 
 function wkClearPaint() {
   const hl = wkHL();
@@ -144,19 +180,19 @@ function walkerHTML() {
   const nav = `<div class="wk-nav"><button type="button" class="small" data-wkgo="-1"${hasPrev ? "" : " disabled"}>‹ ${h(t("wkPrev"))}</button>
     <div class="wk-where"><b class="wk-sev-${sevCls}">${h(title)}</b><span class="hint">${h(sub)}${pos >= 0 ? `${sub ? " · " : ""}${h(t("wkPos")(pos + 1, WK.list.length))}` : ""}</span></div>
     ${hasNext ? `<button type="button" class="small primary" data-wkgo="1">${h(t("wkNext"))} ›</button>` : `<button type="button" class="small primary" data-wkend>${h(t("wkDone"))} →</button>`}</div>`;
-  const lg = `<div class="wk-lg"><span class="wk-lg-r">${h(t("wkLgR"))}</span><span class="wk-lg-a">${h(t("wkLgA"))}</span><span class="wk-lg-d">${h(t("wkLgD"))}</span></div>`;
+  const lg = catLegendHTML(true, catCounts());
   const body = cards.length ? `<ol class="fx-list">${fixItemsHTML(cards, state.result)}</ol>` : `<p class="lead wk-clean">${h(hasNext ? t("wkClean") : t("wkEnd"))}</p>`;
   return `<div class="topfix walk" data-wk-root>${head}${wkStripHTML()}${lg}${nav}${body}</div>`;
 }
 
 // ---- painting ----
 function wkRangesFor(i) {
-  const out = { r: [], a: [], ru: [], au: [] };
+  const out = { w: { hi: [], mid: [], fill: [], pol: [] }, u: { hi: [], mid: [], fill: [], pol: [] } };
   for (const { card, evs } of WK.per[i] || []) {
-    const red = card.level === "rojo";
+    const f = catOfCard(card);
     for (const e of evs) {
-      if (e.marks && e.marks.length) for (const [a, b] of e.marks) { const r = wkRange(a, b); if (r) out[red ? "r" : "a"].push(r); }
-      else { const r = wkRange(e.start, e.end); if (r) out[red ? "ru" : "au"].push(r); }
+      if (e.marks && e.marks.length) for (const [a, b] of e.marks) { const r = wkRange(a, b); if (r) out.w[f].push(r); }
+      else { const r = wkRange(e.start, e.end); if (r) out.u[f].push(r); }
     }
   }
   return out;
@@ -167,25 +203,31 @@ function wkPaint(scroll) {
   if (!WK.ok || !wkReady()) return;
   if (!WK.ranges) WK.ranges = WK.blocks.map((b, i) => wkRangesFor(i));
   if (hl) {
-    const all = { r: [], a: [], ru: [], au: [] };
     // words everywhere; whole-sentence underlines only in the paragraph being reviewed
-    WK.ranges.forEach((g, i) => { for (const k of Object.keys(all)) if (i === WK.i || k.length === 1) all[k].push(...g[k]); });
-    for (const [k, name] of [["r", "sd-r"], ["a", "sd-a"], ["ru", "sd-ru"], ["au", "sd-au"]]) if (all[k].length) hl.set(name, new Highlight(...all[k]));
+    for (const f of WK_FAMS) {
+      if (CATOFF.has(f)) continue;
+      const w = [], u = [];
+      WK.ranges.forEach((g, i) => { w.push(...g.w[f]); if (i === WK.i) u.push(...g.u[f]); });
+      if (w.length) { const x = new Highlight(...w); x.priority = CAT_PRI[f]; hl.set("sd-w-" + f, x); }
+      if (u.length) { const x = new Highlight(...u); x.priority = CAT_PRI[f]; hl.set("sd-u-" + f, x); }
+    }
   }
   const b = WK.blocks[WK.i];
   if (!b) return;
   b.el.classList.add("walk-on");
   // what the first proposal of each card in this paragraph would remove
-  if (hl) {
+  if (hl && !CATOFF.has("cut")) {
     const dels = [];
     (state.fixCards || []).forEach((c, ci) => {
       const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
       if (p && p.kind === "patch") for (const x of p.patches) if (x.end > x.start) { const r = wkRange(x.start, x.end); if (r) dels.push(r); }
     });
-    if (dels.length) hl.set("sd-del", new Highlight(...dels));
+    if (dels.length) { const x = new Highlight(...dels); x.priority = CAT_PRI.cut; hl.set("sd-del", x); }
   }
   if (scroll) {
-    const g = WK.ranges[WK.i], first = [...g.r, ...g.a, ...g.ru, ...g.au].sort((x, y) => x.compareBoundaryPoints(Range.START_TO_START, y))[0];
+    const g = WK.ranges[WK.i], all = [];
+    for (const k of ["w", "u"]) for (const f of WK_FAMS) all.push(...g[k][f]);
+    const first = all.sort((x, y) => x.compareBoundaryPoints(Range.START_TO_START, y))[0];
     wkScrollTo(first || b.el);
     if (first) wkFlash([first]);
   }
@@ -228,6 +270,7 @@ function wkWire() {
   if (!root) return;
   root.querySelectorAll("[data-wk]").forEach((b) => b.addEventListener("click", () => wkGo(+b.dataset.wk)));
   root.querySelectorAll("[data-wkgo]").forEach((b) => b.addEventListener("click", () => wkStep(+b.dataset.wkgo)));
+  root.querySelectorAll(".cat-chip[data-cat]").forEach((b) => b.addEventListener("click", () => catToggle(b.dataset.cat)));
   const end = root.querySelector("[data-wkend]");
   if (end) end.addEventListener("click", () => goStep(3));
   // tapping the quoted text of a card shows it in the script
@@ -291,3 +334,39 @@ scGoRow = function (id) {
   if (at < 0 && WK.glob.some((c) => c.id === id || (c.ids && c.ids.includes(id)))) at = WK.blocks.length;
   if (at >= 0) wkGo(at);
 };
+
+// legend chip: hide / show one family (the walker and the marked script both follow)
+function catToggle(id) {
+  if (CATOFF.has(id)) CATOFF.delete(id); else CATOFF.add(id);
+  catApplyOff();
+  document.querySelectorAll(".cat-chip[data-cat]").forEach((b) => {
+    const off = CATOFF.has(b.dataset.cat);
+    b.classList.toggle("off", off); b.setAttribute("aria-pressed", off ? "false" : "true");
+  });
+  if (document.querySelector(".topfix.walk")) wkPaint(false);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".cat-chip[data-cat]");
+  if (b && !b.closest(".topfix.walk")) catToggle(b.dataset.cat);
+});
+
+// timeline: tapping a marker goes to that paragraph of the script
+function wkMarkerPos(b) {
+  if (b.dataset.pos !== undefined) return +b.dataset.pos;
+  const tms = +b.dataset.tms; // call-to-action clusters only know the time: find the script position at that time
+  const R = state.result;
+  if (!R || !R.timeAt) return -1;
+  let best = -1, bd = Infinity;
+  const L = state.text.length, step = Math.max(1, Math.floor(L / 400));
+  for (let x = 0; x <= L; x += step) { const d = Math.abs(R.timeAt(x) - tms); if (d < bd) { bd = d; best = x; } }
+  return best;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".timeline .mk");
+  if (!b) return;
+  const pos = wkMarkerPos(b);
+  if (pos < 0) return;
+  if (V.guided && V.step !== 2) { WK.pending = true; goStep(2); }
+  if (!wkBuild()) return;
+  wkGo(wkBlockAt(WK.blocks, pos));
+});

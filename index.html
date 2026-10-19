@@ -119,12 +119,11 @@ table.pf th{font-weight:600;color:var(--ink-2);font-size:13px}
 .manuscript{font-family:var(--serif);font-size:17.5px;line-height:1.85;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:22px 24px;white-space:pre-wrap;word-wrap:break-word;max-width:68ch}
 .manuscript mark{background:none;color:inherit;border-radius:3px;padding:0 1px;cursor:help}
 .manuscript .k-risk.l-verde{background:var(--verde-bg);box-shadow:inset 0 -2px var(--verde)}
-.manuscript .k-risk.l-amarillo{background:var(--amarillo-bg);box-shadow:inset 0 -2px var(--amarillo)}
-.manuscript .k-risk.l-rojo{background:var(--rojo-bg);box-shadow:inset 0 -2px var(--rojo)}
-.manuscript .k-muletilla{background:var(--mul-bg);box-shadow:inset 0 -2px var(--mul)}
-.manuscript .k-weak{box-shadow:inset 0 -2px var(--weak)}
-.manuscript .k-regional{background:var(--reg-bg);box-shadow:inset 0 -2px var(--reg)}
-.manuscript .k-aitell{background:var(--rojo-bg)}
+.manuscript .k-risk.l-amarillo{background:var(--c-mid-bg,var(--amarillo-bg));box-shadow:none;text-decoration:underline solid var(--c-mid,var(--amarillo));text-decoration-thickness:2px;text-underline-offset:4px}
+.manuscript .k-risk.l-rojo{background:var(--c-hi-bg,var(--rojo-bg));box-shadow:none;text-decoration:underline solid var(--c-hi,var(--rojo));text-decoration-thickness:3px;text-underline-offset:4px}
+.manuscript .k-muletilla{background:var(--c-fill-bg,var(--mul-bg));box-shadow:none;text-decoration:underline dotted var(--c-fill,var(--mul));text-decoration-thickness:2.5px;text-underline-offset:4px}
+.manuscript .k-weak,.manuscript .k-regional,.manuscript .k-aitell{background:none;box-shadow:none;text-decoration:underline wavy var(--c-pol,var(--weak));text-decoration-thickness:1.5px;text-underline-offset:5px}
+html.cat-off-hi .manuscript .k-risk.l-rojo,html.cat-off-mid .manuscript .k-risk.l-amarillo,html.cat-off-fill .manuscript .k-muletilla,html.cat-off-pol .manuscript .k-weak,html.cat-off-pol .manuscript .k-regional,html.cat-off-pol .manuscript .k-aitell{background:none;text-decoration:none}
 .manuscript .k-greeting,.manuscript .k-cta{text-decoration:underline wavy var(--amarillo);text-underline-offset:4px}
 .manuscript .k-ref{color:var(--gold);font-weight:600}
 .manuscript .k-keyword{background:var(--kw-bg)}
@@ -774,12 +773,39 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 .fix-pts{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-variant-numeric:tabular-nums;vertical-align:middle}
 
 /* ===== Revisión por párrafos ===== */
-::highlight(sd-r){background-color:rgba(220,38,38,.26);color:inherit}
-::highlight(sd-a){background-color:rgba(245,158,11,.34);color:inherit}
-::highlight(sd-ru){text-decoration:underline wavy rgba(220,38,38,.85);text-decoration-thickness:1.5px;text-underline-offset:4px}
-::highlight(sd-au){text-decoration:underline dotted rgba(217,119,6,.95);text-decoration-thickness:2px;text-underline-offset:4px}
-::highlight(sd-del){background-color:rgba(220,38,38,.16);text-decoration:line-through;text-decoration-color:#dc2626;text-decoration-thickness:2px}
-::highlight(sd-flash){background-color:rgba(50,71,201,.38);color:inherit}
+/* highlights: constants per theme (custom properties are not reliable inside ::highlight) */
+:root ::highlight(sd-w-hi){background-color:rgba(180,35,74,.20);text-decoration:underline solid #B4234A;text-decoration-thickness:3px;text-underline-offset:4px}
+:root ::highlight(sd-u-hi){text-decoration:underline dotted #B4234A;text-decoration-thickness:2px;text-underline-offset:4px}
+:root ::highlight(sd-w-mid){background-color:rgba(240,140,20,.26);text-decoration:underline solid #B85400;text-decoration-thickness:2px;text-underline-offset:4px}
+:root ::highlight(sd-u-mid){text-decoration:underline dotted #B85400;text-decoration-thickness:2px;text-underline-offset:4px}
+:root ::highlight(sd-w-fill){background-color:rgba(110,69,196,.17);text-decoration:underline dotted #6E45C4;text-decoration-thickness:2.5px;text-underline-offset:4px}
+:root ::highlight(sd-u-fill){text-decoration:underline dotted #6E45C4;text-decoration-thickness:2px;text-underline-offset:4px}
+:root ::highlight(sd-w-pol){text-decoration:underline wavy #1F5FBF;text-decoration-thickness:1.5px;text-underline-offset:5px}
+:root ::highlight(sd-u-pol){text-decoration:underline dotted #1F5FBF;text-decoration-thickness:2px;text-underline-offset:4px}
+:root ::highlight(sd-del){background-color:rgba(107,42,60,.10);text-decoration:line-through #6B2A3C;text-decoration-thickness:2px}
+:root ::highlight(sd-flash){background-color:rgba(50,71,201,.38)}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme="light"]) ::highlight(sd-w-hi){background-color:rgba(255,125,156,.26);text-decoration:underline solid #FF7D9C;text-decoration-thickness:3px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-u-hi){text-decoration:underline dotted #FF7D9C;text-decoration-thickness:2px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-w-mid){background-color:rgba(255,176,77,.24);text-decoration:underline solid #FFB04D;text-decoration-thickness:2px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-u-mid){text-decoration:underline dotted #FFB04D;text-decoration-thickness:2px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-w-fill){background-color:rgba(183,155,255,.24);text-decoration:underline dotted #C7B5FF;text-decoration-thickness:2.5px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-u-fill){text-decoration:underline dotted #C7B5FF;text-decoration-thickness:2px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-w-pol){text-decoration:underline wavy #7FB2FF;text-decoration-thickness:1.5px;text-underline-offset:5px}
+:root:not([data-theme="light"]) ::highlight(sd-u-pol){text-decoration:underline dotted #7FB2FF;text-decoration-thickness:2px;text-underline-offset:4px}
+:root:not([data-theme="light"]) ::highlight(sd-del){background-color:rgba(231,163,181,.14);text-decoration:line-through #E7A3B5;text-decoration-thickness:2px}
+:root:not([data-theme="light"]) ::highlight(sd-flash){background-color:rgba(140,158,255,.5)}
+}
+:root[data-theme="dark"] ::highlight(sd-w-hi){background-color:rgba(255,125,156,.26);text-decoration:underline solid #FF7D9C;text-decoration-thickness:3px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-u-hi){text-decoration:underline dotted #FF7D9C;text-decoration-thickness:2px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-w-mid){background-color:rgba(255,176,77,.24);text-decoration:underline solid #FFB04D;text-decoration-thickness:2px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-u-mid){text-decoration:underline dotted #FFB04D;text-decoration-thickness:2px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-w-fill){background-color:rgba(183,155,255,.24);text-decoration:underline dotted #C7B5FF;text-decoration-thickness:2.5px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-u-fill){text-decoration:underline dotted #C7B5FF;text-decoration-thickness:2px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-w-pol){text-decoration:underline wavy #7FB2FF;text-decoration-thickness:1.5px;text-underline-offset:5px}
+:root[data-theme="dark"] ::highlight(sd-u-pol){text-decoration:underline dotted #7FB2FF;text-decoration-thickness:2px;text-underline-offset:4px}
+:root[data-theme="dark"] ::highlight(sd-del){background-color:rgba(231,163,181,.14);text-decoration:line-through #E7A3B5;text-decoration-thickness:2px}
+:root[data-theme="dark"] ::highlight(sd-flash){background-color:rgba(140,158,255,.5)}
 .ed .walk-on{position:relative;background:color-mix(in srgb,var(--j2,#B4234A) 7%,transparent);box-shadow:-10px 0 0 color-mix(in srgb,var(--j2,#B4234A) 7%,transparent),10px 0 0 color-mix(in srgb,var(--j2,#B4234A) 7%,transparent);border-radius:4px}
 .ed .walk-on::before{content:"";position:absolute;left:-14px;top:0;bottom:0;width:3px;border-radius:2px;background:var(--j2,#B4234A)}
 .topfix.walk .wk-strip{display:flex;gap:3px;margin:2px 0 8px;align-items:stretch}
@@ -790,11 +816,6 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 .wk-tick.wk-ok{background:var(--verde-bg);box-shadow:inset 0 0 0 1px var(--rule)}
 .wk-tick.on{outline:2px solid var(--ink);outline-offset:2px;z-index:1}
 .wk-tick:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.topfix.walk .wk-lg{display:flex;flex-wrap:wrap;gap:6px 12px;font:500 12.5px/1.2 var(--sans);color:var(--ink-2);margin:0 0 10px}
-.wk-lg span::before{content:"";display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-.wk-lg-r::before{background:rgba(220,38,38,.35)}
-.wk-lg-a::before{background:rgba(245,158,11,.5)}
-.wk-lg-d::before{background:rgba(220,38,38,.16);box-shadow:inset 0 -5px 0 -4px #dc2626}
 .wk-nav{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 0;border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
 .wk-nav .small{min-height:40px;padding:0 14px;white-space:nowrap}
 .wk-where{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:center}
@@ -812,7 +833,6 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
   main[data-view="guide"][data-step="2"] #editor .ed-bar{padding:2px 6px}
   main[data-view="guide"][data-step="2"] #editor .ed-wrap:not(.ed-full) [data-ed="full"]{min-height:32px;height:32px}
   main[data-view="guide"][data-step="2"] .gv{display:none !important}
-  .topfix.walk .wk-lg{font-size:11.5px;gap:4px 10px;margin-bottom:6px}
   main[data-view="guide"][data-step="2"] #editor .ed-wrap:not(.ed-full) .ed{height:30dvh}
   .topfix.walk{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}
   .wk-nav{position:sticky;top:var(--dock-h,40dvh);z-index:12;background:var(--paper)}
@@ -823,6 +843,49 @@ main[data-view="guide"][data-step="2"] .gv .gv-note{flex:1 1 100%;margin:0;font-
 main[data-view="guide"][data-step="2"] .gv .gv-top{margin:0}
 .topfix.walk{overflow:clip}
 @media (max-width:899px){.wk-nav{gap:6px}.wk-nav .small{padding:0 10px;font-size:14px}.wk-where b{font-size:15px;white-space:nowrap}.wk-where .hint{font-size:11.5px}}
+
+/* ---- color families: legend chips (also filters) ---- */
+.cat-legend{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0 0 10px}
+.cat-chip{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:3px 10px 3px 5px;border:1px solid var(--rule);border-radius:999px;background:var(--sheet);color:var(--ink);font:500 13px/1.1 var(--sans);cursor:pointer}
+.cat-chip.static{cursor:default;border-color:transparent;background:none;padding-left:0;min-height:0}
+.cat-chip em{font-style:normal;font-weight:700;font-size:12px;color:var(--ink-2);min-width:1.1em;text-align:center}
+.cat-chip.off{opacity:.5}.cat-chip.off span{text-decoration:line-through}
+.cat-chip:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cat-sw{display:inline-block;width:26px;height:22px;border-radius:5px;font-style:normal;text-align:center;line-height:20px;font-size:12px}
+.cat-sw b{font-weight:700}
+.cat-hi{background:var(--c-hi-bg);color:var(--c-hi);text-decoration:underline solid var(--c-hi);text-decoration-thickness:3px;text-underline-offset:3px}
+.cat-mid{background:var(--c-mid-bg);color:var(--c-mid);text-decoration:underline solid var(--c-mid);text-decoration-thickness:2px;text-underline-offset:3px}
+.cat-cut{background:var(--c-cut-bg);color:var(--c-cut);text-decoration:line-through}
+.cat-fill{background:var(--c-fill-bg);color:var(--c-fill);text-decoration:underline dotted var(--c-fill);text-decoration-thickness:2.5px;text-underline-offset:3px}
+.cat-pol{color:var(--c-pol);text-decoration:underline wavy var(--c-pol);text-decoration-thickness:1.5px;text-underline-offset:4px}
+@media (max-width:899px),(max-height:559px){.cat-legend{gap:4px 6px}.cat-chip{font-size:12px;min-height:32px;padding-right:8px}}
+/* fix cards: family color on the border and the quoted evidence */
+li.fx[data-cat]{border-left:4px solid var(--fxc,var(--rule))}
+li.fx[data-cat=hi]{--fxc:var(--c-hi)}li.fx[data-cat=mid]{--fxc:var(--c-mid)}li.fx[data-cat=fill]{--fxc:var(--c-fill)}li.fx[data-cat=pol]{--fxc:var(--c-pol)}
+mark.fx-hl.fx-hi{background:var(--c-hi-bg);box-shadow:inset 0 -3px 0 var(--c-hi)}
+mark.fx-hl.fx-mid{background:var(--c-mid-bg);box-shadow:inset 0 -2px 0 var(--c-mid)}
+mark.fx-hl.fx-fill{background:var(--c-fill-bg);box-shadow:none;text-decoration:underline dotted var(--c-fill);text-decoration-thickness:2px}
+mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy var(--c-pol);text-decoration-thickness:1.5px}
+/* ---- timeline in three lanes ---- */
+.tl3{display:grid;grid-template-columns:72px 1fr;gap:6px 10px;align-items:center;margin:8px 0 4px}
+.tl3-lbl{font:600 12.5px/1.1 var(--sans);color:var(--ink-2);text-align:right}
+.tl3-lane{position:relative;height:34px;background:linear-gradient(var(--tl-bar,var(--rule)),var(--tl-bar,var(--rule))) center/100% 2px no-repeat}
+.tl3-zone{position:absolute;top:7px;bottom:7px;border-radius:3px}
+.tl3-zone.gap{background:var(--c-mid);opacity:.3}
+.tl3-tick{position:absolute;top:9px;bottom:9px;border-left:1px dashed var(--tl-bar,var(--rule))}
+.mk{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;display:block;padding:0;border:0;background:none;cursor:pointer}
+.mk svg{width:100%;height:100%;display:block;overflow:visible}
+.mk:hover svg,.mk:focus-visible svg{transform:scale(1.25)}
+.mk:focus-visible{outline:2px solid var(--ink);outline-offset:1px;border-radius:6px}
+.tl3-axis{position:relative;height:16px;grid-column:2;font-size:12px;color:var(--ink-2)}
+.tl3-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.tl3-axis span:first-child{transform:none}.tl3-axis span.end{transform:translateX(-100%)}
+.tl3-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:13px}
+.tl3-legend span{display:inline-flex;align-items:center;gap:6px}
+.tl3-legend svg{width:18px;height:18px}
+.tl3-z i{display:inline-block;width:14px;height:10px;border-radius:2px;background:var(--accent);opacity:.45}
+.tl3-hint{margin:6px 0 0}
+@media (max-width:899px){.tl3{grid-template-columns:54px 1fr;gap:4px 6px}.tl3-lbl{font-size:11.5px}.mk{width:22px;height:22px;margin:-11px 0 0 -11px}.tl3-lane{height:32px}}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1404,6 +1467,23 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
   .ed-grip span{width:44px;height:5px;border-radius:3px;background:var(--rule-2);transition:background .15s}
   .ed-grip.on span,.ed-grip:focus-visible span{background:var(--accent)}
   .ed-wrap:not(.ed-full)::after{bottom:30px}
+}
+
+/* ===== Color families for text + timeline markers (see cats_logic.js) ===== */
+:root{
+  --c-hi:#B4234A;--c-hi-bg:rgba(180,35,74,.20);--c-mid:#B85400;--c-mid-bg:rgba(240,140,20,.26);--c-fill:#6E45C4;--c-fill-bg:rgba(110,69,196,.17);
+  --c-pol:#1F5FBF;--c-pol-bg:rgba(31,95,191,.10);--c-cut:#6B2A3C;--c-cut-bg:rgba(107,42,60,.10);
+  --m-risk:#C4183F;--m-promise:#1F5FBF;--m-cta:#7B3FD0;--m-ref:#9A6200;--tl-bar:#E2E6F3;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --c-hi:#FF7D9C;--c-hi-bg:rgba(255,125,156,.26);--c-mid:#FFB04D;--c-mid-bg:rgba(255,176,77,.24);--c-fill:#C7B5FF;--c-fill-bg:rgba(183,155,255,.24);
+  --c-pol:#7FB2FF;--c-pol-bg:rgba(127,178,255,.14);--c-cut:#E7A3B5;--c-cut-bg:rgba(231,163,181,.14);
+  --m-risk:#FF6B8A;--m-promise:#7FB2FF;--m-cta:#C7A2FF;--m-ref:#FFC566;--tl-bar:#2A3068;
+} }
+:root[data-theme="dark"]{
+  --c-hi:#FF7D9C;--c-hi-bg:rgba(255,125,156,.26);--c-mid:#FFB04D;--c-mid-bg:rgba(255,176,77,.24);--c-fill:#C7B5FF;--c-fill-bg:rgba(183,155,255,.24);
+  --c-pol:#7FB2FF;--c-pol-bg:rgba(127,178,255,.14);--c-cut:#E7A3B5;--c-cut-bg:rgba(231,163,181,.14);
+  --m-risk:#FF6B8A;--m-promise:#7FB2FF;--m-cta:#C7A2FF;--m-ref:#FFC566;--tl-bar:#2A3068;
 }
 </style>
 <script id="sdTheme">try{var sdT=localStorage.getItem("sd-theme");if(sdT==="dark"||sdT==="light")document.documentElement.dataset.theme=sdT}catch(e){}</script>
@@ -3318,8 +3398,32 @@ function scoreOf(R, dismissed) {
   if (band === "amarillo") score = Math.min(score, 99);
   return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
+// ---------- Color families for the text (pure) ----------
+// One table decides how a finding looks everywhere: the paragraph review, the fix cards and the marked script.
+// Color is never the only cue: each family also has its own line style (see guide.css).
+//   hi   can remove ads      red fill, thick solid underline
+//   mid  can limit ads       orange fill, solid underline
+//   cut  would be removed    struck through (what the fix on screen deletes)
+//   fill filler words        purple fill, dotted underline
+//   pol  words to polish     blue wavy underline (generic word, regional form, sounds generated)
+const CATS = [{ id: "hi", pri: 5 }, { id: "mid", pri: 4 }, { id: "cut", pri: 3 }, { id: "fill", pri: 2 }, { id: "pol", pri: 1 }];
+const CAT_PRI = Object.fromEntries(CATS.map((c) => [c.id, c.pri]));
+// engine mark (R.marks) -> family; null = keeps its own styling (greeting, call to action, reference, keyword, quote)
+function catOfKind(kind, level) {
+  if (kind === "risk") return level === "rojo" ? "hi" : level === "amarillo" ? "mid" : null;
+  if (kind === "muletilla") return "fill";
+  if (kind === "weak" || kind === "regional" || kind === "aitell") return "pol";
+  return null;
+}
+// fix card -> family of its evidence (cards about structure default to "pol": a sentence to polish)
+function catOfCard(card) {
+  const id = card && card.id || "";
+  if (/^pf-/.test(id)) return card.level === "rojo" ? "hi" : "mid";
+  if (id === "muletillas") return "fill";
+  return "pol";
+}
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -5232,8 +5336,32 @@ function scoreOf(R, dismissed) {
   if (band === "amarillo") score = Math.min(score, 99);
   return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
+// ---------- Color families for the text (pure) ----------
+// One table decides how a finding looks everywhere: the paragraph review, the fix cards and the marked script.
+// Color is never the only cue: each family also has its own line style (see guide.css).
+//   hi   can remove ads      red fill, thick solid underline
+//   mid  can limit ads       orange fill, solid underline
+//   cut  would be removed    struck through (what the fix on screen deletes)
+//   fill filler words        purple fill, dotted underline
+//   pol  words to polish     blue wavy underline (generic word, regional form, sounds generated)
+const CATS = [{ id: "hi", pri: 5 }, { id: "mid", pri: 4 }, { id: "cut", pri: 3 }, { id: "fill", pri: 2 }, { id: "pol", pri: 1 }];
+const CAT_PRI = Object.fromEntries(CATS.map((c) => [c.id, c.pri]));
+// engine mark (R.marks) -> family; null = keeps its own styling (greeting, call to action, reference, keyword, quote)
+function catOfKind(kind, level) {
+  if (kind === "risk") return level === "rojo" ? "hi" : level === "amarillo" ? "mid" : null;
+  if (kind === "muletilla") return "fill";
+  if (kind === "weak" || kind === "regional" || kind === "aitell") return "pol";
+  return null;
+}
+// fix card -> family of its evidence (cards about structure default to "pol": a sentence to polish)
+function catOfCard(card) {
+  const id = card && card.id || "";
+  if (/^pf-/.test(id)) return card.level === "rojo" ? "hi" : "mid";
+  if (id === "muletillas") return "fill";
+  return "pol";
+}
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -5268,7 +5396,7 @@ const T = {
     thCat: "Categoría", thCount: "Apariciones", thIcon: "Ícono probable",
     denseWin: "Tramos de 2 minutos con más términos sensibles: ",
     pass: "pasa", fail: "no pasa",
-    tlTitle: "Línea de tiempo del episodio", tlZones: "0–7 s gancho · 20 s promesa · 30 s intro", tlPromise: "promesa", tlRef: "cita bíblica", tlCta: "llamada a la acción", tlRisk: "término de riesgo", tlRehook: "barra: re-enganche cada 4 min", tlGap: "tramo sin re-enganche", tlNoHook: "Sin re-enganche", tlPromiseT: "Promesa", tlCtaT: "Llamada a la acción", tickTip: "Aproximadamente aquí",
+    tlTitle: "Línea de tiempo del episodio", tlLaneAds: "Anuncios", tlLaneMoments: "Momentos", tlLaneRefs: "Citas", tlTap: "Toca una marca para ir a ese párrafo del guion.", tlZones: "0–7 s gancho · 20 s promesa · 30 s intro", tlPromise: "promesa", tlRef: "cita bíblica", tlCta: "llamada a la acción", tlRisk: "término de riesgo", tlRehook: "barra: re-enganche cada 4 min", tlGap: "tramo sin re-enganche", tlNoHook: "Sin re-enganche", tlPromiseT: "Promesa", tlCtaT: "Llamada a la acción", tickTip: "Aproximadamente aquí",
     lgRisk: "riesgo de anuncios", lgMul: "muletilla", lgWeak: "palabra genérica", lgReg: "regionalismo", lgQuote: "cita bíblica", lgKw: "palabra clave", lgTick: "marca de tiempo", tapNote: "toca una marca para ver la nota",
     noRefs: "No se detectaron referencias bíblicas (libro + capítulo).", refNoQuote: "Referenciada, sin cita textual.", readIn: (t) => `Leer en ${t} (Bible Gateway)`,
     scriptureLead: (t) => `Compara cada cita con la ${t}. La IA no tiene el texto oficial a mano: marca lo que no coincide según su conocimiento y te da el enlace para confirmar.`,
@@ -5338,7 +5466,7 @@ const T = {
     thCat: "Category", thCount: "Occurrences", thIcon: "Likely icon",
     denseWin: "2-minute stretches with the most sensitive terms: ",
     pass: "passes", fail: "fails",
-    tlTitle: "Episode timeline", tlZones: "0–7 s hook · 20 s promise · 30 s intro", tlPromise: "promise", tlRef: "Bible quote", tlCta: "call to action", tlRisk: "risk term", tlRehook: "bar: re-hook every 4 min", tlGap: "stretch without a re-hook", tlNoHook: "No re-hook", tlPromiseT: "Promise", tlCtaT: "Call to action", tickTip: "Approximately here",
+    tlTitle: "Episode timeline", tlLaneAds: "Ads", tlLaneMoments: "Moments", tlLaneRefs: "Verses", tlTap: "Tap a marker to jump to that paragraph of the script.", tlZones: "0–7 s hook · 20 s promise · 30 s intro", tlPromise: "promise", tlRef: "Bible quote", tlCta: "call to action", tlRisk: "risk term", tlRehook: "bar: re-hook every 4 min", tlGap: "stretch without a re-hook", tlNoHook: "No re-hook", tlPromiseT: "Promise", tlCtaT: "Call to action", tickTip: "Approximately here",
     lgRisk: "ad risk", lgMul: "filler", lgWeak: "generic word", lgReg: "regional form", lgQuote: "Bible quote", lgKw: "keyword", lgTick: "time mark", tapNote: "tap a mark to see the note",
     noRefs: "No Bible references detected (book + chapter).", refNoQuote: "Referenced, not quoted.", readIn: (t) => `Read in ${t} (Bible Gateway)`,
     scriptureLead: (t) => `Compares each quote with the ${t}. The AI doesn't have the official text on hand: it flags what doesn't match from its own knowledge and gives you the link to confirm.`,
@@ -5465,25 +5593,46 @@ function rowHTML(r) {
 
 function timelineHTML(R) {
   const Tt = Math.max(R.runtimeSec, 1);
-  const pct = (x) => Math.min(100, Math.max(0, (x / Tt) * 100)).toFixed(2) + "%";
+  const frac = (x) => Math.min(1, Math.max(0, x / Tt)), pct = (x) => (frac(x) * 100).toFixed(2) + "%";
   const zones = [[0, 7, 0.55], [7, 20, 0.32], [20, 30, 0.16]];
   const missing = R.blocks.filter((b) => !b.has);
-  let html = `<div class="timeline"><h3>${h(t("tlTitle"))} · ${h(fmtTime(R.runtimeSec))} ${h(t("teaching"))}</h3><div class="tl-track"><div class="tl-bar">`;
-  for (const [a, b, o] of zones) if (a < Tt) html += `<div class="tl-zone" style="left:${pct(a)};width:calc(${pct(Math.min(b, Tt))} - ${pct(a)});background:var(--accent);opacity:${o}"></div>`;
-  for (const b of missing) html += `<div class="tl-zone" style="left:${pct(b.from)};width:calc(${pct(b.to)} - ${pct(b.from)});background:var(--amarillo);opacity:.28" title="${h(t("tlNoHook"))}"></div>`;
-  html += `</div>`;
-  const ticks = [7, 20, 30].filter((x) => x < Tt);
+  const SH = {
+    risk: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 L20 19 H2 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="9" width="2" height="5" rx="1" fill="#fff"/><circle cx="11" cy="16.2" r="1.1" fill="#fff"/></svg>`,
+    promise: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3 V20" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><path d="M6 4 H18 L14.5 8.5 L18 13 H6 Z" fill="${c}" stroke="var(--sheet)" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+    cta: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3.5" y="3.5" width="15" height="15" rx="3" fill="${c}" stroke="var(--sheet)" stroke-width="2"/><path d="M8 11 H14 M11.5 8 L14.5 11 L11.5 14" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    ref: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2.5 L19.5 11 L11 19.5 L2.5 11 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  };
+  // markers closer than ~2.4% of the width step up/down so none hides another
+  const lane = (items) => {
+    let out = "", last = -1, lvl = 0;
+    for (const m of items.sort((a, b) => a.x - b.x)) {
+      lvl = last >= 0 && frac(m.x) - last < 0.024 ? (lvl + 1) % 3 : 0;
+      last = frac(m.x);
+      const dy = [0, -7, 7][lvl];
+      out += `<button type="button" class="mk mk-${m.k}" style="left:${pct(m.x)};${dy ? `top:calc(50% + ${dy}px);` : ""}" data-mk="${m.k}"${m.pos != null ? ` data-pos="${m.pos}"` : ` data-tms="${Math.round(m.x)}"`} title="${h(m.title)}" aria-label="${h(m.title)}">${SH[m.k](`var(--m-${m.k})`)}</button>`;
+    }
+    return out;
+  };
+  const risks = [], moments = [], refs = [];
+  for (const x of R.riskHits) { const lvl = (R.preflight.find((p) => p.id === x.cat) || {}).level || "amarillo"; if (lvl !== "verde") risks.push({ k: "risk", x: R.timeAt(x.start), pos: x.start, title: x.text + " · " + fmtTime(R.timeAt(x.start)) }); }
+  if (R.firstPromiseT !== null) moments.push({ k: "promise", x: R.firstPromiseT, pos: R.firstPromise ? R.firstPromise.start : null, title: t("tlPromiseT") + " · " + fmtTime(R.firstPromiseT) });
+  for (const c of R.clusters) moments.push({ k: "cta", x: c.t, title: t("tlCtaT") + " · " + fmtTime(c.t) });
+  for (const r of R.refs) refs.push({ k: "ref", x: R.timeAt(r.start), pos: r.start, title: r.canonical + " · " + fmtTime(R.timeAt(r.start)) });
+  let zs = "";
+  for (const [a, b, o] of zones) if (a < Tt) zs += `<div class="tl3-zone" style="left:${pct(a)};width:calc(${pct(Math.min(b, Tt))} - ${pct(a)});background:var(--accent);opacity:${(o * 0.55).toFixed(2)}"></div>`;
+  for (const b of missing) zs += `<div class="tl3-zone gap" style="left:${pct(b.from)};width:calc(${pct(b.to)} - ${pct(b.from)})" title="${h(t("tlNoHook"))}"></div>`;
+  const ticks = [];
   for (let x = 240; x < Tt; x += 240) ticks.push(x);
   const every = Tt > 1800 ? 2 : 1;
-  ticks.forEach((x, i) => { const show = x <= 30 ? x === 30 || Tt < 240 : i % every === 0; html += `<div class="tl-tick${x > 30 ? " rh" : ""}" style="left:${pct(x)}">${show ? `<span>${fmtTime(x)}</span>` : ""}</div>`; });
-  const dot = (x, color, title, shape) => `<div class="tl-dot${shape ? " " + shape : ""}" style="left:${pct(x)};background:${color}" title="${h(title)}"></div>`;
-  for (const r of R.refs) html += dot(R.timeAt(r.start), "var(--gold)", r.canonical + " · " + fmtTime(R.timeAt(r.start)), "diamond");
-  for (const c of R.clusters) html += dot(c.t, "var(--accent)", t("tlCtaT") + " · " + fmtTime(c.t));
-  for (const x of R.riskHits) { const lvl = (R.preflight.find((p) => p.id === x.cat) || {}).level || "amarillo"; if (lvl !== "verde") html += dot(R.timeAt(x.start), "var(--rojo)", x.text + " · " + fmtTime(R.timeAt(x.start)), "risk"); }
-  if (R.firstPromiseT !== null) html += dot(R.firstPromiseT, "var(--verde)", t("tlPromiseT") + " · " + fmtTime(R.firstPromiseT));
-  html += `</div><div class="tl-ends"><span>0:00</span><span>${fmtTime(Tt)}</span></div>
-  <div class="tl-legend"><span><i style="background:var(--accent);opacity:.55"></i>${h(t("tlZones"))}</span><span><i style="background:var(--verde)"></i>${h(t("tlPromise"))}</span><span><i style="background:var(--gold);border-radius:1px;transform:rotate(45deg)"></i>${h(t("tlRef"))}</span><span><i style="background:var(--accent)"></i>${h(t("tlCta"))}</span><span><i class="lg-rh"></i>${h(t("tlRehook"))}</span><span><i style="background:var(--rojo)"></i>${h(t("tlRisk"))}</span>${missing.length ? `<span><i style="background:var(--amarillo);border-radius:2px"></i>${h(t("tlGap"))}</span>` : ""}</div></div>`;
-  return html;
+  const tickLines = ticks.map((x) => `<i class="tl3-tick" style="left:${pct(x)}"></i>`).join("");
+  const axis = [0, ...ticks.filter((x, i) => i % every === 0), Tt].map((x, i, a) => `<span style="left:${pct(x)}"${i === a.length - 1 ? ' class="end"' : ""}>${fmtTime(x)}</span>`).join("");
+  const lg = (k, label) => `<span>${SH[k](`var(--m-${k})`)}${h(label)}</span>`;
+  return `<div class="timeline"><h3>${h(t("tlTitle"))} · ${h(fmtTime(R.runtimeSec))} ${h(t("teaching"))}</h3>
+  <div class="tl3"><div class="tl3-lbl">${h(t("tlLaneAds"))}</div><div class="tl3-lane">${tickLines}${lane(risks)}</div>
+  <div class="tl3-lbl">${h(t("tlLaneMoments"))}</div><div class="tl3-lane">${zs}${tickLines}${lane(moments)}</div>
+  <div class="tl3-lbl">${h(t("tlLaneRefs"))}</div><div class="tl3-lane">${tickLines}${lane(refs)}</div>
+  <div class="tl3-axis">${axis}</div></div>
+  <div class="tl3-legend">${lg("risk", t("tlRisk"))}${lg("promise", t("tlPromise"))}${lg("cta", t("tlCta"))}${lg("ref", t("tlRef"))}<span class="tl3-z"><i></i>${h(t("tlZones"))}</span></div><p class="hint tl3-hint">${h(t("tlTap"))}</p></div>`;
 }
 
 function preflightTable(R) {
@@ -5598,9 +5747,7 @@ function renderResults() {
   }
   if (okCards) cards += `<p class="hint mods-ok-lead">${h(t("modsOkLead"))}</p>` + okCards;
 
-  const legend = `<div class="legend">
-    <span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span>
-    <span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}
+  const legend = `<div class="legend">${typeof catLegendHTML === "function" ? catLegendHTML(true) : ""}
     <span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span>
     <span style="--c:var(--accent)">${h(t("lgTick"))}</span></div>${typeof editLegendHTML === "function" ? editLegendHTML() : ""}`;
   const msOpen = (() => { try { return localStorage.getItem("sd-ms-open") === "1"; } catch (e) { return false; } })();
@@ -7297,7 +7444,7 @@ function evidenceHTML(card) {
     const v = card.field.value;
     return `<div class="fx-ev"><span class="fx-t">${h(t("fxField")[card.field.name])}</span><span>${v ? "«" + h(v) + "»" : `<span class="hint">${h(t("fxEmpty"))}</span>`}</span></div>`;
   }
-  const cls = card.id === "cta" ? "fx-strike" : "fx-hl";
+  const cls = card.id === "cta" ? "fx-strike" : "fx-hl fx-" + (typeof catOfCard === "function" ? catOfCard(card) : "pol");
   return card.evidence.map((e) => `<div class="fx-ev" data-es="${e.start}" data-ee="${e.end}"><span class="fx-t">${fmtTime(e.t)}</span><span>${markedSlice(text, e.start, e.end, e.marks, cls)}</span></div>`).join("") + (card.more ? `<div class="hint">${h(t("fxMore")(card.more))}</div>` : "");
 }
 
@@ -7309,7 +7456,7 @@ function fixItemsHTML(cards, R) {
     const ai = state.fixAi[c.id];
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
-    return `<li class="fx${open ? "" : " fx-closed"}" data-ci="${ci}" data-fid="${h(c.id)}">
+    return `<li class="fx${open ? "" : " fx-closed"}" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
       <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${(() => { const w = (c.ids || [c.id]).reduce((x, id) => { const r = Object.values(R.sections).flat().find((q) => q.id === id); return x + (r ? weightOf(r) : 0); }, 0); return w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${w}</span>` : ""; })()}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
       ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
       <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
@@ -10987,20 +11134,56 @@ Object.assign(T.es, {
   wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Preparar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
   wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
   wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
-  wkLgR: "Puede limitar anuncios", wkLgA: "Ajuste", wkLgD: "Se quitaría", wkEnd: "Terminaste el recorrido del guion.",
+  wkEnd: "Terminaste el recorrido del guion.",
+  cat_hi: "Puede quitar anuncios", cat_mid: "Puede limitar anuncios", cat_cut: "Se quitaría", cat_fill: "Muletillas y relleno", cat_pol: "Para pulir",
+  cat_hi_t: "Rojo: puede quitar los anuncios del video.", cat_mid_t: "Naranja: puede limitar los anuncios.", cat_cut_t: "Tachado: lo que borraría el arreglo propuesto.", cat_fill_t: "Morado: muletillas y palabras de relleno.", cat_pol_t: "Azul ondulado: palabra genérica, regional o que suena generada.", catShow: "Mostrar", catHide: "Ocultar",
 });
 Object.assign(T.en, {
   wkTitle: "Paragraph-by-paragraph review", wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
   wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Prepare", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
   wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
   wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
-  wkLgR: "Can limit ads", wkLgA: "Tweak", wkLgD: "Would be removed", wkEnd: "You've been through the whole script.",
+  wkEnd: "You've been through the whole script.",
+  cat_hi: "Can remove ads", cat_mid: "Can limit ads", cat_cut: "Would be removed", cat_fill: "Fillers", cat_pol: "To polish",
+  cat_hi_t: "Red: can remove ads from the video.", cat_mid_t: "Orange: can limit ads.", cat_cut_t: "Struck through: what the proposed fix would delete.", cat_fill_t: "Purple: filler words.", cat_pol_t: "Blue wavy: generic, regional or generated-sounding word.", catShow: "Show", catHide: "Hide",
 });
 
 const WK = { i: -1, key: "", R: null, map: [], blocks: [], per: [], glob: [], list: [], ranges: null, pending: false, flashT: 0, ok: false };
 const wkReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wkHL = () => (typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function" ? CSS.highlights : null);
-const WK_NAMES = ["sd-r", "sd-a", "sd-ru", "sd-au", "sd-del", "sd-flash"];
+const WK_FAMS = ["hi", "mid", "fill", "pol"];
+const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-flash"];
+// families the person switched off from the legend (kept on this device only)
+const CATOFF = new Set();
+try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) {}
+function catApplyOff() {
+  CATS.forEach((c) => document.documentElement.classList.toggle("cat-off-" + c.id, CATOFF.has(c.id)));
+  try { localStorage.setItem("sd-cats-off", JSON.stringify([...CATOFF])); } catch (e) {}
+}
+catApplyOff();
+function catCounts() {
+  const n = { hi: 0, mid: 0, fill: 0, pol: 0, cut: 0 };
+  if (!WK.ok) return n;
+  for (const g of WK.per) for (const { card, evs } of g) n[catOfCard(card)] += evs.length;
+  // "cut" = deletions the fixes shown for this paragraph would make
+  (state.fixCards || []).forEach((c, ci) => {
+    const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
+    if (p && p.kind === "patch") for (const x of p.patches) if (x.end > x.start) n.cut++;
+  });
+  return n;
+}
+// legend chips double as filters: tap one to hide or show that family in the script
+function catLegendHTML(interactive, counts) {
+  const c = interactive ? counts || null : null;
+  return `<div class="cat-legend" role="group">` + CATS.map((f) => {
+    const off = CATOFF.has(f.id), n = c ? c[f.id] : null;
+    const inner = `<i class="cat-sw cat-${f.id}" aria-hidden="true"><b>Aa</b></i><span>${h(t("cat_" + f.id))}</span>${n != null ? `<em>${n}</em>` : ""}`;
+    return interactive
+      ? `<button type="button" class="cat-chip${off ? " off" : ""}" data-cat="${f.id}" aria-pressed="${off ? "false" : "true"}" title="${h(t("cat_" + f.id + "_t"))}">${inner}</button>`
+      : `<span class="cat-chip static" title="${h(t("cat_" + f.id + "_t"))}">${inner}</span>`;
+  }).join("") + `</div>`;
+}
+
 
 function wkClearPaint() {
   const hl = wkHL();
@@ -11122,19 +11305,19 @@ function walkerHTML() {
   const nav = `<div class="wk-nav"><button type="button" class="small" data-wkgo="-1"${hasPrev ? "" : " disabled"}>‹ ${h(t("wkPrev"))}</button>
     <div class="wk-where"><b class="wk-sev-${sevCls}">${h(title)}</b><span class="hint">${h(sub)}${pos >= 0 ? `${sub ? " · " : ""}${h(t("wkPos")(pos + 1, WK.list.length))}` : ""}</span></div>
     ${hasNext ? `<button type="button" class="small primary" data-wkgo="1">${h(t("wkNext"))} ›</button>` : `<button type="button" class="small primary" data-wkend>${h(t("wkDone"))} →</button>`}</div>`;
-  const lg = `<div class="wk-lg"><span class="wk-lg-r">${h(t("wkLgR"))}</span><span class="wk-lg-a">${h(t("wkLgA"))}</span><span class="wk-lg-d">${h(t("wkLgD"))}</span></div>`;
+  const lg = catLegendHTML(true, catCounts());
   const body = cards.length ? `<ol class="fx-list">${fixItemsHTML(cards, state.result)}</ol>` : `<p class="lead wk-clean">${h(hasNext ? t("wkClean") : t("wkEnd"))}</p>`;
   return `<div class="topfix walk" data-wk-root>${head}${wkStripHTML()}${lg}${nav}${body}</div>`;
 }
 
 // ---- painting ----
 function wkRangesFor(i) {
-  const out = { r: [], a: [], ru: [], au: [] };
+  const out = { w: { hi: [], mid: [], fill: [], pol: [] }, u: { hi: [], mid: [], fill: [], pol: [] } };
   for (const { card, evs } of WK.per[i] || []) {
-    const red = card.level === "rojo";
+    const f = catOfCard(card);
     for (const e of evs) {
-      if (e.marks && e.marks.length) for (const [a, b] of e.marks) { const r = wkRange(a, b); if (r) out[red ? "r" : "a"].push(r); }
-      else { const r = wkRange(e.start, e.end); if (r) out[red ? "ru" : "au"].push(r); }
+      if (e.marks && e.marks.length) for (const [a, b] of e.marks) { const r = wkRange(a, b); if (r) out.w[f].push(r); }
+      else { const r = wkRange(e.start, e.end); if (r) out.u[f].push(r); }
     }
   }
   return out;
@@ -11145,25 +11328,31 @@ function wkPaint(scroll) {
   if (!WK.ok || !wkReady()) return;
   if (!WK.ranges) WK.ranges = WK.blocks.map((b, i) => wkRangesFor(i));
   if (hl) {
-    const all = { r: [], a: [], ru: [], au: [] };
     // words everywhere; whole-sentence underlines only in the paragraph being reviewed
-    WK.ranges.forEach((g, i) => { for (const k of Object.keys(all)) if (i === WK.i || k.length === 1) all[k].push(...g[k]); });
-    for (const [k, name] of [["r", "sd-r"], ["a", "sd-a"], ["ru", "sd-ru"], ["au", "sd-au"]]) if (all[k].length) hl.set(name, new Highlight(...all[k]));
+    for (const f of WK_FAMS) {
+      if (CATOFF.has(f)) continue;
+      const w = [], u = [];
+      WK.ranges.forEach((g, i) => { w.push(...g.w[f]); if (i === WK.i) u.push(...g.u[f]); });
+      if (w.length) { const x = new Highlight(...w); x.priority = CAT_PRI[f]; hl.set("sd-w-" + f, x); }
+      if (u.length) { const x = new Highlight(...u); x.priority = CAT_PRI[f]; hl.set("sd-u-" + f, x); }
+    }
   }
   const b = WK.blocks[WK.i];
   if (!b) return;
   b.el.classList.add("walk-on");
   // what the first proposal of each card in this paragraph would remove
-  if (hl) {
+  if (hl && !CATOFF.has("cut")) {
     const dels = [];
     (state.fixCards || []).forEach((c, ci) => {
       const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
       if (p && p.kind === "patch") for (const x of p.patches) if (x.end > x.start) { const r = wkRange(x.start, x.end); if (r) dels.push(r); }
     });
-    if (dels.length) hl.set("sd-del", new Highlight(...dels));
+    if (dels.length) { const x = new Highlight(...dels); x.priority = CAT_PRI.cut; hl.set("sd-del", x); }
   }
   if (scroll) {
-    const g = WK.ranges[WK.i], first = [...g.r, ...g.a, ...g.ru, ...g.au].sort((x, y) => x.compareBoundaryPoints(Range.START_TO_START, y))[0];
+    const g = WK.ranges[WK.i], all = [];
+    for (const k of ["w", "u"]) for (const f of WK_FAMS) all.push(...g[k][f]);
+    const first = all.sort((x, y) => x.compareBoundaryPoints(Range.START_TO_START, y))[0];
     wkScrollTo(first || b.el);
     if (first) wkFlash([first]);
   }
@@ -11206,6 +11395,7 @@ function wkWire() {
   if (!root) return;
   root.querySelectorAll("[data-wk]").forEach((b) => b.addEventListener("click", () => wkGo(+b.dataset.wk)));
   root.querySelectorAll("[data-wkgo]").forEach((b) => b.addEventListener("click", () => wkStep(+b.dataset.wkgo)));
+  root.querySelectorAll(".cat-chip[data-cat]").forEach((b) => b.addEventListener("click", () => catToggle(b.dataset.cat)));
   const end = root.querySelector("[data-wkend]");
   if (end) end.addEventListener("click", () => goStep(3));
   // tapping the quoted text of a card shows it in the script
@@ -11269,6 +11459,42 @@ scGoRow = function (id) {
   if (at < 0 && WK.glob.some((c) => c.id === id || (c.ids && c.ids.includes(id)))) at = WK.blocks.length;
   if (at >= 0) wkGo(at);
 };
+
+// legend chip: hide / show one family (the walker and the marked script both follow)
+function catToggle(id) {
+  if (CATOFF.has(id)) CATOFF.delete(id); else CATOFF.add(id);
+  catApplyOff();
+  document.querySelectorAll(".cat-chip[data-cat]").forEach((b) => {
+    const off = CATOFF.has(b.dataset.cat);
+    b.classList.toggle("off", off); b.setAttribute("aria-pressed", off ? "false" : "true");
+  });
+  if (document.querySelector(".topfix.walk")) wkPaint(false);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".cat-chip[data-cat]");
+  if (b && !b.closest(".topfix.walk")) catToggle(b.dataset.cat);
+});
+
+// timeline: tapping a marker goes to that paragraph of the script
+function wkMarkerPos(b) {
+  if (b.dataset.pos !== undefined) return +b.dataset.pos;
+  const tms = +b.dataset.tms; // call-to-action clusters only know the time: find the script position at that time
+  const R = state.result;
+  if (!R || !R.timeAt) return -1;
+  let best = -1, bd = Infinity;
+  const L = state.text.length, step = Math.max(1, Math.floor(L / 400));
+  for (let x = 0; x <= L; x += step) { const d = Math.abs(R.timeAt(x) - tms); if (d < bd) { bd = d; best = x; } }
+  return best;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".timeline .mk");
+  if (!b) return;
+  const pos = wkMarkerPos(b);
+  if (pos < 0) return;
+  if (V.guided && V.step !== 2) { WK.pending = true; goStep(2); }
+  if (!wkBuild()) return;
+  wkGo(wkBlockAt(WK.blocks, pos));
+});
 /* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
 Object.assign(T.es, {
   atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",

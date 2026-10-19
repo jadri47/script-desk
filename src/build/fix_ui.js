@@ -78,7 +78,7 @@ function evidenceHTML(card) {
     const v = card.field.value;
     return `<div class="fx-ev"><span class="fx-t">${h(t("fxField")[card.field.name])}</span><span>${v ? "«" + h(v) + "»" : `<span class="hint">${h(t("fxEmpty"))}</span>`}</span></div>`;
   }
-  const cls = card.id === "cta" ? "fx-strike" : "fx-hl";
+  const cls = card.id === "cta" ? "fx-strike" : "fx-hl fx-" + (typeof catOfCard === "function" ? catOfCard(card) : "pol");
   return card.evidence.map((e) => `<div class="fx-ev" data-es="${e.start}" data-ee="${e.end}"><span class="fx-t">${fmtTime(e.t)}</span><span>${markedSlice(text, e.start, e.end, e.marks, cls)}</span></div>`).join("") + (card.more ? `<div class="hint">${h(t("fxMore")(card.more))}</div>` : "");
 }
 
@@ -90,7 +90,7 @@ function fixItemsHTML(cards, R) {
     const ai = state.fixAi[c.id];
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
-    return `<li class="fx${open ? "" : " fx-closed"}" data-ci="${ci}" data-fid="${h(c.id)}">
+    return `<li class="fx${open ? "" : " fx-closed"}" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
       <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${(() => { const w = (c.ids || [c.id]).reduce((x, id) => { const r = Object.values(R.sections).flat().find((q) => q.id === id); return x + (r ? weightOf(r) : 0); }, 0); return w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${w}</span>` : ""; })()}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
       ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
       <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}

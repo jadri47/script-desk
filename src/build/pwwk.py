@@ -16,7 +16,7 @@ async def run(b,ui,vp,ex):
     await pg.evaluate(f"startDemo('{ex}')"); await pg.wait_for_timeout(900)
     await pg.click("#runBtn"); await pg.wait_for_timeout(2500)
     S=await pg.evaluate("({walk:!!document.querySelector('.topfix.walk'),ok:WK.ok,i:WK.i,list:WK.list.length,hl:[...CSS.highlights.keys()],on:document.querySelectorAll('.ed .walk-on').length,ticks:document.querySelectorAll('.wk-tick').length,blocks:WK.blocks.length})")
-    ok(n+": walker + highlights after Revisar",S["walk"] and S["ok"] and "sd-a" in S["hl"]+["sd-a"] and len([h for h in S["hl"] if h in("sd-r","sd-a")])>=1 and S["on"]==1,S)
+    ok(n+": walker + highlights after Revisar",S["walk"] and S["ok"] and len([h for h in S["hl"] if h.startswith("sd-w-") or h.startswith("sd-u-")])>=1 and S["on"]==1,S)
     ok(n+": one tick per paragraph",S["ticks"]>=S["blocks"],S)
     # next -> script scrolled so the paragraph sits in view with text around it
     await pg.evaluate("wkStep(1)"); await pg.wait_for_timeout(1100)

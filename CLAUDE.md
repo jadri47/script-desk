@@ -15,9 +15,9 @@ Output: `src/standalone/site/index.html` (the site) and `src/build/work.html` (t
 
 ## Tests (from `src/`)
 ```
-node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js
+node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js; node eval/cats_test.js
 ```
-Playwright checks (`cd src/build; python3 pwXX.py`) open `file:///home/claude/sd/standalone/site/index.html`, so link the repo first: `ln -s <repo>/src /home/claude/sd`. Main ones: `pwwk` (paragraph review), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px), `pwtoast`. They use `mock_sb.js` instead of Supabase.
+Playwright checks (`cd src/build; python3 pwXX.py`) open `file:///home/claude/sd/standalone/site/index.html`, so link the repo first: `ln -s <repo>/src /home/claude/sd`. Main ones: `pwwk` (paragraph review), `pwcl` (color families, legend filter, timeline lanes), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px), `pwtoast`. They use `mock_sb.js` instead of Supabase.
 
 ## Deploy
 1. Build, run tests.
@@ -31,3 +31,7 @@ Playwright checks (`cd src/build; python3 pwXX.py`) open `file:///home/claude/sd
 - Paragraph review (`walk_ui.js`): highlights use the CSS Custom Highlight API over the editor text (the editor DOM is not changed); positions come from `buildFixCards(..., cap = Infinity)`.
 - Keep the script text **last** in every AI prompt. The server puts the house rules and Bible-version rule in one cached system block; it is below the 512-token cache minimum, so caching is currently a no-op (see `sd_ai_usage` cache columns).
 - Ad warnings are our reading of YouTube's rules, never a promise. Timing limits we invented are labelled as ours.
+
+## Color code (text + timeline)
+- `cats_logic.js` is the single table: families hi (can remove ads), mid (can limit ads), cut (would be removed), fill (fillers), pol (to polish), with priority hi > mid > cut > fill > pol. Colors live as `--c-*` / `--m-*` tokens in `theme2026.css` (light + dark). Color is never the only cue: each family also has its own line style, and timeline markers have their own shape.
+- Legend chips (`catLegendHTML`) double as filters (state in localStorage `sd-cats-off`, `html.cat-off-<id>` classes). Timeline (`timelineHTML` in `base.html`) has 3 lanes; tapping a marker opens its paragraph in the walker.
