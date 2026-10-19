@@ -6,7 +6,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
   fxField: { title: "Título", keyword: "Palabra clave", thumb: "Miniatura", description: "Descripción" }, fxNotFixed: "No resuelve la revisión todavía.",
-  fxSkip: "Ahora no", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
+  fxSkip: "Ahora no", fxDone: "Aplicado", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
@@ -14,13 +14,14 @@ Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
   fxField: { title: "Title", keyword: "Keyword", thumb: "Thumbnail", description: "Description" }, fxNotFixed: "Doesn't pass the check yet.",
-  fxSkip: "Not now", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
+  fxSkip: "Not now", fxDone: "Applied", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
 });
 
 state.fixUndo = state.fixUndo || [];
 state.fixSel = {};
 state.fixAi = {};
 state.fixDismissed = new Set();
+state.fixLog = [];
 let fixMsg = "";
 
 const rowLabel = (R, id) => { for (const rows of Object.values(R.sections)) { const r = rows.find((x) => x.id === id); if (r) return r.label; } return id; };
@@ -132,20 +133,57 @@ function rerunReview(msg) {
   if (tf) tf.scrollIntoView({ block: "start" });
   if (G.prodId) markDirty();
 }
-function applyProposal(p) {
+function fxBlocksOf(c) {
+  if (typeof WK === "undefined" || !WK.ok) return [];
+  const out = [];
+  WK.per.forEach((g, i) => { if (g.some((x) => x.card.id === c.id)) out.push(i); });
+  if (WK.glob.some((x) => x.id === c.id)) out.push(WK.blocks.length);
+  return out;
+}
+function applyProposal(p, c) {
+  // the walker stays clickable after the person types: never apply a fix computed on older text
+  if (state.text.trimEnd() !== $("script").value.trimEnd()) { rerunReview(t("fxStale")); return; }
+  const before = state.text;
+  const after = p.patches && p.patches.length ? applyPatches(state.text, p.patches) : before;
+  const textChanged = after !== before;
+  if (p.kind === "patch" && !textChanged) { rerunReview(t("fxNoChange")); return; }
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
-  if (p.patches && p.patches.length) $("script").value = applyPatches(state.text, p.patches);
+  let pre = 0, post = 0;
+  if (textChanged) {
+    while (pre < before.length && pre < after.length && before[pre] === after[pre]) pre++;
+    let a = before.length, b = after.length;
+    while (a > pre && b > pre && before[a - 1] === after[b - 1]) { a--; b--; }
+    post = b;
+    $("script").value = after;
+  }
   if (p.kind === "cold") {
-    for (const k of ["hook", "promise"]) { const c = p[k]; G.cold[k] = c ? { i: c.i, anchor: c.text.slice(0, 80), text: c.text, mode: c.mode } : G.cold[k]; }
+    for (const k of ["hook", "promise"]) { const x = p[k]; G.cold[k] = x ? { i: x.i, anchor: x.text.slice(0, 80), text: x.text, mode: x.mode } : G.cold[k]; }
   }
   if (p.kind === "field") { $(p.field).value = p.value; if (p.field === "keyword" || p.field === "title" || p.field === "description") $("extraFields").open = true; }
+  if (c) {
+    const bi = typeof WK !== "undefined" && WK.ok ? WK.i : -1;
+    const where = p.kind === "field" ? p.field : p.kind === "cold" && !textChanged ? "cold" : "script";
+    state.fixLog = state.fixLog.filter((x) => !(x.id === c.id && x.kind === "done" && x.bi === bi));
+    state.fixLog.push({ id: c.id, ids: c.ids || [c.id], label: typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label, kind: "done", bi, what: p.label || "", where });
+  }
   state.fixSel = {}; state.fixAi = {};
-  rerunReview(t("fxApplied"));
+  rerunReview(textChanged ? t("fxApplied") : p.kind === "field" ? t("fxOut")((t("fxField") || {})[p.field] || p.field) : t("fxOutCold"));
+  if (textChanged && typeof WK !== "undefined" && WK.ok && typeof wkRange === "function") {
+    let r = pre < post ? wkRange(pre, post) : null;
+    if (!r) { const b = WK.blocks[wkBlockAt(WK.blocks, pre)]; if (b) r = wkRange(b.s, b.e); }
+    if (r) { wkScrollTo(r); wkFlash([r]); }
+  }
+}
+function fxRestore(id) {
+  state.fixLog = state.fixLog.filter((x) => !(x.kind === "skip" && x.ids.includes(id)));
+  state.fixDismissed.delete(id);
+  const keep = window.scrollY; renderResults(); window.scrollTo(0, keep);
 }
 function undoFix() {
   const s = state.fixUndo.pop();
   if (!s) return;
+  { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) state.fixLog.splice(k, 1); }
   $("script").value = s.text; $("title").value = s.title; $("keyword").value = s.keyword; $("thumb").value = s.thumb; $("description").value = s.description; G.cold = s.cold;
   state.fixSel = {}; state.fixAi = {};
   rerunReview(t("fxUndone"));
@@ -200,20 +238,21 @@ ${frag}
   if (box) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
 }
 function wireAiOptions(root) {
-  root.querySelectorAll("[data-fxaiuse]").forEach((b) => b.addEventListener("click", () => { const [ci, k] = b.dataset.fxaiuse.split(":").map(Number); const c = state.fixCards[ci]; applyProposal(state.fixAi[c.id].options[k]); }));
+  root.querySelectorAll("[data-fxaiuse]").forEach((b) => b.addEventListener("click", () => { const [ci, k] = b.dataset.fxaiuse.split(":").map(Number); const c = state.fixCards[ci]; applyProposal(state.fixAi[c.id].options[k], c); }));
 }
 function wireFixes() {
   const root = document.querySelector("#results .topfix") || document.querySelector("#guide .topfix");
   if (!root) return;
   root.querySelectorAll("li.fx-closed > .fx-top").forEach((top) => { const go = () => { const li = top.closest("li"); state.fixOpen = state.fixOpen || new Set(); state.fixOpen.add(li.dataset.fid); li.classList.remove("fx-closed"); top.removeAttribute("role"); top.removeAttribute("tabindex"); top.removeAttribute("aria-expanded"); }; top.addEventListener("click", go); top.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }); });
-  root.querySelectorAll("[data-fxapply]").forEach((b) => b.addEventListener("click", () => { const ci = +b.dataset.fxapply, c = state.fixCards[ci]; applyProposal(c.proposals[Math.min(state.fixSel[ci] || 0, c.proposals.length - 1)]); }));
+  root.querySelectorAll("[data-fxapply]").forEach((b) => b.addEventListener("click", () => { const ci = +b.dataset.fxapply, c = state.fixCards[ci]; applyProposal(c.proposals[Math.min(state.fixSel[ci] || 0, c.proposals.length - 1)], c); }));
   root.querySelectorAll("[data-fxsel]").forEach((b) => b.addEventListener("click", () => { const [ci, k] = b.dataset.fxsel.split(":").map(Number); state.fixSel[ci] = k; const keep = window.scrollY; renderResults(); window.scrollTo(0, keep); }));
   root.querySelectorAll("[data-fxai]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; aiFix(+b.dataset.fxai); }));
   wireAiOptions(root);
   const u = $("fxUndo"); if (u) u.addEventListener("click", undoFix);
-  root.querySelectorAll("[data-fxskip]").forEach((b) => b.addEventListener("click", () => { state.fixCards[+b.dataset.fxskip].ids.forEach((id) => state.fixDismissed.add(id)); const keep = window.scrollY; renderResults(); window.scrollTo(0, keep); }));
+  root.querySelectorAll("[data-fxrestore]").forEach((b) => b.addEventListener("click", () => fxRestore(b.dataset.fxrestore)));
+  root.querySelectorAll("[data-fxskip]").forEach((b) => b.addEventListener("click", () => { { const c = state.fixCards[+b.dataset.fxskip]; const bis = fxBlocksOf(c); const ids = c.ids || [c.id]; ids.forEach((id) => state.fixDismissed.add(id)); (bis.length ? bis : [-1]).forEach((bi) => state.fixLog.push({ id: c.id, ids, label: typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label, kind: "skip", bi })); } const keep = window.scrollY; renderResults(); window.scrollTo(0, keep); }));
   caps.sample.then((s) => { if (!s) root.querySelectorAll("[data-fxai]").forEach((b) => (b.disabled = true)); });
 }
 const _renderResultsFx = renderResults;
 renderResults = function () { _renderResultsFx(); wireFixes(); };
-$("runBtn").addEventListener("click", () => { state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); }, true);
+$("runBtn").addEventListener("click", () => { state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); state.fixLog = []; }, true);

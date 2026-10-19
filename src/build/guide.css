@@ -500,3 +500,18 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
   .ed-wrap.rail-on:not(.ed-full) .ed{padding-left:calc(var(--gw,46px) + 8px)}
   main[data-view="guide"][data-step="2"] #editor .ed-wrap.rail-on:not(.ed-full) .ed{padding-left:calc(var(--gw,46px) + 8px)}
 }
+
+/* accepted / ignored suggestions stay in the paragraph review */
+.fx.fx-done{background:var(--verde-bg);border:1px solid var(--verde);border-left-width:5px}
+.fx.fx-done .fx-top,.fx.fx-skipped .fx-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fx-st{font-weight:800;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:13px}
+.fx-done .fx-st{background:var(--verde);color:var(--verde-bg)}
+.fx-done .tf-t{color:var(--verde)}
+.fx-badge{margin-left:auto;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.fx-done .fx-badge{color:var(--verde)}
+.fx.fx-skipped{background:color-mix(in srgb,var(--rule) 55%,transparent);border:1px dashed var(--rule);opacity:.7;filter:grayscale(1)}
+.fx-skipped .fx-st{background:var(--rule);color:var(--ink)}
+.fx-skipped .tf-t{text-decoration:line-through}
+.fx-skipped .fx-badge{margin-left:auto;color:var(--ink-soft,var(--ink))}
+.fx-skipped .linkish{filter:none}
+.wk-tick.wk-d{background:var(--verde)}

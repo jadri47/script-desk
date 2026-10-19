@@ -62,7 +62,7 @@ function memDb() {
 }
 
 function resetWorkState() {
-  state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set();
+  state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); state.fixLog = [];
   state.result = null; state.text = ""; state.rewrite = null;
   $("results").classList.add("hidden"); $("results").innerHTML = "";
 }

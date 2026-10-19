@@ -92,7 +92,7 @@ async function setPubDate(id, date) {
 }
 async function openFromSeries(id) {
   await openProd(id);
-  state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set();
+  state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); state.fixLog = [];
   if (V.guided) {
     state.text = "";
     if (hasScript()) { ensureReview(); goStep(stepForStatus(G.status)); } else goStep(1);

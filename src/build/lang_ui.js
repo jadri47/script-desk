@@ -124,7 +124,7 @@ function trApply() {
   else { $("lang").value = "es"; $("audience").value = AUD_OF[r.dst]; lsSet("sd-aud", AUD_OF[r.dst]); }
   $("translation").value = r.ver; TR.ver = "";
   G.cold = { hook: null, promise: null }; G.layout = null; G.manual = false;
-  state.result = null; state.text = ""; state.fixUndo = []; state.fixDismissed = new Set(); IDEA.ignored = "";
+  state.result = null; state.text = ""; state.fixUndo = []; state.fixDismissed = new Set(); state.fixLog = []; IDEA.ignored = "";
   TR.res = null; TR.msg = t("trApplied");
   $("results").classList.add("hidden"); $("results").innerHTML = "";
   updateLive(); markDirty(); renderTr(); renderIdeaSug(); renderBibleHint();

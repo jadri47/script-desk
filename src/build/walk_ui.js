@@ -5,7 +5,7 @@
 // Highlights use the CSS Custom Highlight API, which paints over the text without touching the editor's DOM (so typing, undo and
 // saving are unaffected). Browsers without it still get the paragraph accent and the scrolling.
 Object.assign(T.es, {
-  wkTitle: "Revisión por párrafos", wkOf: (i, n) => `Párrafo ${i} de ${n}`, wkHere: (n) => (n === 1 ? "1 revisión" : `${n} revisiones`),
+  wkTitle: "Revisión por párrafos", wkDoneN: (n) => (n === 1 ? "1 aplicada" : `${n} aplicadas`), wkSkipN: (n) => (n === 1 ? "1 ignorada" : `${n} ignoradas`), wkOf: (i, n) => `Párrafo ${i} de ${n}`, wkHere: (n) => (n === 1 ? "1 revisión" : `${n} revisiones`),
   wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Preparar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
   wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
   wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
@@ -14,7 +14,7 @@ Object.assign(T.es, {
   cat_hi_t: "Rojo: puede quitar los anuncios del video.", cat_mid_t: "Naranja: puede limitar los anuncios.", cat_cut_t: "Tachado: lo que borraría el arreglo propuesto.", cat_fill_t: "Morado: muletillas y palabras de relleno.", cat_pol_t: "Azul ondulado: palabra genérica, regional o que suena generada.", catShow: "Mostrar", catHide: "Ocultar",
 });
 Object.assign(T.en, {
-  wkTitle: "Paragraph-by-paragraph review", wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
+  wkTitle: "Paragraph-by-paragraph review", wkDoneN: (n) => `${n} applied`, wkSkipN: (n) => `${n} ignored`, wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
   wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Prepare", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
   wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
   wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
@@ -155,7 +155,15 @@ function wkCardsFor(i) {
     return c;
   });
 }
-const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? "ok" : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");
+function wkLogFor(i) {
+  return (state.fixLog || []).filter((x) => x.bi === i && (x.kind === "done" || x.ids.every((id) => state.fixDismissed.has(id))));
+}
+function wkLogHTML(i) {
+  return wkLogFor(i).map((x) => x.kind === "done"
+    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span></div>${x.what ? `<div class="hint">${h(x.what)}</div>` : ""}${x.where === "script" ? "" : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}</li>`
+    : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
+}
+const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? (wkLogFor(i).some((x) => x.kind === "done") ? "d" : "ok") : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");
 
 function wkStripHTML() {
   const n = WK.blocks.length;
@@ -175,13 +183,14 @@ function walkerHTML() {
   cards.slice(0, 2).forEach((c) => state.fixOpen.add(c.id));
   const pos = WK.list.indexOf(i), hasNext = WK.list.some((x) => x > i), hasPrev = WK.list.some((x) => x < i);
   const title = isG ? t("wkGlobal") : t("wkOf")(i + 1, n);
-  const sub = isG ? t("wkGlobalSub") : cards.length ? t("wkHere")(cards.length) : "";
+  const lg0 = wkLogFor(i), nDone = lg0.filter((x) => x.kind === "done").length, nSkip = lg0.length - nDone;
+  const sub = [isG ? t("wkGlobalSub") : cards.length ? t("wkHere")(cards.length) : "", nDone ? t("wkDoneN")(nDone) : "", nSkip ? t("wkSkipN")(nSkip) : ""].filter(Boolean).join(" · ");
   const sevCls = isG ? "g" : wkSev(i);
   const nav = `<div class="wk-nav"><button type="button" class="small" data-wkgo="-1"${hasPrev ? "" : " disabled"}>‹ ${h(t("wkPrev"))}</button>
     <div class="wk-where"><b class="wk-sev-${sevCls}">${h(title)}</b><span class="hint">${h(sub)}${pos >= 0 ? `${sub ? " · " : ""}${h(t("wkPos")(pos + 1, WK.list.length))}` : ""}</span></div>
     ${hasNext ? `<button type="button" class="small primary" data-wkgo="1">${h(t("wkNext"))} ›</button>` : `<button type="button" class="small primary" data-wkend>${h(t("wkDone"))} →</button>`}</div>`;
   const lg = catLegendHTML(true, catCounts());
-  const body = cards.length ? `<ol class="fx-list">${fixItemsHTML(cards, state.result)}</ol>` : `<p class="lead wk-clean">${h(hasNext ? t("wkClean") : t("wkEnd"))}</p>`;
+  const body = cards.length || lg0.length ? `<ol class="fx-list">${fixItemsHTML(cards, state.result)}${wkLogHTML(i)}</ol>` : `<p class="lead wk-clean">${h(hasNext ? t("wkClean") : t("wkEnd"))}</p>`;
   return `<div class="topfix walk" data-wk-root>${head}${wkStripHTML()}${lg}${nav}${body}</div>`;
 }
 
@@ -262,6 +271,28 @@ function wkGo(i, scroll = true) {
   wireFixes();
   wkPaint(WK.pending); WK.pending = false;
 }
+// tapping or clicking anywhere in a paragraph (also its left margin) makes it the paragraph under review
+function wkOffsetOf(node, off) {
+  for (const m of WK.map) if (m.n === node) return m.s + Math.min(off, m.e - m.s);
+  // caret on an element (empty line, between nodes): use the next text node after it
+  const r = document.createRange();
+  try { r.setStart(node, off); } catch (e) { return -1; }
+  for (const m of WK.map) if (r.comparePoint(m.n, 0) >= 0) return m.s;
+  return WK.map.length ? WK.map[WK.map.length - 1].e : -1;
+}
+// only real taps / clicks / arrow keys count: re-rendering the editor after Apply must not move the review
+function wkFromCaret() {
+  const sel = getSelection();
+  if (!ED.el || !sel || !sel.anchorNode || !ED.el.contains(sel.anchorNode)) return;
+  if (!WK.ok || !wkReady() || !document.querySelector(".topfix.walk")) return;
+  const off = wkOffsetOf(sel.anchorNode, sel.anchorOffset);
+  if (off < 0) return;
+  const bi = wkBlockAt(WK.blocks, off);
+  if (bi !== WK.i && bi >= 0 && bi < WK.blocks.length) wkGo(bi, false);
+}
+const wkInEd = (e) => ED.el && e.target && ED.el.contains(e.target.nodeType === 1 ? e.target : e.target.parentNode);
+document.addEventListener("pointerup", (e) => { if (wkInEd(e) || (ED.el && e.target === ED.el)) setTimeout(wkFromCaret, 30); });
+document.addEventListener("keyup", (e) => { if (/^(Arrow|Page|Home|End)/.test(e.key) && wkInEd(e)) setTimeout(wkFromCaret, 30); });
 function wkStep(dir) {
   const cand = dir > 0 ? WK.list.filter((x) => x > WK.i) : WK.list.filter((x) => x < WK.i).reverse();
   if (cand.length) wkGo(cand[0]);
