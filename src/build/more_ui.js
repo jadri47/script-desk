@@ -80,12 +80,10 @@ document.addEventListener("click", (e) => {
 V.moreOpen = V.moreOpen || new Set();
 function moreChecksHTML(R) {
   const tr = state.opts.translation;
-  const legend = `<div class="legend"><span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span><span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}<span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span></div>${editLegendHTML()}`;
   const block = (id, title, body) => `<details class="g-more-d" data-more="${id}"${V.moreOpen.has(id) ? " open" : ""}><summary>${h(title)}</summary><div class="g-more-b">${body}</div></details>`;
   return `<section class="g-more-sec"><h3>${h(t("moreTitle"))}</h3>
     ${block("scripture", t("moreScripture"), `${scriptureBlock(R)}<div class="g-facts"><p class="lead">${h(t("factsLead"))}</p><div class="actions"><button class="small" data-ai="facts">${h(t("reviewFacts"))}</button></div><div class="out" id="out-facts"></div></div>`)}
     ${block("ads", t("moreAds"), `<p class="lead">${h(t("moreAdsLead"))}</p>${preflightTable(R)}${R.dense.length ? `<p class="lead">${h(t("denseWin"))}${R.dense.slice(0, 3).map((d) => `${fmtTime(d.from)}–${fmtTime(d.to)} (${d.n})`).join(", ")}.</p>` : ""}`)}
-    ${block("ms", t("moreMs"), `${legend}<div class="manuscript" id="ms">${manuscriptHTML(R, state.text)}</div><p class="tipbar hidden" id="tipbar" role="status"></p>`)}
     ${block("seo", t("moreSeo"), seoPanelHTML(R))}
     ${block("rewrite", t("moreRewrite"), `<div class="helper"><p class="desc">${h(t("rwDesc"))}</p><div class="actions"><button class="primary small" data-ai="rewrite">${h(t("rwBtn"))}</button><button class="small hidden" data-stop>${h(t("stop"))}</button></div><div class="out" id="out-rewrite"></div></div>`)}
   </section>`;

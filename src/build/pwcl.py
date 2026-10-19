@@ -26,16 +26,16 @@ async def run(b,ui,vp,ex):
         ok(n+": chip hides family",("sd-w-"+fam) not in S["h"] and S["off"] and S["p"]=="false",S)
         await pg.click(f".topfix.walk .cat-chip[data-cat={fam}]")
         ok(n+": chip shows it again",("sd-w-"+fam) in await pg.evaluate("[...CSS.highlights.keys()]"))
-    mk=await pg.evaluate("""(()=>{const m=[...document.querySelectorAll('.timeline .mk')];const kinds=new Set(m.map(x=>x.dataset.mk));
-      const lanes=document.querySelectorAll('.timeline .tl3-lane').length;
+    mk=await pg.evaluate("""(()=>{const m=[...document.querySelectorAll('.rl-mini .mk')];const kinds=new Set(m.map(x=>x.dataset.mk));
       const sm=m.map(x=>{const r=x.getBoundingClientRect();return Math.min(r.width,r.height)});
-      return {n:m.length,kinds:[...kinds],lanes,min:Math.min(...sm,99),paths:new Set(m.map(x=>x.innerHTML.slice(60,110))).size}})()""")
-    ok(n+": timeline has 3 lanes and markers",mk["lanes"]==3 and mk["n"]>=1,mk)
+      return {n:m.length,kinds:[...kinds],lanes:document.querySelectorAll('.rl-mini .rl-lane').length,min:Math.min(...sm,99),paths:new Set(m.map(x=>x.innerHTML.slice(60,110))).size,old:document.querySelectorAll('.timeline').length}})()""")
+    ok(n+": minimap with markers, old timeline card gone",mk["lanes"]==1 and mk["n"]>=1 and mk["old"]==0,mk)
     ok(n+": marker hit area >= 22px",mk["min"]>=22,mk)
     ok(n+": distinct shape per kind",mk["paths"]>=len(mk["kinds"]),mk)
     if mk["n"]:
-        await pg.evaluate("document.querySelector('.timeline .mk').click()"); await pg.wait_for_timeout(700)
-        ok(n+": tap marker opens walker",await pg.evaluate("!!document.querySelector('.topfix.walk')"))
+        before=await pg.evaluate("WK.i")
+        await pg.evaluate("[...document.querySelectorAll('.rl-mini .mk')].pop().click()"); await pg.wait_for_timeout(700)
+        ok(n+": tap marker opens its paragraph",await pg.evaluate("!!document.querySelector('.topfix.walk')") and await pg.evaluate("WK.i")>=0)
     ok(n+": no page errors",not errs,errs)
     await pg.close()
 async def main():

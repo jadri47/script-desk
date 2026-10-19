@@ -27,7 +27,7 @@ const WK = { i: -1, key: "", R: null, map: [], blocks: [], per: [], glob: [], li
 const wkReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wkHL = () => (typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function" ? CSS.highlights : null);
 const WK_FAMS = ["hi", "mid", "fill", "pol"];
-const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-flash"];
+const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-quote", "sd-flash"];
 // families the person switched off from the legend (kept on this device only)
 const CATOFF = new Set();
 try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) {}
@@ -56,7 +56,7 @@ function catLegendHTML(interactive, counts) {
     return interactive
       ? `<button type="button" class="cat-chip${off ? " off" : ""}" data-cat="${f.id}" aria-pressed="${off ? "false" : "true"}" title="${h(t("cat_" + f.id + "_t"))}">${inner}</button>`
       : `<span class="cat-chip static" title="${h(t("cat_" + f.id + "_t"))}">${inner}</span>`;
-  }).join("") + `</div>`;
+  }).join("") + (interactive && typeof railChipsHTML === "function" ? railChipsHTML() : "") + `</div>`;
 }
 
 
@@ -65,7 +65,7 @@ function wkClearPaint() {
   if (hl) WK_NAMES.forEach((n) => hl.delete(n));
   if (ED.el) ED.el.querySelectorAll(".walk-on").forEach((e) => e.classList.remove("walk-on"));
 }
-function wkInvalidate() { WK.key = ""; WK.R = null; WK.ranges = null; WK.ok = false; wkClearPaint(); }
+function wkInvalidate() { WK.key = ""; WK.R = null; WK.ranges = null; WK.ok = false; wkClearPaint(); if (typeof railClear === "function") railClear(); }
 
 // Where each text node of the editor sits in the script text (the editor drops "## ", list markers and line breaks).
 function wkNodes(text) {
@@ -212,6 +212,7 @@ function wkPaint(scroll) {
       if (u.length) { const x = new Highlight(...u); x.priority = CAT_PRI[f]; hl.set("sd-u-" + f, x); }
     }
   }
+  if (hl && typeof railPaintQuotes === "function") railPaintQuotes(hl);
   const b = WK.blocks[WK.i];
   if (!b) return;
   b.el.classList.add("walk-on");
@@ -303,8 +304,8 @@ function wkDock(scroll) {
 }
 function wkAfterRender() {
   const go = WK.pending;
-  if (wkReady() && WK.ok && document.querySelector(".topfix.walk")) { wkDock(go); wkPaint(go); WK.pending = false; }
-  else { wkClearPaint(); wkDock(false); }
+  if (wkReady() && WK.ok && document.querySelector(".topfix.walk")) { if (typeof railUpdate === "function") railUpdate(); wkDock(go); wkPaint(go); WK.pending = false; }
+  else { wkClearPaint(); if (typeof railClear === "function") railClear(); wkDock(false); }
 }
 const _renderGuideW = renderGuide;
 renderGuide = function () { _renderGuideW(); wkAfterRender(); };
@@ -315,7 +316,7 @@ renderResults = function () { _renderResultsW(); if (!V.guided) wkAfterRender();
 $("runBtn").addEventListener("click", () => { WK.i = -1; WK.pending = true; wkInvalidate(); }, true);
 window.addEventListener("resize", () => wkDock(false));
 const _goStepW = goStep;
-goStep = function (n) { if (n === 2) WK.pending = true; if (n !== 2) wkClearPaint(); _goStepW(n); };
+goStep = function (n) { if (n === 2) WK.pending = true; if (n !== 2) { wkClearPaint(); if (typeof railClear === "function") railClear(); } _goStepW(n); };
 // after applying or undoing a fix, stay on the same paragraph and keep it in view
 const _rerunReviewW = rerunReview;
 rerunReview = function (msg) { WK.pending = true; _rerunReviewW(msg); };
@@ -362,7 +363,7 @@ function wkMarkerPos(b) {
   return best;
 }
 document.addEventListener("click", (e) => {
-  const b = e.target.closest && e.target.closest(".timeline .mk");
+  const b = e.target.closest && e.target.closest(".timeline .mk, .rl-mini .mk");
   if (!b) return;
   const pos = wkMarkerPos(b);
   if (pos < 0) return;

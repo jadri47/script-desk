@@ -15,9 +15,9 @@ Output: `src/standalone/site/index.html` (the site) and `src/build/work.html` (t
 
 ## Tests (from `src/`)
 ```
-node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js; node eval/cats_test.js
+node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js; node eval/cats_test.js; node eval/rail_test.js
 ```
-Playwright checks (`cd src/build; python3 pwXX.py`) open `file:///home/claude/sd/standalone/site/index.html`, so link the repo first: `ln -s <repo>/src /home/claude/sd`. Main ones: `pwwk` (paragraph review), `pwcl` (color families, legend filter, timeline lanes), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px), `pwtoast`. They use `mock_sb.js` instead of Supabase.
+Playwright checks (`cd src/build; python3 pwXX.py`) open `file:///home/claude/sd/standalone/site/index.html`, so link the repo first: `ln -s <repo>/src /home/claude/sd`. Main ones: `pwwk` (paragraph review), `pwcl` (color families, legend filter, minimap markers), `pwrl` (rail + minimap in the script box), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px), `pwtoast`. They use `mock_sb.js` instead of Supabase.
 
 ## Deploy
 1. Build, run tests.
@@ -34,4 +34,5 @@ Playwright checks (`cd src/build; python3 pwXX.py`) open `file:///home/claude/sd
 
 ## Color code (text + timeline)
 - `cats_logic.js` is the single table: families hi (can remove ads), mid (can limit ads), cut (would be removed), fill (fillers), pol (to polish), with priority hi > mid > cut > fill > pol. Colors live as `--c-*` / `--m-*` tokens in `theme2026.css` (light + dark). Color is never the only cue: each family also has its own line style, and timeline markers have their own shape.
-- Legend chips (`catLegendHTML`) double as filters (state in localStorage `sd-cats-off`, `html.cat-off-<id>` classes). Timeline (`timelineHTML` in `base.html`) has 3 lanes; tapping a marker opens its paragraph in the walker.
+- Legend chips (`catLegendHTML`) double as filters (state in localStorage `sd-cats-off`, `html.cat-off-<id>` classes). The 3-lane `timelineHTML` (`base.html`) and `manuscriptHTML` are expert-mode only now.
+- Guided step 2: `rail_ui.js` lays a rail (minute per paragraph, timeline shapes, editor notes) over the script box's left padding and a minimap above the text (window follows scroll; tap or drag to jump; tap a marker to open its paragraph). It is an overlay positioned from paragraph rects, the editor DOM is untouched; typing removes it until the next review. Pure data in `rail_logic.js` (`railItems`, `railCrowd`). Editor notes default on for desktop, off on phone (`sd-rail-cues`); verses toggle `sd-rail-refs`.

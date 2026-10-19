@@ -168,7 +168,6 @@ const HELP_ANCHORS = [
   ["more", ".g-more-sec > h3", "row"],
   ["mScripture", '.g-more-d[data-more="scripture"] > summary', "sum"],
   ["mAds", '.g-more-d[data-more="ads"] > summary', "sum"],
-  ["mMs", '.g-more-d[data-more="ms"] > summary', "sum"],
   ["mSeo", '.g-more-d[data-more="seo"] > summary', "sum"],
   ["mRewrite", '.g-more-d[data-more="rewrite"] > summary', "sum"],
   ["mRepeat", ".seo-block:has(.seo-chips) > h4.pk-h", "row"],

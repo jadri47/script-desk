@@ -128,7 +128,7 @@ function renderGuide() {
   const R = state.result;
   if (V.step === 2) {
     top.innerHTML = head(2);
-    body.innerHTML = `${verdictHTML(R)}${topFixHTML(R)}${timelineHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
+    body.innerHTML = `${verdictHTML(R)}${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
       <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>${navHTML(1, t("next"), 'data-step="3"')}`;
     wireFixes();
     $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });

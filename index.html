@@ -783,6 +783,7 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 :root ::highlight(sd-w-pol){text-decoration:underline wavy #1F5FBF;text-decoration-thickness:1.5px;text-underline-offset:5px}
 :root ::highlight(sd-u-pol){text-decoration:underline dotted #1F5FBF;text-decoration-thickness:2px;text-underline-offset:4px}
 :root ::highlight(sd-del){background-color:rgba(107,42,60,.10);text-decoration:line-through #6B2A3C;text-decoration-thickness:2px}
+:root ::highlight(sd-quote){background-color:rgba(200,150,20,.16)}
 :root ::highlight(sd-flash){background-color:rgba(50,71,201,.38)}
 @media (prefers-color-scheme:dark){
 :root:not([data-theme="light"]) ::highlight(sd-w-hi){background-color:rgba(255,125,156,.26);text-decoration:underline solid #FF7D9C;text-decoration-thickness:3px;text-underline-offset:4px}
@@ -794,6 +795,7 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 :root:not([data-theme="light"]) ::highlight(sd-w-pol){text-decoration:underline wavy #7FB2FF;text-decoration-thickness:1.5px;text-underline-offset:5px}
 :root:not([data-theme="light"]) ::highlight(sd-u-pol){text-decoration:underline dotted #7FB2FF;text-decoration-thickness:2px;text-underline-offset:4px}
 :root:not([data-theme="light"]) ::highlight(sd-del){background-color:rgba(231,163,181,.14);text-decoration:line-through #E7A3B5;text-decoration-thickness:2px}
+:root:not([data-theme="light"]) ::highlight(sd-quote){background-color:rgba(255,197,102,.16)}
 :root:not([data-theme="light"]) ::highlight(sd-flash){background-color:rgba(140,158,255,.5)}
 }
 :root[data-theme="dark"] ::highlight(sd-w-hi){background-color:rgba(255,125,156,.26);text-decoration:underline solid #FF7D9C;text-decoration-thickness:3px;text-underline-offset:4px}
@@ -805,6 +807,7 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 :root[data-theme="dark"] ::highlight(sd-w-pol){text-decoration:underline wavy #7FB2FF;text-decoration-thickness:1.5px;text-underline-offset:5px}
 :root[data-theme="dark"] ::highlight(sd-u-pol){text-decoration:underline dotted #7FB2FF;text-decoration-thickness:2px;text-underline-offset:4px}
 :root[data-theme="dark"] ::highlight(sd-del){background-color:rgba(231,163,181,.14);text-decoration:line-through #E7A3B5;text-decoration-thickness:2px}
+:root[data-theme="dark"] ::highlight(sd-quote){background-color:rgba(255,197,102,.16)}
 :root[data-theme="dark"] ::highlight(sd-flash){background-color:rgba(140,158,255,.5)}
 .ed .walk-on{position:relative;background:color-mix(in srgb,var(--j2,#B4234A) 7%,transparent);box-shadow:-10px 0 0 color-mix(in srgb,var(--j2,#B4234A) 7%,transparent),10px 0 0 color-mix(in srgb,var(--j2,#B4234A) 7%,transparent);border-radius:4px}
 .ed .walk-on::before{content:"";position:absolute;left:-14px;top:0;bottom:0;width:3px;border-radius:2px;background:var(--j2,#B4234A)}
@@ -836,6 +839,7 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
   main[data-view="guide"][data-step="2"] #editor .ed-wrap:not(.ed-full) .ed{height:30dvh}
   .topfix.walk{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}
   .wk-nav{position:sticky;top:var(--dock-h,40dvh);z-index:12;background:var(--paper)}
+  .topfix.walk .fx button,.topfix.walk .fx [data-fxapply]{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}
 }
 main[data-view="guide"][data-step="2"] .gv{text-align:left;justify-content:flex-start;display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap;padding:10px 16px;margin-bottom:0}
 main[data-view="guide"][data-step="2"] .gv>p:not(.gv-note){display:none}
@@ -886,6 +890,46 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 .tl3-z i{display:inline-block;width:14px;height:10px;border-radius:2px;background:var(--accent);opacity:.45}
 .tl3-hint{margin:6px 0 0}
 @media (max-width:899px){.tl3{grid-template-columns:54px 1fr;gap:4px 6px}.tl3-lbl{font-size:11.5px}.mk{width:22px;height:22px;margin:-11px 0 0 -11px}.tl3-lane{height:32px}}
+
+/* ---- rail + minimap inside the script box ---- */
+.ed-wrap.rail-on:not(.ed-full) .ed{padding-left:calc(var(--gw,104px) + 14px)}
+.rl-mini{position:relative;padding:8px 12px 4px;border-bottom:1px solid var(--rule-2);background:var(--sheet);touch-action:none;user-select:none}
+.rl-lane{position:relative;height:30px;cursor:pointer;background:linear-gradient(var(--tl-bar,var(--rule)),var(--tl-bar,var(--rule))) center/100% 2px no-repeat;outline:none}
+.rl-lane:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:6px}
+.rl-tick{position:absolute;top:8px;bottom:8px;border-left:1px dashed var(--tl-bar,var(--rule))}
+.rl-mini .mk{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;padding:0;border:0;background:none;cursor:pointer;z-index:2}
+.rl-mini .mk svg{width:100%;height:100%;display:block;overflow:visible;pointer-events:none}
+.rl-mini .mk:focus-visible{outline:2px solid var(--ink);outline-offset:1px;border-radius:6px}
+.rl-win{position:absolute;top:1px;bottom:1px;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:6px;pointer-events:none;z-index:1;min-width:10px}
+.rl-ax{position:relative;height:14px;font-size:11px;color:var(--ink-2)}
+.rl-ax span{position:absolute;top:0;transform:translateX(-50%)}.rl-ax span:first-child{left:0;transform:none}.rl-ax span.end{right:0;transform:none}
+.rl-layer{position:absolute;left:0;width:var(--gw,104px);overflow:hidden;pointer-events:none;border-right:1px solid var(--rule-2);z-index:3}
+.rl-row{position:absolute;left:0;top:0;width:100%;padding:2px 4px 0 8px;font:600 11px/1.2 var(--sans);color:var(--ink-2);will-change:transform}
+.rl-tm{display:block;margin-bottom:2px}
+.rl-sh{display:flex;flex-wrap:wrap;gap:0 2px}
+.rl-row .g{pointer-events:auto;width:24px;height:24px;padding:1px;border:0;background:none;cursor:pointer}
+.rl-row .g svg{width:100%;height:100%;display:block;overflow:visible;pointer-events:none}
+.rl-more{pointer-events:auto;border:0;background:none;color:var(--ink-2);font:600 11px/1 var(--sans);padding:6px 2px;cursor:pointer}
+.rl-cue{pointer-events:auto;display:block;margin-top:3px;min-height:22px;padding:4px 6px;border-radius:6px;border:1px solid var(--rule);background:var(--paper);color:var(--ink-2);font:700 9.5px/1.2 var(--sans);letter-spacing:.04em;white-space:nowrap;cursor:pointer}
+.rl-cue.warn{border-color:var(--c-mid);color:var(--c-mid)}
+.rl-cue.c-ad{border-color:var(--m-risk);color:var(--m-risk)}
+.rl-row .g:focus-visible,.rl-cue:focus-visible,.rl-more:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.cat-sw.cat-ref svg{width:100%;height:100%;padding:2px}.cat-sw.cat-cue{border:1px solid var(--rule);color:var(--ink-2);background:var(--paper)}
+.rl-pop{position:absolute;z-index:20;background:var(--sheet);border:1px solid var(--rule);border-radius:12px;box-shadow:0 12px 30px -8px rgba(20,20,60,.35);padding:12px 14px 12px;display:grid;gap:10px;max-height:60%;overflow:auto}
+.rl-pop.hidden{display:none}
+.rl-pl{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.rl-pl .g{flex:none;width:22px;height:22px}.rl-pl .g svg{width:100%;height:100%;display:block}
+.rl-pl .rl-cue{margin:0;flex:none;cursor:default}
+.rl-pl .hint{font-size:12.5px}
+.rl-x{position:absolute;right:6px;top:4px;border:0;background:none;font-size:20px;line-height:1;color:var(--ink-2);cursor:pointer;min-width:32px;min-height:32px}
+@media (max-width:899px),(max-height:559px){
+  .rl-tm{display:none}
+  .rl-row{padding:2px 2px 0 5px}
+  .rl-cue{width:24px;min-height:24px;padding:4px 0;text-align:center;font-size:11px;letter-spacing:0}
+  .rl-mini{padding:5px 10px 3px}.rl-lane{height:30px}
+  .ed-wrap.rail-on:not(.ed-full) .ed{padding-left:calc(var(--gw,46px) + 8px)}
+  main[data-view="guide"][data-step="2"] #editor .ed-wrap.rail-on:not(.ed-full) .ed{padding-left:calc(var(--gw,46px) + 8px)}
+}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -3422,8 +3466,38 @@ function catOfCard(card) {
   if (id === "muletillas") return "fill";
   return "pol";
 }
+// ---------- Rail items (pure): what the time rail and the minimap show for one script ----------
+// shapes (timeline markers): risk, promise, cta, ref. cues (notes for the speaker/editor): hook, intro, cta (PEDIDO), rehook, broll, ad.
+// `ems` is the list from editMarks(); R is the analysis result. Everything is keyed by text position.
+const RAIL_SHAPES = ["risk", "promise", "cta", "ref"];
+const RAIL_CUES = ["hook", "intro", "cta", "rehook", "broll", "ad"];
+const RAIL_LETTER = { hook: "H", intro: "I", cta: "P", rehook: "R", broll: "B", ad: "A" };
+function railItems(R, ems) {
+  const out = [];
+  const T = (p) => (R && R.timeAt ? R.timeAt(p) : 0);
+  for (const x of (R && R.riskHits) || []) {
+    const lvl = ((R.preflight || []).find((p) => p.id === x.cat) || {}).level || "amarillo";
+    if (lvl !== "verde") out.push({ pos: x.start, t: T(x.start), shape: "risk", text: x.text, level: lvl });
+  }
+  for (const r of (R && R.refs) || []) out.push({ pos: r.start, t: T(r.start), shape: "ref", text: r.canonical });
+  for (const e of ems || []) {
+    if (e.kind === "promise") out.push({ pos: e.pos, t: T(e.pos), shape: "promise", label: e.label, tip: e.tip });
+    if (e.kind === "cta") out.push({ pos: e.pos, t: T(e.pos), shape: "cta", label: e.label, tip: e.tip });
+    if (RAIL_CUES.includes(e.kind)) out.push({ pos: e.pos, t: T(e.pos), cue: e.kind, label: e.label, tip: e.tip, warn: !!e.warn });
+  }
+  out.sort((a, b) => a.pos - b.pos || (a.shape ? 0 : 1) - (b.shape ? 0 : 1));
+  return out;
+}
+// Minimap positions: markers closer than `gap` (fraction of the width) step to another row so none hides another.
+function railCrowd(xs, gap = 0.024) {
+  const idx = xs.map((x, i) => i).sort((a, b) => xs[a] - xs[b]);
+  const lvl = new Array(xs.length).fill(0);
+  let last = -1, l = 0;
+  for (const i of idx) { l = last >= 0 && xs[i] - last < gap ? (l + 1) % 3 : 0; last = xs[i]; lvl[i] = l; }
+  return lvl;
+}
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -5360,8 +5434,38 @@ function catOfCard(card) {
   if (id === "muletillas") return "fill";
   return "pol";
 }
+// ---------- Rail items (pure): what the time rail and the minimap show for one script ----------
+// shapes (timeline markers): risk, promise, cta, ref. cues (notes for the speaker/editor): hook, intro, cta (PEDIDO), rehook, broll, ad.
+// `ems` is the list from editMarks(); R is the analysis result. Everything is keyed by text position.
+const RAIL_SHAPES = ["risk", "promise", "cta", "ref"];
+const RAIL_CUES = ["hook", "intro", "cta", "rehook", "broll", "ad"];
+const RAIL_LETTER = { hook: "H", intro: "I", cta: "P", rehook: "R", broll: "B", ad: "A" };
+function railItems(R, ems) {
+  const out = [];
+  const T = (p) => (R && R.timeAt ? R.timeAt(p) : 0);
+  for (const x of (R && R.riskHits) || []) {
+    const lvl = ((R.preflight || []).find((p) => p.id === x.cat) || {}).level || "amarillo";
+    if (lvl !== "verde") out.push({ pos: x.start, t: T(x.start), shape: "risk", text: x.text, level: lvl });
+  }
+  for (const r of (R && R.refs) || []) out.push({ pos: r.start, t: T(r.start), shape: "ref", text: r.canonical });
+  for (const e of ems || []) {
+    if (e.kind === "promise") out.push({ pos: e.pos, t: T(e.pos), shape: "promise", label: e.label, tip: e.tip });
+    if (e.kind === "cta") out.push({ pos: e.pos, t: T(e.pos), shape: "cta", label: e.label, tip: e.tip });
+    if (RAIL_CUES.includes(e.kind)) out.push({ pos: e.pos, t: T(e.pos), cue: e.kind, label: e.label, tip: e.tip, warn: !!e.warn });
+  }
+  out.sort((a, b) => a.pos - b.pos || (a.shape ? 0 : 1) - (b.shape ? 0 : 1));
+  return out;
+}
+// Minimap positions: markers closer than `gap` (fraction of the width) step to another row so none hides another.
+function railCrowd(xs, gap = 0.024) {
+  const idx = xs.map((x, i) => i).sort((a, b) => xs[a] - xs[b]);
+  const lvl = new Array(xs.length).fill(0);
+  let last = -1, l = 0;
+  for (const i of idx) { l = last >= 0 && xs[i] - last < gap ? (l + 1) % 3 : 0; last = xs[i]; lvl[i] = l; }
+  return lvl;
+}
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -5596,12 +5700,7 @@ function timelineHTML(R) {
   const frac = (x) => Math.min(1, Math.max(0, x / Tt)), pct = (x) => (frac(x) * 100).toFixed(2) + "%";
   const zones = [[0, 7, 0.55], [7, 20, 0.32], [20, 30, 0.16]];
   const missing = R.blocks.filter((b) => !b.has);
-  const SH = {
-    risk: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 L20 19 H2 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="9" width="2" height="5" rx="1" fill="#fff"/><circle cx="11" cy="16.2" r="1.1" fill="#fff"/></svg>`,
-    promise: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3 V20" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><path d="M6 4 H18 L14.5 8.5 L18 13 H6 Z" fill="${c}" stroke="var(--sheet)" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
-    cta: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3.5" y="3.5" width="15" height="15" rx="3" fill="${c}" stroke="var(--sheet)" stroke-width="2"/><path d="M8 11 H14 M11.5 8 L14.5 11 L11.5 14" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    ref: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2.5 L19.5 11 L11 19.5 L2.5 11 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/></svg>`,
-  };
+  const SH = MK_SVG;
   // markers closer than ~2.4% of the width step up/down so none hides another
   const lane = (items) => {
     let out = "", last = -1, lvl = 0;
@@ -7713,7 +7812,7 @@ function renderGuide() {
   const R = state.result;
   if (V.step === 2) {
     top.innerHTML = head(2);
-    body.innerHTML = `${verdictHTML(R)}${topFixHTML(R)}${timelineHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
+    body.innerHTML = `${verdictHTML(R)}${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
       <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>${navHTML(1, t("next"), 'data-step="3"')}`;
     wireFixes();
     $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
@@ -8096,12 +8195,10 @@ document.addEventListener("click", (e) => {
 V.moreOpen = V.moreOpen || new Set();
 function moreChecksHTML(R) {
   const tr = state.opts.translation;
-  const legend = `<div class="legend"><span style="--c:var(--amarillo-bg)">${h(t("lgRisk"))}</span><span style="--c:var(--mul-bg)">${h(t("lgMul"))}</span><span style="--c:var(--weak-bg)">${h(t("lgWeak"))}</span>${R.lang === "es" ? `<span style="--c:var(--reg-bg)">${h(t("lgReg"))}</span>` : ""}<span style="--c:var(--gold-bg)">${h(t("lgQuote"))}</span><span style="--c:var(--kw-bg)">${h(t("lgKw"))}</span></div>${editLegendHTML()}`;
   const block = (id, title, body) => `<details class="g-more-d" data-more="${id}"${V.moreOpen.has(id) ? " open" : ""}><summary>${h(title)}</summary><div class="g-more-b">${body}</div></details>`;
   return `<section class="g-more-sec"><h3>${h(t("moreTitle"))}</h3>
     ${block("scripture", t("moreScripture"), `${scriptureBlock(R)}<div class="g-facts"><p class="lead">${h(t("factsLead"))}</p><div class="actions"><button class="small" data-ai="facts">${h(t("reviewFacts"))}</button></div><div class="out" id="out-facts"></div></div>`)}
     ${block("ads", t("moreAds"), `<p class="lead">${h(t("moreAdsLead"))}</p>${preflightTable(R)}${R.dense.length ? `<p class="lead">${h(t("denseWin"))}${R.dense.slice(0, 3).map((d) => `${fmtTime(d.from)}–${fmtTime(d.to)} (${d.n})`).join(", ")}.</p>` : ""}`)}
-    ${block("ms", t("moreMs"), `${legend}<div class="manuscript" id="ms">${manuscriptHTML(R, state.text)}</div><p class="tipbar hidden" id="tipbar" role="status"></p>`)}
     ${block("seo", t("moreSeo"), seoPanelHTML(R))}
     ${block("rewrite", t("moreRewrite"), `<div class="helper"><p class="desc">${h(t("rwDesc"))}</p><div class="actions"><button class="primary small" data-ai="rewrite">${h(t("rwBtn"))}</button><button class="small hidden" data-stop>${h(t("stop"))}</button></div><div class="out" id="out-rewrite"></div></div>`)}
   </section>`;
@@ -10665,7 +10762,6 @@ const HELP_ANCHORS = [
   ["more", ".g-more-sec > h3", "row"],
   ["mScripture", '.g-more-d[data-more="scripture"] > summary', "sum"],
   ["mAds", '.g-more-d[data-more="ads"] > summary', "sum"],
-  ["mMs", '.g-more-d[data-more="ms"] > summary', "sum"],
   ["mSeo", '.g-more-d[data-more="seo"] > summary', "sum"],
   ["mRewrite", '.g-more-d[data-more="rewrite"] > summary', "sum"],
   ["mRepeat", ".seo-block:has(.seo-chips) > h4.pk-h", "row"],
@@ -11152,7 +11248,7 @@ const WK = { i: -1, key: "", R: null, map: [], blocks: [], per: [], glob: [], li
 const wkReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wkHL = () => (typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function" ? CSS.highlights : null);
 const WK_FAMS = ["hi", "mid", "fill", "pol"];
-const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-flash"];
+const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-quote", "sd-flash"];
 // families the person switched off from the legend (kept on this device only)
 const CATOFF = new Set();
 try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) {}
@@ -11181,7 +11277,7 @@ function catLegendHTML(interactive, counts) {
     return interactive
       ? `<button type="button" class="cat-chip${off ? " off" : ""}" data-cat="${f.id}" aria-pressed="${off ? "false" : "true"}" title="${h(t("cat_" + f.id + "_t"))}">${inner}</button>`
       : `<span class="cat-chip static" title="${h(t("cat_" + f.id + "_t"))}">${inner}</span>`;
-  }).join("") + `</div>`;
+  }).join("") + (interactive && typeof railChipsHTML === "function" ? railChipsHTML() : "") + `</div>`;
 }
 
 
@@ -11190,7 +11286,7 @@ function wkClearPaint() {
   if (hl) WK_NAMES.forEach((n) => hl.delete(n));
   if (ED.el) ED.el.querySelectorAll(".walk-on").forEach((e) => e.classList.remove("walk-on"));
 }
-function wkInvalidate() { WK.key = ""; WK.R = null; WK.ranges = null; WK.ok = false; wkClearPaint(); }
+function wkInvalidate() { WK.key = ""; WK.R = null; WK.ranges = null; WK.ok = false; wkClearPaint(); if (typeof railClear === "function") railClear(); }
 
 // Where each text node of the editor sits in the script text (the editor drops "## ", list markers and line breaks).
 function wkNodes(text) {
@@ -11337,6 +11433,7 @@ function wkPaint(scroll) {
       if (u.length) { const x = new Highlight(...u); x.priority = CAT_PRI[f]; hl.set("sd-u-" + f, x); }
     }
   }
+  if (hl && typeof railPaintQuotes === "function") railPaintQuotes(hl);
   const b = WK.blocks[WK.i];
   if (!b) return;
   b.el.classList.add("walk-on");
@@ -11428,8 +11525,8 @@ function wkDock(scroll) {
 }
 function wkAfterRender() {
   const go = WK.pending;
-  if (wkReady() && WK.ok && document.querySelector(".topfix.walk")) { wkDock(go); wkPaint(go); WK.pending = false; }
-  else { wkClearPaint(); wkDock(false); }
+  if (wkReady() && WK.ok && document.querySelector(".topfix.walk")) { if (typeof railUpdate === "function") railUpdate(); wkDock(go); wkPaint(go); WK.pending = false; }
+  else { wkClearPaint(); if (typeof railClear === "function") railClear(); wkDock(false); }
 }
 const _renderGuideW = renderGuide;
 renderGuide = function () { _renderGuideW(); wkAfterRender(); };
@@ -11440,7 +11537,7 @@ renderResults = function () { _renderResultsW(); if (!V.guided) wkAfterRender();
 $("runBtn").addEventListener("click", () => { WK.i = -1; WK.pending = true; wkInvalidate(); }, true);
 window.addEventListener("resize", () => wkDock(false));
 const _goStepW = goStep;
-goStep = function (n) { if (n === 2) WK.pending = true; if (n !== 2) wkClearPaint(); _goStepW(n); };
+goStep = function (n) { if (n === 2) WK.pending = true; if (n !== 2) { wkClearPaint(); if (typeof railClear === "function") railClear(); } _goStepW(n); };
 // after applying or undoing a fix, stay on the same paragraph and keep it in view
 const _rerunReviewW = rerunReview;
 rerunReview = function (msg) { WK.pending = true; _rerunReviewW(msg); };
@@ -11487,7 +11584,7 @@ function wkMarkerPos(b) {
   return best;
 }
 document.addEventListener("click", (e) => {
-  const b = e.target.closest && e.target.closest(".timeline .mk");
+  const b = e.target.closest && e.target.closest(".timeline .mk, .rl-mini .mk");
   if (!b) return;
   const pos = wkMarkerPos(b);
   if (pos < 0) return;
@@ -11495,6 +11592,222 @@ document.addEventListener("click", (e) => {
   if (!wkBuild()) return;
   wkGo(wkBlockAt(WK.blocks, pos));
 });
+/* ===== Riel de tiempo + minimapa dentro del guion (reemplaza la tarjeta de línea de tiempo y el "Guion marcado") ===== */
+// After "Revisar guion" the script box carries everything that used to live in two other places:
+//  - a rail on the left with the minute of each paragraph, the timeline shapes (risk, promise, call to action, verse) on the line where
+//    they happen and small notes for the speaker/editor (hook, intro, ask, re-hook, B-roll, ad break);
+//  - a minimap above the text: the whole episode in one row, a window that follows the scroll, tap or drag to jump.
+// The editor's DOM is not touched: the rail is an overlay laid over the box's left padding and positioned from the paragraphs' rectangles.
+Object.assign(T.es, {
+  rlCues: "Para el editor", rlRefs: "Citas", rlMini: "Mapa del episodio: toca o arrastra para ir a ese punto", rlGoPara: "Revisar este párrafo",
+  rlClose: "Cerrar", rlRisk: "Palabra de riesgo", rlPromise: "Promesa", rlCta: "Pedido al oyente", rlRef: "Cita bíblica", rlMore: (n) => `+${n} más`,
+});
+Object.assign(T.en, {
+  rlCues: "For the editor", rlRefs: "Verses", rlMini: "Episode map: tap or drag to jump to that point", rlGoPara: "Review this paragraph",
+  rlClose: "Close", rlRisk: "Risky word", rlPromise: "Promise", rlCta: "Call to action", rlRef: "Bible reference", rlMore: (n) => `+${n} more`,
+});
+const MK_SVG = {
+    risk: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 L20 19 H2 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="9" width="2" height="5" rx="1" fill="#fff"/><circle cx="11" cy="16.2" r="1.1" fill="#fff"/></svg>`,
+    promise: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3 V20" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><path d="M6 4 H18 L14.5 8.5 L18 13 H6 Z" fill="${c}" stroke="var(--sheet)" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+    cta: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3.5" y="3.5" width="15" height="15" rx="3" fill="${c}" stroke="var(--sheet)" stroke-width="2"/><path d="M8 11 H14 M11.5 8 L14.5 11 L11.5 14" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    ref: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2.5 L19.5 11 L11 19.5 L2.5 11 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  };
+
+const RL = { on: false, items: [], byBlock: [], rows: [], layer: null, mini: null, pop: null, raf: 0, bt: [], T: 1, popB: -1 };
+const rlPhone = () => !SPLIT.on;
+function rlPref(key, def) { try { const v = localStorage.getItem(key); return v === null ? def : v === "1"; } catch (e) { return def; } }
+function rlSet(key, v) { try { localStorage.setItem(key, v ? "1" : "0"); } catch (e) {} }
+const rlCuesOn = () => rlPref("sd-rail-cues", !rlPhone());
+const rlRefsOn = () => rlPref("sd-rail-refs", true);
+
+function railOk() {
+  return !!(V.guided && V.step === 2 && ED.el && WK.ok && state.result && WK.R === state.result && document.querySelector(".topfix.walk"));
+}
+function railClear() {
+  RL.on = false; RL.popB = -1;
+  if (RL.layer) { RL.layer.remove(); RL.layer = null; }
+  if (RL.mini) { RL.mini.remove(); RL.mini = null; }
+  if (RL.pop) { RL.pop.remove(); RL.pop = null; }
+  if (ED.wrap) { ED.wrap.classList.remove("rail-on", "rail-phone"); ED.wrap.style.removeProperty("--gw"); }
+}
+const rlCueLabel = (it) => t("em" + it.cue[0].toUpperCase() + it.cue.slice(1)) + (it.warn ? " !" : "");
+const rlShapeTitle = (it) => it.shape === "risk" ? t("rlRisk") + ": «" + it.text + "»" : it.shape === "ref" ? it.text : it.shape === "promise" ? t("rlPromise") : t("rlCta");
+
+function railBuild() {
+  const R = state.result, text = state.text;
+  const ems = typeof editMarks === "function" ? editMarks(R, text) : [];
+  RL.items = railItems(R, ems);
+  RL.T = Math.max(1, R.runtimeSec);
+  RL.byBlock = WK.blocks.map(() => []);
+  for (const it of RL.items) RL.byBlock[wkBlockAt(WK.blocks, it.pos)].push(it);
+  RL.bt = WK.blocks.map((b) => R.timeAt(b.s));
+}
+function railMiniHTML() {
+  const phone = rlPhone(), refs = rlRefsOn();
+  const sh = RL.items.filter((x) => x.shape && (refs || x.shape !== "ref"));
+  const xs = sh.map((x) => x.t / RL.T), lv = railCrowd(xs);
+  const mk = sh.map((x, i) => `<button type="button" class="mk mk-${x.shape}" style="left:${(Math.min(1, xs[i]) * 100).toFixed(2)}%;top:calc(50% + ${[0, -6, 6][lv[i]]}px)" data-mk="${x.shape}" data-pos="${x.pos}" title="${h(rlShapeTitle(x) + " · " + fmtTime(x.t))}" aria-label="${h(rlShapeTitle(x) + " · " + fmtTime(x.t))}">${MK_SVG[x.shape](`var(--m-${x.shape})`)}</button>`).join("");
+  const ticks = []; for (let x = 240; x < RL.T; x += 240) ticks.push(x);
+  const tk = ticks.map((x) => `<i class="rl-tick" style="left:${((x / RL.T) * 100).toFixed(2)}%"></i>`).join("");
+  const ax = phone ? "" : `<div class="rl-ax"><span>0:00</span>${ticks.length ? `<span style="left:${((ticks[Math.floor(ticks.length / 2)] / RL.T) * 100).toFixed(1)}%">${fmtTime(ticks[Math.floor(ticks.length / 2)])}</span>` : ""}<span class="end">${fmtTime(RL.T)}</span></div>`;
+  return `<div class="rl-lane" role="slider" aria-label="${h(t("rlMini"))}" aria-valuemin="0" aria-valuemax="${Math.round(RL.T)}" aria-valuenow="0" tabindex="0">${tk}${mk}<span class="rl-win"></span></div>${ax}`;
+}
+function railMake() {
+  railClear();
+  const wrap = ED.wrap;
+  RL.mini = document.createElement("div");
+  RL.mini.className = "rl-mini"; RL.mini.title = t("rlMini");
+  RL.mini.innerHTML = railMiniHTML();
+  ED.el.insertAdjacentElement("beforebegin", RL.mini);
+  RL.layer = document.createElement("div");
+  RL.layer.className = "rl-layer";
+  wrap.appendChild(RL.layer);
+  RL.pop = document.createElement("div");
+  RL.pop.className = "rl-pop hidden"; RL.pop.setAttribute("role", "dialog");
+  wrap.appendChild(RL.pop);
+  wrap.classList.add("rail-on"); wrap.classList.toggle("rail-phone", rlPhone());
+  wrap.style.setProperty("--gw", (rlPhone() ? 46 : 104) + "px");
+  // one row per paragraph
+  const cues = rlCuesOn(), phone = rlPhone(), refs = rlRefsOn();
+  RL.rows = WK.blocks.map((b, i) => {
+    const its = RL.byBlock[i], row = document.createElement("div");
+    row.className = "rl-row"; row.dataset.b = i;
+    const sh = its.filter((x) => x.shape && (refs || x.shape !== "ref")), cu = cues ? its.filter((x) => x.cue) : [];
+    if (!sh.length && !cu.length && phone) { row.classList.add("empty"); }
+    const shown = sh.slice(0, 3), more = sh.length - shown.length;
+    row.innerHTML = `<span class="rl-tm">${fmtTime(RL.bt[i])}</span>` +
+      (shown.length || more > 0 ? `<span class="rl-sh">${shown.map((x) => `<button type="button" class="g" data-b="${i}" title="${h(rlShapeTitle(x))}" aria-label="${h(rlShapeTitle(x))}">${MK_SVG[x.shape](`var(--m-${x.shape})`)}</button>`).join("")}${more > 0 ? `<button type="button" class="rl-more" data-b="${i}">${h(t("rlMore")(more))}</button>` : ""}</span>` : "") +
+      cu.map((x) => `<button type="button" class="rl-cue c-${x.cue}${x.warn ? " warn" : ""}" data-b="${i}" title="${h(x.label)}" aria-label="${h(x.label)}">${phone ? RAIL_LETTER[x.cue] : h(rlCueLabel(x))}</button>`).join("");
+    RL.layer.appendChild(row);
+    return row;
+  });
+  RL.on = true;
+}
+function railLayout() {
+  if (!RL.on || !RL.layer || !ED.el) return;
+  const ed = ED.el, er = ed.getBoundingClientRect(), wr = ED.wrap.getBoundingClientRect();
+  Object.assign(RL.layer.style, { top: er.top - wr.top + "px", height: ed.clientHeight + "px" });
+  const H = ed.clientHeight;
+  WK.blocks.forEach((b, i) => {
+    const row = RL.rows[i];
+    if (!row) return;
+    const br = b.el.getBoundingClientRect(), y = br.top - er.top, bh = br.height;
+    // a paragraph taller than the screen keeps its row pinned to the top until the paragraph ends
+    const vis = br.bottom - er.top > 4 && y < H;
+    row.style.display = vis ? "" : "none";
+    if (vis) {
+      const rh = row.offsetHeight || 24;
+      const ty = y + 2 >= 0 ? y + 2 : Math.min(0, y + bh - rh);
+      row.style.transform = `translateY(${Math.round(ty)}px)`;
+    }
+  });
+  // the window of the minimap = what is on screen now
+  const lane = RL.mini && RL.mini.querySelector(".rl-lane"), win = lane && lane.querySelector(".rl-win");
+  if (win) {
+    let a = -1, z = -1;
+    WK.blocks.forEach((b, i) => { const r = b.el.getBoundingClientRect(); if (r.bottom > er.top + 4 && r.top < er.bottom - 4) { if (a < 0) a = i; z = i; } });
+    if (a >= 0) {
+      const t0 = RL.bt[a], t1 = z + 1 < RL.bt.length ? RL.bt[z + 1] : RL.T;
+      win.style.left = ((t0 / RL.T) * 100).toFixed(2) + "%";
+      win.style.width = Math.max(1.5, ((t1 - t0) / RL.T) * 100).toFixed(2) + "%";
+      lane.setAttribute("aria-valuenow", Math.round(t0));
+    }
+  }
+  if (RL.popB >= 0) railPopPlace();
+}
+function railSched() { if (RL.raf) return; RL.raf = requestAnimationFrame(() => { RL.raf = 0; railLayout(); }); }
+function railUpdate() {
+  if (!railOk()) { railClear(); return; }
+  try { railBuild(); railMake(); railLayout(); } catch (e) { railClear(); }
+}
+
+// popover with the notes of one paragraph
+function railPopPlace() {
+  const row = RL.rows[RL.popB], pop = RL.pop;
+  if (!row || row.style.display === "none") { railPopClose(); return; }
+  const wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), rr = row.getBoundingClientRect();
+  const w = Math.min(320, wr.width - 16);
+  pop.style.width = w + "px";
+  pop.style.left = Math.max(8, Math.min(wr.width - w - 8, rr.left - wr.left + 8)) + "px";
+  const below = rr.bottom - wr.top + 6, ph = pop.offsetHeight;
+  pop.style.top = (below + ph > wr.height - 4 ? Math.max(er.top - wr.top + 4, rr.top - wr.top - ph - 6) : below) + "px";
+}
+function railPopOpen(bi) {
+  const its = RL.byBlock[bi].filter((x) => (x.shape ? rlRefsOn() || x.shape !== "ref" : rlCuesOn()));
+  if (!its.length) return;
+  RL.popB = bi;
+  const line = (x) => x.shape
+    ? `<div class="rl-pl"><span class="g">${MK_SVG[x.shape](`var(--m-${x.shape})`)}</span><div><b>${h(rlShapeTitle(x))}</b> <span class="hint">${h(fmtTime(x.t))}</span>${x.tip ? `<div class="hint">${h(x.tip)}</div>` : ""}</div></div>`
+    : `<div class="rl-pl"><span class="rl-cue c-${x.cue}${x.warn ? " warn" : ""}">${h(rlCueLabel(x))}</span><div><span class="hint">${h(fmtTime(x.t))}</span><div class="hint">${h(x.tip || "")}</div></div></div>`;
+  const hasCards = WK.list.includes(bi);
+  RL.pop.innerHTML = `<button type="button" class="rl-x" aria-label="${h(t("rlClose"))}">×</button>${its.map(line).join("")}${hasCards ? `<button type="button" class="small primary" data-rlgo="${bi}">${h(t("rlGoPara"))}</button>` : ""}`;
+  RL.pop.classList.remove("hidden");
+  railPopPlace();
+}
+function railPopClose() { RL.popB = -1; if (RL.pop) RL.pop.classList.add("hidden"); }
+
+// seek: a fraction of the episode -> scroll the box to the paragraph at that minute
+function railSeek(frac) {
+  if (!RL.on) return;
+  const tt = Math.max(0, Math.min(1, frac)) * RL.T;
+  let bi = 0;
+  RL.bt.forEach((x, i) => { if (x <= tt) bi = i; });
+  const b = WK.blocks[bi];
+  if (!b) return;
+  const top = ED.el.scrollTop + b.el.getBoundingClientRect().top - ED.el.getBoundingClientRect().top - 10;
+  ED.el.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+}
+document.addEventListener("pointerdown", (e) => {
+  const lane = e.target.closest && e.target.closest(".rl-lane");
+  if (!lane || e.target.closest(".mk")) return;
+  const at = (ev) => { const r = lane.getBoundingClientRect(); railSeek((ev.clientX - r.left) / r.width); };
+  at(e);
+  const mv = (ev) => at(ev), up = () => { document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); };
+  document.addEventListener("pointermove", mv); document.addEventListener("pointerup", up);
+  e.preventDefault();
+});
+document.addEventListener("keydown", (e) => {
+  const lane = e.target.closest && e.target.closest(".rl-lane");
+  if (!lane || !["ArrowLeft", "ArrowRight"].includes(e.key)) return;
+  e.preventDefault();
+  railSeek((+lane.getAttribute("aria-valuenow") + (e.key === "ArrowRight" ? 1 : -1) * 60) / RL.T);
+});
+document.addEventListener("click", (e) => {
+  const tg = e.target.closest && e.target.closest(".rl-row .g, .rl-row .rl-cue, .rl-row .rl-more");
+  if (tg) { const bi = +tg.dataset.b; if (RL.popB === bi) railPopClose(); else railPopOpen(bi); return; }
+  const go = e.target.closest && e.target.closest("[data-rlgo]");
+  if (go) { const bi = +go.dataset.rlgo; railPopClose(); wkGo(bi); return; }
+  if (e.target.closest && e.target.closest(".rl-x")) { railPopClose(); return; }
+  if (RL.popB >= 0 && !(e.target.closest && e.target.closest(".rl-pop"))) railPopClose();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") railPopClose(); });
+
+// legend chips: verses and editor notes
+function railChipsHTML() {
+  const refs = rlRefsOn(), cues = rlCuesOn();
+  return `<button type="button" class="cat-chip${refs ? "" : " off"}" data-rail="refs" aria-pressed="${refs}"><i class="cat-sw cat-ref" aria-hidden="true">${MK_SVG.ref("var(--m-ref)")}</i><span>${h(t("rlRefs"))}</span></button>` +
+    `<button type="button" class="cat-chip${cues ? "" : " off"}" data-rail="cues" aria-pressed="${cues}"><i class="cat-sw cat-cue" aria-hidden="true"><b>H</b></i><span>${h(t("rlCues"))}</span></button>`;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".cat-chip[data-rail]");
+  if (!b) return;
+  const k = b.dataset.rail;
+  if (k === "refs") rlSet("sd-rail-refs", !rlRefsOn()); else rlSet("sd-rail-cues", !rlCuesOn());
+  document.querySelectorAll(`.cat-chip[data-rail="${k}"]`).forEach((c) => { const on = k === "refs" ? rlRefsOn() : rlCuesOn(); c.classList.toggle("off", !on); c.setAttribute("aria-pressed", on); });
+  railUpdate();
+  if (typeof wkPaint === "function" && document.querySelector(".topfix.walk")) wkPaint(false);
+});
+// verses: soft gold background on the quoted words (word-level highlight, same API as the colors)
+function railPaintQuotes(hl) {
+  if (!hl || !rlRefsOn() || !state.result) return;
+  const rs = [];
+  for (const q of state.result.quoteSpans || []) { const r = wkRange(q.start, q.end); if (r) rs.push(r); }
+  if (rs.length) { const x = new Highlight(...rs); x.priority = 0; hl.set("sd-quote", x); }
+}
+
+if (ED.el) ED.el.addEventListener("scroll", railSched, { passive: true });
+window.addEventListener("resize", () => { if (RL.on) { if (rlPhone() !== ED.wrap.classList.contains("rail-phone")) railUpdate(); else railSched(); } });
+if (typeof ResizeObserver === "function" && ED.el) new ResizeObserver(railSched).observe(ED.el);
 /* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
 Object.assign(T.es, {
   atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",
