@@ -1,0 +1,197 @@
+[
+  {
+    "id": "T1 clean-es",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [],
+      "allFails": [
+        "runtime",
+        "bigidea",
+        "onscreen",
+        "recap",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"¿Alguna vez has sentido que no puedes perdonar a alguien?\" (10 words). It",
+      "promiseInfo": "First promise at 0:04: \"Hoy veremos\".",
+      "ctaInfo": "1 call-to-action block(s), at 0:50.",
+      "runtime": "0:55",
+      "wc": 148
+    }
+  },
+  {
+    "id": "T2 greeting-first-es",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [],
+      "allFails": [
+        "rhythm",
+        "greeting",
+        "cta",
+        "ending",
+        "runtime",
+        "weak",
+        "search",
+        "bigidea",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"Hola a todos, bienvenidos de nuevo al canal.\" (8 words). It has no questi",
+      "promiseInfo": "The promise arrives after 20 s. 20 s is our target.",
+      "ctaInfo": "2 call-to-action block(s), at 0:06, 0:32.",
+      "runtime": "0:34",
+      "wc": 92
+    }
+  },
+  {
+    "id": "T3 healing-promise-es",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [
+        "harm=amarillo/mencionado(1)"
+      ],
+      "allFails": [
+        "pf-harm",
+        "runtime",
+        "search",
+        "bigidea",
+        "onscreen",
+        "recap",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"¿Puede Dios sanar hoy?\" (4 words). It has: question. The 7 seconds and 18",
+      "promiseInfo": "First promise at 0:01: \"Hoy veremos\". Series episode: 45 s allowed (our target).",
+      "ctaInfo": "1 call-to-action block(s), at 0:39.",
+      "runtime": "0:44",
+      "wc": 119
+    }
+  },
+  {
+    "id": "T4 graphic-violence-es",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [
+        "violence=amarillo/gráfico(1)"
+      ],
+      "allFails": [
+        "pack-Title",
+        "pf-violence",
+        "runtime",
+        "bigidea",
+        "onscreen",
+        "recap",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"¿Por qué Dios aceptó la ofrenda de Abel y no la de Caín?\" (13 words). It ",
+      "promiseInfo": "First promise at 0:04: \"Hoy veremos\".",
+      "ctaInfo": "1 call-to-action block(s), at 0:48.",
+      "runtime": "0:53",
+      "wc": 143
+    }
+  },
+  {
+    "id": "T5 controversial-nongraphic-es",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [
+        "controversial=verde/central(3)"
+      ],
+      "allFails": [
+        "pack-Title",
+        "runtime",
+        "bigidea",
+        "onscreen",
+        "recap"
+      ],
+      "hookInfo": "First sentence: \"¿Qué dice la Biblia sobre el suicidio?\" (7 words). It has: question, tied",
+      "promiseInfo": "First promise at 0:06: \"Hoy veremos\".",
+      "ctaInfo": "1 call-to-action block(s), at 0:41.",
+      "runtime": "0:45",
+      "wc": 116
+    }
+  },
+  {
+    "id": "T6 regional-voseo-es",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [],
+      "allFails": [
+        "runtime",
+        "regional",
+        "search",
+        "bigidea",
+        "recap",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"¿Sabés qué pasa cuando la fe se cansa?\" (8 words). It has: question, tied",
+      "promiseInfo": "First promise at 0:03: \"Hoy veremos\".",
+      "ctaInfo": "1 call-to-action block(s), at 0:35.",
+      "runtime": "0:38",
+      "wc": 110
+    }
+  },
+  {
+    "id": "T7 clean-en",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [],
+      "allFails": [
+        "runtime",
+        "bigidea",
+        "onscreen",
+        "recap",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"Have you ever felt anxiety so heavy you couldn't pray?\" (10 words). It ha",
+      "promiseInfo": "First promise at 0:04: \"you'll learn\".",
+      "ctaInfo": "1 call-to-action block(s), at 0:43.",
+      "runtime": "0:47",
+      "wc": 130
+    }
+  },
+  {
+    "id": "T8 profanity-hate-en",
+    "missed": [],
+    "false": [],
+    "structErr": [],
+    "pass": true,
+    "detail": {
+      "red": [
+        "lang=verde/mencionado(1)",
+        "hate=rojo/deshumanizante(1)"
+      ],
+      "allFails": [
+        "pf-hate",
+        "rhythm",
+        "runtime",
+        "bigidea",
+        "recap",
+        "application"
+      ],
+      "hookInfo": "First sentence: \"Have you ever walked out of a church and never gone back?\" (12 words). It",
+      "promiseInfo": "First promise at 0:04: \"you'll learn\".",
+      "ctaInfo": "1 call-to-action block(s), at 0:36.",
+      "runtime": "0:40",
+      "wc": 120
+    }
+  }
+]

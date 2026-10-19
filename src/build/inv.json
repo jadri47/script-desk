@@ -1,0 +1,970 @@
+{
+"g1": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"h2",
+"guideTop",
+"",
+"Pega el guion del episodio"
+],
+[
+"label",
+"editor",
+"script",
+"Guion del episodio"
+],
+[
+"h2",
+"gSeries",
+"",
+"Calendario de la serie"
+],
+[
+"h2",
+"gBackup",
+"",
+"Copia de seguridad"
+],
+[
+"label.small",
+"gBackup",
+"",
+"Restaurar desde un archivo"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+],
+[
+"UNLABELED-input",
+"gSeries-t",
+"gSeries-t",
+"Qué dice la Biblia sobre el perdón"
+],
+[
+"UNLABELED-input",
+"gSeries-d",
+"gSeries-d",
+"Fecha de publicación"
+]
+],
+"g2": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"h2",
+"guideTop",
+"",
+"Lo que conviene arreglar antes de grabar"
+],
+[
+"h3",
+"guide",
+"",
+"Lo primero que arreglaría"
+],
+[
+"h3",
+"guide",
+"",
+"Más revisiones"
+],
+[
+"summary",
+"guide",
+"",
+"Citas bíblicas y datos"
+],
+[
+"summary",
+"guide",
+"",
+"Anuncios de YouTube por categoría"
+],
+[
+"summary",
+"guide",
+"",
+"Guion marcado"
+],
+[
+"summary",
+"guide",
+"",
+"Búsqueda en YouTube (SEO)"
+],
+[
+"h4.pk-h",
+"guide",
+"",
+"TÉRMINOS QUE YA REPITES"
+],
+[
+"h4.pk-h",
+"guide",
+"",
+"PALABRAS DÉBILES → MEJORES"
+],
+[
+"summary",
+"guide",
+"",
+"Guía rápida de búsqueda"
+],
+[
+"summary",
+"guide",
+"",
+"Reescribir todo el guion con IA"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+]
+],
+"g3": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"h2",
+"guideTop",
+"",
+"Cómo empieza el video y cómo se llama"
+],
+[
+"h2",
+"gTopic",
+"",
+"Tema y próximo episodio"
+],
+[
+"label",
+"gTopic",
+"tpTopic",
+"¿De qué tema trata?"
+],
+[
+"label",
+"gTopic",
+"tpNext",
+"¿Qué veremos el próximo episodio?"
+],
+[
+"label",
+"gTopic",
+"tpDate",
+"Fecha de publicación"
+],
+[
+"h2",
+"gCold",
+"",
+"Apertura en frío"
+],
+[
+"h3",
+"gCold",
+"",
+"Tu apertura"
+],
+[
+"h4",
+"gCold",
+"",
+"GANCHO"
+],
+[
+"h4",
+"gCold",
+"",
+"PROMESA"
+],
+[
+"h2",
+"gPack",
+"",
+"Empaque"
+],
+[
+"label",
+"gPack",
+"pkTitleIn",
+"Título de trabajo"
+],
+[
+"label",
+"gPack",
+"pkThumbIn",
+"Texto de la miniatura"
+],
+[
+"label",
+"gPack",
+"pkDescIn",
+"Descripción"
+],
+[
+"h4.pk-h",
+"pkChecks",
+"",
+"OBLIGATORIO"
+],
+[
+"h4.pk-h",
+"pkChecks",
+"",
+"RECOMENDADO"
+],
+[
+"h3",
+"pkChapters",
+"",
+"Capítulos para la descripción"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+],
+[
+"UNLABELED-textarea",
+"chOut",
+"chOut",
+"textarea"
+]
+],
+"g4": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"h2",
+"guideTop",
+"",
+"Grabar con el prompter"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+]
+],
+"g5": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"h2",
+"guideTop",
+"",
+"Después de grabar"
+],
+[
+"h2",
+"gShorts",
+"",
+"Clips para Shorts"
+],
+[
+"h2",
+"gRes",
+"",
+"Resultados del episodio"
+],
+[
+"label",
+"gRes",
+"rsDur",
+"Duración real del video"
+],
+[
+"label",
+"gRes",
+"rsData",
+"Datos de retención"
+],
+[
+"label.small",
+"gRes",
+"",
+"Subir CSV"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+]
+],
+"full_review": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"label",
+"editor",
+"script",
+"Guion del episodio"
+],
+[
+"summary",
+"extraFields",
+"",
+"Título, palabra clave y descripción (opcional)"
+],
+[
+"label",
+"extraFields",
+"title",
+"Título de trabajo"
+],
+[
+"label",
+"extraFields",
+"keyword",
+"Palabra clave"
+],
+[
+"label",
+"extraFields",
+"thumb",
+"Texto de la miniatura"
+],
+[
+"label",
+"extraFields",
+"description",
+"Descripción"
+],
+[
+"label",
+"extraFields",
+"translation",
+"Versión bíblica"
+],
+[
+"label",
+"extraFields",
+"series",
+"Serie o episodio"
+],
+[
+"label",
+"extraFields",
+"lang",
+"Idioma del guion"
+],
+[
+"h3",
+"results",
+"",
+"Lo primero que arreglaría"
+],
+[
+"h3",
+"results",
+"",
+"Línea de tiempo del episodio · 4:54 enseñando"
+],
+[
+"summary",
+"sec-money",
+"",
+"Monetización 0 de 0 Todo en orden"
+],
+[
+"summary",
+"sec-money",
+"",
+"¿Por qué?"
+],
+[
+"summary",
+"sec-structure",
+"",
+"Estructura y apertura 4 de 7 Gancho en los primeros 7 segundos · +2"
+],
+[
+"summary",
+"sec-structure",
+"",
+"¿Por qué?"
+],
+[
+"summary",
+"sec-scripture",
+"",
+"Citas bíblicas 1 de 1 Todo en orden"
+],
+[
+"summary",
+"sec-facts",
+"",
+"Datos y hechos con IA Revisar hechos"
+],
+[
+"summary",
+"sec-spoken",
+"",
+"Español hablado 5 de 6 Duración razonable para un episodio de enseñanz"
+],
+[
+"summary",
+"sec-auth",
+"",
+"Autenticidad 3 de 3 Todo en orden"
+],
+[
+"summary",
+"sec-auth",
+"",
+"¿Por qué?"
+],
+[
+"summary",
+"sec-seo",
+"",
+"Descubrimiento 5 de 6 Frase con forma de búsqueda"
+],
+[
+"summary",
+"sec-seo",
+"",
+"¿Por qué?"
+],
+[
+"h4.pk-h",
+"sec-seo",
+"",
+"TÉRMINOS QUE YA REPITES"
+],
+[
+"h4.pk-h",
+"sec-seo",
+"",
+"PALABRAS DÉBILES → MEJORES"
+],
+[
+"summary",
+"sec-seo",
+"",
+"Guía rápida de búsqueda"
+],
+[
+"summary",
+"sec-manuscript",
+"",
+"Guion marcado toca una marca para ver la nota"
+],
+[
+"h2",
+"sec-manuscript",
+"",
+"Guion marcado"
+],
+[
+"h2",
+"sec-ai",
+"",
+"Ayuda con IA"
+],
+[
+"h3",
+"sec-ai",
+"",
+"Reescribir el guion"
+],
+[
+"h3",
+"sec-ai",
+"",
+"Tres aperturas"
+],
+[
+"h3",
+"sec-ai",
+"",
+"Títulos, miniatura y descripción"
+],
+[
+"h2",
+"sec-save",
+"",
+"Guardar y exportar"
+],
+[
+"h2",
+"historyBlock",
+"",
+"Versiones y resultados"
+],
+[
+"h2",
+"gSeriesFull",
+"",
+"Calendario de la serie"
+],
+[
+"h2",
+"gBackupFull",
+"",
+"Copia de seguridad"
+],
+[
+"label.small",
+"gBackupFull",
+"",
+"Restaurar desde un archivo"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+],
+[
+"UNLABELED-input",
+"gSeriesFull-t",
+"gSeriesFull-t",
+"Qué dice la Biblia sobre el perdón"
+],
+[
+"UNLABELED-input",
+"gSeriesFull-d",
+"gSeriesFull-d",
+"Fecha de publicación"
+],
+[
+"UNLABELED-input",
+"gSeriesFull",
+"",
+"Fecha de publicación"
+]
+],
+"full_guion": [
+[
+"label.xswitch",
+"",
+"",
+"Modo completo"
+],
+[
+"label",
+"gProdBar",
+"gProdSel",
+"Producción"
+],
+[
+"h2",
+"gCold",
+"",
+"Apertura en frío"
+],
+[
+"h3",
+"gCold",
+"",
+"Tu apertura"
+],
+[
+"h4",
+"gCold",
+"",
+"GANCHO"
+],
+[
+"h4",
+"gCold",
+"",
+"PROMESA"
+],
+[
+"h2",
+"gEsc",
+"",
+"Escaleta"
+],
+[
+"label",
+"gEsc",
+"gTarget",
+"Duración objetivo"
+],
+[
+"h2",
+"gSecs",
+"",
+"Guion por secciones"
+],
+[
+"summary",
+"gs-0",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-1",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-2",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-3",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-4",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-5",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-6",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-7",
+"",
+"Notas"
+],
+[
+"summary",
+"gs-8",
+"",
+"Notas"
+],
+[
+"h2",
+"gTopic",
+"",
+"Tema y próximo episodio"
+],
+[
+"label",
+"gTopic",
+"tpTopic",
+"¿De qué tema trata?"
+],
+[
+"label",
+"gTopic",
+"tpNext",
+"¿Qué veremos el próximo episodio?"
+],
+[
+"label",
+"gTopic",
+"tpDate",
+"Fecha de publicación"
+],
+[
+"h2",
+"gPack",
+"",
+"Empaque"
+],
+[
+"label",
+"gPack",
+"pkTitleIn",
+"Título de trabajo"
+],
+[
+"label",
+"gPack",
+"pkThumbIn",
+"Texto de la miniatura"
+],
+[
+"label",
+"gPack",
+"pkDescIn",
+"Descripción"
+],
+[
+"h4.pk-h",
+"pkChecks",
+"",
+"OBLIGATORIO"
+],
+[
+"h4.pk-h",
+"pkChecks",
+"",
+"RECOMENDADO"
+],
+[
+"h3",
+"pkChapters",
+"",
+"Capítulos para la descripción"
+],
+[
+"h2",
+"gShorts",
+"",
+"Clips para Shorts"
+],
+[
+"h2",
+"gRes",
+"",
+"Resultados del episodio"
+],
+[
+"label",
+"gRes",
+"rsDur",
+"Duración real del video"
+],
+[
+"label",
+"gRes",
+"rsData",
+"Datos de retención"
+],
+[
+"label.small",
+"gRes",
+"",
+"Subir CSV"
+],
+[
+"h2",
+"gRev",
+"",
+"Revisiones"
+],
+[
+"label",
+"gRev",
+"",
+"Estado: En revisión"
+],
+[
+"summary",
+"",
+"",
+"ver más"
+],
+[
+"UNLABELED-select",
+"gs-0",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-0",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-0",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-1",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-1",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-1",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-2",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-2",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-2",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-3",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-3",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-3",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-4",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-4",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-4",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-5",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-5",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-5",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-6",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-6",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-6",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-7",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-7",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-7",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-select",
+"gs-8",
+"",
+"Sección"
+],
+[
+"UNLABELED-select",
+"gs-8",
+"",
+"role"
+],
+[
+"UNLABELED-textarea",
+"gs-8",
+"",
+"Nota para esta sección…"
+],
+[
+"UNLABELED-textarea",
+"chOut",
+"chOut",
+"textarea"
+],
+[
+"UNLABELED-input",
+"snapName",
+"snapName",
+"Nombre, p. ej. «Después de las notas»"
+]
+]
+}

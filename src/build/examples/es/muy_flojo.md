@@ -1,0 +1,48 @@
+---
+key: bad
+name: Muy flojo
+title: ¡El FIN DEL MUNDO ya empezó! 😱 Guerra, MUERTE y la MARCA DE LA BESTIA explicadas (NADIE te dice esto)
+keyword: 
+thumb: 😱 MUERTE Y GUERRA 😱
+description: Link del grupo de WhatsApp y número de cuenta para sembrar aquí abajo!! Compartan!!
+series: 
+nextEp: 
+bigIdea: 
+translation: RVR1960
+audience: both
+---
+Hola a todos, ¿qué tal? Bienvenidos a otro episodio del canal, qué alegría tenerlos aquí una semana más. Bueno, antes de empezar, como siempre, denle like a este video, suscríbanse, activen la campanita y compartan con todos sus contactos, porque eso nos ayuda un montón a seguir creciendo y a que el algoritmo nos muestre a más gente, ¿verdad? Y nada, también los invito al grupo de WhatsApp, el link está en la descripción, ahí subimos un montón de cosas súper interesantes que no subimos aquí.
+
+Y antes de empezar oremos. Padre celestial, te damos gracias por este canal y por cada persona que nos ve. Abre el entendimiento de cada uno, Señor, y que nada nos distraiga. En el nombre de Jesús, amén.
+
+Bueno, pues, hoy vamos a hablar de un tema que está súper fuerte, ¿no? O sea, digamos que es un tema muy importante, ¿verdad? Todo el mundo habla de esto, en las noticias no se habla de otra cosa: la guerra, la muerte por todos lados, el terrorismo, los terremotos, la pandemia que vivimos, otra pandemia que dicen que viene, y después de esa pandemia otra más, porque la Biblia habla de pestes en plural, y la gente me pregunta: pastor, ¿ya estamos en el fin del mundo? ¿Esto es el Apocalipsis? Y, o sea, yo les digo: güey, abran los ojos. Literalmente estamos viendo las señales en vivo.
+
+Sin más preámbulos, vamos con el tema. En el mundo actual es importante destacar que la escatología es el tema más importante que existe, porque básicamente de eso depende todo, y cabe mencionar que la parusía está más cerca de lo que pensamos, y los que no son premileniales, pues, digamos que están equivocados, con todo respeto, ¿amén?
+
+Abran sus Biblias, los que están aquí. Como dice la Palabra, «el que tenga oídos para oír, oiga». O sea, básicamente, dice la Biblia que habrá guerras y rumores de guerras, y que se levantará nación contra nación y reino contra reino, y habrá pestes y hambres y terremotos en diferentes lugares. ¿Y qué estamos viendo? Exactamente eso. Guerra en Europa, guerra en Medio Oriente, una masacre tras otra, un atentado tras otro, un ataque terrorista cada semana, gente muriendo como moscas, pandemia tras pandemia, hambre. O sea, literalmente la Biblia lo dijo y está pasando enfrente de nosotros y la gente sigue como si nada, de fiesta, tomando, drogándose, viendo pornografía, matándose entre ellos, y no se dan cuenta de que el juicio viene, de que la ira de Dios se va a derramar sobre este mundo, de que va a haber una matanza como nunca se ha visto en la historia de la humanidad, con sangre hasta los frenos de los caballos, como dice la Biblia, y eso no es una metáfora, hermanos, eso es literal, sangre de verdad, ríos de sangre, una masacre con tortura y ejecución en masa, cuerpos por todas partes, gente desangrándose en las calles.
+
+Les voy a contar algo que me pasó la semana pasada, o sea, una cosa muy interesante. Estaba viendo las noticias, el ataque terrorista ese que hubo, ustedes saben cuál, y mi esposa me dice: apaga eso. Y yo le dije: no, mira, esto es profecía cumplida, esto hay que verlo. Porque uno tiene que estar informado, hermanos. El que no ve las noticias no sabe en qué tiempo está viviendo. Yo me paso horas viendo análisis de lo que está pasando en Israel, hay canales buenísimos con cosas súper interesantes, se los puedo pasar por el grupo, son cosas muy bonitas.
+
+Y luego está lo de la marca de la bestia, que es una cosa súper importante, ¿verdad? Yo se los he dicho muchas veces: los chips, las vacunas, el dinero digital, todo eso es preparación para la marca. Hay mucha gente que dice que no, que eso es teoría de conspiración, pero vale, díganme, ¿qué más necesitan ver? El seiscientos sesenta y seis está en los códigos de barras, en plan escondido, pero ahí está, y el que tenga ojos para ver que vea. Un hermano de la iglesia me mandó un video donde lo explican con el código de barras de una Coca-Cola, se los voy a subir al grupo también.
+
+Bueno, y la gente me dice: pastor, usted asusta a la gente. Pues sí, la verdad es que sí, porque hay que asustarse. Jesús mismo dijo que vendría como ladrón en la noche, y el que no esté listo se queda. Y si ustedes conocen a alguien que no está listo, compartan este video, en serio, compartan este video, porque puede ser la última oportunidad que tenga esa persona. Dale like, suscríbete, compártelo, es gratis y salva vidas.
+
+Ahora, hablando de las trompetas, les voy a leer todo el pasaje de Apocalipsis 6:12-17, que es el sexto sello, porque es básicamente lo mismo, o sea:
+
+«Miré cuando abrió el sexto sello, y he aquí hubo un gran terremoto; y el sol se puso negro como tela de cilicio, y la luna se volvió toda como sangre; y las estrellas del cielo cayeron sobre la tierra, como la higuera deja caer sus higos cuando es sacudida por un fuerte viento. Y el cielo se desvaneció como un pergamino que se enrolla; y todo monte y toda isla se removió de su lugar. Y los reyes de la tierra, y los grandes, los ricos, los capitanes, los poderosos, y todo siervo y todo libre, se escondieron en las cuevas y entre las peñas de los montes; y decían a los montes y a las peñas: Caed sobre nosotros, y escondednos del rostro de aquel que está sentado sobre el trono, y de la ira del Cordero; porque el gran día de su ira ha llegado; ¿y quién podrá sostenerse en pie?»
+
+O sea, literalmente eso. Y ahora sí, las trompetas. Hay siete trompetas y siete copas y siete sellos, y hay toda una discusión sobre si son lo mismo o si son cosas distintas, y la hermenéutica dispensacionalista dice una cosa y los amileniales dicen otra, pero eso no importa ahorita. Lo que importa es que cuando suene la primera trompeta cae granizo y fuego mezclados con sangre, y se quema la tercera parte de los árboles. La tercera parte del mar se convierte en sangre, con los peces flotando muertos, podridos, imagínense el olor. Una estrella cae del cielo y envenena las aguas y mucha gente muere por las aguas, dice ahí, muere retorciéndose, envenenada. Y la cuarta trompeta oscurece el sol y la luna. ¿Ustedes han visto los eclipses raros que ha habido? Piénsenlo.
+
+Y la quinta trompeta, hermanos, esa es la que más miedo da. Salen langostas del abismo con cola de escorpión y atormentan a la gente cinco meses, y la gente busca la muerte y no la encuentra, quieren suicidarse y no pueden. Imagínense eso. Imagínense querer morirse y no poder, intentar el suicidio y que no funcione, cinco meses así. Eso es lo que le espera al que no se arrepienta. Yo no lo digo, lo dice la Biblia.
+
+Y la sexta trompeta suelta a cuatro ángeles que matan a la tercera parte de la humanidad. La tercera parte. Hoy en día eso serían como dos mil setecientos millones de personas muertas. Muertas. Una masacre global. Una ejecución masiva. Y la gente sigue viendo series en Netflix.
+
+Entonces, ¿qué hacemos? Pues, arrepentirse, obvio, o sea, básicamente eso, ¿verdad? Y la propiciación de Cristo nos cubre, la justificación es por fe, y el que está en Cristo no tiene por qué temer, porque nosotros no vamos a estar aquí para la gran tribulación, nosotros nos vamos en el arrebatamiento, antes de los siete años, eso está clarísimo en la Biblia aunque mucha gente lo niegue, porque dice que no nos ha puesto Dios para ira, y el que diga lo contrario, pues, que lea bien su Biblia, con todo respeto, pero que la lea.
+
+Y otra cosa, hermanos, que tiene que ver con esto. Si el tiempo es corto, ¿de qué sirve el dinero? Dios me puso en el corazón decirles esto: siembra hoy y recibirás el ciento por uno. Este ministerio necesita crecer antes de que venga el Señor, necesitamos cámaras nuevas, necesitamos el estudio, y el que siembra en tiempo de crisis es el que cosecha. Multiplica tu dinero sembrando en el reino, eso es bíblico. El número de cuenta está en la descripción, y el que siembre estos días que me escriba, porque vamos a orar por cada uno con nombre, y yo creo que Dios les va a devolver eso multiplicado, en plan, de verdad, yo lo he visto.
+
+Y mientras tanto hay que estar atentos a las señales. Yo les recomiendo que sigan las noticias, que vean lo que está pasando en Israel, porque Israel es el reloj de Dios, y cuando reconstruyan el templo ahí sí que ya no queda nada de tiempo. Hay gente que ya tiene las vacas rojas listas para el sacrificio, eso lo pueden buscar en internet, hay videos. Y también estén pendientes de lo del dinero digital, porque ese es el sistema de la bestia, el que no tenga la marca no va a poder comprar ni vender, y eso ya está pasando con la gente que le cierran las cuentas por pensar distinto, o sea, ya está pasando, ya empezó.
+
+Bueno, y antes de que se me olvide, el domingo pasado en la iglesia tuvimos un servicio tremendo, y este domingo vamos a seguir con el tema de las copas de la ira, así que los espero a todos, los que estamos aquí ya saben la dirección, y los que nos ven desde otros países pues conéctense en vivo, el link también está en la descripción. Y pónganse de pie los que están viendo esto en casa, en serio, pónganse de pie y digan amén, porque el Rey viene.
+
+Y nada, eso es todo por hoy. Acuérdense de darle like, de suscribirse si no lo han hecho, de activar la campanita y de compartir, porque, en serio, puede que no haya un próximo video, puede que el Señor venga esta misma noche, y ustedes no quieren que les agarre sin haber compartido la palabra. Nos vemos. Dios les bendiga. Chau.

@@ -1,0 +1,12 @@
+# derived by the build, never edit or commit
+src/build/work.html
+src/build/full.js
+src/build/logic.js
+src/all.js
+src/standalone/site/
+src/standalone/preview2026.html
+# test screenshots
+src/**/*.png
+!src/build/site_assets/*.png
+__pycache__/
+node_modules/

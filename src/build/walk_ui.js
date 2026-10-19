@@ -1,0 +1,293 @@
+/* ===== Revisión por párrafos: los problemas se pintan en el guion y se recorren de uno en uno ===== */
+// After "Revisar guion" the script itself shows what the app found: red words can cost ads, yellow ones are tweaks, struck-through
+// text is what the proposed fix would remove. The panel walks the script paragraph by paragraph; tapping a card or a score row
+// scrolls the script to that spot with the text before and after it in view.
+// Highlights use the CSS Custom Highlight API, which paints over the text without touching the editor's DOM (so typing, undo and
+// saving are unaffected). Browsers without it still get the paragraph accent and the scrolling.
+Object.assign(T.es, {
+  wkTitle: "Revisión por párrafos", wkOf: (i, n) => `Párrafo ${i} de ${n}`, wkHere: (n) => (n === 1 ? "1 revisión" : `${n} revisiones`),
+  wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Preparar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
+  wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
+  wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
+  wkLgR: "Puede limitar anuncios", wkLgA: "Ajuste", wkLgD: "Se quitaría", wkEnd: "Terminaste el recorrido del guion.",
+});
+Object.assign(T.en, {
+  wkTitle: "Paragraph-by-paragraph review", wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
+  wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Prepare", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
+  wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
+  wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
+  wkLgR: "Can limit ads", wkLgA: "Tweak", wkLgD: "Would be removed", wkEnd: "You've been through the whole script.",
+});
+
+const WK = { i: -1, key: "", R: null, map: [], blocks: [], per: [], glob: [], list: [], ranges: null, pending: false, flashT: 0, ok: false };
+const wkReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wkHL = () => (typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function" ? CSS.highlights : null);
+const WK_NAMES = ["sd-r", "sd-a", "sd-ru", "sd-au", "sd-del", "sd-flash"];
+
+function wkClearPaint() {
+  const hl = wkHL();
+  if (hl) WK_NAMES.forEach((n) => hl.delete(n));
+  if (ED.el) ED.el.querySelectorAll(".walk-on").forEach((e) => e.classList.remove("walk-on"));
+}
+function wkInvalidate() { WK.key = ""; WK.R = null; WK.ranges = null; WK.ok = false; wkClearPaint(); }
+
+// Where each text node of the editor sits in the script text (the editor drops "## ", list markers and line breaks).
+function wkNodes(text) {
+  const out = [];
+  const tw = document.createTreeWalker(ED.el, NodeFilter.SHOW_TEXT);
+  let cur = 0, n;
+  while ((n = tw.nextNode())) {
+    const d = n.data;
+    if (!d) continue;
+    const i = text.indexOf(d, cur);
+    if (i < 0) continue;
+    out.push({ n, s: i, e: i + d.length });
+    cur = i + d.length;
+  }
+  return out;
+}
+function wkBlocksOf(map) {
+  const out = [];
+  ED.el.querySelectorAll(":scope > p, :scope > h2, :scope > ul > li, :scope > ol > li").forEach((el) => {
+    const ms = map.filter((m) => el.contains(m.n));
+    if (ms.length) out.push({ el, s: ms[0].s, e: ms[ms.length - 1].e });
+  });
+  return out;
+}
+function wkBlockAt(blocks, pos) {
+  for (let i = 0; i < blocks.length; i++) if (pos <= blocks[i].e) return i;
+  return blocks.length - 1;
+}
+function wkRange(a, b) {
+  const map = WK.map;
+  let sN = null, sO = 0, eN = null, eO = 0;
+  for (const m of map) {
+    if (sN === null && a < m.e) { sN = m.n; sO = Math.max(0, a - m.s); }
+    if (b > m.s) { eN = m.n; eO = Math.min(m.e, b) - m.s; }
+  }
+  if (!sN || !eN) return null;
+  const r = document.createRange();
+  try { r.setStart(sN, sO); r.setEnd(eN, eO); } catch (e) { return null; }
+  return r.collapsed ? null : r;
+}
+
+function wkReady() { return !!(ED.el && state.result && state.text === $("script").value && (SPLIT.on || (V.guided && V.step === 2))); }
+
+function wkBuild() {
+  const key = state.text + "|" + [...state.fixDismissed].sort().join(",");
+  if (WK.ok && WK.key === key && WK.R === state.result) return true;
+  WK.ok = false; WK.ranges = null;
+  if (!wkReady()) return false;
+  const text = state.text, R = state.result;
+  try {
+    WK.map = wkNodes(text);
+    WK.blocks = wkBlocksOf(WK.map);
+    if (!WK.blocks.length) return false;
+    const failed = failedRows(R).filter((r) => !state.fixDismissed.has(r.id));
+    const cards = buildFixCards(text, R, state.opts, failed, 1e9, Infinity);
+    WK.per = WK.blocks.map(() => []);
+    WK.glob = [];
+    for (const c of cards) {
+      if (!c.evidence.length) { WK.glob.push(c); continue; }
+      const by = new Map();
+      for (const e of c.evidence) { const bi = wkBlockAt(WK.blocks, e.start); if (!by.has(bi)) by.set(bi, []); by.get(bi).push(e); }
+      for (const [bi, evs] of by) WK.per[bi].push({ card: c, evs });
+    }
+    WK.list = WK.per.map((x, i) => (x.length ? i : -1)).filter((i) => i >= 0);
+    if (WK.glob.length) WK.list.push(WK.blocks.length);
+    WK.key = key; WK.R = R; WK.ok = true;
+  } catch (e) { WK.ok = false; return false; }
+  return true;
+}
+
+// A card's proposal limited to one paragraph (so "remove the fillers" in paragraph 3 doesn't touch paragraph 7).
+function wkScope(p, bi, card) {
+  if (p.kind !== "patch" || !p.patches || p.patches.length < 2) return p;
+  const ps = p.patches.filter((x) => wkBlockAt(WK.blocks, x.start) === bi);
+  if (ps.length === p.patches.length) return p;
+  if (!ps.length) return null;
+  const sp = { ...p, patches: ps, of: p.of || p.patches.length, scoped: true, label: p.label + t("wkSuffix") };
+  sp.check = verifyProposal(state.text, state.opts, state.result, sp);
+  return sp.check.broke.length ? null : sp;
+}
+function wkCardsFor(i) {
+  if (i >= WK.blocks.length) return WK.glob;
+  return WK.per[i].map(({ card, evs }) => {
+    const c = { ...card, evidence: evs, more: 0 };
+    c.proposals = (card.proposals || []).map((p) => wkScope(p, i, card)).filter(Boolean);
+    if (card.ai && card.ai.start != null && !(card.ai.start >= WK.blocks[i].s && card.ai.start <= WK.blocks[i].e)) c.ai = { ...card.ai, start: evs[0].start, end: evs[0].end };
+    return c;
+  });
+}
+const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? "ok" : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");
+
+function wkStripHTML() {
+  const n = WK.blocks.length;
+  const ticks = WK.blocks.map((b, i) => `<button type="button" class="wk-tick wk-${wkSev(i)}${i === WK.i ? " on" : ""}" data-wk="${i}" aria-label="${h(t("wkTickN")(i + 1, WK.per[i].length))}"></button>`).join("");
+  const glob = WK.glob.length ? `<button type="button" class="wk-tick wk-g${WK.i === n ? " on" : ""}" data-wk="${n}" aria-label="${h(t("wkGlobal"))}"></button>` : "";
+  return `<div class="wk-strip" role="group">${ticks}${glob}</div>`;
+}
+function walkerHTML() {
+  const n = WK.blocks.length, i = WK.i;
+  const undo = state.fixUndo.length ? `<button class="small" id="fxUndo">${h(t("fxUndo"))}</button>` : "";
+  const head = `<div class="fx-head"><h3>${h(t("wkTitle"))}</h3><span class="status" id="fxMsg">${h(fixMsg)}</span>${undo}</div>`;
+  fixMsg = "";
+  if (!WK.list.length) { state.fixCards = []; return `<div class="topfix walk" data-wk-root>${head}<p class="lead" style="margin:0">${h(t("fxNone"))}</p></div>`; }
+  const isG = i >= n, cards = wkCardsFor(i);
+  state.fixCards = cards;
+  state.fixOpen = state.fixOpen || new Set();
+  cards.slice(0, 2).forEach((c) => state.fixOpen.add(c.id));
+  const pos = WK.list.indexOf(i), hasNext = WK.list.some((x) => x > i), hasPrev = WK.list.some((x) => x < i);
+  const title = isG ? t("wkGlobal") : t("wkOf")(i + 1, n);
+  const sub = isG ? t("wkGlobalSub") : cards.length ? t("wkHere")(cards.length) : "";
+  const sevCls = isG ? "g" : wkSev(i);
+  const nav = `<div class="wk-nav"><button type="button" class="small" data-wkgo="-1"${hasPrev ? "" : " disabled"}>‹ ${h(t("wkPrev"))}</button>
+    <div class="wk-where"><b class="wk-sev-${sevCls}">${h(title)}</b><span class="hint">${h(sub)}${pos >= 0 ? `${sub ? " · " : ""}${h(t("wkPos")(pos + 1, WK.list.length))}` : ""}</span></div>
+    ${hasNext ? `<button type="button" class="small primary" data-wkgo="1">${h(t("wkNext"))} ›</button>` : `<button type="button" class="small primary" data-wkend>${h(t("wkDone"))} →</button>`}</div>`;
+  const lg = `<div class="wk-lg"><span class="wk-lg-r">${h(t("wkLgR"))}</span><span class="wk-lg-a">${h(t("wkLgA"))}</span><span class="wk-lg-d">${h(t("wkLgD"))}</span></div>`;
+  const body = cards.length ? `<ol class="fx-list">${fixItemsHTML(cards, state.result)}</ol>` : `<p class="lead wk-clean">${h(hasNext ? t("wkClean") : t("wkEnd"))}</p>`;
+  return `<div class="topfix walk" data-wk-root>${head}${wkStripHTML()}${lg}${nav}${body}</div>`;
+}
+
+// ---- painting ----
+function wkRangesFor(i) {
+  const out = { r: [], a: [], ru: [], au: [] };
+  for (const { card, evs } of WK.per[i] || []) {
+    const red = card.level === "rojo";
+    for (const e of evs) {
+      if (e.marks && e.marks.length) for (const [a, b] of e.marks) { const r = wkRange(a, b); if (r) out[red ? "r" : "a"].push(r); }
+      else { const r = wkRange(e.start, e.end); if (r) out[red ? "ru" : "au"].push(r); }
+    }
+  }
+  return out;
+}
+function wkPaint(scroll) {
+  const hl = wkHL();
+  wkClearPaint();
+  if (!WK.ok || !wkReady()) return;
+  if (!WK.ranges) WK.ranges = WK.blocks.map((b, i) => wkRangesFor(i));
+  if (hl) {
+    const all = { r: [], a: [], ru: [], au: [] };
+    // words everywhere; whole-sentence underlines only in the paragraph being reviewed
+    WK.ranges.forEach((g, i) => { for (const k of Object.keys(all)) if (i === WK.i || k.length === 1) all[k].push(...g[k]); });
+    for (const [k, name] of [["r", "sd-r"], ["a", "sd-a"], ["ru", "sd-ru"], ["au", "sd-au"]]) if (all[k].length) hl.set(name, new Highlight(...all[k]));
+  }
+  const b = WK.blocks[WK.i];
+  if (!b) return;
+  b.el.classList.add("walk-on");
+  // what the first proposal of each card in this paragraph would remove
+  if (hl) {
+    const dels = [];
+    (state.fixCards || []).forEach((c, ci) => {
+      const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
+      if (p && p.kind === "patch") for (const x of p.patches) if (x.end > x.start) { const r = wkRange(x.start, x.end); if (r) dels.push(r); }
+    });
+    if (dels.length) hl.set("sd-del", new Highlight(...dels));
+  }
+  if (scroll) {
+    const g = WK.ranges[WK.i], first = [...g.r, ...g.a, ...g.ru, ...g.au].sort((x, y) => x.compareBoundaryPoints(Range.START_TO_START, y))[0];
+    wkScrollTo(first || b.el);
+    if (first) wkFlash([first]);
+  }
+}
+function wkScrollTo(target) {
+  const box = ED.el;
+  if (!box) return;
+  const rr = (target.getBoundingClientRect ? target : target).getBoundingClientRect(), bb = box.getBoundingClientRect();
+  // leave about a third of the box above the spot so the sentences before it stay in view
+  const dy = rr.top - (bb.top + bb.height * 0.32);
+  box.scrollTo({ top: Math.max(0, box.scrollTop + dy), behavior: wkReduced() ? "auto" : "smooth" });
+}
+function wkFlash(ranges) {
+  const hl = wkHL();
+  if (!hl || !ranges.length) return;
+  hl.set("sd-flash", new Highlight(...ranges));
+  clearTimeout(WK.flashT);
+  WK.flashT = setTimeout(() => hl.delete("sd-flash"), 1500);
+}
+
+// ---- navigation ----
+function wkGo(i, scroll = true) {
+  WK.i = i;
+  state.fixSel = {}; state.fixAi = {}; state.fixOpen = new Set();
+  WK.pending = scroll;
+  const old = document.querySelector(".topfix.walk");
+  if (!old || !WK.ok) { if (V.guided) renderGuide(); else renderResults(); return; }
+  const tmp = document.createElement("div");
+  tmp.innerHTML = walkerHTML();
+  old.replaceWith(tmp.firstElementChild);
+  wireFixes();
+  wkPaint(WK.pending); WK.pending = false;
+}
+function wkStep(dir) {
+  const cand = dir > 0 ? WK.list.filter((x) => x > WK.i) : WK.list.filter((x) => x < WK.i).reverse();
+  if (cand.length) wkGo(cand[0]);
+}
+function wkWire() {
+  const root = document.querySelector(".topfix.walk");
+  if (!root) return;
+  root.querySelectorAll("[data-wk]").forEach((b) => b.addEventListener("click", () => wkGo(+b.dataset.wk)));
+  root.querySelectorAll("[data-wkgo]").forEach((b) => b.addEventListener("click", () => wkStep(+b.dataset.wkgo)));
+  const end = root.querySelector("[data-wkend]");
+  if (end) end.addEventListener("click", () => goStep(3));
+  // tapping the quoted text of a card shows it in the script
+  root.querySelectorAll(".fx-ev[data-es]").forEach((el) => {
+    el.setAttribute("role", "button"); el.tabIndex = 0; el.title = t("wkLoc");
+    const go = () => { const r = wkRange(+el.dataset.es, +el.dataset.ee); if (r) { wkScrollTo(r); wkFlash([r]); } };
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+}
+
+// ---- hooks into the existing flow ----
+const _topFixHTMLW = topFixHTML;
+topFixHTML = function (R) {
+  if (!wkBuild()) return _topFixHTMLW(R);
+  if (WK.i < 0) WK.i = WK.list.length ? WK.list[0] : 0;
+  WK.i = Math.min(WK.i, WK.glob.length ? WK.blocks.length : WK.blocks.length - 1);
+  return walkerHTML();
+};
+const _wireFixesW = wireFixes;
+wireFixes = function () { _wireFixesW(); wkWire(); };
+
+function wkDock(scroll) {
+  const root = document.documentElement, ed = $("editor");
+  if (SPLIT.on || !V.guided || V.step !== 2 || !ed) { root.style.removeProperty("--dock-h"); return; }
+  root.style.setProperty("--dock-h", ed.offsetHeight + "px");
+  // phone: bring the docked script to the top of the screen so the script and the walker are both in view
+  // goStep scrolls to the top right after rendering, so this waits a beat
+  if (scroll) setTimeout(() => window.scrollTo({ top: Math.max(0, $("guideTop").getBoundingClientRect().bottom + window.scrollY - 2), behavior: "auto" }), 80);
+}
+function wkAfterRender() {
+  const go = WK.pending;
+  if (wkReady() && WK.ok && document.querySelector(".topfix.walk")) { wkDock(go); wkPaint(go); WK.pending = false; }
+  else { wkClearPaint(); wkDock(false); }
+}
+const _renderGuideW = renderGuide;
+renderGuide = function () { _renderGuideW(); wkAfterRender(); };
+const _renderResultsW = renderResults;
+renderResults = function () { _renderResultsW(); if (!V.guided) wkAfterRender(); };
+
+// new review: start at the first paragraph that has something
+$("runBtn").addEventListener("click", () => { WK.i = -1; WK.pending = true; wkInvalidate(); }, true);
+window.addEventListener("resize", () => wkDock(false));
+const _goStepW = goStep;
+goStep = function (n) { if (n === 2) WK.pending = true; if (n !== 2) wkClearPaint(); _goStepW(n); };
+// after applying or undoing a fix, stay on the same paragraph and keep it in view
+const _rerunReviewW = rerunReview;
+rerunReview = function (msg) { WK.pending = true; _rerunReviewW(msg); };
+// typing in the script makes the painted spots stale
+if (ED.el) ED.el.addEventListener("input", wkInvalidate);
+
+// score rows: jump to the first paragraph where that check shows up
+const _scGoRowW = scGoRow;
+scGoRow = function (id) {
+  if (!V.guided) return _scGoRowW(id);
+  scClosePop();
+  if (!ensureReview()) return;
+  if (V.step !== 2) { WK.pending = true; goStep(2); }
+  if (!wkBuild()) return _scGoRowW(id);
+  let at = WK.per.findIndex((x) => x.some((y) => y.card.id === id || (y.card.ids && y.card.ids.includes(id))));
+  if (at < 0 && WK.glob.some((c) => c.id === id || (c.ids && c.ids.includes(id)))) at = WK.blocks.length;
+  if (at >= 0) wkGo(at);
+};

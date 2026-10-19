@@ -1,0 +1,12 @@
+const L = require("./logic.js"); const fs = require("fs");
+const text = fs.readFileSync("long_es.txt", "utf8");
+const R = L.analyze(text, { lang: "es", keyword: "ansiedad", uiLang: "es", title: "¿Qué dice la Biblia sobre la ansiedad?", thumb: "No cargues mañana" });
+const U = L.buildUnits(R, text), secs = L.sectionsFrom(L.detectLayout(U, R), U, R.runtimeSec);
+console.log("CLIPS"); for (const c of L.clipCandidates(U, R, secs, { keyword: "ansiedad" })) console.log(c.score, L.fmtTime(c.t0), Math.round(c.dur) + "s", c.why.join("/"), "|", c.first, "…", c.last);
+console.log(L.packagingChecks({ title: "¿Qué dice la Biblia sobre la ansiedad?", thumb: "No cargues mañana", keyword: "ansiedad" }, R, U[1].text).map(c => c.id + ":" + c.pass).join(" "));
+console.log(L.buildChapters(secs.map(s => ({ t: s.t0, type: s.type, label: s.type + s.n })), R.runtimeSec, "Intro").map(c => L.fmtTime(c.t) + " " + c.label).join(" | "));
+const csv1 = "Video position (%),Absolute audience retention (%),Relative audience retention\n" + Array.from({ length: 101 }, (_, i) => `${i},${(100 * Math.exp(-i / 60) - (i > 40 && i < 50 ? (i - 40) : 0)).toFixed(1)},0.5`).join("\n");
+const r1 = L.parseRetention(csv1, 300); console.log("pct", r1.error || r1.points.length, r1.pctPos, r1.points[50]);
+const csv2 = "0:00\t100\n0:30\t72\n1:00\t65\n2:00\t55\n4:00\t40"; const r2 = L.parseRetention(csv2); console.log("time", r2.error || JSON.stringify(r2.points), r2.durationSec);
+console.log("noDur", L.parseRetention(csv1).error);
+const rows = L.retentionBySection(r1.points, secs.map(s => ({ k: s.k, a: s.t0, b: s.t1 }))); console.log(rows.map(r => r.k + ":" + r.r0.toFixed(0) + "→" + r.r1.toFixed(0) + (r.worst ? "*" : "")).join(" "), "avg", L.avgViewed(r1.points, 300).toFixed(1));
