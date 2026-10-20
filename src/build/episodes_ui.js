@@ -72,12 +72,14 @@ renderSeries = function (cid) {
           <div class="field"><label for="${cid}-d">${h(t("epDay"))}</label><input id="${cid}-d" type="date" value="${h(nextFreeDate())}"><span class="hint" id="${cid}-dh">${h(longDay(nextFreeDate()))}</span></div>
           <div class="actions"><button type="button" class="small primary" id="${cid}-p">${h(t("epAddBtn"))}</button><button type="button" class="small" id="${cid}-x">${h(t("epCancel"))}</button></div></div>`
       : `<button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button>`;
-    el.innerHTML = `${head}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
+    const notice = G.loadErr.prods ? `<p class="status err" role="alert">${h(t("srLoadFail"))} <button type="button" class="small" data-retry="prods">${h(t("srRetry"))}</button></p>` : G.srMsg ? `<p class="status err" role="alert">${h(G.srMsg)}</p>` : "";
+    el.innerHTML = `${head}${notice}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
       ${active.length ? `<ul class="ep-list">${active.map(row).join("")}</ul>` : ""}
       ${past.length ? `<button type="button" class="small linkish" id="${cid}-past">${h(G.epPast ? t("epPastHide") : t("epPast")(past.length))}</button>${G.epPast ? `<ul class="ep-list ep-pastlist">${past.map(row).join("")}</ul>` : ""}` : ""}
       ${addForm}
       ${G.prods.length ? `<div class="sr-clear"><button type="button" class="small linkish sr-del" id="${cid}-delall">${h(t("srDelAll")(G.prods.length))}</button></div>` : ""}`;
     const q = (s) => el.querySelector(s);
+    el.querySelectorAll("[data-retry=prods]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; await loadProds(); }));
     // Deleting asks first, right where the button was, and only removes episodes (nothing else).
     const askDel = (box, msg, onYes) => { box.innerHTML = `<span class="sr-q">${h(msg)}</span><button type="button" class="small danger" data-y>${h(t("srDelYes"))}</button><button type="button" class="small" data-n>${h(t("srDelNo"))}</button>`; box.querySelector("[data-n]").addEventListener("click", () => renderSeriesAll()); box.querySelector("[data-y]").addEventListener("click", async (e) => { e.target.disabled = true; await onYes(); }); };
     el.querySelectorAll("[data-srdel]").forEach((b) => b.addEventListener("click", () => { const p = G.prods.find((x) => x.id === b.dataset.srdel); askDel(b.closest(".ep-tools"), t("srDelQ")(p ? p.title || "—" : "—"), () => deleteProds([b.dataset.srdel])); }));

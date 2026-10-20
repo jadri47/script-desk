@@ -36,7 +36,7 @@ Object.assign(T.es, {
   ppSpeed: "ppm", ppElapsed: "Tiempo", ppSecLeft: "Queda en la sección", ppEnd: "Fin estimado", ppOn: "a tiempo", ppOver: (x) => `+${x} sobre el plan`, ppUnder: (x) => `−${x} bajo el plan`,
   ppMirror: "Espejo", ppCues: "Señales", ppFull: "Pantalla completa", ppExit: "Salir", ppWidth: "Ancho", ppFont: "Letra", ppStart: "Toca o pulsa Espacio para empezar", ppClip: "CLIP", ppPaused: "En pausa", ppDone: "Fin del guion",
   ppLap: "Sección terminada", ppRehHint: "Ensayo: → o Intro marca la sección como terminada. Espacio pausa.", ppLapLbl: "Esta sección",
-  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
+  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
   rehTot: (a, b) => `Estimado ${a} · real ${b}`, rehEst: "Estimado", rehReal: "Real",
   sheetTitle: "Hoja de edición", sheetNote: "Tiempos estimados: busca cada frase en la grabación.", cuesTitle: "Señales para edición", clipsTitle: "Clips para la apertura en frío", openNotesTitle: "Notas abiertas", modeLbl: "Modo",
   aiPickNeed: "La IA solo funciona dentro de Claude.",
@@ -77,7 +77,7 @@ Object.assign(T.en, {
   ppSpeed: "wpm", ppElapsed: "Time", ppSecLeft: "Left in section", ppEnd: "Estimated end", ppOn: "on time", ppOver: (x) => `+${x} over plan`, ppUnder: (x) => `−${x} under plan`,
   ppMirror: "Mirror", ppCues: "Cues", ppFull: "Full screen", ppExit: "Exit", ppWidth: "Width", ppFont: "Text", ppStart: "Tap or press Space to start", ppClip: "CLIP", ppPaused: "Paused", ppDone: "End of script",
   ppLap: "Section done", ppRehHint: "Rehearsal: → or Enter marks the section done. Space pauses.", ppLapLbl: "This section",
-  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehApplied: "Pace updated: estimates now use the rehearsal's.",
+  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
   rehTot: (a, b) => `Estimated ${a} · real ${b}`, rehEst: "Estimated", rehReal: "Real",
   sheetTitle: "Edit sheet", sheetNote: "Estimated times: find each line in the recording.", cuesTitle: "Cues for the edit", clipsTitle: "Clips for the cold open", openNotesTitle: "Open notes", modeLbl: "Mode",
   aiPickNeed: "AI only works inside Claude.",
@@ -93,7 +93,7 @@ const G = {
   prodId: null, status: "borrador", layout: null, manual: false,
   cold: { hook: null, promise: null }, coldLost: false,
   notes: [], rehearsals: [], target: "", loadedAt: 0, saveState: "", conflict: null,
-  prods: [], snaps: [], snapSel: [], diffHTML: "", sel: null, editing: null, aiPick: null,
+  prods: [], snaps: [], loadErr: { prods: false, snaps: false }, srMsg: "", snapSel: [], diffHTML: "", sel: null, editing: null, aiPick: null,
   R: null, U: [], secs: [], flags: [], cands: null, text: "",
   sid: Math.random().toString(36).slice(2), role: lsGet("sd-role") === "presentador" ? "presentador" : "productor",
 };
@@ -208,8 +208,9 @@ async function loadProds() {
   try {
     const q = await db.collection("producciones").orderBy("updatedAt", "desc").limit(30).get();
     G.prods = q.docs.map((d) => ({ id: d.id, title: (d.data() || {}).title || "", status: (d.data() || {}).status || "borrador", updatedAt: (d.data() || {}).updatedAt || 0 }));
+    G.loadErr.prods = false;
     if (G.mode === "guion") renderProdBar();
-  } catch (e) {}
+  } catch (e) { G.loadErr.prods = true; if ($("gSeriesFull") || $("epList")) renderSeriesAll(); }
 }
 function applyProd(id, d) {
   G.prodId = id;
@@ -242,7 +243,8 @@ async function loadSnaps() {
   try {
     const q = await db.collection("instantaneas").where("prodId", "==", G.prodId).limit(60).get();
     G.snaps = q.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => b.at - a.at);
-  } catch (e) {}
+    G.loadErr.snaps = false;
+  } catch (e) { G.loadErr.snaps = true; if ($("gRev")) renderRevisions(); }
 }
 async function addSnap(name) {
   const db = await caps.db;
@@ -564,8 +566,10 @@ function renderRevisions() {
     const fmtD = (x) => new Date(x).toLocaleString(UI, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
     const list = G.snaps.length ? `<ul class="snaps">${G.snaps.map((s) => `<li><label><input type="checkbox" data-snap="${h(s.id)}"${G.snapSel.includes(s.id) ? " checked" : ""}> <b>${h(s.name)}</b></label><span class="hint">${fmtD(s.at)} · ${h(t("status")[s.status] || s.status)} · ${s.wc} ${h(t("words"))}</span><button class="small linkish" data-vs="${h(s.id)}">${h(t("snapVsCurrent"))}</button></li>`).join("")}</ul>` : `<p class="hint">${h(t("snapNone"))}</p>`;
     el.innerHTML = `<header class="g-h"><h2>${h(t("revTitle"))}</h2></header><p class="lead">${h(t("revLead"))}</p>
+      ${G.loadErr.snaps ? `<p class="status err" role="alert">${h(t("snapLoadFail"))} <button type="button" class="small" id="snapRetry">${h(t("srRetry"))}</button></p>` : ""}
       ${db ? `<div class="snap-form"><input id="snapName" placeholder="${h(t("snapPh"))}" maxlength="80"><button class="small primary" id="snapSave">${h(t("snapSave"))}</button></div>${list}${G.snaps.length > 1 ? `<div class="actions"><button class="small" id="snapCmp">${h(t("snapCompare"))}</button><span class="status" id="snapMsg"></span></div>` : ""}` : `<p class="hint">${h(t("snapNeedsDb"))}</p>`}
       <div id="snapDiff">${G.diffHTML}</div>`;
+    if ($("snapRetry")) $("snapRetry").addEventListener("click", async () => { await loadSnaps(); renderRevisions(); });
     if (!db) return;
     $("snapSave").addEventListener("click", async (e) => { e.target.disabled = true; await addSnap($("snapName").value.trim()); });
     el.querySelectorAll("[data-snap]").forEach((c) => c.addEventListener("change", () => {
@@ -909,9 +913,10 @@ function ppFinishRehearsal() {
     state.kReh = prev ? 0.7 * prev + 0.3 * kNew : kNew;
     if (!state.kCalibrated) state.k = state.kReh;
     const db = await caps.db;
-    if (db) { try { await db.doc("ajustes/ritmo").set({ k: state.kReh, n: (state.kRehN || 0) + 1, updatedAt: Date.now() }); state.kRehN = (state.kRehN || 0) + 1; } catch (e) {} }
+    let paceFail = false;
+    if (db) { try { await db.doc("ajustes/ritmo").set({ k: state.kReh, n: (state.kRehN || 0) + 1, updatedAt: Date.now() }); state.kRehN = (state.kRehN || 0) + 1; } catch (e) { paceFail = true; } }
     updateLive();
-    $("rehMsg").textContent = t("rehApplied");
+    $("rehMsg").textContent = paceFail ? t("rehNotSaved") : t("rehApplied");
   });
   $("rehClose").addEventListener("click", ppClose);
 }

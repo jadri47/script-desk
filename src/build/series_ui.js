@@ -37,9 +37,10 @@ loadProds = async function () {
   try {
     const q = await db.collection("producciones").orderBy("updatedAt", "desc").limit(200).get();
     G.prods = q.docs.map((d) => { const x = d.data() || {}; return { id: d.id, title: x.title || "", status: x.status || "borrador", updatedAt: x.updatedAt || 0, pubDate: x.pubDate || "", nextEp: x.nextEp || "", hasText: !!(x.text && x.text.trim()) }; });
+    G.loadErr.prods = false; G.srMsg = "";
     if (G.mode === "guion" && !V.guided) renderProdBar();
     renderSeriesAll();
-  } catch (e) {}
+  } catch (e) { G.loadErr.prods = true; renderSeriesAll(); }
 };
 function renderSeriesAll() {
   if ($("gSeries")) renderSeries("gSeries");
@@ -88,7 +89,7 @@ async function setPubDate(id, date) {
   if (id === G.prodId) { G.pubDate = date; markDirty(); const p = G.prods.find((x) => x.id === id); if (p) p.pubDate = date; renderSeriesAll(); return; }
   const db = await caps.db;
   if (!db) return;
-  try { await db.collection("producciones").doc(id).update({ pubDate: date }); const p = G.prods.find((x) => x.id === id); if (p) p.pubDate = date; renderSeriesAll(); } catch (e) {}
+  try { await db.collection("producciones").doc(id).update({ pubDate: date }); const p = G.prods.find((x) => x.id === id); if (p) p.pubDate = date; G.srMsg = ""; renderSeriesAll(); } catch (e) { G.srMsg = t("srDateFail"); renderSeriesAll(); }
 }
 async function openFromSeries(id) {
   await openProd(id);
@@ -109,7 +110,7 @@ async function deleteProds(ids) {
   for (const id of ids) { try { await db.collection("producciones").doc(id).delete(); } catch (e) { /* keep going; the list reloads below */ } }
   G.prods = G.prods.filter((p) => !ids.includes(p.id));
   if (wasOpen) { clearTimeout(saveTimer); applyProd(null, {}); G.snaps = []; resetWorkState(); state.result = null; updateLive(); if (V.guided) goStep(1); else setMode("review"); }
-  try { await loadProds(); } catch (e) {}
+  await loadProds(); // reports its own failure (G.loadErr.prods) and shows it in the list
   renderSeriesAll(); if (typeof renderEpStrip === "function") renderEpStrip();
 }
 function renderSeries(cid) {
