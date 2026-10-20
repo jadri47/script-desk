@@ -29,6 +29,12 @@ async def run(b,ui,vp,ex):
     ok(n+": maximizer still works",await pg.evaluate("ED.full"))
     await pg.evaluate("setFull(false)"); await pg.wait_for_timeout(500)
     ok(n+": after Listo the review still shows that paragraph",await pg.evaluate("WK.i")==target)
+    nbar=await pg.evaluate("document.querySelectorAll('.rl-bar').length")
+    ok(n+": one bar per paragraph",nbar==nb,(nbar,nb))
+    tgt=min(nb-1,5)
+    await pg.evaluate(f"WK.blocks[{tgt}].el.scrollIntoView({{block:'center'}})"); await pg.wait_for_timeout(300)
+    await pg.locator(f".rl-bar[data-b='{tgt}']").click(); await pg.wait_for_timeout(500)
+    ok(n+": bar click selects the paragraph",await pg.evaluate(f"WK.i=={tgt} && document.querySelector('.rl-bar.on').dataset.b=='{tgt}' && !ED.full"))
     # accept on the first paragraph with a patch card
     await pg.evaluate("wkGo(WK.list[0])"); await pg.wait_for_timeout(600)
     if await pg.locator("[data-fxapply]:visible").count():
@@ -39,6 +45,8 @@ async def run(b,ui,vp,ex):
         edtxt=await pg.evaluate("ED.el.innerText.replace(/\\s+/g,' ').trim()")
         msg=await pg.evaluate("document.getElementById('fxMsg').textContent")
         ok(n+": accepted fix lands in the script, or says where it went",(after!=before and len(edtxt)>50) or bool(msg and ("arranque" in msg or "cold open" in msg or "Preparar" in msg or "Prepare" in msg)),msg)
+        vis=await pg.evaluate("(()=>{const li=document.querySelector('.topfix.walk li.fx-done');return li?getComputedStyle(li.querySelector('.fx-body')).display:'none'})()")
+        ok(n+": accepted card is collapsed",vis=="none",vis)
         D=await pg.evaluate("[...document.querySelectorAll('.topfix.walk li.fx-done')].length")
         ok(n+": green accepted card stays in the review",D>=1,D)
         ok(n+": strip tick/count mention applied",await pg.evaluate("/\\b1\\b/.test(document.querySelector('.wk-where .hint').textContent)"))
@@ -53,6 +61,8 @@ async def run(b,ui,vp,ex):
             af=await pg.evaluate("$('script').value"); ed=await pg.evaluate("domToModel(ED.el).text")
             ok(n+": patch changes script and editor text",af!=b4 and ed.strip()==af.strip(),(len(b4),len(af),len(ed)))
             ok(n+": changed text flashes",await pg.evaluate("CSS.highlights.has('sd-flash')"))
+            await pg.locator(".topfix.walk li.fx-done:has(.fx-chg) > .fx-top").first.click(); await pg.wait_for_timeout(200)
+            ok(n+": tapping the green card shows the change",await pg.evaluate("(()=>{const x=document.querySelector('.topfix.walk li.fx-done.open .fx-chg');return !!x&&x.querySelector('del,ins')!==null})()"))
             changed=True; break
     ok(n+": found a patch card to apply",changed)
     # ignore

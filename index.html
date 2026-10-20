@@ -945,6 +945,28 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 .fx-skipped .fx-badge{margin-left:auto;color:var(--ink-soft,var(--ink))}
 .fx-skipped .linkish{filter:none}
 .wk-tick.wk-d{background:var(--verde)}
+/* vertical bar beside each paragraph (select it for editing) */
+.rl-bar{position:absolute;top:0;left:calc(var(--gw,104px) - 12px);width:12px;padding:0;border:0;background:transparent;cursor:pointer;pointer-events:auto;will-change:transform}
+.rl-bar::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:4px;border-radius:2px;background:var(--rule);transition:background .15s,width .15s,left .15s}
+.rl-bar.sev-r::after{background:color-mix(in srgb,var(--rojo) 55%,var(--rule))}
+.rl-bar.sev-a::after{background:color-mix(in srgb,#E8A33A 60%,var(--rule))}
+.rl-bar.sev-d::after{background:var(--verde)}
+.rl-bar:hover::after{left:2px;width:8px;background:var(--accent)}
+.rl-bar.on::after{left:2px;width:8px;background:var(--accent)}
+.rl-bar:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.rl-row{padding-right:14px}
+@media (max-width:899px){.rl-bar{width:16px;left:calc(var(--gw,46px) - 16px)}.rl-bar::after{left:6px}.rl-bar:hover::after,.rl-bar.on::after{left:4px}}
+/* accepted card: collapsed, tap to see the change */
+.fx-done .fx-top{cursor:pointer}
+.fx-done .fx-body{display:none;margin-top:8px}
+.fx-done.open .fx-body{display:block}
+.fx-chev{font-size:12px;transition:transform .15s;color:var(--verde)}
+.fx-done.open .fx-chev{transform:rotate(180deg)}
+.fx-chg{display:grid;gap:6px;font-size:14px;line-height:1.45}
+.fx-chg-l{display:inline-block;min-width:54px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)}
+.fx-chg del{background:var(--rojo-bg);color:var(--rojo);text-decoration:line-through}
+.fx-chg ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
+.topfix.walk .fx-done .fx-top{scroll-margin-top:200px;scroll-margin-bottom:90px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -7486,7 +7508,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
   fxField: { title: "Título", keyword: "Palabra clave", thumb: "Miniatura", description: "Descripción" }, fxNotFixed: "No resuelve la revisión todavía.",
-  fxSkip: "Ahora no", fxDone: "Aplicado", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
+  fxSkip: "Ahora no", fxDone: "Aplicado", fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
@@ -7494,7 +7516,7 @@ Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
   fxField: { title: "Title", keyword: "Keyword", thumb: "Thumbnail", description: "Description" }, fxNotFixed: "Doesn't pass the check yet.",
-  fxSkip: "Not now", fxDone: "Applied", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
+  fxSkip: "Not now", fxDone: "Applied", fxBefore: "Before", fxAfter: "After", fxShowChange: "See the change", fxEmptyChg: "(removed)", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
 });
 
 state.fixUndo = state.fixUndo || [];
@@ -7629,12 +7651,15 @@ function applyProposal(p, c) {
   if (p.kind === "patch" && !textChanged) { rerunReview(t("fxNoChange")); return; }
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
-  let pre = 0, post = 0;
+  let pre = 0, post = 0, aEnd = 0, chg = null;
   if (textChanged) {
     while (pre < before.length && pre < after.length && before[pre] === after[pre]) pre++;
     let a = before.length, b = after.length;
     while (a > pre && b > pre && before[a - 1] === after[b - 1]) { a--; b--; }
-    post = b;
+    post = b; aEnd = a;
+    const clip = (x) => (x.length > 260 ? x.slice(0, 120) + " … " + x.slice(-120) : x);
+    const c0 = Math.max(0, pre - 40), c1 = Math.min(before.length, aEnd + 40), d1 = Math.min(after.length, post + 40);
+    chg = { pre: (c0 > 0 ? "…" : "") + before.slice(c0, pre), from: clip(before.slice(pre, aEnd)), to: clip(after.slice(pre, post)), post: after.slice(post, d1) + (c1 < before.length ? "…" : "") };
     $("script").value = after;
   }
   if (p.kind === "cold") {
@@ -7645,7 +7670,7 @@ function applyProposal(p, c) {
     const bi = typeof WK !== "undefined" && WK.ok ? WK.i : -1;
     const where = p.kind === "field" ? p.field : p.kind === "cold" && !textChanged ? "cold" : "script";
     state.fixLog = state.fixLog.filter((x) => !(x.id === c.id && x.kind === "done" && x.bi === bi));
-    state.fixLog.push({ id: c.id, ids: c.ids || [c.id], label: typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label, kind: "done", bi, what: p.label || "", where });
+    state.fixLog.push({ id: c.id, ids: c.ids || [c.id], label: typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label, kind: "done", bi, what: p.label || "", where, chg });
   }
   state.fixSel = {}; state.fixAi = {};
   rerunReview(textChanged ? t("fxApplied") : p.kind === "field" ? t("fxOut")((t("fxField") || {})[p.field] || p.field) : t("fxOutCold"));
@@ -11430,9 +11455,15 @@ function wkCardsFor(i) {
 function wkLogFor(i) {
   return (state.fixLog || []).filter((x) => x.bi === i && (x.kind === "done" || x.ids.every((id) => state.fixDismissed.has(id))));
 }
+function wkChgHTML(x) {
+  const c = x.chg;
+  if (!c) return "";
+  const e = (v) => (v ? h(v) : `<i>${h(t("fxEmptyChg"))}</i>`);
+  return `<div class="fx-chg"><div><span class="fx-chg-l">${h(t("fxBefore"))}</span> ${h(c.pre)}<del>${e(c.from)}</del>${h(c.post)}</div><div><span class="fx-chg-l">${h(t("fxAfter"))}</span> ${h(c.pre)}<ins>${e(c.to)}</ins>${h(c.post)}</div></div>`;
+}
 function wkLogHTML(i) {
   return wkLogFor(i).map((x) => x.kind === "done"
-    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span></div>${x.what ? `<div class="hint">${h(x.what)}</div>` : ""}${x.where === "script" ? "" : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}</li>`
+    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${x.what ? `<div class="hint">${h(x.what)}</div>` : ""}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}</div></li>`
     : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
 }
 const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? (wkLogFor(i).some((x) => x.kind === "done") ? "d" : "ok") : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");
@@ -11479,6 +11510,7 @@ function wkRangesFor(i) {
   return out;
 }
 function wkPaint(scroll) {
+  if (typeof railMarkActive === "function") railMarkActive();
   const hl = wkHL();
   wkClearPaint();
   if (!WK.ok || !wkReady()) return;
@@ -11575,6 +11607,11 @@ function wkWire() {
   root.querySelectorAll("[data-wk]").forEach((b) => b.addEventListener("click", () => wkGo(+b.dataset.wk)));
   root.querySelectorAll("[data-wkgo]").forEach((b) => b.addEventListener("click", () => wkStep(+b.dataset.wkgo)));
   root.querySelectorAll(".cat-chip[data-cat]").forEach((b) => b.addEventListener("click", () => catToggle(b.dataset.cat)));
+  root.querySelectorAll("li.fx-done > .fx-top").forEach((top) => {
+    const tg = () => { const li = top.closest("li"), on = !li.classList.contains("open"); li.classList.toggle("open", on); top.setAttribute("aria-expanded", on ? "true" : "false"); };
+    top.addEventListener("click", tg);
+    top.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tg(); } });
+  });
   const end = root.querySelector("[data-wkend]");
   if (end) end.addEventListener("click", () => goStep(3));
   // tapping the quoted text of a card shows it in the script
@@ -11681,11 +11718,11 @@ document.addEventListener("click", (e) => {
 //  - a minimap above the text: the whole episode in one row, a window that follows the scroll, tap or drag to jump.
 // The editor's DOM is not touched: the rail is an overlay laid over the box's left padding and positioned from the paragraphs' rectangles.
 Object.assign(T.es, {
-  rlCues: "Para el editor", rlRefs: "Citas", rlMini: "Mapa del episodio: toca o arrastra para ir a ese punto", rlGoPara: "Revisar este párrafo",
+  rlCues: "Para el editor", rlRefs: "Citas", rlBar: (n) => `Seleccionar el párrafo ${n} para editarlo`, rlMini: "Mapa del episodio: toca o arrastra para ir a ese punto", rlGoPara: "Revisar este párrafo",
   rlClose: "Cerrar", rlRisk: "Palabra de riesgo", rlPromise: "Promesa", rlCta: "Pedido al oyente", rlRef: "Cita bíblica", rlMore: (n) => `+${n} más`,
 });
 Object.assign(T.en, {
-  rlCues: "For the editor", rlRefs: "Verses", rlMini: "Episode map: tap or drag to jump to that point", rlGoPara: "Review this paragraph",
+  rlCues: "For the editor", rlRefs: "Verses", rlBar: (n) => `Select paragraph ${n} to edit it`, rlMini: "Episode map: tap or drag to jump to that point", rlGoPara: "Review this paragraph",
   rlClose: "Close", rlRisk: "Risky word", rlPromise: "Promise", rlCta: "Call to action", rlRef: "Bible reference", rlMore: (n) => `+${n} more`,
 });
 const MK_SVG = {
@@ -11706,7 +11743,7 @@ function railOk() {
   return !!(V.guided && V.step === 2 && ED.el && WK.ok && state.result && WK.R === state.result && document.querySelector(".topfix.walk"));
 }
 function railClear() {
-  RL.on = false; RL.popB = -1;
+  RL.on = false; RL.popB = -1; RL.bars = null;
   if (RL.layer) { RL.layer.remove(); RL.layer = null; }
   if (RL.mini) { RL.mini.remove(); RL.mini = null; }
   if (RL.pop) { RL.pop.remove(); RL.pop = null; }
@@ -11763,7 +11800,31 @@ function railMake() {
     RL.layer.appendChild(row);
     return row;
   });
+  // a vertical bar beside every paragraph: one tap selects it for editing
+  RL.bars = WK.blocks.map((b, i) => {
+    const bar = document.createElement("button");
+    bar.type = "button"; bar.className = "rl-bar"; bar.dataset.b = i;
+    bar.title = bar.ariaLabel = t("rlBar")(i + 1);
+    bar.addEventListener("click", (e) => { e.preventDefault(); railSelect(i); });
+    RL.layer.appendChild(bar);
+    return bar;
+  });
+  railMarkActive();
   RL.on = true;
+}
+function railMarkActive() {
+  if (!RL.bars) return;
+  RL.bars.forEach((b, i) => { b.classList.toggle("on", i === WK.i); b.className = b.className.replace(/ sev-\w+/, "") + " sev-" + (typeof wkSev === "function" ? wkSev(i) : "ok"); });
+}
+// tap on a bar: that paragraph becomes the one under review and the caret goes to its start
+function railSelect(i) {
+  const b = WK.blocks[i];
+  if (!b) return;
+  wkGo(i, false);
+  try {
+    const m = WK.map.find((x) => b.el.contains(x.n));
+    if (m) { const r = document.createRange(); r.setStart(m.n, 0); r.collapse(true); ED.el.focus({ preventScroll: true }); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  } catch (e) {}
 }
 function railLayout() {
   if (!RL.on || !RL.layer || !ED.el) return;
@@ -11777,6 +11838,8 @@ function railLayout() {
     // a paragraph taller than the screen keeps its row pinned to the top until the paragraph ends
     const vis = br.bottom - er.top > 4 && y < H;
     row.style.display = vis ? "" : "none";
+    const bar = RL.bars && RL.bars[i];
+    if (bar) { bar.style.display = vis ? "" : "none"; bar.style.transform = `translateY(${Math.round(y)}px)`; bar.style.height = Math.max(8, Math.round(bh) - 2) + "px"; }
     if (vis) {
       const rh = row.offsetHeight || 24;
       const ty = y + 2 >= 0 ? y + 2 : Math.min(0, y + bh - rh);

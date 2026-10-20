@@ -5,11 +5,11 @@
 //  - a minimap above the text: the whole episode in one row, a window that follows the scroll, tap or drag to jump.
 // The editor's DOM is not touched: the rail is an overlay laid over the box's left padding and positioned from the paragraphs' rectangles.
 Object.assign(T.es, {
-  rlCues: "Para el editor", rlRefs: "Citas", rlMini: "Mapa del episodio: toca o arrastra para ir a ese punto", rlGoPara: "Revisar este párrafo",
+  rlCues: "Para el editor", rlRefs: "Citas", rlBar: (n) => `Seleccionar el párrafo ${n} para editarlo`, rlMini: "Mapa del episodio: toca o arrastra para ir a ese punto", rlGoPara: "Revisar este párrafo",
   rlClose: "Cerrar", rlRisk: "Palabra de riesgo", rlPromise: "Promesa", rlCta: "Pedido al oyente", rlRef: "Cita bíblica", rlMore: (n) => `+${n} más`,
 });
 Object.assign(T.en, {
-  rlCues: "For the editor", rlRefs: "Verses", rlMini: "Episode map: tap or drag to jump to that point", rlGoPara: "Review this paragraph",
+  rlCues: "For the editor", rlRefs: "Verses", rlBar: (n) => `Select paragraph ${n} to edit it`, rlMini: "Episode map: tap or drag to jump to that point", rlGoPara: "Review this paragraph",
   rlClose: "Close", rlRisk: "Risky word", rlPromise: "Promise", rlCta: "Call to action", rlRef: "Bible reference", rlMore: (n) => `+${n} more`,
 });
 const MK_SVG = {
@@ -30,7 +30,7 @@ function railOk() {
   return !!(V.guided && V.step === 2 && ED.el && WK.ok && state.result && WK.R === state.result && document.querySelector(".topfix.walk"));
 }
 function railClear() {
-  RL.on = false; RL.popB = -1;
+  RL.on = false; RL.popB = -1; RL.bars = null;
   if (RL.layer) { RL.layer.remove(); RL.layer = null; }
   if (RL.mini) { RL.mini.remove(); RL.mini = null; }
   if (RL.pop) { RL.pop.remove(); RL.pop = null; }
@@ -87,7 +87,31 @@ function railMake() {
     RL.layer.appendChild(row);
     return row;
   });
+  // a vertical bar beside every paragraph: one tap selects it for editing
+  RL.bars = WK.blocks.map((b, i) => {
+    const bar = document.createElement("button");
+    bar.type = "button"; bar.className = "rl-bar"; bar.dataset.b = i;
+    bar.title = bar.ariaLabel = t("rlBar")(i + 1);
+    bar.addEventListener("click", (e) => { e.preventDefault(); railSelect(i); });
+    RL.layer.appendChild(bar);
+    return bar;
+  });
+  railMarkActive();
   RL.on = true;
+}
+function railMarkActive() {
+  if (!RL.bars) return;
+  RL.bars.forEach((b, i) => { b.classList.toggle("on", i === WK.i); b.className = b.className.replace(/ sev-\w+/, "") + " sev-" + (typeof wkSev === "function" ? wkSev(i) : "ok"); });
+}
+// tap on a bar: that paragraph becomes the one under review and the caret goes to its start
+function railSelect(i) {
+  const b = WK.blocks[i];
+  if (!b) return;
+  wkGo(i, false);
+  try {
+    const m = WK.map.find((x) => b.el.contains(x.n));
+    if (m) { const r = document.createRange(); r.setStart(m.n, 0); r.collapse(true); ED.el.focus({ preventScroll: true }); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  } catch (e) {}
 }
 function railLayout() {
   if (!RL.on || !RL.layer || !ED.el) return;
@@ -101,6 +125,8 @@ function railLayout() {
     // a paragraph taller than the screen keeps its row pinned to the top until the paragraph ends
     const vis = br.bottom - er.top > 4 && y < H;
     row.style.display = vis ? "" : "none";
+    const bar = RL.bars && RL.bars[i];
+    if (bar) { bar.style.display = vis ? "" : "none"; bar.style.transform = `translateY(${Math.round(y)}px)`; bar.style.height = Math.max(8, Math.round(bh) - 2) + "px"; }
     if (vis) {
       const rh = row.offsetHeight || 24;
       const ty = y + 2 >= 0 ? y + 2 : Math.min(0, y + bh - rh);

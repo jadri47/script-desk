@@ -6,7 +6,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
   fxField: { title: "Título", keyword: "Palabra clave", thumb: "Miniatura", description: "Descripción" }, fxNotFixed: "No resuelve la revisión todavía.",
-  fxSkip: "Ahora no", fxDone: "Aplicado", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
+  fxSkip: "Ahora no", fxDone: "Aplicado", fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
@@ -14,7 +14,7 @@ Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
   fxField: { title: "Title", keyword: "Keyword", thumb: "Thumbnail", description: "Description" }, fxNotFixed: "Doesn't pass the check yet.",
-  fxSkip: "Not now", fxDone: "Applied", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
+  fxSkip: "Not now", fxDone: "Applied", fxBefore: "Before", fxAfter: "After", fxShowChange: "See the change", fxEmptyChg: "(removed)", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
 });
 
 state.fixUndo = state.fixUndo || [];
@@ -149,12 +149,15 @@ function applyProposal(p, c) {
   if (p.kind === "patch" && !textChanged) { rerunReview(t("fxNoChange")); return; }
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
-  let pre = 0, post = 0;
+  let pre = 0, post = 0, aEnd = 0, chg = null;
   if (textChanged) {
     while (pre < before.length && pre < after.length && before[pre] === after[pre]) pre++;
     let a = before.length, b = after.length;
     while (a > pre && b > pre && before[a - 1] === after[b - 1]) { a--; b--; }
-    post = b;
+    post = b; aEnd = a;
+    const clip = (x) => (x.length > 260 ? x.slice(0, 120) + " … " + x.slice(-120) : x);
+    const c0 = Math.max(0, pre - 40), c1 = Math.min(before.length, aEnd + 40), d1 = Math.min(after.length, post + 40);
+    chg = { pre: (c0 > 0 ? "…" : "") + before.slice(c0, pre), from: clip(before.slice(pre, aEnd)), to: clip(after.slice(pre, post)), post: after.slice(post, d1) + (c1 < before.length ? "…" : "") };
     $("script").value = after;
   }
   if (p.kind === "cold") {
@@ -165,7 +168,7 @@ function applyProposal(p, c) {
     const bi = typeof WK !== "undefined" && WK.ok ? WK.i : -1;
     const where = p.kind === "field" ? p.field : p.kind === "cold" && !textChanged ? "cold" : "script";
     state.fixLog = state.fixLog.filter((x) => !(x.id === c.id && x.kind === "done" && x.bi === bi));
-    state.fixLog.push({ id: c.id, ids: c.ids || [c.id], label: typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label, kind: "done", bi, what: p.label || "", where });
+    state.fixLog.push({ id: c.id, ids: c.ids || [c.id], label: typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label, kind: "done", bi, what: p.label || "", where, chg });
   }
   state.fixSel = {}; state.fixAi = {};
   rerunReview(textChanged ? t("fxApplied") : p.kind === "field" ? t("fxOut")((t("fxField") || {})[p.field] || p.field) : t("fxOutCold"));

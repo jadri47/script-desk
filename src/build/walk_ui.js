@@ -158,9 +158,15 @@ function wkCardsFor(i) {
 function wkLogFor(i) {
   return (state.fixLog || []).filter((x) => x.bi === i && (x.kind === "done" || x.ids.every((id) => state.fixDismissed.has(id))));
 }
+function wkChgHTML(x) {
+  const c = x.chg;
+  if (!c) return "";
+  const e = (v) => (v ? h(v) : `<i>${h(t("fxEmptyChg"))}</i>`);
+  return `<div class="fx-chg"><div><span class="fx-chg-l">${h(t("fxBefore"))}</span> ${h(c.pre)}<del>${e(c.from)}</del>${h(c.post)}</div><div><span class="fx-chg-l">${h(t("fxAfter"))}</span> ${h(c.pre)}<ins>${e(c.to)}</ins>${h(c.post)}</div></div>`;
+}
 function wkLogHTML(i) {
   return wkLogFor(i).map((x) => x.kind === "done"
-    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span></div>${x.what ? `<div class="hint">${h(x.what)}</div>` : ""}${x.where === "script" ? "" : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}</li>`
+    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${x.what ? `<div class="hint">${h(x.what)}</div>` : ""}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}</div></li>`
     : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
 }
 const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? (wkLogFor(i).some((x) => x.kind === "done") ? "d" : "ok") : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");
@@ -207,6 +213,7 @@ function wkRangesFor(i) {
   return out;
 }
 function wkPaint(scroll) {
+  if (typeof railMarkActive === "function") railMarkActive();
   const hl = wkHL();
   wkClearPaint();
   if (!WK.ok || !wkReady()) return;
@@ -303,6 +310,11 @@ function wkWire() {
   root.querySelectorAll("[data-wk]").forEach((b) => b.addEventListener("click", () => wkGo(+b.dataset.wk)));
   root.querySelectorAll("[data-wkgo]").forEach((b) => b.addEventListener("click", () => wkStep(+b.dataset.wkgo)));
   root.querySelectorAll(".cat-chip[data-cat]").forEach((b) => b.addEventListener("click", () => catToggle(b.dataset.cat)));
+  root.querySelectorAll("li.fx-done > .fx-top").forEach((top) => {
+    const tg = () => { const li = top.closest("li"), on = !li.classList.contains("open"); li.classList.toggle("open", on); top.setAttribute("aria-expanded", on ? "true" : "false"); };
+    top.addEventListener("click", tg);
+    top.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tg(); } });
+  });
   const end = root.querySelector("[data-wkend]");
   if (end) end.addEventListener("click", () => goStep(3));
   // tapping the quoted text of a card shows it in the script

@@ -515,3 +515,25 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 .fx-skipped .fx-badge{margin-left:auto;color:var(--ink-soft,var(--ink))}
 .fx-skipped .linkish{filter:none}
 .wk-tick.wk-d{background:var(--verde)}
+/* vertical bar beside each paragraph (select it for editing) */
+.rl-bar{position:absolute;top:0;left:calc(var(--gw,104px) - 12px);width:12px;padding:0;border:0;background:transparent;cursor:pointer;pointer-events:auto;will-change:transform}
+.rl-bar::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:4px;border-radius:2px;background:var(--rule);transition:background .15s,width .15s,left .15s}
+.rl-bar.sev-r::after{background:color-mix(in srgb,var(--rojo) 55%,var(--rule))}
+.rl-bar.sev-a::after{background:color-mix(in srgb,#E8A33A 60%,var(--rule))}
+.rl-bar.sev-d::after{background:var(--verde)}
+.rl-bar:hover::after{left:2px;width:8px;background:var(--accent)}
+.rl-bar.on::after{left:2px;width:8px;background:var(--accent)}
+.rl-bar:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.rl-row{padding-right:14px}
+@media (max-width:899px){.rl-bar{width:16px;left:calc(var(--gw,46px) - 16px)}.rl-bar::after{left:6px}.rl-bar:hover::after,.rl-bar.on::after{left:4px}}
+/* accepted card: collapsed, tap to see the change */
+.fx-done .fx-top{cursor:pointer}
+.fx-done .fx-body{display:none;margin-top:8px}
+.fx-done.open .fx-body{display:block}
+.fx-chev{font-size:12px;transition:transform .15s;color:var(--verde)}
+.fx-done.open .fx-chev{transform:rotate(180deg)}
+.fx-chg{display:grid;gap:6px;font-size:14px;line-height:1.45}
+.fx-chg-l{display:inline-block;min-width:54px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)}
+.fx-chg del{background:var(--rojo-bg);color:var(--rojo);text-decoration:line-through}
+.fx-chg ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
+.topfix.walk .fx-done .fx-top{scroll-margin-top:200px;scroll-margin-bottom:90px}
