@@ -1,5 +1,15 @@
 # Decisions (newest first)
 
+## 2026-10-20: silent failures now say so (Adrian: "Fix both", "Fix all three"; wording approved as shown)
+
+- The six empty catches left on 2026-10-19 now show a message: episode list load (`guion_ui.js`, `series_ui.js`, with
+  **Retry**), typed publish date not saved (previous date kept), saved-versions load (**Retry**), rehearsal pace not
+  saved (the old text said "Ritmo actualizado" even when the write failed). Plain `status err` lines, no pop-up.
+- Pinned by `pwerr.py` (20 checks, ES+EN, a db that rejects). Seen red on the old build first, green after.
+- Known and unchanged: `pw8` fails on the previous commit too (it waits for the old `#gSeries-t` input, now behind the
+  "+ Planear otro episodio" button). Stale selector, not caused by this change, not fixed here.
+- Plan step 6, prompt caching: Adrian chose **B, leave it**.
+
 ## 2026-10-19: desktop hardening (docs/PLAN-2026-10-desktop.md)
 
 **Main use is a computer browser (Adrian, 2026-10-19).** Phone items are parked.
@@ -15,7 +25,7 @@
   sonnet default $0.012 avg), cache write/read 0. At this volume even a working cache saves cents a month;
   moving instructions into the system block is a server change + deploy for no visible gain. Revisit if
   usage grows. Options were: A move rules into the cached block, B leave, C remove the cache marker and warning.
-- **Empty catches:** 20 got a "best effort: why" comment (behaviour unchanged). **Six left as they were; each can
+- **Empty catches:** 20 got a "best effort: why" comment (behaviour unchanged). **Six left as they were (fixed 2026-10-20, see above); each can
   hide a failure the person would care about** (Adrian decides, one step each):
   - `guion_ui.js:212` `loadProds` fails: the episode list stays empty, which looks like lost episodes.
   - `series_ui.js:42` and `:112` same, for the calendar/episode list.
