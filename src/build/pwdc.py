@@ -36,6 +36,9 @@ async def run(b,ui,vp,ex):
     await pg.evaluate(f"WK.blocks[{tgt}].el.scrollIntoView({{block:'center'}})"); await pg.wait_for_timeout(300)
     await pg.locator(f".rl-bar[data-b='{tgt}']").click(); await pg.wait_for_timeout(500)
     ok(n+": bar click selects the paragraph",await pg.evaluate(f"WK.i=={tgt} && document.querySelector('.rl-bar.on').dataset.b=='{tgt}' && !ED.full"))
+    # phone: the bar must not focus the editor (that opens the keyboard); desktop puts the caret there
+    foc=await pg.evaluate("document.activeElement===ED.el")
+    ok(n+": bar click "+("leaves the keyboard closed" if vp['width']<=640 else "puts the caret in the script"),foc==(vp['width']>640),foc)
     # accept on the first paragraph with a patch card
     await pg.evaluate("wkGo(WK.list[0])"); await pg.wait_for_timeout(600)
     if await pg.locator("[data-fxapply]:visible").count():

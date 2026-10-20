@@ -108,6 +108,8 @@ function railSelect(i) {
   const b = WK.blocks[i];
   if (!b) return;
   wkGo(i, false);
+  // phone: focusing the editor opens the keyboard over the review, so only select (jadri47, 2026-10-19: "select without opening the keyboard")
+  if (isPhone() && document.activeElement !== ED.el) return;
   try {
     const m = WK.map.find((x) => b.el.contains(x.n));
     if (m) { const r = document.createRange(); r.setStart(m.n, 0); r.collapse(true); ED.el.focus({ preventScroll: true }); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
