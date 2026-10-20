@@ -4,7 +4,7 @@ from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(); pg = await b.new_page(viewport={"width":1440,"height":900}); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
+        b = await getattr(p, __import__("os").environ.get("SD_BROWSER", "chromium")).launch(); pg = await b.new_page(viewport={"width":1440,"height":900}); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
         await pg.add_init_script("window.__SB_MODE='member'; if(!sessionStorage.getItem('seen0')){localStorage.setItem('sd-intro','1');sessionStorage.setItem('seen0','1')}")
         await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
         await pg.goto(SDU+"standalone/site/index.html"); await pg.wait_for_timeout(700)

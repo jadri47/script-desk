@@ -19,7 +19,7 @@ PILL = "(()=>{const p=document.getElementById('scorePill');if(!p)return null;con
 FRESH = "(()=>{const R=analyze($('script').value, readOpts());return scoreOf(R, state.fixDismissed).score})()"
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch()
+        b = await getattr(p, __import__("os").environ.get("SD_BROWSER", "chromium")).launch()  # SD_BROWSER=chromium|firefox|webkit
         for (w, h, n) in [(390, 844, "m"), (1440, 900, "d")]:
             print("=====", n)
             pg, errs = await mk(b, w, h, pre="localStorage.setItem('sd-expert','0')")

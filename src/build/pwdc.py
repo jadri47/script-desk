@@ -98,7 +98,7 @@ async def run(b,ui,vp,ex):
     await pg.close()
 async def main():
     async with async_playwright() as p:
-        b=await p.chromium.launch()
+        b=await getattr(p, __import__("os").environ.get("SD_BROWSER", "chromium")).launch()  # SD_BROWSER=chromium|firefox|webkit
         for ui in ["es","en"]:
             for vp in [{"width":1280,"height":800},{"width":390,"height":780}]:
                 await run(b,ui,vp,"bad")
