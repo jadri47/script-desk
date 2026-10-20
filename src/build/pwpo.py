@@ -3,7 +3,7 @@ import asyncio, json, re
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
 URL = SDU+"standalone/site/index.html"
-OUT = "/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
+OUT = __import__("os").path.join(__import__("tempfile").gettempdir(), "script-desk-pw") + "/"; __import__("os").makedirs(OUT, exist_ok=True)  # screenshots; folder exists on every OS
 V1 = "«Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.»"
 V2 = "«Jehová es mi pastor; nada me faltará.»"
 TEXT = f"""¿Alguna vez has sentido que la tormenta no termina? Hoy vamos a ver qué dice la Biblia sobre la fé en medio de la prueba y de como Dios nos sostiene.

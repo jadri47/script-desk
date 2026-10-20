@@ -3,7 +3,7 @@ import asyncio
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
 URL = SDU+"standalone/site/index.html"
-OUT = "/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
+OUT = __import__("os").path.join(__import__("tempfile").gettempdir(), "script-desk-pw") + "/"; __import__("os").makedirs(OUT, exist_ok=True)  # screenshots; folder exists on every OS
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); errs = []

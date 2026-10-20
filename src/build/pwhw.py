@@ -3,7 +3,7 @@ import asyncio
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
 URL = SDU+"standalone/site/index.html"
-OUT = "/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
+OUT = __import__("os").path.join(__import__("tempfile").gettempdir(), "script-desk-pw") + "/"; __import__("os").makedirs(OUT, exist_ok=True)  # screenshots; folder exists on every OS
 JS = """(()=>{const m=document.querySelector('.masthead');const sel=['h1','.xswitch','#stepBar','#exPick','#authBar:not([hidden])','.themebtn','.langswitch'];
 const out=[];for(const s of sel){const e=m.querySelector(s);if(!e)continue;const b=e.getBoundingClientRect();if(!b.height)continue;out.push([s,Math.round(b.top+b.height/2),Math.round(b.left),Math.round(b.right)])}
 const cy=out.map(o=>o[1]);const mr=m.getBoundingClientRect();return {spread:Math.max(...cy)-Math.min(...cy),over:out.filter(o=>o[3]>mr.right+1).map(o=>o[0]),hs:document.documentElement.scrollWidth>innerWidth,steps:[...m.querySelectorAll('.sb button')].every(b=>b.getBoundingClientRect().width>20)}})()"""

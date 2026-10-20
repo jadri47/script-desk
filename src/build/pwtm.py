@@ -3,7 +3,7 @@ import asyncio, json
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
 URL = SDU+"standalone/site/index.html"
-OUT = "/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
+OUT = __import__("os").path.join(__import__("tempfile").gettempdir(), "script-desk-pw") + "/"; __import__("os").makedirs(OUT, exist_ok=True)  # screenshots; folder exists on every OS
 def filler(n, s): return " ".join(f"La gracia de Dios sostiene al creyente en el día {s+i} de su camino, aun cuando las fuerzas se acaban." for i in range(n))
 V = "«Jehová es mi pastor; nada me faltará.»"
 T = "Hola a todos, bienvenidos. Oremos juntos. Padre celestial, te damos gracias por este día y por tu palabra, señor te pedimos que abras nuestro corazón. Amén. Hoy veremos qué dice la Biblia sobre el miedo.\n\n"
