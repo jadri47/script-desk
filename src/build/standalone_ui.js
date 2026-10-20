@@ -67,7 +67,7 @@ function renderAuthBar() {
     el.hidden = false; el.className = "auth-bar ok";
     el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p><button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
   }
-  $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) {} lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
+  $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) { /* best effort: sign-out failing still reloads signed out locally */ } lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
 }
 window.__sdAuth.then((a) => { AUTH = a || AUTH; renderAuthBar(); });
 const _gOnLangAuth = gOnLang;
@@ -86,7 +86,7 @@ window.__sdAuth.then(async (a) => {
     const db = await caps.db;
     const s = db && (await db.collection("producciones").doc(last).get());
     if (s && s.exists) await openFromSeries(last);
-  } catch (e) {}
+  } catch (e) { /* best effort: resuming the last episode is a convenience: open a blank script */ }
 });
 
 // Save pending edits when the page is hidden or closed (phone lock, tab switch).
@@ -128,5 +128,5 @@ window.addEventListener("sd-ai-cost", (e) => {
 });
 window.__sdAuth.then(async (a) => {
   if (!a || !a.member || !window.__sb) return;
-  try { const r = await window.__sb.rpc("sd_month_cost"); if (r && r.data != null) { MONTH_COST = Number(r.data); renderAuthBar(); } } catch (e) {}
+  try { const r = await window.__sb.rpc("sd_month_cost"); if (r && r.data != null) { MONTH_COST = Number(r.data); renderAuthBar(); } } catch (e) { /* best effort: month cost is display only */ }
 });

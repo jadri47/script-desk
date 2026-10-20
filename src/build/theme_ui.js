@@ -19,7 +19,7 @@ function paintThemeBtn() {
 $("themeBtn").addEventListener("click", () => {
   const next = themeNow() === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  try { localStorage.setItem("sd-theme", next); } catch (e) {}
+  try { localStorage.setItem("sd-theme", next); } catch (e) { /* best effort: storage blocked: the theme applies but isn't remembered */ }
   paintThemeBtn();
 });
 if (THEME_MQ) { const f = () => paintThemeBtn(); if (THEME_MQ.addEventListener) THEME_MQ.addEventListener("change", f); else if (THEME_MQ.addListener) THEME_MQ.addListener(f); }

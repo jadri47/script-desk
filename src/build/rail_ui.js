@@ -22,7 +22,7 @@ const MK_SVG = {
 const RL = { on: false, items: [], byBlock: [], rows: [], layer: null, mini: null, pop: null, raf: 0, bt: [], T: 1, popB: -1 };
 const rlPhone = () => !SPLIT.on;
 function rlPref(key, def) { try { const v = localStorage.getItem(key); return v === null ? def : v === "1"; } catch (e) { return def; } }
-function rlSet(key, v) { try { localStorage.setItem(key, v ? "1" : "0"); } catch (e) {} }
+function rlSet(key, v) { try { localStorage.setItem(key, v ? "1" : "0"); } catch (e) { /* best effort: storage blocked: the toggle works but isn't remembered */ } }
 const rlCuesOn = () => rlPref("sd-rail-cues", !rlPhone());
 const rlRefsOn = () => rlPref("sd-rail-refs", true);
 
@@ -113,7 +113,7 @@ function railSelect(i) {
   try {
     const m = WK.map.find((x) => b.el.contains(x.n));
     if (m) { const r = document.createRange(); r.setStart(m.n, 0); r.collapse(true); ED.el.focus({ preventScroll: true }); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
-  } catch (e) {}
+  } catch (e) { /* best effort: caret placement is cosmetic: the paragraph is already selected */ }
 }
 function railLayout() {
   if (!RL.on || !RL.layer || !ED.el) return;

@@ -309,7 +309,7 @@ function setFull(on, fromHistory) {
   btn.innerHTML = fullBtnHTML(on);
   btn.title = btn.ariaLabel = t(on ? "edFocusOff" : "edFocus");
   // On a phone the back button closes the writing view instead of leaving the app.
-  if (isPhone() && !fromHistory) { if (on) { try { history.pushState({ sdEd: 1 }, ""); } catch (e) {} } else if (history.state && history.state.sdEd) { try { history.back(); } catch (e) {} } }
+  if (isPhone() && !fromHistory) { if (on) { try { history.pushState({ sdEd: 1 }, ""); } catch (e) { /* best effort: history API unavailable: the back button just won't close full screen */ } } else if (history.state && history.state.sdEd) { try { history.back(); } catch (e) { /* best effort: history API unavailable: the back button just won't close full screen */ } } }
   if (on) { ED.el.focus(); requestAnimationFrame(() => requestAnimationFrame(caretIntoView)); }
   else { syncFromEditor(); ED.el.blur(); ED.el.scrollTop = 0; ED.wrap.scrollIntoView({ block: "nearest" }); }
 }
@@ -366,7 +366,7 @@ function onPaste(e) {
     },
   });
   TA.focus = () => { if (!ED.el) return; if (isPhone()) ED.wrap.scrollIntoView({ block: "nearest", behavior: "smooth" }); else ED.el.focus(); };
-  try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {}
+  try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) { /* best effort: older browsers lack this command: paragraphs still work */ }
 
   const wrap = document.createElement("div");
   wrap.className = "ed-wrap";
@@ -385,11 +385,11 @@ function onPaste(e) {
     const grip = wrap.querySelector("#edGrip"), MIN = 120, maxH = () => Math.round(innerHeight * 0.85);
     const cur = () => ED.el.getBoundingClientRect().height;
     const setH = (px) => { const v = Math.max(MIN, Math.min(maxH(), Math.round(px))); wrap.style.setProperty("--edh", v + "px"); return v; };
-    try { const s = +lsGet("sd-edh"); if (s >= MIN) setH(s); } catch (e) {}
+    try { const s = +lsGet("sd-edh"); if (s >= MIN) setH(s); } catch (e) { /* best effort: saved editor height unreadable: keep the default */ }
     let y0 = 0, h0 = 0, drag = false;
     grip.addEventListener("pointerdown", (e) => { drag = true; y0 = e.clientY; h0 = cur(); grip.setPointerCapture(e.pointerId); grip.classList.add("on"); e.preventDefault(); });
     grip.addEventListener("pointermove", (e) => { if (drag) setH(h0 + (e.clientY - y0)); });
-    const end = () => { if (!drag) return; drag = false; grip.classList.remove("on"); try { lsSet("sd-edh", String(Math.round(cur()))); } catch (e) {} };
+    const end = () => { if (!drag) return; drag = false; grip.classList.remove("on"); try { lsSet("sd-edh", String(Math.round(cur()))); } catch (e) { /* best effort: can't remember the editor height: it resets next visit */ } };
     grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
     grip.addEventListener("keydown", (e) => { if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const v = setH(cur() + (e.key === "ArrowDown" ? 40 : -40)); lsSet("sd-edh", String(v)); } });
     grip.addEventListener("dblclick", () => { wrap.style.removeProperty("--edh"); lsSet("sd-edh", ""); });
@@ -422,7 +422,7 @@ function onPaste(e) {
   setTimeout(() => {
     if (G.prodId || taGet().trim()) return;
     let d = null;
-    try { d = JSON.parse(lsGet("sd-draft") || "null"); } catch (e) {}
+    try { d = JSON.parse(lsGet("sd-draft") || "null"); } catch (e) { /* best effort: unreadable draft: start without one */ }
     if (!d || !d.text || !d.text.trim()) return;
     TA.value = d.text; FMT.marks = Array.isArray(d.marks) ? d.marks : []; renderEd();
     updateLive(); setEdSave(t("edLocal"));

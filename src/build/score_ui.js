@@ -59,7 +59,7 @@ onmessage=function(e){var d=e.data;try{var t0=Date.now();var R=analyze(d.text,d.
     SC.w = w;
   } catch (e) { SC.noWorker = true; SC.w = null; }
 }
-function scKillWorker() { try { if (SC.w) SC.w.terminate(); } catch (e) {} SC.w = null; SC.noWorker = true; clearTimeout(SC.guard); }
+function scKillWorker() { try { if (SC.w) SC.w.terminate(); } catch (e) { /* best effort: worker already gone */ } SC.w = null; SC.noWorker = true; clearTimeout(SC.guard); }
 function scAdapt() { SC.delay = SC.ms > 250 ? Math.min(2000, SC.delay * 2) : SC.ms < 120 ? Math.max(700, Math.round(SC.delay / 2)) : SC.delay; }
 const scIdle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0));
 function scSlim(R) {
@@ -78,7 +78,7 @@ function scQueue(now) {
 function scRun() {
   if (SC.off) return;
   const text = $("script").value;
-  if (!text.trim()) { SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) {} scPaint(); return; }
+  if (!text.trim()) { SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) { /* best effort: storage blocked: nothing to forget */ } scPaint(); return; }
   let opts; try { opts = JSON.parse(JSON.stringify(readOpts())); } catch (e) { return; }
   const seq = ++SC.seq;
   scStartWorker();
@@ -107,7 +107,7 @@ function scApply() {
   if (SC.baseKey !== key || SC.base == null) {
     SC.baseKey = key;
     let b = null;
-    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number") b = o.score; } catch (e) {} }
+    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number") b = o.score; } catch (e) { /* best effort: unreadable saved baseline: show no change arrow */ } }
     if (b == null) { b = S.score; if (!scDemo()) lsSet(key, JSON.stringify({ score: b, at: Date.now() })); }
     SC.base = b;
   }
@@ -191,7 +191,7 @@ function scRenderPop() {
   pop.querySelectorAll("[data-scrow]").forEach((b) => b.addEventListener("click", () => scGoRow(b.dataset.scrow)));
   pop.querySelectorAll("[data-scshow]").forEach((b) => b.addEventListener("click", () => { state.fixDismissed.delete(b.dataset.scshow); scApply(); scRefreshView(); }));
 }
-function scRefreshView() { try { if (state.result) { if (V.guided) renderGuide(); else renderResults(); } } catch (e) {} }
+function scRefreshView() { try { if (state.result) { if (V.guided) renderGuide(); else renderResults(); } } catch (e) { /* best effort: view refresh is cosmetic: the next render redraws */ } }
 function scOpenPop() {
   if (!SC.S) return;
   let scrim = $("scScrim");
@@ -271,7 +271,7 @@ applyLang = function () { _alSC(); scPaint(); };
 const _gsSC = goStep;
 goStep = function (n) { scClosePop(); _gsSC(n); };
 const _dcSC = doClearScript;
-doClearScript = function () { _dcSC(); SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) {} scPaint(); };
+doClearScript = function () { _dcSC(); SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) { /* best effort: storage blocked: nothing to forget */ } scPaint(); };
 if (typeof SPLIT !== "undefined" && SPLIT.mq) SPLIT.mq.addEventListener("change", () => setTimeout(scPlace, 0));
 const _opSC = typeof openPrompter === "function" ? openPrompter : null;
 if (_opSC) openPrompter = function (m) { scClosePop(); return _opSC(m); };

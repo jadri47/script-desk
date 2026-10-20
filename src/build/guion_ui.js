@@ -86,7 +86,7 @@ Object.assign(T.en, {
 const STATUSES = ["borrador", "revision", "aprobado", "grabado"];
 const SEC_COLOR = { hook: "var(--accent)", promise: "var(--verde)", intro: "var(--ink-2)", point: "var(--gold)", body: "var(--rule)", cta: "var(--amarillo)", close: "var(--reg)" };
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* best effort: storage blocked or full: the setting just isn't remembered */ } };
 
 const G = {
   mode: lsGet("sd-mode") === "guion" ? "guion" : "review",
@@ -644,7 +644,7 @@ async function offerFileG(filename, data) {
 const PP = { on: false };
 function ppPrefs() {
   let p = {};
-  try { p = JSON.parse(lsGet("sd-pp") || "{}") || {}; } catch (e) {}
+  try { p = JSON.parse(lsGet("sd-pp") || "{}") || {}; } catch (e) { /* best effort: unreadable prompter settings: use the defaults */ }
   const w = window.innerWidth;
   return { font: p.font || (w < 600 ? 34 : w < 1100 ? 52 : 64), width: p.width || 30, mirrorH: !!p.mirrorH, mirrorV: !!p.mirrorV, cues: p.cues !== false };
 }

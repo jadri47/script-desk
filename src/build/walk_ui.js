@@ -30,10 +30,10 @@ const WK_FAMS = ["hi", "mid", "fill", "pol"];
 const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-quote", "sd-flash"];
 // families the person switched off from the legend (kept on this device only)
 const CATOFF = new Set();
-try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) {}
+try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) { /* best effort: unreadable legend filter: show every category */ }
 function catApplyOff() {
   CATS.forEach((c) => document.documentElement.classList.toggle("cat-off-" + c.id, CATOFF.has(c.id)));
-  try { localStorage.setItem("sd-cats-off", JSON.stringify([...CATOFF])); } catch (e) {}
+  try { localStorage.setItem("sd-cats-off", JSON.stringify([...CATOFF])); } catch (e) { /* best effort: storage blocked: the filter isn't remembered */ }
 }
 catApplyOff();
 function catCounts() {
