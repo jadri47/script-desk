@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio, json
 from playwright.async_api import async_playwright
 TEXT = open("long_es.txt", encoding="utf-8").read(); MOCK = open("mockclaude.js").read()
@@ -10,7 +11,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); res={}
         pg = await b.new_page(viewport={"width":1100,"height":900}); await pg.add_init_script(MOCK)
-        await pg.goto("file:///home/claude/sd/build/work.html"); await pg.wait_for_timeout(300)
+        await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(300)
         res["g1"] = await pg.evaluate(JS)
         await pg.fill("#script", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(900)
         for n in [2,3,4,5]:

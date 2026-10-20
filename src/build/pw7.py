@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 async def main():
@@ -5,7 +6,7 @@ async def main():
         b = await p.chromium.launch(); errs=[]
         for w,hh,n in [(1100,900,"d"),(390,844,"m")]:
             pg = await b.new_page(viewport={"width": w, "height": hh}); pg.on("pageerror", lambda e: errs.append(str(e)))
-            await pg.goto("file:///home/claude/sd/build/work.html"); await pg.wait_for_timeout(300)
+            await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(300)
             await pg.screenshot(path=f"gd_{n}_1.png")
             await pg.click("#gSample"); await pg.click("#runBtn"); await pg.wait_for_timeout(600)
             print(n, "step:", await pg.evaluate("V.step"), "|", (await pg.inner_text("#guide .gv")).replace("\n"," | "))

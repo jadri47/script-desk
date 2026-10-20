@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 TEXT = open("long_es.txt", encoding="utf-8").read(); MOCK = open("mockclaude.js").read()
@@ -8,7 +9,7 @@ async def main():
           for w,hh,n in [(1100,900,"d"),(390,844,"m")]:
             ctx = await b.new_context(viewport={"width":w,"height":hh}, color_scheme=scheme)
             pg = await ctx.new_page(); await pg.add_init_script(MOCK); pg.on("pageerror", lambda e: errs.append(str(e)))
-            await pg.goto("file:///home/claude/sd/build/work.html"); await pg.wait_for_timeout(300)
+            await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(300)
             st = lambda: pg.evaluate("[document.documentElement.dataset.theme||'-', getComputedStyle(document.body).backgroundColor, document.getElementById('themeBtn').getAttribute('aria-label')].join(' | ')")
             print(scheme, n, "start:", await st())
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(700)

@@ -1,8 +1,9 @@
 # Tap-to-select paragraph, green accepted card, grey ignored card + restore, accept lands in script. ES/EN, desktop + phone.
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 SB=open("mock_sb.js").read()
-URL="file:///home/claude/sd/standalone/site/index.html"
+URL=SDU+"standalone/site/index.html"
 fails=[]
 def ok(n,c,x=""):
     print(("ok   " if c else "FAIL ")+n,x if not c else "")
@@ -63,6 +64,12 @@ async def run(b,ui,vp,ex):
             ok(n+": changed text flashes",await pg.evaluate("CSS.highlights.has('sd-flash')"))
             await pg.locator(".topfix.walk li.fx-done:has(.fx-chg) > .fx-top").first.click(); await pg.wait_for_timeout(200)
             ok(n+": tapping the green card shows the change",await pg.evaluate("(()=>{const x=document.querySelector('.topfix.walk li.fx-done.open .fx-chg');return !!x&&x.querySelector('del,ins')!==null})()"))
+            info=await pg.evaluate("document.querySelectorAll('.topfix.walk li.fx-done.open .fx-i').length")
+            ok(n+": expanded card shows more info",info>=3,info)
+            await pg.locator(".topfix.walk li.fx-done.open [data-fxrevert]").first.click(); await pg.wait_for_timeout(1200)
+            rv=await pg.evaluate("$('script').value")
+            ok(n+": revert restores the text",rv==b4 or rv.trimEnd()==b4.trimEnd(),(len(rv),len(b4)))
+            ok(n+": reverted card is gone",await pg.evaluate("document.querySelectorAll('.topfix.walk li.fx-done:has(.fx-chg)').length")==0)
             changed=True; break
     ok(n+": found a patch card to apply",changed)
     # ignore

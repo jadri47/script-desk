@@ -1,7 +1,8 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
-URL = "file:///home/claude/sd/standalone/site/index.html"
+URL = SDU+"standalone/site/index.html"
 OUT = "/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
 JS = """(()=>{const m=document.querySelector('.masthead');const sel=['h1','.xswitch','#stepBar','#exPick','#authBar:not([hidden])','.themebtn','.langswitch'];
 const out=[];for(const s of sel){const e=m.querySelector(s);if(!e)continue;const b=e.getBoundingClientRect();if(!b.height)continue;out.push([s,Math.round(b.top+b.height/2),Math.round(b.left),Math.round(b.right)])}

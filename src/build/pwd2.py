@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 TEXT = open("long_es.txt", encoding="utf-8").read(); MOCK = open("mockclaude.js").read()
@@ -6,7 +7,7 @@ async def main():
         b = await p.chromium.launch(); errs=[]
         for w,hh,n in [(1100,900,"d"),(390,844,"m")]:
             pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); pg.on("pageerror", lambda e: errs.append(str(e)))
-            await pg.goto("file:///home/claude/sd/build/work.html"); await pg.wait_for_timeout(400)
+            await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(400)
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(900)
             await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300)
             print(n, "audience default:", await pg.evaluate("$('audience').value"), "| visible:", await pg.evaluate("!!$('audience').offsetParent"))

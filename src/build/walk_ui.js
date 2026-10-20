@@ -164,9 +164,15 @@ function wkChgHTML(x) {
   const e = (v) => (v ? h(v) : `<i>${h(t("fxEmptyChg"))}</i>`);
   return `<div class="fx-chg"><div><span class="fx-chg-l">${h(t("fxBefore"))}</span> ${h(c.pre)}<del>${e(c.from)}</del>${h(c.post)}</div><div><span class="fx-chg-l">${h(t("fxAfter"))}</span> ${h(c.pre)}<ins>${e(c.to)}</ins>${h(c.post)}</div></div>`;
 }
+function wkInfoHTML(x) {
+  const row = (l, v) => (v ? `<div class="fx-i"><span class="fx-chg-l">${h(l)}</span> ${v}</div>` : "");
+  const sc = x.sc && x.sc[0] != null && x.sc[1] != null ? `${x.sc[0]} → ${x.sc[1]}${x.sc[1] !== x.sc[0] ? ` (${x.sc[1] > x.sc[0] ? "+" : ""}${x.sc[1] - x.sc[0]})` : ""}` : "";
+  const words = x.dw ? `${x.dw > 0 ? "+" : "−"}${Math.abs(x.dw)}` : "";
+  return row(t("fxWhy"), h(x.why || x.label)) + row(t("fxOpt"), h(x.what || "")) + row(t("fxWhere"), x.para ? h(t("fxParaN")(x.para, x.tm)) : h((t("fxField") || {})[x.where] || "")) + row(t("fxWords"), h(words)) + row(t("fxScore"), h(sc));
+}
 function wkLogHTML(i) {
   return wkLogFor(i).map((x) => x.kind === "done"
-    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${x.what ? `<div class="hint">${h(x.what)}</div>` : ""}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}</div></li>`
+    ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${wkInfoHTML(x)}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}<div class="actions"><button type="button" class="small" data-fxrevert="${x.uid}">${h(t("fxRevert"))}</button></div></div></li>`
     : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
 }
 const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? (wkLogFor(i).some((x) => x.kind === "done") ? "d" : "ok") : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");

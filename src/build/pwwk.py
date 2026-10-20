@@ -1,8 +1,9 @@
 # Paragraph walk: highlights painted, stepper, scroll-to-context, scoped fixes, score-row jump. ES/EN, desktop + phone.
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 SB=open("mock_sb.js").read()
-URL="file:///home/claude/sd/standalone/site/index.html"
+URL=SDU+"standalone/site/index.html"
 fails=[]
 def ok(n,c,x=""):
     print(("ok   " if c else "FAIL ")+n,x if not c else "")

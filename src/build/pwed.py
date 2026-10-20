@@ -1,7 +1,8 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio, json
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read(); LONG = open("long_es.txt", encoding="utf-8").read()
-URL = "file:///home/claude/sd/standalone/site/index.html"
+URL = SDU+"standalone/site/index.html"
 OUT = "/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
 GDOCS = '<meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-guid-1"><h2 dir="ltr"><span style="font-size:16pt;font-weight:400">Apertura</span></h2><p dir="ltr"><span style="font-weight:400">¿Te has sentido </span><span style="font-weight:700">tan cansado</span><span style="font-weight:400"> que ni orar puedes? Hoy veremos </span><span style="font-style:italic;font-weight:400">qué dice la Biblia</span><span style="font-weight:400"> sobre el </span><span style="text-decoration:underline;font-weight:400">descanso</span><span style="font-weight:400">.</span></p><ul><li dir="ltr"><p dir="ltr"><span style="font-weight:400">Primero, Jesús invita.</span></p></li><li dir="ltr"><p dir="ltr"><span style="background-color:#ffff00;font-weight:400">Segundo, Jesús carga.</span></p></li></ul><br><p dir="ltr"><span style="font-weight:400">[TEXTO: Mateo 11:28] «Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar.»</span></p></b>'
 WORD = '<html><body><p class=MsoNormal><b>Introducción</b></p><p class=MsoListParagraph style="mso-list:l0 level1 lfo1"><span style="font-family:Symbol">·<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>Uno <i>dos</i></p><p class=MsoListParagraph style="mso-list:l0 level1 lfo1"><span style="font-family:Symbol">·<span>&nbsp;&nbsp;&nbsp;&nbsp;</span></span>Tres</p></body></html>'

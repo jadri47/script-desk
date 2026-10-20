@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 TEXT = open("long_es.txt", encoding="utf-8").read(); MOCK = open("mockclaude.js").read()
@@ -12,7 +13,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); pg = await b.new_page(viewport={"width":1100,"height":900}); errs=[]
         await pg.add_init_script(MOCK); await pg.add_init_script("localStorage.setItem('sd-expert','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
-        await pg.goto("file:///home/claude/sd/build/work.html"); await pg.wait_for_timeout(400)
+        await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(400)
         await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(700)
         for k,s in CHECK.items(): print(("OK  " if await pg.query_selector(s) else "MISSING ")+k)
         await pg.click("[data-mode=guion]"); await pg.wait_for_timeout(600)

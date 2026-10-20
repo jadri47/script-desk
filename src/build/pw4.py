@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio
 from playwright.async_api import async_playwright
 TEXT = open("long_es.txt", encoding="utf-8").read()
@@ -8,7 +9,7 @@ async def main():
         for w,hh,n in [(1200,900,"d"),(390,844,"m")]:
             pg = await b.new_page(viewport={"width": w, "height": hh})
             await pg.add_init_script("localStorage.setItem('sd-expert','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
-            await pg.goto("file:///home/claude/sd/build/work.html")
+            await pg.goto(SDU+"build/work.html")
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.evaluate("document.getElementById('keyword').value='ansiedad'")
             await pg.click("[data-mode=guion]"); await pg.wait_for_timeout(300)
             print(n, "aprobado disabled:", await pg.is_disabled("[data-status=aprobado]"), "|", (await pg.inner_text(".g-gate"))[:140])

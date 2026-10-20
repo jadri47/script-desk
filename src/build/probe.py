@@ -1,3 +1,4 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio, time
 from playwright.async_api import async_playwright
 MOCK = open("mockclaude.js").read(); LONG = open("long_es.txt", encoding="utf-8").read()
@@ -5,10 +6,10 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); errs=[]
         pg = await b.new_page(viewport={"width":390,"height":844}); await pg.add_init_script(MOCK); pg.on("pageerror", lambda e: errs.append(str(e)))
-        await pg.goto("file:///home/claude/sd/build/work.html"); await pg.wait_for_timeout(400)
+        await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(400)
         # 1. no-db experience (what Juan sees if runtime missing)
         pg2 = await b.new_page(viewport={"width":390,"height":844}); pg2.on("pageerror", lambda e: errs.append("nodb:"+str(e)))
-        await pg2.goto("file:///home/claude/sd/build/work.html"); await pg2.wait_for_timeout(400)
+        await pg2.goto(SDU+"build/work.html"); await pg2.wait_for_timeout(400)
         print("NO-DB step1 calendar text:", (await pg2.inner_text("#gSeries"))[:120].replace("\n"," | "))
         await pg2.fill("#script", LONG); await pg2.click("#runBtn"); await pg2.wait_for_timeout(900)
         print("NO-DB verdict:", await pg2.evaluate("(document.querySelector('.gv .lamp')||{}).textContent"), "| AI btn disabled:", await pg2.evaluate("[...document.querySelectorAll('[data-ai],[data-fxai],#coAi,#pkAi')].map(b=>b.disabled)"))

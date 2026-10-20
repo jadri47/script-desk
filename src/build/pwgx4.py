@@ -1,7 +1,8 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio, json
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read(); EX = json.load(open("examples.json"))
-URL = "file:///home/claude/sd/standalone/site/index.html"
+URL = SDU+"standalone/site/index.html"
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()

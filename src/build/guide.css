@@ -537,3 +537,4 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 .fx-chg del{background:var(--rojo-bg);color:var(--rojo);text-decoration:line-through}
 .fx-chg ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
 .topfix.walk .fx-done .fx-top{scroll-margin-top:200px;scroll-margin-bottom:90px}
+.fx-i{font-size:14px;line-height:1.45;margin:2px 0}.fx-done .actions{margin-top:10px}

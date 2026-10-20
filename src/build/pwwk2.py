@@ -1,7 +1,8 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio,time
 from playwright.async_api import async_playwright
 SB=open("mock_sb.js").read()
-URL="file:///home/claude/sd/standalone/site/index.html"
+URL=SDU+"standalone/site/index.html"
 OUT="/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/"
 async def run(b, ui, vp, ex):
     pg=await b.new_page(viewport=vp); errs=[]; pg.on("pageerror",lambda e:errs.append(str(e)))

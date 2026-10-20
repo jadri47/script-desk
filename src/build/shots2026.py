@@ -1,7 +1,8 @@
+SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
 import asyncio, json, sys
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read(); FONTS = open("/tmp/claude-0/-home-claude/8105d05d-2e83-5f0e-bc3d-a5db415f0e12/scratchpad/fonts.css").read()
-URL = "file:///home/claude/sd/standalone/" + (sys.argv[1] if len(sys.argv)>1 else "preview2026.html")
+URL = SDU+"standalone/" + (sys.argv[1] if len(sys.argv)>1 else "preview2026.html")
 OUT = "/home/claude/sd/shots2026/"; import os; os.makedirs(OUT, exist_ok=True)
 PFX = sys.argv[2] if len(sys.argv)>2 else ""
 async def main():
