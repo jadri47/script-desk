@@ -39,14 +39,21 @@
 | check | chromium | firefox | webkit (Playwright build, Windows) |
 |---|---|---|---|
 | pwdc | pass | pass | 1 "page error": `ResizeObserver loop completed with undelivered notifications` at 390 px |
-| pwwk | pass | pass | stuck: `.wk-nav` hint intercepts the click on a `.fx-ev` evidence chip (30 s timeout) |
+| pwwk | pass | pass | stuck at phone width: the sticky `.wk-nav` covers an evidence chip after Playwright's scroll (see 2026-10-20 probe) |
 | pwcl | pass | pass | same ResizeObserver message at 390 px (2 cases) |
 | pwrl | pass | pass | page crashed (Playwright WebKit crash; not shown to be the app) |
 | pwsc | pass (2 clean runs; one earlier run failed a typing-lag check under load) | cannot run (needs CDP) | cannot run (needs CDP) |
 | pwtoast | pass | pass | pass |
 
 Not conclusions: the WebKit items may be test-engine artefacts; real Safari not tried. The ResizeObserver
-message is normally harmless but the tests count it as an error. The `.wk-nav` overlap is the one worth a look.
+message is normally harmless but the tests count it as an error.
+
+**2026-10-20 probe of the `.wk-nav` overlap (Adrian: "Investigate first"):** not a Safari problem and not a desktop problem.
+At 1280 px the nav is `position: static` and the chip is clickable at every scroll position in both engines. At 390 px
+the nav is sticky (`guide.css:411`) and covers the chip when it is scrolled to the middle of the screen, identically in
+Chromium and WebKit; a person just scrolls a bit more. WebKit fails the test only because Playwright's retry scrolls
+differently. No app change made. If it should be fixed anyway (e.g. `scroll-margin-top` on `.fx-ev` for the phone
+dock), that is a phone-layout step for Adrian to ask for.
 With `CSS.highlights` deleted (older Safari/Firefox) the review still works, no page errors; the in-text
 word highlights are not drawn (the panel still shows them).
 
