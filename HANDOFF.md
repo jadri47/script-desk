@@ -13,7 +13,7 @@ Written 2026-10-19 at the end of a long claude.ai session. Read `CLAUDE.md` firs
 - Adrian (owner/producer; industrial engineer, builds apps with AI, bilingual ES/EN). He wants answers first, direct and honest feedback, choices as buttons, complete runnable files, and a notification when a task finishes.
 - Juan Sánchez: the host, non-technical, uses it mostly on a phone. The UI must stay simple for him.
 
-## Where things stand (v67, commit after 9b31b10)
+## Where things stand (site v67 + phone bar tap fix, 2026-10-19)
 Recent work, newest first:
 1. v67: accepted fixes show more (what it fixes, option chosen, paragraph + minute, word change, score before → after, before/after text) and each one can be reverted on its own.
 2. v66: a vertical bar beside every paragraph in the script box (rail) selects that paragraph; accepted cards start collapsed and expand on tap.
@@ -24,14 +24,14 @@ Recent work, newest first:
 All node tests pass; Playwright `pwdc pwwk pwcl pwrl pwtm pwex pwtoast` pass; `pwsc` flaky but two clean passes; `pwhw` was clean at v64.
 
 ## Open items / ideas Adrian was offered
-- Phone: tapping a paragraph bar focuses the editor, so the keyboard opens. Offered: select without opening the keyboard.
+- (done 2026-10-19) Phone: tapping a paragraph bar no longer opens the keyboard. Needs a check on a real phone.
 - Phone: the formatting toolbar (B/I/U/heading) only shows in full screen. Offered: show it without maximizing.
 - Plan docs in the claude.ai Project still say "plan only" for color code and timeline (both built).
 - Juan's guide doc needs updating for the new rail/bars/green cards.
 - Not yet tested on a real iPhone/Safari (CSS Custom Highlight API needs Safari 17.2+).
 - "Revisar guion" button overlaps the toolbar in phone Chrome "desktop site" mode.
 - Prompt caching in `sd-ai` is a no-op (system block under the 512-token minimum).
-- `pw9` has stale selectors; some Playwright scripts write screenshots to Linux paths.
+- (done 2026-10-19) `pw9` selectors and screenshot paths fixed. See `docs/DECISIONS.md` for engine results (Firefox/WebKit), six empty catches left for Adrian, and the prompt-caching decision. Plan: `docs/PLAN-2026-10-desktop.md`.
 
 ## Start in Claude Code
 ```

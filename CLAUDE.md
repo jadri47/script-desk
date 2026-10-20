@@ -17,12 +17,14 @@ Output: `src/standalone/site/index.html` (the site) and `src/build/work.html` (t
 ```
 node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js; node eval/cats_test.js; node eval/rail_test.js
 ```
-Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/site/index.html` relative to the script (the `SDU` line at the top of each file), so they work wherever the repo is cloned. Main ones: `pwdc` (tap/bar selects a paragraph, green accepted cards collapse/expand + revert, grey ignored cards + restore, stale-apply guard), `pwwk` (paragraph review), `pwcl` (color families, legend filter, minimap markers), `pwrl` (rail + minimap in the script box), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px; ~8 min), `pwtoast`, `pw10`. `pw9` has stale "MISSING" selectors (known). They use `mock_sb.js` instead of Supabase. Some scripts save screenshots to Linux paths (`/tmp/...`); change `OUT` if a run on Windows complains.
+Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/site/index.html` relative to the script (the `SDU` line at the top of each file), so they work wherever the repo is cloned. Main ones: `pwdc` (tap/bar selects a paragraph; on a phone the bar does not open the keyboard, green accepted cards collapse/expand + revert, grey ignored cards + restore, stale-apply guard), `pwwk` (paragraph review), `pwcl` (color families, legend filter, minimap markers), `pwrl` (rail + minimap in the script box), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px; ~8 min), `pwtoast`, `pw10`. `pw9` follows the cards by phase (27 checks, needs `mock_sb.js`). They use `mock_sb.js` instead of Supabase. Screenshots go to the OS temp folder (`script-desk-pw/`).
 
 ### Running on Windows (Adrian's PC)
 - Python 3 + `pip install playwright` + `python -m playwright install chromium`; Node 18+.
 - Set `PYTHONUTF8=1` (PowerShell: `$env:PYTHONUTF8=1`) before building: the build scripts open UTF-8 files without an explicit encoding.
 - Use `python` instead of `python3` if that is what the PC has.
+- `src/package.json` (`type: commonjs`) must stay: a stray `Claude_Programming/package.json` with `type: module` otherwise breaks the node tests and `build_examples.py`. Keep a test file out of `build/` if it is named like a Python stdlib module (`pwd.py` once broke every `pw*.py`; now `pwdl.py`).
+- `SD_BROWSER=firefox|webkit python pwXX.py` runs the six main checks (`pwdc pwwk pwcl pwrl pwsc pwtoast`) in another engine (`python -m playwright install firefox webkit`). `pwsc` is chromium-only (CDP). Known engine results: `docs/DECISIONS.md`.
 
 ## Deploy
 1. Build, run tests.
