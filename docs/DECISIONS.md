@@ -1,5 +1,15 @@
 # Decisions (newest first)
 
+## 2026-10-21: paragraph review: points that are real, suggestions that are specific (Adrian: "most recommendations either don't increase the rating or don't suggest anything specific")
+
+Audit of the walker over the 8 demos: ~250 cards offered only "Proponer con IA" and ~200 showed "+1..+16" while applying the suggestion moved the score 0.
+- **Score: B partial credit** (Adrian). Counted checks cost 1 point per instance over the limit, capped (`SCORE_CAP`: long 4; muletillas, weak, regional, aitell, onscreen, jargon, pulpit, cta 3; openers 2). Demo ladder re-pinned: ES 0,17,53,91,100 -> 0,6,48,91,100; EN 0,16,55,96,100 -> 0,6,53,96,100. Alternatives offered: caps of 2 (ES 0,13,52,91,100) or today's weights (ES 0,19,56,91,100).
+- **Badge = the real change** of the selected suggestion ("Up to +N" with no suggestion); a +0 says why (fewer remain / red warning holds at 69 / score already 0).
+- **Suggestions: B rules only, no AI spending** (Adrian). Added: trailing "¿amén?"-type tags, "Abran sus Biblias en Juan 3" -> "Busca conmigo en Juan 3", a fixed everyday-words line for 10 technical terms (ES+EN), dropping a repeated connector opener, "Hoy hablamos de {tema}." after the first sentence, splitting the hardest/longest sentence, a description that opens with the topic.
+- **Tried and left out because the output cut sentences** (read on the demos): removing a profane noun ("era una."), removing flagged words from a title, replacing "los que estamos aquí" with "tú y yo", explaining a term that is followed by an adjective ("escatología dispensacionalista"). Those cards keep the AI button. About 60 ad-risk cards (violence, events, firearms, adult, harm, drugs, shocking, controversial, hate) stay AI-only on purpose: they need judgement about graphic detail.
+- **Notes, not cards** (Adrian): verse without a reference and long readings are dashed notes (no Apply, no badge). "Ahora no" kept so they can still be set aside (a deviation from the plan, which dropped it).
+- **Open:** the ES/EN jargon glossary wording was approved with the plan, but it is doctrine-adjacent: Adrian should read the 10 lines in `fix_logic.js` (`JARGON_GLOSS`). Still AI-only: promise (when no line fits), application, rehook, kwspread, readability without a natural connector, content-word openers.
+
 ## 2026-10-20: silent failures now say so (Adrian: "Fix both", "Fix all three"; wording approved as shown)
 
 - The six empty catches left on 2026-10-19 now show a message: episode list load (`guion_ui.js`, `series_ui.js`, with

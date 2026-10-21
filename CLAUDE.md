@@ -15,9 +15,9 @@ Output: `src/standalone/site/index.html` (the site) and `src/build/work.html` (t
 
 ## Tests (from `src/`)
 ```
-node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js; node eval/cats_test.js; node eval/rail_test.js
+node eval/run.js; node eval/timing_test.js; node eval/polish_test.js; node eval/score_test.js; node eval/cats_test.js; node eval/rail_test.js; node eval/rules_test.js
 ```
-Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/site/index.html` relative to the script (the `SDU` line at the top of each file), so they work wherever the repo is cloned. Main ones: `pwdc` (tap/bar selects a paragraph; on a phone the bar does not open the keyboard, green accepted cards collapse/expand + revert, grey ignored cards + restore, stale-apply guard), `pwwk` (paragraph review), `pwcl` (color families, legend filter, minimap markers), `pwrl` (rail + minimap in the script box), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px; ~8 min), `pwtoast`, `pw10`. `pw9` follows the cards by phase (27 checks, needs `mock_sb.js`). They use `mock_sb.js` instead of Supabase. Screenshots go to the OS temp folder (`script-desk-pw/`).
+Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/site/index.html` relative to the script (the `SDU` line at the top of each file), so they work wherever the repo is cloned. Main ones: `pwdc` (tap/bar selects a paragraph; on a phone the bar does not open the keyboard, green accepted cards collapse/expand + revert, grey ignored cards + restore, stale-apply guard), `pwwk` (paragraph review), `pwcl` (color families, legend filter, minimap markers), `pwrl` (rail + minimap in the script box), `pwsc` (score pill; flaky on "off persists after reload" and "show button appears": rerun, two clean passes = OK), `pwfx` (paragraph review: every points badge equals the real score change, a +0 says why, refs/reading are notes), `pwerr`, `pwpack`, `pwex`, `pwmt`, `pwtm`, `pwat`, `pwhw` (header never wraps 900–1920 px; ~8 min), `pwtoast`, `pw10`. `pw9` follows the cards by phase (27 checks, needs `mock_sb.js`). They use `mock_sb.js` instead of Supabase. Screenshots go to the OS temp folder (`script-desk-pw/`).
 
 ### Running on Windows (Adrian's PC)
 - Python 3 + `pip install playwright` + `python -m playwright install chromium`; Node 18+.
@@ -33,7 +33,7 @@ Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/si
 4. Tell Adrian it is live (in claude.ai: push notification).
 
 ## Design rules that matter
-- Score v2 (`score_logic.js`): score = 100 − weights of open checks − small penalty for dismissed ones; any red ⇒ ≤ 69. Weights live in one table (`SCORE_W`); ladders are pinned in `eval/score_test.js`.
+- Score v2 (`score_logic.js`): score = 100 − weights of open checks − small penalty for dismissed ones; any red ⇒ ≤ 69. Counted checks (long, fillers, weak, regional, aitell, onscreen, jargon, pulpit, openers, cta) give partial credit: 1 point per instance over the limit, capped by `SCORE_CAP`. Weights live in one table (`SCORE_W`); ladders are pinned in `eval/score_test.js`.
 - Desktop (≥900 px wide and ≥560 px tall) is a split view: script left, review right. Phone: single column, stepBar fixed at the bottom; in step 2 the script docks at the top.
 - Paragraph review (`walk_ui.js`): highlights use the CSS Custom Highlight API over the editor text (the editor DOM is not changed); positions come from `buildFixCards(..., cap = Infinity)`.
 - Choosing the paragraph: a real tap/click/arrow key inside a paragraph (`pointerup`/`keyup`, not `selectionchange`, so re-rendering after Apply never moves the review) or the vertical bar per paragraph in the rail (`.rl-bar`, `railSelect`) calls `wkGo(i, false)`. The phone editor only goes full screen from the maximizer button, never on tap.
