@@ -19,6 +19,7 @@ JS = r"""(() => {
     cards.forEach((c, ci) => {
       const li = lis.find((x) => +x.dataset.ci === ci); if (!li) return;
       const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
+      if (li.classList.contains("fx-note")) { if (li.querySelector("[data-fxapply]") || li.querySelector(".fix-pts") || !li.querySelector("[data-fxskip]") || !["refs", "reading"].includes(c.id)) bad.push(`p${i} ${c.id}: note has Apply/badge or lost Ahora no`); stat.notes = (stat.notes || 0) + 1; return; }
       const badge = li.querySelector(".fix-pts"), txt = badge ? badge.textContent.trim() : "", why = !!li.querySelector(".fx-why");
       stat.cards++;
       if (!p) { stat.upTo += /^(Hasta|Up to) \+\d+$/.test(txt) || txt === "" ? 1 : 0; if (txt && !/^(Hasta|Up to) \+\d+$/.test(txt)) bad.push(`p${i} ${c.id}: no suggestion but badge "${txt}"`); return; }

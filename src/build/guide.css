@@ -502,6 +502,7 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 }
 
 /* accepted / ignored suggestions stay in the paragraph review */
+.fx.fx-note{border-style:dashed}
 .fx.fx-done{background:var(--verde-bg);border:1px solid var(--verde);border-left-width:5px}
 .fx.fx-done .fx-top,.fx.fx-skipped .fx-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .fx-st{font-weight:800;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:13px}
