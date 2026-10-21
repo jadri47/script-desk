@@ -16,6 +16,7 @@ Object.assign(T.es, {
   lvl: { verde: "Anuncios: sin riesgo", amarillo: "Anuncios: podrían limitarse", rojo: "Anuncios: riesgo alto" },
   plainPackTitle: "El título tiene palabras que limitan anuncios",
   plainPackThumb: "El texto de la miniatura tiene palabras que limitan anuncios",
+  plainPackDesc: "La descripción tiene palabras que limitan anuncios",
   introTitle: "Bienvenido a Script Desk",
   introBody: "Pegas tu guion y la app te dice qué ajustar para que funcione en YouTube como pódcast: que enganche, que se entienda fuera de la iglesia y que no pierda anuncios. Tu mensaje y tu doctrina no se tocan; cada cambio lo decides tú.",
   introTry: "Probar con un ejemplo",
@@ -38,6 +39,7 @@ Object.assign(T.en, {
   lvl: { verde: "Ads: no risk", amarillo: "Ads: could be limited", rojo: "Ads: high risk" },
   plainPackTitle: "The title has words that limit ads",
   plainPackThumb: "The thumbnail text has words that limit ads",
+  plainPackDesc: "The description has words that limit ads",
   introTitle: "Welcome to Script Desk",
   introBody: "Paste your script and the app shows what to adjust so it works on YouTube as a podcast: it hooks, it's understood outside church, and it keeps its ads. Your message and doctrine aren't touched; you decide every change.",
   introTry: "Try an example",
@@ -65,7 +67,7 @@ failedRows = function (R) {
 
 const _plainLabelM = plainLabel;
 plainLabel = function (id, fallback) {
-  if (V.guided && /^pack-/.test(id)) return /Título|Title/.test(id) ? t("plainPackTitle") : t("plainPackThumb");
+  if (V.guided && /^pack-/.test(id)) return /Título|Title/.test(id) ? t("plainPackTitle") : /Descripci|Description/.test(id) ? t("plainPackDesc") : t("plainPackThumb");
   return _plainLabelM(id, fallback);
 };
 const _verdictHTMLM = verdictHTML;
