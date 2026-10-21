@@ -31,7 +31,9 @@ function verifyProposal(text, opts, R, p) {
   if (p.kind === "field") o2[p.field] = p.value;
   const R2 = analyze(t2, o2);
   const before = failIds(R), after = failIds(R2);
-  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2 };
+  // score after the change, with what the person already ignored, so a card's badge shows the real gain (jadri47, 2026-10-21)
+  const dis = typeof state !== "undefined" && state.fixDismissed ? state.fixDismissed : undefined;
+  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2, score: scoreOf(R2, dis).score };
 }
 
 // Filler removal keeps the sentence grammatical: commas, closing tag questions and capitals.

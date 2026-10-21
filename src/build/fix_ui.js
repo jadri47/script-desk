@@ -3,7 +3,7 @@
 Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras 3 con IA",
   fxMulti: (n) => `resuelve ${n} revisiones`, fxPartial: (n, m) => `Arregla ${n} de ${m}; el resto, con IA o a mano.`, fxApplied: "Aplicado.", fxUndo: "Deshacer", fxUndone: "Deshecho.",
-  fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
+  fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxUpTo: "Hasta", fxZeroMore: (n) => `La nota sube cuando quedan menos: faltan ${n} en otros párrafos.`, fxZeroFloor: "La nota ya está en 0: empieza a subir cuando arregles varias cosas más.", fxZeroRed: "Un aviso rojo limita la nota a 69 hasta que lo arregles.", fxZeroCap: "Ya cuentas el máximo de puntos por esto; la nota sube al arreglar varios.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
   fxField: { title: "Título", keyword: "Palabra clave", thumb: "Miniatura", description: "Descripción" }, fxNotFixed: "No resuelve la revisión todavía.",
   fxSkip: "Ahora no", fxDone: "Aplicado", fxWhy: "Qué corrige", fxOpt: "Opción elegida", fxWhere: "Dónde", fxWords: "Palabras", fxScore: "Puntuación", fxRevert: "Revertir este cambio", fxReverted: "Cambio revertido.", fxCantRevert: "No se puede revertir solo este cambio: el texto ya cambió en ese lugar. Usa Deshacer o corrígelo a mano.", fxParaN: (n, tm) => `Párrafo ${n}${tm ? " · " + tm : ""}`, fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
@@ -11,7 +11,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
   fxMulti: (n) => `fixes ${n} checks`, fxPartial: (n, m) => `Fixes ${n} of ${m}; the rest with AI or by hand.`, fxApplied: "Applied.", fxUndo: "Undo", fxUndone: "Undone.",
-  fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
+  fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxUpTo: "Up to", fxZeroMore: (n) => `The score moves once fewer remain: ${n} left in other paragraphs.`, fxZeroFloor: "The score is already at 0: it starts rising once you fix several more.", fxZeroRed: "A red warning holds the score at 69 until it's fixed.", fxZeroCap: "This already counts the most points it can; the score rises as you fix several.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
   fxField: { title: "Title", keyword: "Keyword", thumb: "Thumbnail", description: "Description" }, fxNotFixed: "Doesn't pass the check yet.",
   fxSkip: "Not now", fxDone: "Applied", fxWhy: "What it fixes", fxOpt: "Option chosen", fxWhere: "Where", fxWords: "Words", fxScore: "Score", fxRevert: "Revert this change", fxReverted: "Change reverted.", fxCantRevert: "This change can't be reverted on its own: the text has changed there since. Use Undo or fix it by hand.", fxParaN: (n, tm) => `Paragraph ${n}${tm ? " · " + tm : ""}`, fxBefore: "Before", fxAfter: "After", fxShowChange: "See the change", fxEmptyChg: "(removed)", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
@@ -83,17 +83,31 @@ function evidenceHTML(card) {
   return card.evidence.map((e) => `<div class="fx-ev" data-es="${e.start}" data-ee="${e.end}"><span class="fx-t">${fmtTime(e.t)}</span><span>${markedSlice(text, e.start, e.end, e.marks, cls)}</span></div>`).join("") + (card.more ? `<div class="hint">${h(t("fxMore")(card.more))}</div>` : "");
 }
 
+// The badge shows what applying the selected proposal really does to the score. With no proposal it shows the most the
+// check could be worth ("Up to"). A 0 says why (jadri47, 2026-10-21: "most recommendations don't increase the rating").
+function fxPtsHTML(c, p, R) {
+  const rows = (c.ids || [c.id]).map((id) => Object.values(R.sections).flat().find((q) => q.id === id)).filter(Boolean);
+  const w = rows.reduce((x, r) => x + weightOf(r), 0);
+  if (!p || p.check.score == null) return { html: w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">${h(t("fxUpTo"))} +${w}</span>` : "", why: "" };
+  const cur = scoreOf(R, state.fixDismissed), gain = p.check.score - cur.score;
+  if (gain > 0) return { html: `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${gain}</span>`, why: "" };
+  const row = rows.find((r) => r.n != null);
+  const left = row ? Math.max(0, row.n - (p.patches ? p.patches.length : 0)) : 0;
+  const why = cur.score === 0 ? t("fxZeroFloor") : cur.band === "rojo" && cur.score >= 69 ? t("fxZeroRed") : row && left > (row.lim || 0) ? t("fxZeroMore")(left) : row ? t("fxZeroCap") : "";
+  return { html: `<span class="fix-pts fix-pts0" title="${h(why || t("scPtsTip"))}">+0</span>`, why };
+}
 function fixItemsHTML(cards, R) {
   const meta = Object.fromEntries(sectionMeta().map(([k, n]) => [k, n]));
   const items = cards.map((c, ci) => {
     const sel = Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1));
     const p = c.proposals[sel];
     const ai = state.fixAi[c.id];
+    const pts = fxPtsHTML(c, p, R);
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
     return `<li class="fx${open ? "" : " fx-closed"}" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
-      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${(() => { const w = (c.ids || [c.id]).reduce((x, id) => { const r = Object.values(R.sections).flat().find((q) => q.id === id); return x + (r ? weightOf(r) : 0); }, 0); return w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${w}</span>` : ""; })()}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
-      ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
+      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${pts.html}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
+      ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}${pts.why ? `<div class="hint fx-why">${h(pts.why)}</div>` : ""}
       <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
       <div class="fx-lbl">${h(t("fxWould"))}${p && c.proposals.length > 1 ? ` <span class="hint">· ${h(p.label)}</span>` : p ? ` <span class="hint">· ${h(p.label)}</span>` : ""}</div>
       ${p ? proposalHTML(c, p, state.result) : `<p class="hint">${h(t("fxNoProp"))}</p>`}
