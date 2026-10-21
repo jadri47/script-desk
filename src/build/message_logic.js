@@ -66,7 +66,7 @@ function messageChecks(text, opts, ctx) {
 
   // 2. Pulpit phrases: on video each person watches alone.
   out.pulpit = findPhrases(text, PULPIT, "pulpit").filter((x) => !insideQuote(x.start));
-  add("message", { id: "pulpit", label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
+  add("message", { id: "pulpit", n: out.pulpit.length, lim: 0, label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
     info: out.pulpit.length ? L(`Frases de culto en vivo: ${[...new Set(out.pulpit.map((x) => "«" + x.text + "»"))].slice(0, 4).join(", ")}. En video cada persona escucha sola, en su teléfono.`, `Live-service phrases: ${[...new Set(out.pulpit.map((x) => "“" + x.text + "”"))].slice(0, 4).join(", ")}. On video each person listens alone, on their phone.`)
       : L("Le hablas a una persona, como en una conversación.", "You speak to one person, like a conversation."),
     fix: out.pulpit.length ? L("Habla a «tú» y muestra el versículo en pantalla con [TEXTO: …] en vez de pedir que abran la Biblia.", "Speak to “you” and show the verse on screen with [TEXTO: …] instead of asking people to open their Bibles.") : null });
@@ -74,7 +74,7 @@ function messageChecks(text, opts, ctx) {
   // 3. Technical theology words without a plain explanation nearby.
   const jhits = findPhrases(text, JARGON, "jargon").filter((x) => !insideQuote(x.start));
   out.jargon = jhits.filter((x) => !EXPLAIN_RE.test(text.slice(x.end, x.end + 160)) && !EXPLAIN_RE.test(text.slice(Math.max(0, x.start - 40), x.start)));
-  add("message", { id: "jargon", label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
+  add("message", { id: "jargon", n: out.jargon.length, lim: 0, label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
     info: out.jargon.length ? L(`Sin explicar: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. Tú los conoces bien; quien llega por YouTube quizá no.`, `Not explained: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. You know them well; someone arriving from YouTube may not.`)
       : L("Ningún término técnico queda sin explicar.", "No technical term is left unexplained."),
     fix: out.jargon.length ? L("Añade una frase corta que lo explique con palabras de todos los días; no hace falta quitarlo.", "Add a short everyday-words explanation; no need to remove the term.") : null });
@@ -90,7 +90,7 @@ function messageChecks(text, opts, ctx) {
     if (!shown && /\[(TEXTO|CITA)\s*:/i.test(text.slice(a, b))) continue;
     if (!shown) out.offscreen.push({ ref: pr.ref, quote: pr.quote, paraStart: a });
   }
-  add("message", { id: "onscreen", label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
+  add("message", { id: "onscreen", n: out.offscreen.length, lim: 0, label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
     info: out.offscreen.length ? L(`${out.offscreen.length} pasaje(s) sin [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Quien escucha sin Biblia a mano lo sigue mejor si lo ve.`, `${out.offscreen.length} passage(s) without [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Viewers without a Bible at hand follow better when they see it.`)
       : L("Los pasajes que lees tienen su señal para el editor.", "The passages you read have their cue for the editor."),
     fix: out.offscreen.length ? L("Añade [TEXTO: libro capítulo:versículo] antes del párrafo para que el editor lo ponga en pantalla.", "Add [TEXTO: book chapter:verse] before the paragraph so the editor shows it.") : null });

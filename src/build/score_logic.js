@@ -15,9 +15,13 @@ const SCORE_W = {
 const SCORE_TIER = { pf: "A", pack: "A", promise: "B", content: "B", greeting: "B", cta: "B", ending: "B", hook: "B", rehook: "B", prayer: "B",
   bigidea: "C", recap: "C", application: "C", onscreen: "C", jargon: "C", pulpit: "C", reading: "C", refs: "C",
   kw: "D", title: "D", desc: "D", search: "D", kwspread: "D", chapters: "D", support: "D", kwopen: "D" };
+// Checks that count instances over the whole script give partial credit: each instance over the allowed number costs
+// a point, up to the cap, so fixing one paragraph moves the score (jadri47, 2026-10-21: "B: partial credit").
+const SCORE_CAP = { long: 4, muletillas: 3, weak: 3, regional: 3, aitell: 3, onscreen: 3, jargon: 3, pulpit: 3, openers: 2, cta: 3 };
 function weightOf(r) {
   if (/^pf-/.test(r.id)) return r.level === "rojo" ? 30 : 8;
   if (/^pack-/.test(r.id)) return 6;
+  if (r.n != null && Object.prototype.hasOwnProperty.call(SCORE_CAP, r.id)) return Math.min(SCORE_CAP[r.id], Math.max(1, r.n - (r.lim || 0)));
   return Object.prototype.hasOwnProperty.call(SCORE_W, r.id) ? SCORE_W[r.id] : 2;
 }
 function tierOf(r) { return /^pf-/.test(r.id) ? "A" : /^pack-/.test(r.id) ? "A" : SCORE_TIER[r.id] || "E"; }

@@ -14,7 +14,8 @@ const lamp = (R, dismissed) => {
 let seed = 12345; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 const clone = (R) => JSON.parse(JSON.stringify(R));
 const fixRows = (R, ids) => { const R2 = clone(R); for (const r of Object.values(R2.sections).flat()) if (ids.has(r.id)) { r.passed = true; r.warn = false; } return R2; };
-const PIN = { es: [0, 17, 53, 91, 100], en: [0, 16, 55, 96, 100] };
+// re-pinned for partial credit (jadri47, 2026-10-21: proposed caps; was es 0,17,53,91,100 / en 0,16,55,96,100)
+const PIN = { es: [0, 6, 48, 91, 100], en: [0, 6, 53, 96, 100] };
 const ladder = {};
 for (const lg of ["es", "en"]) {
   ladder[lg] = [];
@@ -53,6 +54,16 @@ for (const lg of ["es", "en"]) {
       const full = L.scoreOf(R), bare = L.scoreOf(L.analyze(e.text, opts(e, lg, { title: "", description: "", thumb: "" })));
       const own = ["title", "desc", "pack-Título", "pack-Texto de miniatura", "pack-Descripción", "pack-Title", "pack-Thumbnail text", "pack-Description"].reduce((a, id) => a + (full.pts.get(id) || 0) + (bare.pts.get(id) || 0), 0);
       if (full.band === bare.band) ok(`${lg}/${k}: fields move score <= their own rows`, Math.abs(full.score - bare.score) <= own + 1, `${full.score} vs ${bare.score} (own ${own})`);
+    }
+  }
+  // partial credit (jadri47, 2026-10-21): one instance fewer of a counted check is worth exactly 1 point while under its cap
+  for (const k of ["mid", "good"]) {
+    const e = ex[lg][k], R = L.analyze(e.text, opts(e, lg));
+    for (const id of ["long", "muletillas", "weak", "regional", "aitell", "onscreen", "jargon", "pulpit", "openers", "cta"]) {
+      const at = (extra) => { const R2 = clone(R); const r = Object.values(R2.sections).flat().find((x) => x.id === id); if (!r) return null; r.passed = false; r.warn = false; r.level = "amarillo"; r.lim = 2; r.n = 2 + extra; return L.scoreOf(R2); };
+      const two = at(2), one = at(1);
+      if (!two || two.band === "rojo") continue;
+      ok(`${lg}/${k}: ${id} one fewer instance gains 1`, one.score - two.score === 1, `${two.score} -> ${one.score}`);
     }
   }
   ok(`${lg}: ladder strictly increasing`, ladder[lg].every((v, i) => i === 0 || v > ladder[lg][i - 1]), ladder[lg].join(" < "));
