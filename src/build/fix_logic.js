@@ -109,7 +109,7 @@ function aiTellPatch(text, hit) {
 }
 
 // Spanish article guess for a bare keyword ("ansiedad" → "la ansiedad"); names and phrases with an article stay as they are.
-const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
+const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "señal", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
 const FEMN = new Set([...FEM].map(norm));
 const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
 function esArticle(kw) {
@@ -120,6 +120,47 @@ function esArticle(kw) {
   const fem = FEMN.has(k) || FEMN.has(first) || FEMN.has(sing) || (/(a|ion|dad|tad|tud|ez|umbre|sis)$/.test(sing) && !/(ma|pa)$/.test(sing));
   return plural ? (fem ? "las " : "los ") : fem ? "la " : "el ";
 }
+
+// Live-service phrases → what a person watching alone would hear. "" = remove. Phrases that state a fact
+// ("el domingo pasado", "en el servicio de hoy") have no rule: a rule would have to invent what replaces them.
+const PULPIT_FIX = { "abran sus biblias": "busca conmigo", "abran su biblia": "busca conmigo", "abramos nuestras biblias": "busca conmigo", "abramos la biblia": "busca conmigo", "abrid vuestras biblias": "busca conmigo", "abrid la biblia": "busca conmigo",
+  "querida congregación": "querido oyente",
+  "¿amén?": "", "¿me dicen amén?": "", "¿me decís amén?": "", "digan amén": "", "decid amén": "", "un aplauso": "", "pueden sentarse": "", "podéis sentaros": "", "pónganse de pie": "", "póngase de pie": "", "poneos de pie": "", "levanten la mano": "", "levanten sus manos": "", "levantad la mano": "",
+  "open your bibles": "turn with me", "turn in your bibles": "turn with me", "dear congregation": "dear friend", "church family": "friend",
+  "can i get an amen": "", "say amen": "", "please stand": "", "you may be seated": "", "raise your hand": "" };
+function pulpitPatch(text, hit, U) {
+  const k = hit.text.toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(PULPIT_FIX, k)) return null;
+  const to = PULPIT_FIX[k], after = text.slice(hit.end, hit.end + 12);
+  if (/^(?:busca|turn with)/.test(to) && !/^\s+(?:en|a|to)\s+(?=\p{Lu}|\d)/u.test(after)) return null; // only when a passage follows: "Abran sus Biblias en Juan 3"
+  if (to === "" && !(/\?$/.test(hit.text) || /^\s*(?:[.!?…]|\n|$)/.test(after))) return null; // only when the phrase ends its sentence
+  if (to === "" && !/\?$/.test(hit.text) && /^\s*\?/.test(after)) { // "…respeto, can I get an amen?" → "…respeto."
+    let s2 = hit.start; while (s2 > 0 && /[\s,]/.test(text[s2 - 1])) s2--;
+    return { start: s2, end: hit.end + after.indexOf("?") + 1, rep: "." };
+  }
+  if (to === "") {
+    const u = unitAtPos(U, hit.start), bare = (x) => x.toLowerCase().replace(/[\s¿?¡!.,;:]/g, "");
+    return u && bare(u.text) === bare(hit.text) ? delUnitPatch(text, u) : fillerPatch(text, hit);
+  }
+  let end = hit.end, rep = to;
+  const m = /^\s+a\s+(?=\p{Lu}|\d)/u.exec(text.slice(end, end + 6)); // "abran sus Biblias a Juan 3" → "busca conmigo en Juan 3"
+  if (m && /^busca/.test(to)) { end += m[0].length; rep = to + " en "; }
+  if (hit.text[0] === hit.text[0].toUpperCase() && /\p{L}/u.test(hit.text[0])) rep = rep[0].toUpperCase() + rep.slice(1);
+  return { start: hit.start, end, rep };
+}
+// Plain-words explanations for technical terms, one fixed line each (Adrian reads and approves the wording).
+const JARGON_GLOSS = { "justificación": "ser declarado justo ante Dios por la fe", "santificación": "el proceso de parecernos más a Cristo", "propiciación": "el sacrificio que satisface la justicia de Dios", "expiación": "el pago por el pecado", "regeneración": "el nuevo nacimiento", "escatología": "lo que la Biblia enseña sobre el final de los tiempos", "hermenéutica": "cómo interpretar la Biblia", "exégesis": "explicar lo que el texto dice en su contexto", "parusía": "la segunda venida de Cristo", "teofanía": "una aparición visible de Dios",
+  "justification": "being declared righteous before God by faith", "sanctification": "the process of becoming more like Christ", "propitiation": "the sacrifice that satisfies God's justice", "expiation": "the payment that removes sin", "regeneration": "the new birth", "eschatology": "what the Bible teaches about the end times", "hermeneutics": "how to interpret the Bible", "exegesis": "explaining what the text says in its context", "parousia": "the second coming of Christ", "theophany": "a visible appearance of God" };
+const JARGON_NEXT = /^(?:es|son|está|están|fue|era|se|nos|que|y|o|no|en|para|por|con|según|ya|porque|pero|como|a|al|la|el|les|le|lo|sí|is|are|was|were|that|and|or|not|in|for|by|with|according|already|because|but|as|to|the|it|which|does|will|they|we|you|i|he|she)$/i;
+function jargonPatch(text, hit, en) {
+  const g = JARGON_GLOSS[hit.text.toLowerCase()];
+  if (!g) return null;
+  const nx = (text.slice(hit.end, hit.end + 20).match(/^\s*(\p{L}+)/u) || [])[1];
+  if (nx && !JARGON_NEXT.test(nx)) return null; // "la escatología dispensacionalista": inserting here would cut the phrase in two
+  const closes = /^\s*[.!?;:,)]/.test(text.slice(hit.end, hit.end + 3)) || hit.end >= text.length;
+  return { start: hit.end, end: hit.end, rep: (en ? ", that is, " : ", es decir, ") + g + (closes ? "" : ",") };
+}
+const OPENER_CONNECT = /^(y|entonces|bueno|pues|ahora|así que|and|so|well|now|then)(?=[\s,])/i;
 
 // Build cards in priority order until `max` cards exist.
 // cap = how many places each check lists as evidence (4 for the short list; Infinity when every place is needed, as in the paragraph walk).
@@ -243,6 +284,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (row.id === "readability") {
       const hard = U.filter((u) => u.wc >= 8).map((u) => ({ u, d: (u.syl / u.wc) * 10 + u.wc })).sort((a, b) => b.d - a.d).slice(0, 3).map((x) => x.u).sort((a, b) => a.i - b.i);
       card.evidence = hard.map((u) => ev(u, []));
+      const rs = hard.map((u) => splitPatch(text, u, R.quotes || [])).filter(Boolean);
+      if (rs.length) card.proposals.push({ kind: "patch", label: L("Partir la oración más difícil en el conector más natural", "Split the hardest sentence at its most natural connector"), patches: rs });
       card.ai = hard[0] ? { start: hard[0].start, end: hard[0].end } : null;
     } else if (row.id === "rehook" && R.blocks) {
       const miss = R.blocks.filter((b) => !b.has);
@@ -258,12 +301,17 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (row.id === "rhythm") {
       let best = null;
       for (let i = 0; i + 4 <= U.length; i++) { const w = U.slice(i, i + 4).map((u) => u.wc), m = w.reduce((a, b) => a + b, 0) / 4, v = w.reduce((a, b) => a + (b - m) ** 2, 0); if (!best || v < best.v) best = { i, v }; }
-      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); card.ai = { start: us[0].start, end: us[3].end }; }
+      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); const lg = [...us].sort((a, b) => b.wc - a.wc)[0], sp = splitPatch(text, lg, R.quotes || []); if (sp) card.proposals.push({ kind: "patch", label: L("Partir la oración más larga para variar el ritmo", "Split the longest sentence to vary the rhythm"), patches: [sp] }); card.ai = { start: us[0].start, end: us[3].end }; }
     } else if (row.id === "openers" && R.inauth) {
       const op = (R.inauth.repeatedOpeners[0] || [])[0];
       const us = op ? U.filter((u) => norm(u.text).startsWith(norm(op))) : [];
       card.evidence = us.slice(0, cap).map((u) => ev(u, [[u.start, u.start + op.length]]));
       card.more = Math.max(0, us.length - cap);
+      const cm = op ? OPENER_CONNECT.exec(op) : null;
+      if (cm) { // keep the first three, drop the connector from the rest: "Y Dios dijo…" → "Dios dijo…"
+        const ps = us.slice(3).map((u) => { const m = /^[\s,]*/.exec(text.slice(u.start + cm[0].length)); const e = u.start + cm[0].length + m[0].length; return { start: u.start, end: e + 1, rep: (text[e] || "").toUpperCase() }; }).filter((x) => x.rep.trim());
+        if (ps.length) card.proposals.push({ kind: "patch", label: L(`Quitar «${cm[0]}» al inicio de las oraciones repetidas`, `Drop "${cm[0]}" from the repeated openings`), patches: ps });
+      }
       card.ai = us[1] ? { start: us[1].start, end: us[1].end } : null;
     } else if (row.id === "kwspread" && R.keyword) {
       const tot = Math.max(1, R.runtimeSec), kw = norm(R.keyword);
@@ -307,6 +355,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
       card.evidence = us.slice(0, cap).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
       card.more = Math.max(0, us.length - cap);
       const term = hits[0] ? hits[0].text : "";
+      const ps = row.id === "pulpit" ? hits.map((x) => pulpitPatch(text, x, U)).filter(Boolean) : hits.map((x) => jargonPatch(text, x, en)).filter(Boolean);
+      if (ps.length) card.proposals.push({ kind: "patch", label: row.id === "pulpit" ? L("Decirlo a quien te ve", "Say it to the person watching") : L("Explicar el término con palabras de todos los días", "Explain the term in everyday words"), patches: ps, of: hits.length });
       card.ai = us[0] ? { start: us[0].start, end: us[0].end, note: row.id === "pulpit"
         ? L("Convierte esta frase de culto en vivo en una frase para alguien que mira el video solo en su teléfono. Conserva exactamente el mismo contenido.", "Turn this live-service sentence into one for someone watching alone on their phone. Keep exactly the same content.")
         : L(`Conserva el término «${term}» y añade justo después una explicación breve con palabras de todos los días. No cambies la doctrina.`, `Keep the term “${term}” and add right after it a short everyday-words explanation. Don't change the doctrine.`) } : null;
@@ -321,10 +371,16 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (/^pack-/.test(row.id) || row.id === "desc") {
       const f = /Title|Título/.test(row.id) ? "title" : /iniatura|humbnail/.test(row.id) ? "thumb" : "description";
       card.field = { name: f, value: (opts[f] || "").trim() };
+      const kw = (opts.keyword || R.keyword || "").trim();
+      if (row.id === "desc" && kw) card.proposals.push({ kind: "field", field: "description", value: (en ? `Today we're talking about ${kw}. ` : `Hoy hablamos de ${esArticle(kw)}${kw}. `) + card.field.value, label: L("Empezar con el tema y la palabra clave", "Open with the topic and keyword") });
       card.ai = { field: f };
     } else {
       const u = row.id === "kwopen" ? U[0] : null;
-      if (u) { card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword }; }
+      if (u) {
+        card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword };
+        const kw = (opts.keyword || R.keyword || "").trim();
+        if (kw) card.proposals.push({ kind: "patch", label: L("Nombrar el tema justo después de la primera oración", "Name the topic right after the first sentence"), patches: [{ start: u.end, end: u.end, rep: " " + (en ? `Today we're talking about ${kw}.` : `Hoy hablamos de ${esArticle(kw)}${kw}.`) }] });
+      }
     }
     // keep only proposals that fix at least one of the card's checks and break nothing
     card.proposals = card.proposals.map((p) => ({ ...p, check: verifyProposal(text, opts, R, p) })).filter((p) => !p.check.broke.length && (p.check.fixed.some((id) => ids.includes(id)) || (p.of && p.patches.length < p.of)));
