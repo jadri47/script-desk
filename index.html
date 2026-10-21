@@ -6299,7 +6299,7 @@ Object.assign(T.es, {
   ppSpeed: "ppm", ppElapsed: "Tiempo", ppSecLeft: "Queda en la sección", ppEnd: "Fin estimado", ppOn: "a tiempo", ppOver: (x) => `+${x} sobre el plan`, ppUnder: (x) => `−${x} bajo el plan`,
   ppMirror: "Espejo", ppCues: "Señales", ppFull: "Pantalla completa", ppExit: "Salir", ppWidth: "Ancho", ppFont: "Letra", ppStart: "Toca o pulsa Espacio para empezar", ppClip: "CLIP", ppPaused: "En pausa", ppDone: "Fin del guion",
   ppLap: "Sección terminada", ppRehHint: "Ensayo: → o Intro marca la sección como terminada. Espacio pausa.", ppLapLbl: "Esta sección",
-  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
+  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
   rehTot: (a, b) => `Estimado ${a} · real ${b}`, rehEst: "Estimado", rehReal: "Real",
   sheetTitle: "Hoja de edición", sheetNote: "Tiempos estimados: busca cada frase en la grabación.", cuesTitle: "Señales para edición", clipsTitle: "Clips para la apertura en frío", openNotesTitle: "Notas abiertas", modeLbl: "Modo",
   aiPickNeed: "La IA solo funciona dentro de Claude.",
@@ -6340,7 +6340,7 @@ Object.assign(T.en, {
   ppSpeed: "wpm", ppElapsed: "Time", ppSecLeft: "Left in section", ppEnd: "Estimated end", ppOn: "on time", ppOver: (x) => `+${x} over plan`, ppUnder: (x) => `−${x} under plan`,
   ppMirror: "Mirror", ppCues: "Cues", ppFull: "Full screen", ppExit: "Exit", ppWidth: "Width", ppFont: "Text", ppStart: "Tap or press Space to start", ppClip: "CLIP", ppPaused: "Paused", ppDone: "End of script",
   ppLap: "Section done", ppRehHint: "Rehearsal: → or Enter marks the section done. Space pauses.", ppLapLbl: "This section",
-  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehApplied: "Pace updated: estimates now use the rehearsal's.",
+  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
   rehTot: (a, b) => `Estimated ${a} · real ${b}`, rehEst: "Estimated", rehReal: "Real",
   sheetTitle: "Edit sheet", sheetNote: "Estimated times: find each line in the recording.", cuesTitle: "Cues for the edit", clipsTitle: "Clips for the cold open", openNotesTitle: "Open notes", modeLbl: "Mode",
   aiPickNeed: "AI only works inside Claude.",
@@ -6349,14 +6349,14 @@ Object.assign(T.en, {
 const STATUSES = ["borrador", "revision", "aprobado", "grabado"];
 const SEC_COLOR = { hook: "var(--accent)", promise: "var(--verde)", intro: "var(--ink-2)", point: "var(--gold)", body: "var(--rule)", cta: "var(--amarillo)", close: "var(--reg)" };
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* best effort: storage blocked or full: the setting just isn't remembered */ } };
 
 const G = {
   mode: lsGet("sd-mode") === "guion" ? "guion" : "review",
   prodId: null, status: "borrador", layout: null, manual: false,
   cold: { hook: null, promise: null }, coldLost: false,
   notes: [], rehearsals: [], target: "", loadedAt: 0, saveState: "", conflict: null,
-  prods: [], snaps: [], snapSel: [], diffHTML: "", sel: null, editing: null, aiPick: null,
+  prods: [], snaps: [], loadErr: { prods: false, snaps: false }, srMsg: "", snapSel: [], diffHTML: "", sel: null, editing: null, aiPick: null,
   R: null, U: [], secs: [], flags: [], cands: null, text: "",
   sid: Math.random().toString(36).slice(2), role: lsGet("sd-role") === "presentador" ? "presentador" : "productor",
 };
@@ -6471,8 +6471,9 @@ async function loadProds() {
   try {
     const q = await db.collection("producciones").orderBy("updatedAt", "desc").limit(30).get();
     G.prods = q.docs.map((d) => ({ id: d.id, title: (d.data() || {}).title || "", status: (d.data() || {}).status || "borrador", updatedAt: (d.data() || {}).updatedAt || 0 }));
+    G.loadErr.prods = false;
     if (G.mode === "guion") renderProdBar();
-  } catch (e) {}
+  } catch (e) { G.loadErr.prods = true; if ($("gSeriesFull") || $("epList")) renderSeriesAll(); }
 }
 function applyProd(id, d) {
   G.prodId = id;
@@ -6505,7 +6506,8 @@ async function loadSnaps() {
   try {
     const q = await db.collection("instantaneas").where("prodId", "==", G.prodId).limit(60).get();
     G.snaps = q.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => b.at - a.at);
-  } catch (e) {}
+    G.loadErr.snaps = false;
+  } catch (e) { G.loadErr.snaps = true; if ($("gRev")) renderRevisions(); }
 }
 async function addSnap(name) {
   const db = await caps.db;
@@ -6827,8 +6829,10 @@ function renderRevisions() {
     const fmtD = (x) => new Date(x).toLocaleString(UI, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
     const list = G.snaps.length ? `<ul class="snaps">${G.snaps.map((s) => `<li><label><input type="checkbox" data-snap="${h(s.id)}"${G.snapSel.includes(s.id) ? " checked" : ""}> <b>${h(s.name)}</b></label><span class="hint">${fmtD(s.at)} · ${h(t("status")[s.status] || s.status)} · ${s.wc} ${h(t("words"))}</span><button class="small linkish" data-vs="${h(s.id)}">${h(t("snapVsCurrent"))}</button></li>`).join("")}</ul>` : `<p class="hint">${h(t("snapNone"))}</p>`;
     el.innerHTML = `<header class="g-h"><h2>${h(t("revTitle"))}</h2></header><p class="lead">${h(t("revLead"))}</p>
+      ${G.loadErr.snaps ? `<p class="status err" role="alert">${h(t("snapLoadFail"))} <button type="button" class="small" id="snapRetry">${h(t("srRetry"))}</button></p>` : ""}
       ${db ? `<div class="snap-form"><input id="snapName" placeholder="${h(t("snapPh"))}" maxlength="80"><button class="small primary" id="snapSave">${h(t("snapSave"))}</button></div>${list}${G.snaps.length > 1 ? `<div class="actions"><button class="small" id="snapCmp">${h(t("snapCompare"))}</button><span class="status" id="snapMsg"></span></div>` : ""}` : `<p class="hint">${h(t("snapNeedsDb"))}</p>`}
       <div id="snapDiff">${G.diffHTML}</div>`;
+    if ($("snapRetry")) $("snapRetry").addEventListener("click", async () => { await loadSnaps(); renderRevisions(); });
     if (!db) return;
     $("snapSave").addEventListener("click", async (e) => { e.target.disabled = true; await addSnap($("snapName").value.trim()); });
     el.querySelectorAll("[data-snap]").forEach((c) => c.addEventListener("change", () => {
@@ -6907,7 +6911,7 @@ async function offerFileG(filename, data) {
 const PP = { on: false };
 function ppPrefs() {
   let p = {};
-  try { p = JSON.parse(lsGet("sd-pp") || "{}") || {}; } catch (e) {}
+  try { p = JSON.parse(lsGet("sd-pp") || "{}") || {}; } catch (e) { /* best effort: unreadable prompter settings: use the defaults */ }
   const w = window.innerWidth;
   return { font: p.font || (w < 600 ? 34 : w < 1100 ? 52 : 64), width: p.width || 30, mirrorH: !!p.mirrorH, mirrorV: !!p.mirrorV, cues: p.cues !== false };
 }
@@ -7172,9 +7176,10 @@ function ppFinishRehearsal() {
     state.kReh = prev ? 0.7 * prev + 0.3 * kNew : kNew;
     if (!state.kCalibrated) state.k = state.kReh;
     const db = await caps.db;
-    if (db) { try { await db.doc("ajustes/ritmo").set({ k: state.kReh, n: (state.kRehN || 0) + 1, updatedAt: Date.now() }); state.kRehN = (state.kRehN || 0) + 1; } catch (e) {} }
+    let paceFail = false;
+    if (db) { try { await db.doc("ajustes/ritmo").set({ k: state.kReh, n: (state.kRehN || 0) + 1, updatedAt: Date.now() }); state.kRehN = (state.kRehN || 0) + 1; } catch (e) { paceFail = true; } }
     updateLive();
-    $("rehMsg").textContent = t("rehApplied");
+    $("rehMsg").textContent = paceFail ? t("rehNotSaved") : t("rehApplied");
   });
   $("rehClose").addEventListener("click", ppClose);
 }
@@ -8043,9 +8048,10 @@ loadProds = async function () {
   try {
     const q = await db.collection("producciones").orderBy("updatedAt", "desc").limit(200).get();
     G.prods = q.docs.map((d) => { const x = d.data() || {}; return { id: d.id, title: x.title || "", status: x.status || "borrador", updatedAt: x.updatedAt || 0, pubDate: x.pubDate || "", nextEp: x.nextEp || "", hasText: !!(x.text && x.text.trim()) }; });
+    G.loadErr.prods = false; G.srMsg = "";
     if (G.mode === "guion" && !V.guided) renderProdBar();
     renderSeriesAll();
-  } catch (e) {}
+  } catch (e) { G.loadErr.prods = true; renderSeriesAll(); }
 };
 function renderSeriesAll() {
   if ($("gSeries")) renderSeries("gSeries");
@@ -8094,7 +8100,7 @@ async function setPubDate(id, date) {
   if (id === G.prodId) { G.pubDate = date; markDirty(); const p = G.prods.find((x) => x.id === id); if (p) p.pubDate = date; renderSeriesAll(); return; }
   const db = await caps.db;
   if (!db) return;
-  try { await db.collection("producciones").doc(id).update({ pubDate: date }); const p = G.prods.find((x) => x.id === id); if (p) p.pubDate = date; renderSeriesAll(); } catch (e) {}
+  try { await db.collection("producciones").doc(id).update({ pubDate: date }); const p = G.prods.find((x) => x.id === id); if (p) p.pubDate = date; G.srMsg = ""; renderSeriesAll(); } catch (e) { G.srMsg = t("srDateFail"); renderSeriesAll(); }
 }
 async function openFromSeries(id) {
   await openProd(id);
@@ -8115,7 +8121,7 @@ async function deleteProds(ids) {
   for (const id of ids) { try { await db.collection("producciones").doc(id).delete(); } catch (e) { /* keep going; the list reloads below */ } }
   G.prods = G.prods.filter((p) => !ids.includes(p.id));
   if (wasOpen) { clearTimeout(saveTimer); applyProd(null, {}); G.snaps = []; resetWorkState(); state.result = null; updateLive(); if (V.guided) goStep(1); else setMode("review"); }
-  try { await loadProds(); } catch (e) {}
+  await loadProds(); // reports its own failure (G.loadErr.prods) and shows it in the list
   renderSeriesAll(); if (typeof renderEpStrip === "function") renderEpStrip();
 }
 function renderSeries(cid) {
@@ -8358,7 +8364,7 @@ function paintThemeBtn() {
 $("themeBtn").addEventListener("click", () => {
   const next = themeNow() === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  try { localStorage.setItem("sd-theme", next); } catch (e) {}
+  try { localStorage.setItem("sd-theme", next); } catch (e) { /* best effort: storage blocked: the theme applies but isn't remembered */ }
   paintThemeBtn();
 });
 if (THEME_MQ) { const f = () => paintThemeBtn(); if (THEME_MQ.addEventListener) THEME_MQ.addEventListener("change", f); else if (THEME_MQ.addListener) THEME_MQ.addListener(f); }
@@ -9461,12 +9467,14 @@ renderSeries = function (cid) {
           <div class="field"><label for="${cid}-d">${h(t("epDay"))}</label><input id="${cid}-d" type="date" value="${h(nextFreeDate())}"><span class="hint" id="${cid}-dh">${h(longDay(nextFreeDate()))}</span></div>
           <div class="actions"><button type="button" class="small primary" id="${cid}-p">${h(t("epAddBtn"))}</button><button type="button" class="small" id="${cid}-x">${h(t("epCancel"))}</button></div></div>`
       : `<button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button>`;
-    el.innerHTML = `${head}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
+    const notice = G.loadErr.prods ? `<p class="status err" role="alert">${h(t("srLoadFail"))} <button type="button" class="small" data-retry="prods">${h(t("srRetry"))}</button></p>` : G.srMsg ? `<p class="status err" role="alert">${h(G.srMsg)}</p>` : "";
+    el.innerHTML = `${head}${notice}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
       ${active.length ? `<ul class="ep-list">${active.map(row).join("")}</ul>` : ""}
       ${past.length ? `<button type="button" class="small linkish" id="${cid}-past">${h(G.epPast ? t("epPastHide") : t("epPast")(past.length))}</button>${G.epPast ? `<ul class="ep-list ep-pastlist">${past.map(row).join("")}</ul>` : ""}` : ""}
       ${addForm}
       ${G.prods.length ? `<div class="sr-clear"><button type="button" class="small linkish sr-del" id="${cid}-delall">${h(t("srDelAll")(G.prods.length))}</button></div>` : ""}`;
     const q = (s) => el.querySelector(s);
+    el.querySelectorAll("[data-retry=prods]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; await loadProds(); }));
     // Deleting asks first, right where the button was, and only removes episodes (nothing else).
     const askDel = (box, msg, onYes) => { box.innerHTML = `<span class="sr-q">${h(msg)}</span><button type="button" class="small danger" data-y>${h(t("srDelYes"))}</button><button type="button" class="small" data-n>${h(t("srDelNo"))}</button>`; box.querySelector("[data-n]").addEventListener("click", () => renderSeriesAll()); box.querySelector("[data-y]").addEventListener("click", async (e) => { e.target.disabled = true; await onYes(); }); };
     el.querySelectorAll("[data-srdel]").forEach((b) => b.addEventListener("click", () => { const p = G.prods.find((x) => x.id === b.dataset.srdel); askDel(b.closest(".ep-tools"), t("srDelQ")(p ? p.title || "—" : "—"), () => deleteProds([b.dataset.srdel])); }));
@@ -9889,7 +9897,7 @@ function setFull(on, fromHistory) {
   btn.innerHTML = fullBtnHTML(on);
   btn.title = btn.ariaLabel = t(on ? "edFocusOff" : "edFocus");
   // On a phone the back button closes the writing view instead of leaving the app.
-  if (isPhone() && !fromHistory) { if (on) { try { history.pushState({ sdEd: 1 }, ""); } catch (e) {} } else if (history.state && history.state.sdEd) { try { history.back(); } catch (e) {} } }
+  if (isPhone() && !fromHistory) { if (on) { try { history.pushState({ sdEd: 1 }, ""); } catch (e) { /* best effort: history API unavailable: the back button just won't close full screen */ } } else if (history.state && history.state.sdEd) { try { history.back(); } catch (e) { /* best effort: history API unavailable: the back button just won't close full screen */ } } }
   if (on) { ED.el.focus(); requestAnimationFrame(() => requestAnimationFrame(caretIntoView)); }
   else { syncFromEditor(); ED.el.blur(); ED.el.scrollTop = 0; ED.wrap.scrollIntoView({ block: "nearest" }); }
 }
@@ -9946,7 +9954,7 @@ function onPaste(e) {
     },
   });
   TA.focus = () => { if (!ED.el) return; if (isPhone()) ED.wrap.scrollIntoView({ block: "nearest", behavior: "smooth" }); else ED.el.focus(); };
-  try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {}
+  try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) { /* best effort: older browsers lack this command: paragraphs still work */ }
 
   const wrap = document.createElement("div");
   wrap.className = "ed-wrap";
@@ -9965,11 +9973,11 @@ function onPaste(e) {
     const grip = wrap.querySelector("#edGrip"), MIN = 120, maxH = () => Math.round(innerHeight * 0.85);
     const cur = () => ED.el.getBoundingClientRect().height;
     const setH = (px) => { const v = Math.max(MIN, Math.min(maxH(), Math.round(px))); wrap.style.setProperty("--edh", v + "px"); return v; };
-    try { const s = +lsGet("sd-edh"); if (s >= MIN) setH(s); } catch (e) {}
+    try { const s = +lsGet("sd-edh"); if (s >= MIN) setH(s); } catch (e) { /* best effort: saved editor height unreadable: keep the default */ }
     let y0 = 0, h0 = 0, drag = false;
     grip.addEventListener("pointerdown", (e) => { drag = true; y0 = e.clientY; h0 = cur(); grip.setPointerCapture(e.pointerId); grip.classList.add("on"); e.preventDefault(); });
     grip.addEventListener("pointermove", (e) => { if (drag) setH(h0 + (e.clientY - y0)); });
-    const end = () => { if (!drag) return; drag = false; grip.classList.remove("on"); try { lsSet("sd-edh", String(Math.round(cur()))); } catch (e) {} };
+    const end = () => { if (!drag) return; drag = false; grip.classList.remove("on"); try { lsSet("sd-edh", String(Math.round(cur()))); } catch (e) { /* best effort: can't remember the editor height: it resets next visit */ } };
     grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
     grip.addEventListener("keydown", (e) => { if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const v = setH(cur() + (e.key === "ArrowDown" ? 40 : -40)); lsSet("sd-edh", String(v)); } });
     grip.addEventListener("dblclick", () => { wrap.style.removeProperty("--edh"); lsSet("sd-edh", ""); });
@@ -10002,7 +10010,7 @@ function onPaste(e) {
   setTimeout(() => {
     if (G.prodId || taGet().trim()) return;
     let d = null;
-    try { d = JSON.parse(lsGet("sd-draft") || "null"); } catch (e) {}
+    try { d = JSON.parse(lsGet("sd-draft") || "null"); } catch (e) { /* best effort: unreadable draft: start without one */ }
     if (!d || !d.text || !d.text.trim()) return;
     TA.value = d.text; FMT.marks = Array.isArray(d.marks) ? d.marks : []; renderEd();
     updateLive(); setEdSave(t("edLocal"));
@@ -11115,7 +11123,7 @@ onmessage=function(e){var d=e.data;try{var t0=Date.now();var R=analyze(d.text,d.
     SC.w = w;
   } catch (e) { SC.noWorker = true; SC.w = null; }
 }
-function scKillWorker() { try { if (SC.w) SC.w.terminate(); } catch (e) {} SC.w = null; SC.noWorker = true; clearTimeout(SC.guard); }
+function scKillWorker() { try { if (SC.w) SC.w.terminate(); } catch (e) { /* best effort: worker already gone */ } SC.w = null; SC.noWorker = true; clearTimeout(SC.guard); }
 function scAdapt() { SC.delay = SC.ms > 250 ? Math.min(2000, SC.delay * 2) : SC.ms < 120 ? Math.max(700, Math.round(SC.delay / 2)) : SC.delay; }
 const scIdle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0));
 function scSlim(R) {
@@ -11134,7 +11142,7 @@ function scQueue(now) {
 function scRun() {
   if (SC.off) return;
   const text = $("script").value;
-  if (!text.trim()) { SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) {} scPaint(); return; }
+  if (!text.trim()) { SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) { /* best effort: storage blocked: nothing to forget */ } scPaint(); return; }
   let opts; try { opts = JSON.parse(JSON.stringify(readOpts())); } catch (e) { return; }
   const seq = ++SC.seq;
   scStartWorker();
@@ -11163,7 +11171,7 @@ function scApply() {
   if (SC.baseKey !== key || SC.base == null) {
     SC.baseKey = key;
     let b = null;
-    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number") b = o.score; } catch (e) {} }
+    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number") b = o.score; } catch (e) { /* best effort: unreadable saved baseline: show no change arrow */ } }
     if (b == null) { b = S.score; if (!scDemo()) lsSet(key, JSON.stringify({ score: b, at: Date.now() })); }
     SC.base = b;
   }
@@ -11247,7 +11255,7 @@ function scRenderPop() {
   pop.querySelectorAll("[data-scrow]").forEach((b) => b.addEventListener("click", () => scGoRow(b.dataset.scrow)));
   pop.querySelectorAll("[data-scshow]").forEach((b) => b.addEventListener("click", () => { state.fixDismissed.delete(b.dataset.scshow); scApply(); scRefreshView(); }));
 }
-function scRefreshView() { try { if (state.result) { if (V.guided) renderGuide(); else renderResults(); } } catch (e) {} }
+function scRefreshView() { try { if (state.result) { if (V.guided) renderGuide(); else renderResults(); } } catch (e) { /* best effort: view refresh is cosmetic: the next render redraws */ } }
 function scOpenPop() {
   if (!SC.S) return;
   let scrim = $("scScrim");
@@ -11327,7 +11335,7 @@ applyLang = function () { _alSC(); scPaint(); };
 const _gsSC = goStep;
 goStep = function (n) { scClosePop(); _gsSC(n); };
 const _dcSC = doClearScript;
-doClearScript = function () { _dcSC(); SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) {} scPaint(); };
+doClearScript = function () { _dcSC(); SC.R = null; SC.S = null; SC.base = null; SC.baseKey = null; SC.shown = null; try { localStorage.removeItem(scKey()); } catch (e) { /* best effort: storage blocked: nothing to forget */ } scPaint(); };
 if (typeof SPLIT !== "undefined" && SPLIT.mq) SPLIT.mq.addEventListener("change", () => setTimeout(scPlace, 0));
 const _opSC = typeof openPrompter === "function" ? openPrompter : null;
 if (_opSC) openPrompter = function (m) { scClosePop(); return _opSC(m); };
@@ -11365,10 +11373,10 @@ const WK_FAMS = ["hi", "mid", "fill", "pol"];
 const WK_NAMES = [...WK_FAMS.map((f) => "sd-w-" + f), ...WK_FAMS.map((f) => "sd-u-" + f), "sd-del", "sd-quote", "sd-flash"];
 // families the person switched off from the legend (kept on this device only)
 const CATOFF = new Set();
-try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) {}
+try { JSON.parse(localStorage.getItem("sd-cats-off") || "[]").forEach((x) => CATOFF.add(x)); } catch (e) { /* best effort: unreadable legend filter: show every category */ }
 function catApplyOff() {
   CATS.forEach((c) => document.documentElement.classList.toggle("cat-off-" + c.id, CATOFF.has(c.id)));
-  try { localStorage.setItem("sd-cats-off", JSON.stringify([...CATOFF])); } catch (e) {}
+  try { localStorage.setItem("sd-cats-off", JSON.stringify([...CATOFF])); } catch (e) { /* best effort: storage blocked: the filter isn't remembered */ }
 }
 catApplyOff();
 function catCounts() {
@@ -11779,7 +11787,7 @@ const MK_SVG = {
 const RL = { on: false, items: [], byBlock: [], rows: [], layer: null, mini: null, pop: null, raf: 0, bt: [], T: 1, popB: -1 };
 const rlPhone = () => !SPLIT.on;
 function rlPref(key, def) { try { const v = localStorage.getItem(key); return v === null ? def : v === "1"; } catch (e) { return def; } }
-function rlSet(key, v) { try { localStorage.setItem(key, v ? "1" : "0"); } catch (e) {} }
+function rlSet(key, v) { try { localStorage.setItem(key, v ? "1" : "0"); } catch (e) { /* best effort: storage blocked: the toggle works but isn't remembered */ } }
 const rlCuesOn = () => rlPref("sd-rail-cues", !rlPhone());
 const rlRefsOn = () => rlPref("sd-rail-refs", true);
 
@@ -11870,7 +11878,7 @@ function railSelect(i) {
   try {
     const m = WK.map.find((x) => b.el.contains(x.n));
     if (m) { const r = document.createRange(); r.setStart(m.n, 0); r.collapse(true); ED.el.focus({ preventScroll: true }); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
-  } catch (e) {}
+  } catch (e) { /* best effort: caret placement is cosmetic: the paragraph is already selected */ }
 }
 function railLayout() {
   if (!RL.on || !RL.layer || !ED.el) return;
@@ -12182,7 +12190,7 @@ function renderAuthBar() {
     el.hidden = false; el.className = "auth-bar ok";
     el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p><button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
   }
-  $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) {} lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
+  $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) { /* best effort: sign-out failing still reloads signed out locally */ } lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
 }
 window.__sdAuth.then((a) => { AUTH = a || AUTH; renderAuthBar(); });
 const _gOnLangAuth = gOnLang;
@@ -12201,7 +12209,7 @@ window.__sdAuth.then(async (a) => {
     const db = await caps.db;
     const s = db && (await db.collection("producciones").doc(last).get());
     if (s && s.exists) await openFromSeries(last);
-  } catch (e) {}
+  } catch (e) { /* best effort: resuming the last episode is a convenience: open a blank script */ }
 });
 
 // Save pending edits when the page is hidden or closed (phone lock, tab switch).
@@ -12243,7 +12251,7 @@ window.addEventListener("sd-ai-cost", (e) => {
 });
 window.__sdAuth.then(async (a) => {
   if (!a || !a.member || !window.__sb) return;
-  try { const r = await window.__sb.rpc("sd_month_cost"); if (r && r.data != null) { MONTH_COST = Number(r.data); renderAuthBar(); } } catch (e) {}
+  try { const r = await window.__sb.rpc("sd_month_cost"); if (r && r.data != null) { MONTH_COST = Number(r.data); renderAuthBar(); } } catch (e) { /* best effort: month cost is display only */ }
 });
 
 applyLang();
