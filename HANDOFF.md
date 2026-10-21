@@ -23,6 +23,9 @@ Recent work, newest first:
 
 All node tests pass; Playwright `pwdc pwwk pwcl pwrl pwtm pwex pwtoast` pass; `pwsc` flaky but two clean passes; `pwhw` was clean at v64.
 
+## NEXT TASK (approved 2026-10-20)
+Build `docs/PLAN-intro-after-review.md`: review the message alone (drop the 7/20/30 s opening checks from the message review, timeline and score) and build a ≈30 s intro in Preparar from the key idea (Recorded intro by default, 3 AI drafts via `sd-ai`, fixed 4 s title graphic, "Video with intro" switch). Follow its build order and deploy after each step that passes tests.
+
 ## Open items / ideas Adrian was offered
 - (done 2026-10-19) Phone: tapping a paragraph bar no longer opens the keyboard. Needs a check on a real phone.
 - Phone: the formatting toolbar (B/I/U/heading) only shows in full screen. Offered: show it without maximizing.
