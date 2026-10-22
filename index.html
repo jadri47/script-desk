@@ -969,6 +969,46 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 .fx-chg ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
 .topfix.walk .fx-done .fx-top{scroll-margin-top:200px;scroll-margin-bottom:90px}
 .fx-i{font-size:14px;line-height:1.45;margin:2px 0}.fx-done .actions{margin-top:10px}
+
+/* ===== Coach: one decision at a time (tokens only) ===== */
+.topfix.coach{overflow:clip}
+.cc-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-bottom:6px}
+.cc-head h3{margin:0;flex:1 1 auto;font-size:17px}
+.cc-bar{height:8px;border-radius:4px;background:var(--rule);overflow:hidden;margin:2px 0 8px}
+.cc-bar i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .2s}
+.cc-score{margin:0 0 10px;font-size:14px;color:var(--ink-2)}
+.cc-dec{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;outline:none}
+.cc-dec:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cc-top{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-bottom:6px}
+.cc-t{font:700 16px/1.3 var(--sans);flex:1 1 auto;min-width:0}
+.cc-tag{font-size:12px;font-weight:700;color:var(--rojo);border:1px solid var(--rojo);border-radius:999px;padding:1px 8px}
+.cc-sub{margin:0 0 4px;font-size:15px}
+.cc-see{margin:8px 0}.cc-see summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
+.cc-items{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:4px}
+.cc-it{display:block;width:100%;text-align:left;font-size:14px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;padding:4px 6px}
+.cc-it del{background:var(--rojo-bg);color:var(--rojo);text-decoration:line-through}
+.cc-it ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
+.cc-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cc-write{margin-top:10px;display:grid;gap:6px}.cc-write textarea,.cc-dec textarea{width:100%;box-sizing:border-box}
+.cc-lbl{display:block;font-size:13px;font-weight:600;margin:8px 0 4px}
+.cc-nav{display:flex;justify-content:flex-end;margin:8px 0 4px}
+.cc-log{margin-top:10px}.cc-log summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
+.cc-none{margin:0}
+main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{min-height:40px}
+@media (max-width:899px),(max-height:559px){.topfix.coach{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}.cc-dec button{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}}
+.cc-nav{justify-content:flex-start}
+.cc-see summary::before,.cc-log summary::before{content:"▸";display:inline-block;width:1.2em;color:var(--accent)}
+.cc-see[open] summary::before,.cc-log[open] summary::before{content:"▾"}
+.cc-see summary,.cc-log summary{list-style:none}.cc-see summary::-webkit-details-marker,.cc-log summary::-webkit-details-marker{display:none}
+.cc-see summary:focus-visible,.cc-log summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.topfix.coach{padding-bottom:8px}
+.cc-radios{display:grid;gap:6px;margin:8px 0}
+.cc-radio{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:1px solid var(--rule);border-radius:10px;background:var(--paper);cursor:pointer;min-height:40px;line-height:1.4;overflow-wrap:anywhere}
+.cc-radio:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cc-radio input{margin-top:3px;flex:none;accent-color:var(--accent)}
+.cc-radio:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.cc-ai{color:var(--accent);border-color:var(--accent)}
+.cc-pause{margin:0 0 8px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -2350,6 +2390,19 @@ function analyze(text, opts = {}) {
   }
   const bestGram = Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0];
   const bestWord = top.find(([w, c]) => c > 1 && !COMMON.has(w));
+  // Keyword candidates for the coach question: the same pick as `keyword` first, then the next frequent phrases/words that do not overlap it.
+  // (jadri47, 2026-10-22: "R.keyword first, then up to 3 other frequent content phrases", extends the pick above, no second algorithm)
+  const kwCands = [];
+  {
+    const pool = [...Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length), ...top.filter(([w, c]) => c > 1 && !COMMON.has(w))];
+    const first = bestGram || bestWord;
+    if (first) kwCands.push({ phrase: first[0], n: first[1] });
+    for (const [ph, c] of pool) {
+      if (kwCands.length >= 4) break;
+      if (kwCands.some((x) => x.phrase === ph || x.phrase.includes(ph) || ph.includes(x.phrase))) continue;
+      kwCands.push({ phrase: ph, n: c });
+    }
+  }
   const keyword = (opts.keyword || "").trim().toLowerCase() || (bestGram ? bestGram[0] : bestWord ? bestWord[0] : "");
   const kwRe = keyword ? new RegExp("(?<![\\p{L}])" + esc(norm(keyword)) + "(?![\\p{L}])", "giu") : null;
   const normText = norm(text);
@@ -2402,7 +2455,7 @@ function analyze(text, opts = {}) {
   const passed = allRows.filter((r) => r.passed).length;
   const worst = preflight.some((p) => p.level === "rojo") || packaging.some((p) => p.level === "rojo") ? "rojo" : preflight.some((p) => p.level === "amarillo") || packaging.some((p) => p.level === "amarillo") ? "amarillo" : "verde";
 
-  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, promiseDeadline, openPrayer, closeFrom, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
+  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, kwCands, promiseSent: firstPromise ? { start: firstPromise.start, text: firstPromise.text } : null, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, promiseDeadline, openPrayer, closeFrom, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
 }
 
 // ---------- Guion: sentence units, sections, cold-open candidates (pure) ----------
@@ -2920,6 +2973,8 @@ function weakPatch(text, hit) {
   const key = hit.text.toLowerCase();
   if (!WEAK_SAFE[key]) return null;
   let alt = hit.alts[0];
+  // "súper importante" → "muy importante" swapped one weak word for another: drop the intensifier instead (jadri47, 2026-10-21)
+  if (key === "súper") { let e = hit.end; while (text[e] === " ") e++; const nx = text[e] || ""; return hit.text[0] === hit.text[0].toUpperCase() && nx ? { start: hit.start, end: e + 1, rep: nx.toUpperCase() } : { start: hit.start, end: e, rep: "" }; }
   if (key === "cosas") { const prev = (text.slice(Math.max(0, hit.start - 12), hit.start).match(/(\p{L}+)\s*$/u) || [])[1] || ""; alt = /as$/i.test(prev) ? "verdades" : "aspectos"; if (/as$/i.test(prev) && /^(las|unas|estas|esas|muchas|otras|todas|algunas|tantas)$/i.test(prev)) alt = "verdades"; }
   if (hit.text[0] === hit.text[0].toUpperCase()) alt = alt[0].toUpperCase() + alt.slice(1);
   return { start: hit.start, end: hit.end, rep: alt };
@@ -2935,7 +2990,8 @@ function regionalPatch(text, hit) {
 }
 // Split a long sentence at the connector nearest its middle, never inside a quote.
 function splitPatch(text, s, quotes) {
-  const re = /(,\s+)(y|pero|porque|así que|entonces|and|but|because|so)\s|(;\s+)/giu;
+  // No «porque»/«because»: a clause that starts with it is not a sentence (". Porque no lo sabía.") (jadri47, 2026-10-21: "stop splitting before porque")
+  const re = /(,\s+)(y|pero|así que|entonces|and|but|so)\s|(;\s+)/giu;
   const body = text.slice(s.start, s.end), mid = body.length / 2;
   let best = null, m;
   while ((m = re.exec(body))) {
@@ -3598,7 +3654,167 @@ function railCrowd(xs, gap = 0.024) {
   return lvl;
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER };
+// ---------- Coach: the review as a queue of decisions, one at a time (pure; the UI words it later) ----------
+// (jadri47, 2026-10-21: "the app should walk him through the process and just ask him questions")
+// kind: risk (red ad risk) > batch (every safe fix at once) > question (missing info) > choice (by score gain) > note (nothing to apply)
+const COACH_FAMILY = { muletillas: "muletillas", pulpit: "pulpit", openers: "openers", weak: "weak", regional: "regional", onscreen: "onscreen" };
+const COACH_QUESTION = { bigidea: "bigIdea", kw: "keyword", ending: "nextEp" };
+const COACH_NOTE = new Set(["refs", "reading"]);
+
+function coachFailedRows(R, dismissed) {
+  const out = [];
+  for (const [k, rows] of Object.entries(R.sections)) for (const r of rows) if ((!r.passed || r.warn) && !FIX_SKIP.has(r.id) && !dismissed.has(r.id)) out.push({ ...r, sec: k });
+  return out;
+}
+// Overlap rule of applyPatches: a patch starting before the previous one ended is dropped (touching is fine).
+function coachNoOverlap(items) {
+  const out = []; let end = -1;
+  for (const it of [...items].sort((a, b) => a.start - b.start || a.end - b.end)) { if (it.start < end) continue; out.push(it); end = Math.max(end, it.end); }
+  return out;
+}
+const coachCounts = (items) => items.reduce((m, x) => ((m[x.fam] = (m[x.fam] || 0) + 1), m), {});
+
+function buildDecisions(text, R, opts, dismissed) {
+  dismissed = dismissed || new Set();
+  const failed = coachFailedRows(R, dismissed);
+  const cards = buildFixCards(text, R, opts, failed, 1e9, Infinity);
+  const base = scoreOf(R, dismissed).score;
+  const rowW = (ids) => ids.reduce((a, id) => { const r = failed.find((x) => x.id === id); return a + (r ? weightOf(r) : 0); }, 0);
+  const pos = (c) => (c.evidence[0] ? c.evidence[0].start : Infinity);
+  const gainOf = (c) => (c.proposals[0] ? c.proposals[0].check.score - base : rowW(c.ids));
+
+  // 1. the safe batch: first proposal of the fixed-table cards, across the whole script
+  let items = [];
+  for (const c of cards) {
+    const fam = COACH_FAMILY[c.id], p = c.proposals[0];
+    if (!fam || !p || p.kind !== "patch") continue;
+    for (const q of p.patches) {
+      items.push({ fam, start: q.start, end: q.end, rep: q.rep, cardId: c.id });
+    }
+  }
+  items = coachNoOverlap(items);
+  const mk = (its) => ({ kind: "patch", label: "batch", patches: its.map((x) => ({ start: x.start, end: x.end, rep: x.rep })) });
+  let check = null;
+  while (items.length) {
+    const p = mk(items); check = verifyProposal(text, opts, R, p);
+    if (!check.broke.length) break;
+    // drop one family: the one whose removal leaves the fewest broken checks (ties: the smaller family)
+    const fams = Object.keys(coachCounts(items));
+    let best = null;
+    for (const f of fams) {
+      const rest = items.filter((x) => x.fam !== f);
+      const b = rest.length ? verifyProposal(text, opts, R, mk(rest)).broke.length : 0;
+      const n = items.length - rest.length;
+      if (!best || b < best.b || (b === best.b && n < best.n)) best = { f, b, n };
+    }
+    items = items.filter((x) => x.fam !== best.f); check = null;
+  }
+  const decisions = [];
+  const covered = new Set();
+  if (items.length && check) {
+    const key = (x) => x.start + ":" + x.end + ":" + x.rep, inBatch = new Set(items.map(key));
+    for (const c of cards) { const p = c.proposals[0]; if (COACH_FAMILY[c.id] && p && p.kind === "patch" && p.patches.every((q) => inBatch.has(key(q)))) covered.add(c.id); }
+    const opt = { ...mk(items), check };
+    decisions.push({ kind: "batch", id: "batch", ids: [...covered], card: null, options: [opt], at: { start: items[0].start, end: items[0].end }, gain: check.score - base, fam: coachCounts(items), items });
+  }
+
+  // 2. everything else
+  const rest = [];
+  for (const c of cards) {
+    if (covered.has(c.id)) continue;
+    const at = c.evidence[0] ? { start: c.evidence[0].start, end: c.evidence[0].end } : null;
+    const d = { kind: "choice", id: c.id, ids: c.ids, card: c, options: c.proposals, at, gain: gainOf(c) };
+    const emptyTitle = c.ids.some((x) => x === "search" || x === "title") && !(opts.title || "").trim();
+    if (c.level === "rojo") d.kind = "risk";
+    else if (COACH_NOTE.has(c.id)) d.kind = "note";
+    else if ((COACH_QUESTION[c.id] && !(opts[COACH_QUESTION[c.id]] || "").trim()) || emptyTitle) { d.kind = "question"; d.ask = emptyTitle ? "title" : COACH_QUESTION[c.id]; d.options = []; d.gain = rowW(c.ids); } // options: step 3
+    if (d.kind !== "note" && !d.options.length && d.kind !== "question") d.needsAi = true;
+    rest.push(d);
+  }
+  const order = (a, b) => b.gain - a.gain || pos(a.card) - pos(b.card);
+  const part = (k) => rest.filter((d) => d.kind === k).sort(order);
+  // The keyword check passes on the app's own pick (R.keyword), so it never raises a card; but with the field empty and a few real
+  // candidates, confirming one is a one-tap question. (jadri47, 2026-10-22: "keyword: candidates by rule, R.keyword first")
+  const qs = part("question");
+  if (!(opts.keyword || "").trim() && (R.kwCands || []).length >= 2 && !qs.some((d) => d.ask === "keyword") && !dismissed.has("kw-ask"))
+    qs.push({ kind: "question", id: "kw-ask", ids: ["kw-ask"], card: null, options: [], at: null, gain: 0, ask: "keyword" });
+  return [...part("risk"), ...decisions, ...qs, ...part("choice"), ...part("note")];
+}
+
+// The score if every decision's first option were applied. A decision goes in whole or not at all (its patches must
+// not overlap what is already in), so two cards that edit the same words never half-apply.
+function projectedScore(text, R, opts, decisions, dismissed) {
+  const taken = []; let o2 = { ...opts };
+  for (const d of decisions) {
+    const p = d.options && d.options[0];
+    if (!p || d.kind === "question" || d.kind === "note") continue;
+    const ps = p.patches || [];
+    if (ps.some((q) => taken.some((t) => q.start < t.end && t.start < q.end))) continue;
+    taken.push(...ps);
+    if (p.kind === "field") o2[p.field] = p.value;
+    if (p.kind === "cold") o2.coldOpen = { hook: p.hook ? p.hook.text : "", promise: p.promise ? p.promise.text : "", mode: [p.hook, p.promise].filter(Boolean).every((x) => x.mode === "move") ? "move" : "dup" };
+  }
+  return scoreOf(analyze(applyPatches(text, taken), o2), dismissed).score;
+}
+
+// Ready answers for a question, only from the script or the rules (never invented text). Each: {text, n?, src}.
+// (jadri47, 2026-10-22: "Choices must be real text from the script or the rules")
+function coachOneSentence(x, max) {
+  const s = (x || "").replace(/\s+/g, " ").trim().replace(/^[«"“]|[»"”]$/g, "");
+  if (!s) return "";
+  if (s.split(" ").length < 6) return ""; // "vamos a ver" is not an idea
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max), c = Math.max(cut.lastIndexOf(","), cut.lastIndexOf(";"));
+  return c > 40 ? cut.slice(0, c) : ""; // a clause that ends on its own, or nothing: no half sentence
+}
+function coachQuestionChoices(ask, R, opts, card, extra) {
+  const en = R.lang === "en", out = [], add = (c) => { if (c.text && !out.some((x) => norm(x.text) === norm(c.text))) out.push(c); };
+  extra = extra || {};
+  if (ask === "keyword") for (const k of R.kwCands || []) add({ text: k.phrase, n: k.n, src: "kw" });
+  else if (ask === "title") {
+    for (const p of (card && card.proposals) || []) if (p.kind === "field" && p.field === "title") add({ text: p.value, src: "rule" });
+    for (const k of (R.kwCands || []).filter((x) => x.n >= 3).slice(0, 3)) { // only phrases said often: a weak phrase makes a silly title
+      const t = en ? `What does the Bible say about ${k.phrase}?` : `¿Qué dice la Biblia sobre ${esArticle(k.phrase)}${k.phrase}?`;
+      if (t.length <= 60) add({ text: t, src: "rule" });
+    }
+  } else if (ask === "nextEp") {
+    const cur = extra.pubDate || "";
+    const nx = (extra.prods || []).filter((p) => p.id !== extra.curId && (p.title || "").trim() && p.pubDate && cur && p.pubDate > cur).sort((a, b) => a.pubDate.localeCompare(b.pubDate))[0];
+    if (nx) add({ text: nx.title.trim(), src: "plan" });
+  } else if (ask === "bigIdea") {
+    // promiseSent is the matched phrase ("vas a descubrir"); the choice is the whole sentence it sits in
+    const ps = R.promiseSent && (R.sents || []).find((x) => x.start <= R.promiseSent.start && R.promiseSent.start < x.start + x.text.length);
+    const p = ps && coachOneSentence(ps.text, 140);
+    if (p) add({ text: p, src: "promise" });
+    const late = (R.msg && R.msg.lateStart) || 0;
+    const rc = [...(R.sents || [])].reverse().find((x) => x.start >= late && hasPhrase(x.text, RECAP));
+    const r = rc && coachOneSentence(rc.text, 140);
+    if (r) add({ text: r, src: "recap" });
+  }
+  return out;
+}
+
+// Masks the Bible text inside [from,to) with ⟦Vn⟧ tokens (numbered over the whole script, so a token means one verse in the
+// fragment and its context alike). null when a verse crosses the edge of the fragment: that range cannot be protected, so it
+// is never sent. The context range grows to whole verses. (jadri47, 2026-10-22: "Scripture must never be rewritten")
+function coachAiMask(text, spans, a, b, pad) {
+  const verse = spans.filter((s) => s.kind !== "ref").sort((x, y) => x.start - y.start);
+  for (const s of verse) if (s.start < b && s.end > a && (s.start < a || s.end > b)) return null;
+  let c0 = Math.max(0, a - pad), c1 = Math.min(text.length, b + pad);
+  for (let k = 0; k < 4; k++) for (const s of verse) { if (s.start < c0 && s.end > c0) c0 = s.start; if (s.start < c1 && s.end > c1) c1 = s.end; }
+  const mask = (from, to) => {
+    let out = "", pos = from; const toks = [];
+    verse.forEach((s, i) => { if (s.start >= from && s.end <= to) { const tok = `⟦V${i + 1}⟧`; out += text.slice(pos, s.start) + tok; toks.push({ tok, text: text.slice(s.start, s.end) }); pos = s.end; } });
+    return { masked: out + text.slice(pos, to), toks };
+  };
+  return { frag: mask(a, b), ctx: mask(c0, c1) };
+}
+// Up to `max` decisions that need an AI proposal and have none yet, in queue order.
+function coachAiPick(list, have, max) {
+  return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -3669,7 +3885,7 @@ if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz
         r = await fetch(SB_URL + "/functions/v1/sd-ai", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token, apikey: SB_KEY },
-          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible }),
+          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible, auto: !!opts.auto }),
           signal: opts.signal,
         });
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
@@ -4380,6 +4596,19 @@ function analyze(text, opts = {}) {
   }
   const bestGram = Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0];
   const bestWord = top.find(([w, c]) => c > 1 && !COMMON.has(w));
+  // Keyword candidates for the coach question: the same pick as `keyword` first, then the next frequent phrases/words that do not overlap it.
+  // (jadri47, 2026-10-22: "R.keyword first, then up to 3 other frequent content phrases", extends the pick above, no second algorithm)
+  const kwCands = [];
+  {
+    const pool = [...Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length), ...top.filter(([w, c]) => c > 1 && !COMMON.has(w))];
+    const first = bestGram || bestWord;
+    if (first) kwCands.push({ phrase: first[0], n: first[1] });
+    for (const [ph, c] of pool) {
+      if (kwCands.length >= 4) break;
+      if (kwCands.some((x) => x.phrase === ph || x.phrase.includes(ph) || ph.includes(x.phrase))) continue;
+      kwCands.push({ phrase: ph, n: c });
+    }
+  }
   const keyword = (opts.keyword || "").trim().toLowerCase() || (bestGram ? bestGram[0] : bestWord ? bestWord[0] : "");
   const kwRe = keyword ? new RegExp("(?<![\\p{L}])" + esc(norm(keyword)) + "(?![\\p{L}])", "giu") : null;
   const normText = norm(text);
@@ -4432,7 +4661,7 @@ function analyze(text, opts = {}) {
   const passed = allRows.filter((r) => r.passed).length;
   const worst = preflight.some((p) => p.level === "rojo") || packaging.some((p) => p.level === "rojo") ? "rojo" : preflight.some((p) => p.level === "amarillo") || packaging.some((p) => p.level === "amarillo") ? "amarillo" : "verde";
 
-  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, promiseDeadline, openPrayer, closeFrom, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
+  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, kwCands, promiseSent: firstPromise ? { start: firstPromise.start, text: firstPromise.text } : null, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits, cues, msg, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang, promiseDeadline, openPrayer, closeFrom, topWords: top.filter(([w, c]) => c > 1 && !COMMON.has(w)).slice(0, 10), topGrams: Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 8) };
 }
 
 // ---------- Guion: sentence units, sections, cold-open candidates (pure) ----------
@@ -4950,6 +5179,8 @@ function weakPatch(text, hit) {
   const key = hit.text.toLowerCase();
   if (!WEAK_SAFE[key]) return null;
   let alt = hit.alts[0];
+  // "súper importante" → "muy importante" swapped one weak word for another: drop the intensifier instead (jadri47, 2026-10-21)
+  if (key === "súper") { let e = hit.end; while (text[e] === " ") e++; const nx = text[e] || ""; return hit.text[0] === hit.text[0].toUpperCase() && nx ? { start: hit.start, end: e + 1, rep: nx.toUpperCase() } : { start: hit.start, end: e, rep: "" }; }
   if (key === "cosas") { const prev = (text.slice(Math.max(0, hit.start - 12), hit.start).match(/(\p{L}+)\s*$/u) || [])[1] || ""; alt = /as$/i.test(prev) ? "verdades" : "aspectos"; if (/as$/i.test(prev) && /^(las|unas|estas|esas|muchas|otras|todas|algunas|tantas)$/i.test(prev)) alt = "verdades"; }
   if (hit.text[0] === hit.text[0].toUpperCase()) alt = alt[0].toUpperCase() + alt.slice(1);
   return { start: hit.start, end: hit.end, rep: alt };
@@ -4965,7 +5196,8 @@ function regionalPatch(text, hit) {
 }
 // Split a long sentence at the connector nearest its middle, never inside a quote.
 function splitPatch(text, s, quotes) {
-  const re = /(,\s+)(y|pero|porque|así que|entonces|and|but|because|so)\s|(;\s+)/giu;
+  // No «porque»/«because»: a clause that starts with it is not a sentence (". Porque no lo sabía.") (jadri47, 2026-10-21: "stop splitting before porque")
+  const re = /(,\s+)(y|pero|así que|entonces|and|but|so)\s|(;\s+)/giu;
   const body = text.slice(s.start, s.end), mid = body.length / 2;
   let best = null, m;
   while ((m = re.exec(body))) {
@@ -5628,7 +5860,167 @@ function railCrowd(xs, gap = 0.024) {
   return lvl;
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER };
+// ---------- Coach: the review as a queue of decisions, one at a time (pure; the UI words it later) ----------
+// (jadri47, 2026-10-21: "the app should walk him through the process and just ask him questions")
+// kind: risk (red ad risk) > batch (every safe fix at once) > question (missing info) > choice (by score gain) > note (nothing to apply)
+const COACH_FAMILY = { muletillas: "muletillas", pulpit: "pulpit", openers: "openers", weak: "weak", regional: "regional", onscreen: "onscreen" };
+const COACH_QUESTION = { bigidea: "bigIdea", kw: "keyword", ending: "nextEp" };
+const COACH_NOTE = new Set(["refs", "reading"]);
+
+function coachFailedRows(R, dismissed) {
+  const out = [];
+  for (const [k, rows] of Object.entries(R.sections)) for (const r of rows) if ((!r.passed || r.warn) && !FIX_SKIP.has(r.id) && !dismissed.has(r.id)) out.push({ ...r, sec: k });
+  return out;
+}
+// Overlap rule of applyPatches: a patch starting before the previous one ended is dropped (touching is fine).
+function coachNoOverlap(items) {
+  const out = []; let end = -1;
+  for (const it of [...items].sort((a, b) => a.start - b.start || a.end - b.end)) { if (it.start < end) continue; out.push(it); end = Math.max(end, it.end); }
+  return out;
+}
+const coachCounts = (items) => items.reduce((m, x) => ((m[x.fam] = (m[x.fam] || 0) + 1), m), {});
+
+function buildDecisions(text, R, opts, dismissed) {
+  dismissed = dismissed || new Set();
+  const failed = coachFailedRows(R, dismissed);
+  const cards = buildFixCards(text, R, opts, failed, 1e9, Infinity);
+  const base = scoreOf(R, dismissed).score;
+  const rowW = (ids) => ids.reduce((a, id) => { const r = failed.find((x) => x.id === id); return a + (r ? weightOf(r) : 0); }, 0);
+  const pos = (c) => (c.evidence[0] ? c.evidence[0].start : Infinity);
+  const gainOf = (c) => (c.proposals[0] ? c.proposals[0].check.score - base : rowW(c.ids));
+
+  // 1. the safe batch: first proposal of the fixed-table cards, across the whole script
+  let items = [];
+  for (const c of cards) {
+    const fam = COACH_FAMILY[c.id], p = c.proposals[0];
+    if (!fam || !p || p.kind !== "patch") continue;
+    for (const q of p.patches) {
+      items.push({ fam, start: q.start, end: q.end, rep: q.rep, cardId: c.id });
+    }
+  }
+  items = coachNoOverlap(items);
+  const mk = (its) => ({ kind: "patch", label: "batch", patches: its.map((x) => ({ start: x.start, end: x.end, rep: x.rep })) });
+  let check = null;
+  while (items.length) {
+    const p = mk(items); check = verifyProposal(text, opts, R, p);
+    if (!check.broke.length) break;
+    // drop one family: the one whose removal leaves the fewest broken checks (ties: the smaller family)
+    const fams = Object.keys(coachCounts(items));
+    let best = null;
+    for (const f of fams) {
+      const rest = items.filter((x) => x.fam !== f);
+      const b = rest.length ? verifyProposal(text, opts, R, mk(rest)).broke.length : 0;
+      const n = items.length - rest.length;
+      if (!best || b < best.b || (b === best.b && n < best.n)) best = { f, b, n };
+    }
+    items = items.filter((x) => x.fam !== best.f); check = null;
+  }
+  const decisions = [];
+  const covered = new Set();
+  if (items.length && check) {
+    const key = (x) => x.start + ":" + x.end + ":" + x.rep, inBatch = new Set(items.map(key));
+    for (const c of cards) { const p = c.proposals[0]; if (COACH_FAMILY[c.id] && p && p.kind === "patch" && p.patches.every((q) => inBatch.has(key(q)))) covered.add(c.id); }
+    const opt = { ...mk(items), check };
+    decisions.push({ kind: "batch", id: "batch", ids: [...covered], card: null, options: [opt], at: { start: items[0].start, end: items[0].end }, gain: check.score - base, fam: coachCounts(items), items });
+  }
+
+  // 2. everything else
+  const rest = [];
+  for (const c of cards) {
+    if (covered.has(c.id)) continue;
+    const at = c.evidence[0] ? { start: c.evidence[0].start, end: c.evidence[0].end } : null;
+    const d = { kind: "choice", id: c.id, ids: c.ids, card: c, options: c.proposals, at, gain: gainOf(c) };
+    const emptyTitle = c.ids.some((x) => x === "search" || x === "title") && !(opts.title || "").trim();
+    if (c.level === "rojo") d.kind = "risk";
+    else if (COACH_NOTE.has(c.id)) d.kind = "note";
+    else if ((COACH_QUESTION[c.id] && !(opts[COACH_QUESTION[c.id]] || "").trim()) || emptyTitle) { d.kind = "question"; d.ask = emptyTitle ? "title" : COACH_QUESTION[c.id]; d.options = []; d.gain = rowW(c.ids); } // options: step 3
+    if (d.kind !== "note" && !d.options.length && d.kind !== "question") d.needsAi = true;
+    rest.push(d);
+  }
+  const order = (a, b) => b.gain - a.gain || pos(a.card) - pos(b.card);
+  const part = (k) => rest.filter((d) => d.kind === k).sort(order);
+  // The keyword check passes on the app's own pick (R.keyword), so it never raises a card; but with the field empty and a few real
+  // candidates, confirming one is a one-tap question. (jadri47, 2026-10-22: "keyword: candidates by rule, R.keyword first")
+  const qs = part("question");
+  if (!(opts.keyword || "").trim() && (R.kwCands || []).length >= 2 && !qs.some((d) => d.ask === "keyword") && !dismissed.has("kw-ask"))
+    qs.push({ kind: "question", id: "kw-ask", ids: ["kw-ask"], card: null, options: [], at: null, gain: 0, ask: "keyword" });
+  return [...part("risk"), ...decisions, ...qs, ...part("choice"), ...part("note")];
+}
+
+// The score if every decision's first option were applied. A decision goes in whole or not at all (its patches must
+// not overlap what is already in), so two cards that edit the same words never half-apply.
+function projectedScore(text, R, opts, decisions, dismissed) {
+  const taken = []; let o2 = { ...opts };
+  for (const d of decisions) {
+    const p = d.options && d.options[0];
+    if (!p || d.kind === "question" || d.kind === "note") continue;
+    const ps = p.patches || [];
+    if (ps.some((q) => taken.some((t) => q.start < t.end && t.start < q.end))) continue;
+    taken.push(...ps);
+    if (p.kind === "field") o2[p.field] = p.value;
+    if (p.kind === "cold") o2.coldOpen = { hook: p.hook ? p.hook.text : "", promise: p.promise ? p.promise.text : "", mode: [p.hook, p.promise].filter(Boolean).every((x) => x.mode === "move") ? "move" : "dup" };
+  }
+  return scoreOf(analyze(applyPatches(text, taken), o2), dismissed).score;
+}
+
+// Ready answers for a question, only from the script or the rules (never invented text). Each: {text, n?, src}.
+// (jadri47, 2026-10-22: "Choices must be real text from the script or the rules")
+function coachOneSentence(x, max) {
+  const s = (x || "").replace(/\s+/g, " ").trim().replace(/^[«"“]|[»"”]$/g, "");
+  if (!s) return "";
+  if (s.split(" ").length < 6) return ""; // "vamos a ver" is not an idea
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max), c = Math.max(cut.lastIndexOf(","), cut.lastIndexOf(";"));
+  return c > 40 ? cut.slice(0, c) : ""; // a clause that ends on its own, or nothing: no half sentence
+}
+function coachQuestionChoices(ask, R, opts, card, extra) {
+  const en = R.lang === "en", out = [], add = (c) => { if (c.text && !out.some((x) => norm(x.text) === norm(c.text))) out.push(c); };
+  extra = extra || {};
+  if (ask === "keyword") for (const k of R.kwCands || []) add({ text: k.phrase, n: k.n, src: "kw" });
+  else if (ask === "title") {
+    for (const p of (card && card.proposals) || []) if (p.kind === "field" && p.field === "title") add({ text: p.value, src: "rule" });
+    for (const k of (R.kwCands || []).filter((x) => x.n >= 3).slice(0, 3)) { // only phrases said often: a weak phrase makes a silly title
+      const t = en ? `What does the Bible say about ${k.phrase}?` : `¿Qué dice la Biblia sobre ${esArticle(k.phrase)}${k.phrase}?`;
+      if (t.length <= 60) add({ text: t, src: "rule" });
+    }
+  } else if (ask === "nextEp") {
+    const cur = extra.pubDate || "";
+    const nx = (extra.prods || []).filter((p) => p.id !== extra.curId && (p.title || "").trim() && p.pubDate && cur && p.pubDate > cur).sort((a, b) => a.pubDate.localeCompare(b.pubDate))[0];
+    if (nx) add({ text: nx.title.trim(), src: "plan" });
+  } else if (ask === "bigIdea") {
+    // promiseSent is the matched phrase ("vas a descubrir"); the choice is the whole sentence it sits in
+    const ps = R.promiseSent && (R.sents || []).find((x) => x.start <= R.promiseSent.start && R.promiseSent.start < x.start + x.text.length);
+    const p = ps && coachOneSentence(ps.text, 140);
+    if (p) add({ text: p, src: "promise" });
+    const late = (R.msg && R.msg.lateStart) || 0;
+    const rc = [...(R.sents || [])].reverse().find((x) => x.start >= late && hasPhrase(x.text, RECAP));
+    const r = rc && coachOneSentence(rc.text, 140);
+    if (r) add({ text: r, src: "recap" });
+  }
+  return out;
+}
+
+// Masks the Bible text inside [from,to) with ⟦Vn⟧ tokens (numbered over the whole script, so a token means one verse in the
+// fragment and its context alike). null when a verse crosses the edge of the fragment: that range cannot be protected, so it
+// is never sent. The context range grows to whole verses. (jadri47, 2026-10-22: "Scripture must never be rewritten")
+function coachAiMask(text, spans, a, b, pad) {
+  const verse = spans.filter((s) => s.kind !== "ref").sort((x, y) => x.start - y.start);
+  for (const s of verse) if (s.start < b && s.end > a && (s.start < a || s.end > b)) return null;
+  let c0 = Math.max(0, a - pad), c1 = Math.min(text.length, b + pad);
+  for (let k = 0; k < 4; k++) for (const s of verse) { if (s.start < c0 && s.end > c0) c0 = s.start; if (s.start < c1 && s.end > c1) c1 = s.end; }
+  const mask = (from, to) => {
+    let out = "", pos = from; const toks = [];
+    verse.forEach((s, i) => { if (s.start >= from && s.end <= to) { const tok = `⟦V${i + 1}⟧`; out += text.slice(pos, s.start) + tok; toks.push({ tok, text: text.slice(s.start, s.end) }); pos = s.end; } });
+    return { masked: out + text.slice(pos, to), toks };
+  };
+  return { frag: mask(a, b), ctx: mask(c0, c1) };
+}
+// Up to `max` decisions that need an AI proposal and have none yet, in queue order.
+function coachAiPick(list, have, max) {
+  return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -7734,6 +8126,7 @@ function fxPtsHTML(c, p, R) {
 const FX_NOTES = new Set(["refs", "reading"]);
 function fixItemsHTML(cards, R) {
   const meta = Object.fromEntries(sectionMeta().map(([k, n]) => [k, n]));
+  const whySeen = new Set(); // the "+0 reason" line shows once per check id in one list; later cards keep it in the badge title (jadri47, 2026-10-21: "it repeated on every card")
   const items = cards.map((c, ci) => {
     if (FX_NOTES.has(c.id)) return `<li class="fx fx-note" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
       <div class="fx-top"><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(t("fxNoteTag"))}</span></div>
@@ -7743,6 +8136,7 @@ function fixItemsHTML(cards, R) {
     const p = c.proposals[sel];
     const ai = state.fixAi[c.id];
     const pts = fxPtsHTML(c, p, R);
+    if (pts.why) { if (whySeen.has(c.id)) pts.why = ""; else whySeen.add(c.id); }
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
     return `<li class="fx${open ? "" : " fx-closed"}" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
@@ -7824,6 +8218,13 @@ function fxBlocksOf(c) {
   if (WK.glob.some((x) => x.id === c.id)) out.push(WK.blocks.length);
   return out;
 }
+// The before/after record of one change: [pre, aEnd) of `before` became [pre2, post) of `after`, shown with a little context.
+// cPre/cPost come from `after` (what revert looks for); the batch passes its own positions per item.
+function fxChgOf(before, after, pre, aEnd, pre2, post) {
+  const clip = (x) => (x.length > 260 ? x.slice(0, 120) + " … " + x.slice(-120) : x);
+  const c0 = Math.max(0, pre - 40), c1 = Math.min(before.length, aEnd + 40), d1 = Math.min(after.length, post + 40);
+  return { rawFrom: before.slice(pre, aEnd), rawTo: after.slice(pre2, post), cPre: after.slice(Math.max(0, pre2 - 30), pre2), cPost: after.slice(post, post + 30), pre: (c0 > 0 ? "…" : "") + before.slice(c0, pre), from: clip(before.slice(pre, aEnd)), to: clip(after.slice(pre2, post)), post: after.slice(post, d1) + (c1 < before.length ? "…" : "") };
+}
 function applyProposal(p, c) {
   // the walker stays clickable after the person types: never apply a fix computed on older text
   if (state.text.trimEnd() !== $("script").value.trimEnd()) { rerunReview(t("fxStale")); return; }
@@ -7842,9 +8243,7 @@ function applyProposal(p, c) {
     let a = before.length, b = after.length;
     while (a > pre && b > pre && before[a - 1] === after[b - 1]) { a--; b--; }
     post = b; aEnd = a;
-    const clip = (x) => (x.length > 260 ? x.slice(0, 120) + " … " + x.slice(-120) : x);
-    const c0 = Math.max(0, pre - 40), c1 = Math.min(before.length, aEnd + 40), d1 = Math.min(after.length, post + 40);
-    chg = { rawFrom: before.slice(pre, aEnd), rawTo: after.slice(pre, post), cPre: before.slice(Math.max(0, pre - 30), pre), cPost: after.slice(post, post + 30), pre: (c0 > 0 ? "…" : "") + before.slice(c0, pre), from: clip(before.slice(pre, aEnd)), to: clip(after.slice(pre, post)), post: after.slice(post, d1) + (c1 < before.length ? "…" : "") };
+    chg = fxChgOf(before, after, pre, aEnd, pre, post);
     $("script").value = after;
   }
   if (p.kind === "cold") {
@@ -7876,12 +8275,24 @@ function fxRestore(id) {
 function undoFix() {
   const s = state.fixUndo.pop();
   if (!s) return;
-  { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) state.fixLog.splice(k, 1); }
+  { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) { const g = state.fixLog[k].grp; if (g) state.fixLog = state.fixLog.filter((x) => x.grp !== g); else state.fixLog.splice(k, 1); } } // grp: the entries of one coach batch go together
   $("script").value = s.text; $("title").value = s.title; $("keyword").value = s.keyword; $("thumb").value = s.thumb; $("description").value = s.description; G.cold = s.cold;
   state.fixSel = {}; state.fixAi = {};
   rerunReview(t("fxUndone"));
 }
 
+// The per-card instructions of an AI rewrite (keyword, question, note, sensitive terms, field rules); the coach prefetch reuses them.
+function fxAiExtra(a) {
+  return [
+    a.keyword ? `Incluye la palabra clave «${a.keyword}» de forma natural.` : "",
+    a.insertQuestion ? "Añade al final una pregunta directa al oyente o un anticipo de lo que viene, para recuperar su atención." : "",
+    a.note || "",
+    a.keepTerms ? "No cambies los términos sensibles por eufemismos: quita el detalle gráfico, la garantía de resultados o el lenguaje deshumanizante, y conserva el tema." : "",
+    a.field === "title" ? "Es el título del video: 60 caracteres o menos, con la palabra clave al inicio, como la pregunta que alguien escribiría en YouTube, prometiendo solo lo que el guion entrega." : "",
+    a.field === "thumb" ? "Es el texto de la miniatura: 1 a 4 palabras (24 caracteres como máximo), sin repetir el título." : "",
+    a.field === "description" ? "Es la descripción: los primeros 150 caracteres dicen la promesa con la palabra clave." : "",
+  ].filter(Boolean).join(" ");
+}
 async function aiFix(ci) {
   const c = state.fixCards[ci], sample = await caps.sample;
   if (!sample) { state.fixAi[c.id] = { error: t("aiOnlyClaude") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; }
@@ -7891,15 +8302,7 @@ async function aiFix(ci) {
   const fieldMode = !!a.field;
   const frag = fieldMode ? (state.opts[a.field] || "") : text.slice(a.start, a.end);
   const ctx = fieldMode ? text.slice(0, 2500) : text.slice(Math.max(0, a.start - 400), Math.min(text.length, a.end + 400));
-  const extra = [
-    a.keyword ? `Incluye la palabra clave «${a.keyword}» de forma natural.` : "",
-    a.insertQuestion ? "Añade al final una pregunta directa al oyente o un anticipo de lo que viene, para recuperar su atención." : "",
-    a.note || "",
-    a.keepTerms ? "No cambies los términos sensibles por eufemismos: quita el detalle gráfico, la garantía de resultados o el lenguaje deshumanizante, y conserva el tema." : "",
-    a.field === "title" ? "Es el título del video: 60 caracteres o menos, con la palabra clave al inicio, como la pregunta que alguien escribiría en YouTube, prometiendo solo lo que el guion entrega." : "",
-    a.field === "thumb" ? "Es el texto de la miniatura: 1 a 4 palabras (24 caracteres como máximo), sin repetir el título." : "",
-    a.field === "description" ? "Es la descripción: los primeros 150 caracteres dicen la promesa con la palabra clave." : "",
-  ].filter(Boolean).join(" ");
+  const extra = fxAiExtra(a);
   const prompt = `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. ${voice()}
 Problema detectado: «${c.label}». ${c.info || ""} ${c.fix || ""}
 Reescribe SOLO el fragmento de abajo para resolver ese problema. Escribe 3 opciones distintas. Mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; copia exacto cualquier versículo entre comillas; sin frases de plantilla. ${extra}
@@ -7965,7 +8368,7 @@ Object.assign(T.es, {
   s4Help: "Con teclado o pedal: Espacio empieza o pausa · flechas ↑ ↓ cambian la velocidad · Esc sale. En el celular o la tableta: toca la pantalla para empezar o pausar.",
   s5Lead: "Apunta el próximo episodio, elige clips cortos para Shorts y, cuando el video lleve unos días publicado, mira dónde se fue la gente.",
   next: "Siguiente", back: "Atrás", approve: "Aprobar el guion", approved: "Guion aprobado", toReview: "Ver todas las revisiones",
-  vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
+  vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vYellowLow: (n) => `Le falta trabajo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
   vGreenD: "No hay nada importante que cambiar.", vYellowD: "Nada impide grabar, pero estos cambios ayudan a que la gente se quede.", vRedD: "Hay algo que puede quitar los anuncios del video. Arréglalo primero.",
   needText: "Primero pega un guion en el paso 1.", statusLbl: "Estado",
   plain: {
@@ -7991,7 +8394,7 @@ Object.assign(T.en, {
   s4Help: "With a keyboard or pedal: Space starts or pauses · ↑ ↓ change speed · Esc exits. On a phone or tablet: tap the screen to start or pause.",
   s5Lead: "Note the next episode, pick short clips for Shorts and, once the video has been up a few days, see where people left.",
   next: "Next", back: "Back", approve: "Approve the script", approved: "Script approved", toReview: "See every check",
-  vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
+  vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vYellowLow: (n) => `Needs work: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
   vGreenD: "Nothing important to change.", vYellowD: "Nothing stops you from recording, but these changes help people stay.", vRedD: "Something could remove ads from the video. Fix it first.",
   needText: "First paste a script in step 1.", statusLbl: "Status",
   plain: {
@@ -8017,7 +8420,7 @@ function plainLabel(id, fallback) {
 }
 function verdictOf(R) {
   const S = scoreOf(R, state.fixDismissed), n = S.open.length;
-  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: t("vYellow")(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
+  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (S.score >= 70 ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } /* "almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score") */ : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
 }
 const hasScript = () => !!$("script").value.trim();
 function ensureReview() {
@@ -11246,7 +11649,8 @@ if (typeof HELP !== "undefined") {
 
 const SC = { w: null, seq: 0, pending: 0, guard: null, timer: null, delay: 700, ms: 0, R: null, S: null, base: null, baseKey: null, shown: null, off: lsGet("sd-bubble") === "off", where: "", pop: false, noWorker: false, liveAt: 0 };
 window.SC = SC;
-const scKey = () => "sd-score-base-v2:" + (G.prodId || "draft");
+// v3: the score recipe changed on 2026-10-21 (partial credit); "since last time" must not compare scores from two recipes
+const scKey = () => "sd-score-base-v3:" + (G.prodId || "draft");
 const scDemo = () => typeof DEMO !== "undefined" && !!DEMO;
 const scReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -11256,8 +11660,9 @@ function scStartWorker() {
   try {
     const el = document.getElementById("engineSrc");
     if (!el || !el.textContent.trim()) { SC.noWorker = true; return; }
+    // the slim rows keep n/lim: partial credit (weightOf) needs them, or the pill and the verdict disagree (53 vs 48)
     const code = el.textContent.replace(/<\\\/script/g, "</script") + `
-;(function(){function slim(s){var o={};for(var k in s)o[k]=s[k].map(function(r){return{id:r.id,label:r.label,passed:r.passed,warn:r.warn,level:r.level}});return o}
+;(function(){function slim(s){var o={};for(var k in s)o[k]=s[k].map(function(r){return{id:r.id,label:r.label,passed:r.passed,warn:r.warn,level:r.level,n:r.n,lim:r.lim}});return o}
 onmessage=function(e){var d=e.data;try{var t0=Date.now();var R=analyze(d.text,d.opts);postMessage({seq:d.seq,ms:Date.now()-t0,R:{worst:R.worst,passed:R.passed,total:R.total,sections:slim(R.sections)}})}catch(err){postMessage({seq:d.seq,error:String(err&&err.message||err)})}}})();`;
     const w = new Worker(URL.createObjectURL(new Blob([code], { type: "text/javascript" })));
     w.onmessage = (e) => {
@@ -11661,8 +12066,9 @@ function wkInfoHTML(x) {
   const words = x.dw ? `${x.dw > 0 ? "+" : "−"}${Math.abs(x.dw)}` : "";
   return row(t("fxWhy"), h(x.why || x.label)) + row(t("fxOpt"), h(x.what || "")) + row(t("fxWhere"), x.para ? h(t("fxParaN")(x.para, x.tm)) : h((t("fxField") || {})[x.where] || "")) + row(t("fxWords"), h(words)) + row(t("fxScore"), h(sc));
 }
-function wkLogHTML(i) {
-  return wkLogFor(i).map((x) => x.kind === "done"
+const wkLogHTML = (i) => wkLogItemsHTML(wkLogFor(i));
+function wkLogItemsHTML(list) {
+  return list.map((x) => x.kind === "done"
     ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${wkInfoHTML(x)}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}<div class="actions"><button type="button" class="small" data-fxrevert="${x.uid}">${h(t("fxRevert"))}</button></div></div></li>`
     : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
 }
@@ -12155,6 +12561,539 @@ function railPaintQuotes(hl) {
 if (ED.el) ED.el.addEventListener("scroll", railSched, { passive: true });
 window.addEventListener("resize", () => { if (RL.on) { if (rlPhone() !== ED.wrap.classList.contains("rail-phone")) railUpdate(); else railSched(); } });
 if (typeof ResizeObserver === "function" && ED.el) new ResizeObserver(railSched).observe(ED.el);
+/* ===== Coach: step 2 as one decision at a time ===== */
+// (jadri47, 2026-10-21: "The app should walk him through the process and just ask him questions") The queue comes from
+// coach_logic.js (pure). This file shows the first remaining decision, scrolls the script to its spot, and reuses the walker's
+// painting and fix_ui's applyProposal / fxRevert so the decision log, revert and stale-text guard keep working.
+// A resolved decision (applied, skipped, answered) leaves the queue, so "Decisión i de n" is derived: i = n - remaining + 1.
+Object.assign(T.es, {
+  coDec: (i, n) => `Decisión ${i} de ${n}`, coScore: (a, b) => `Nota ${a} → ${b} si aceptas lo propuesto`, coByPara: "Ver por párrafos", coBack: "Volver a una decisión a la vez",
+  coPrev: "‹ Anterior", coPrevTip: "Recupera la última decisión que saltaste", coRegion: "Decisión actual", coSkip: "Saltar", coNext: "Siguiente",
+  coBatchN: (n) => (n === 1 ? "1 arreglo seguro" : `${n} arreglos seguros`), coSeeEach: "Ver cada uno", coApplyAll: (n) => `Aplicar los ${n}`, coBatchLbl: "Arreglos seguros",
+  coBatchDone: (n) => `${n} arreglos aplicados.`, coBatchHint: "Cada uno se puede revertir desde «Cambios hechos».", coItems: "Arreglos seguros uno por uno",
+  coFam: { muletillas: (n) => `${n} muletilla${n === 1 ? "" : "s"}`, pulpit: (n) => `${n} frase${n === 1 ? "" : "s"} de culto («¿amén?»…)`, openers: (n) => `${n} «Y»/«Entonces» repetida${n === 1 ? "" : "s"} al inicio`, weak: (n) => `${n} palabra${n === 1 ? "" : "s"} genérica${n === 1 ? "" : "s"}`, regional: (n) => `${n} regionalismo${n === 1 ? "" : "s"}`, onscreen: (n) => `${n} señal${n === 1 ? "" : "es"} [TEXTO]` },
+  coWrite: "Lo escribo yo", coWriteLbl: "Escribe cómo debe quedar", coCheck: "Comprobar", coWriteApply: "Aplicar lo escrito", coCancel: "Cancelar", coManual: "A mano",
+  coAsk: { bigIdea: "¿Cuál es la idea central del episodio?", keyword: "¿Qué frase buscaría alguien en YouTube para encontrar este episodio?", nextEp: "¿De qué trata el próximo episodio?", title: "¿Qué título le pones?" },
+  coAskHint: { bigIdea: "Saldrá al inicio y al cierre." }, coAnsLbl: "Tu respuesta", coEmptyAns: "Escribe una respuesta o salta esta pregunta.", coSaved: "Guardado.",
+  coLead: "Toca «Aplicar» para aceptar el cambio o «Saltar» para dejarlo. Todo se puede revertir en «Cambios hechos».", coOwn: "Escribirla yo", coTimes: (n) => `${n} ${n === 1 ? "vez" : "veces"}`, coSrc: { promise: "tu promesa del inicio", recap: "tu cierre", plan: "del plan de la serie" }, coAiTitles: "Más ideas con IA", coAiIdea: "Sugerir con IA", coNone: "Listo: no quedan decisiones", coLog: (n) => `Cambios hechos (${n})`, coRisk: "Aviso rojo",
+});
+Object.assign(T.en, {
+  coDec: (i, n) => `Decision ${i} of ${n}`, coScore: (a, b) => `Score ${a} → ${b} if you accept the suggestions`, coByPara: "See by paragraph", coBack: "Back to one decision at a time",
+  coPrev: "‹ Previous", coPrevTip: "Brings back the last decision you skipped", coRegion: "Current decision", coSkip: "Skip", coNext: "Next",
+  coBatchN: (n) => (n === 1 ? "1 safe fix" : `${n} safe fixes`), coSeeEach: "See each one", coApplyAll: (n) => `Apply all ${n}`, coBatchLbl: "Safe fixes",
+  coBatchDone: (n) => `${n} fixes applied.`, coBatchHint: "You can revert each one from \"Changes made\".", coItems: "Safe fixes one by one",
+  coFam: { muletillas: (n) => `${n} filler${n === 1 ? "" : "s"}`, pulpit: (n) => `${n} pulpit phrase${n === 1 ? "" : "s"} ("amen?"…)`, openers: (n) => `${n} repeated "And"/"Then" opener${n === 1 ? "" : "s"}`, weak: (n) => `${n} generic word${n === 1 ? "" : "s"}`, regional: (n) => `${n} regional word${n === 1 ? "" : "s"}`, onscreen: (n) => `${n} [TEXT] cue${n === 1 ? "" : "s"}` },
+  coWrite: "I'll write it", coWriteLbl: "Write how it should read", coCheck: "Check", coWriteApply: "Apply what I wrote", coCancel: "Cancel", coManual: "By hand",
+  coAsk: { bigIdea: "What is the central idea of the episode?", keyword: "What phrase would someone search on YouTube to find this episode?", nextEp: "What is the next episode about?", title: "What title do you give it?" },
+  coAskHint: { bigIdea: "It will be heard at the start and at the close." }, coAnsLbl: "Your answer", coEmptyAns: "Write an answer or skip this question.", coSaved: "Saved.",
+  coLead: "Tap “Apply” to accept the change or “Skip” to leave it. Everything can be reverted under “Changes made”.", coOwn: "Write my own", coTimes: (n) => `${n} ${n === 1 ? "time" : "times"}`, coSrc: { promise: "your opening promise", recap: "your close", plan: "from your series plan" }, coAiTitles: "More ideas with AI", coAiIdea: "Suggest with AI", coNone: "Done: no decisions left", coLog: (n) => `Changes made (${n})`, coRisk: "Red warning",
+});
+
+const COACH = { order: [], key: "", R: null, list: [], proj: 0, total: 0, hist: [], sel: { id: "", k: 0 }, write: null, q: { id: "", sel: 0, ai: [], err: "", busy: false }, curId: "", delay: 0, tm: 0 };
+const coachOn = () => { try { return localStorage.getItem("sd-coach-off") !== "1"; } catch (e) { return true; /* best effort: storage blocked: the coach stays the default */ } };
+function coachSetOn(on) {
+  try { if (on) localStorage.removeItem("sd-coach-off"); else localStorage.setItem("sd-coach-off", "1"); } catch (e) { /* best effort: storage blocked: the choice isn't remembered after a reload */ }
+  WK.pending = true;
+  if (V.guided) renderGuide(); else renderResults();
+}
+// Computed once per review result (text + ignored set + result identity), not on every render.
+function coachBuild() {
+  const key = state.text + "|" + [...state.fixDismissed].sort().join(",");
+  if (COACH.key === key && COACH.R === state.result) return;
+  COACH.list = buildDecisions(state.text, state.result, state.opts, state.fixDismissed);
+  COACH.proj = COACH.list.length ? projectedScore(state.text, state.result, state.opts, COACH.list, state.fixDismissed) : scoreOf(state.result, state.fixDismissed).score;
+  COACH.key = key; COACH.R = state.result;
+  COACH.total = Math.max(COACH.total, COACH.list.length);
+  if (!COACH.order.length) COACH.order = COACH.list.map((d) => d.id); // the queue as it was at the start: the header position follows it, also after a jump from the score popover
+  const id = COACH.list[0] ? COACH.list[0].id : "";
+  if (id !== COACH.curId) { COACH.sel = { id: "", k: 0 }; COACH.write = null; COACH.q = { id, sel: 0, ai: [], err: "", busy: false }; }
+}
+
+const coFlat = (x) => x.replace(/\s+/g, " ");
+function coItemsHTML(d) {
+  const text = state.text;
+  return `<ul class="cc-items" aria-label="${h(t("coItems"))}">` + d.items.map((it, k) => {
+    const pre = coFlat(text.slice(Math.max(0, it.start - 28), it.start)), from = coFlat(text.slice(it.start, it.end)), post = coFlat(text.slice(it.end, it.end + 28));
+    return `<li><button type="button" class="linkish cc-it" data-co-it="${k}" title="${h(t("wkLoc"))}">…${h(pre)}<del>${h(from)}</del><ins>${h(coFlat(it.rep))}</ins>${h(post)}…</button></li>`;
+  }).join("") + `</ul>`;
+}
+function coBatchHTML(d) {
+  const fams = Object.entries(d.fam).map(([f, n]) => (t("coFam")[f] ? t("coFam")[f](n) : `${n} ${f}`)).join(", ");
+  const n = d.items.length;
+  return `<div class="cc-top"><b class="cc-t">${h(t("coBatchN")(n))}</b>${d.gain > 0 ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${d.gain}</span>` : ""}</div>
+    <p class="cc-sub">${h(fams)}</p><p class="hint">${h(t("coBatchHint"))}</p>
+    <details class="cc-see"><summary>${h(t("coSeeEach"))}</summary>${coItemsHTML(d)}</details>
+    <div class="actions cc-act"><button type="button" class="small primary" data-co="batch" data-co-primary>${h(t("coApplyAll")(n))}</button><button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>`;
+}
+// Rule options first, then the automatic AI ones (coach_ai.js, already verified).
+const coOptions = (d) => d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []);
+const coAiBusy = (d) => typeof coachAiLoading === "function" && coachAiLoading(d);
+function coChoiceHTML(d, R) {
+  const c = d.card, w = COACH.write && COACH.write.id === d.id ? COACH.write : null;
+  const opts = coOptions(d), k = COACH.sel.id === d.id && opts.length ? COACH.sel.k % opts.length : 0, p = opts[k];
+  const pts = fxPtsHTML(c, p, R), ai = state.fixAi[c.id];
+  const canWrite = !!(d.at || c.field);
+  const writeBox = w ? `<div class="cc-write"><label for="coW">${h(t("coWriteLbl"))}</label><textarea id="coW" rows="3">${h(w.value)}</textarea>
+      <div class="actions"><button type="button" class="small" data-co="wcheck">${h(t("coCheck"))}</button><button type="button" class="small linkish" data-co="wcancel">${h(t("coCancel"))}</button></div>
+      ${w.p ? proposalHTML(c, w.p, R) + `<div class="actions"><button type="button" class="small primary" data-co="wapply" data-co-primary>${h(t("coWriteApply"))}</button></div>` : ""}</div>` : "";
+  return `<div class="cc-top"><b class="cc-t">${h(plainLabel(c.id, c.label))}</b>${d.kind === "risk" ? `<span class="cc-tag">${h(t("coRisk"))}: ${h(t("cat_hi"))}</span>` : ""}${pts.html}</div>
+    ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}${pts.why ? `<div class="hint fx-why">${h(pts.why)}</div>` : ""}
+    <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
+    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span>${p.label === "IA" ? ` <span class="cc-tag cc-ai">${h(t("coAiTag"))}</span>` : ""}</div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : coAiBusy(d) ? `<p class="hint cc-prep" role="status">${h(t("coAiPrep"))}</p>` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
+    ${writeBox}
+    <div class="actions cc-act">${p ? `<button type="button" class="small primary" data-co="apply"${w && w.p ? "" : " data-co-primary"}>${h(t("fxApply"))}</button>` : ""}${opts.length > 1 ? `<button type="button" class="small" data-co="other">${h(t("fxOther"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-co="write">${h(t("coWrite"))}</button>` : ""}${d.needsAi && c.ai ? `<button type="button" class="small" data-fxai="0">${h(ai ? t("fxAiAgain") : t("fxAi"))}</button>` : ""}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>
+    <div class="fx-ai" id="fxai-0">${ai ? aiOptionsHTML(0, ai) : ""}</div>`;
+}
+// Ready answers (coachQuestionChoices: from the script or the rules) as radios, the first one chosen, plus «Escribirla yo».
+// Without any candidate only the box shows, as before. (jadri47, 2026-10-22: "radios in a radiogroup, first choice preselected")
+function coChoices(d) {
+  const extra = { prods: G.prods || [], curId: G.prodId, pubDate: G.pubDate || "" };
+  const base = coachQuestionChoices(d.ask, state.result, state.opts, d.card, extra);
+  for (const x of COACH.q.ai) if (!base.some((c) => norm(c.text) === norm(x))) base.push({ text: x, src: "ai" });
+  return base;
+}
+function coQuestionHTML(d) {
+  const a = d.ask, hint = (t("coAskHint") || {})[a], ch = coChoices(d), q = COACH.q;
+  const sel = ch.length ? (q.sel >= 0 && q.sel < ch.length ? q.sel : q.sel === -1 ? -1 : 0) : -1, own = sel === -1;
+  const ml = a === "title" ? ' maxlength="100"' : "";
+  const radios = ch.length ? `<div class="cc-radios" role="radiogroup" aria-labelledby="coQ">${ch.map((c, i) => `<label class="cc-radio"><input type="radio" name="coChoice" value="${i}"${sel === i ? " checked" : ""}><span>${h(c.text)}${c.n ? ` <span class="hint">· ${h(t("coTimes")(c.n))}</span>` : ""}${c.src && t("coSrc")[c.src] ? ` <span class="hint">· ${h(t("coSrc")[c.src])}</span>` : ""}</span></label>`).join("")}<label class="cc-radio"><input type="radio" name="coChoice" value="own"${own ? " checked" : ""}><span>${h(t("coOwn"))}</span></label></div>` : "";
+  const aiBtn = a === "title" || a === "bigIdea" ? `<button type="button" class="small" data-co="${a === "title" ? "ai-title" : "ai-idea"}"${q.busy ? " disabled" : ""}>${h(q.busy ? t("thinking") : a === "title" ? t("coAiTitles") : t("coAiIdea"))}</button>` : "";
+  return `<div class="cc-top"><b class="cc-t" id="coQ">${h(t("coAsk")[a])}</b></div>${hint ? `<p class="hint">${h(hint)}</p>` : ""}${radios}
+    <div id="coOwnBox"${ch.length && !own ? " hidden" : ""}><label class="cc-lbl" for="coAns">${h(t("coAnsLbl"))}</label><textarea id="coAns" rows="2"${ml}></textarea></div><p class="status err" id="coAnsErr" hidden>${h(t("coEmptyAns"))}</p>${q.err ? `<p class="status err">${h(q.err)}</p>` : ""}
+    <div class="actions cc-act"><button type="button" class="small primary" data-co="answer" data-co-primary>${h(t("fxUse"))}</button>${aiBtn}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>`;
+}
+function coNoteHTML(d) {
+  const c = d.card;
+  return `<div class="cc-top"><b class="cc-t">${h(plainLabel(c.id, c.label))}</b><span class="fx-meta">${h(t("fxNoteTag"))}</span></div>
+    ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}<p class="hint">${h(t("fxNoteHow"))}</p>
+    <div class="actions cc-act"><button type="button" class="small primary" data-co="skip" data-co-primary>${h(t("coNext"))}</button></div>`;
+}
+function coachHTML(R) {
+  coachBuild();
+  const L = COACH.list, d = L[0], n = Math.max(COACH.total, L.length), done = n - L.length, oi = d ? COACH.order.indexOf(d.id) : -1, i = d ? (oi >= 0 ? oi + 1 : done + 1) : n;
+  COACH.curId = d ? d.id : "";
+  state.fixCards = !d ? [] : d.kind === "batch" ? [{ id: "batch", ids: [], label: "", proposals: d.options, evidence: [] }] : d.card ? [d.card] : [];
+  state.fixSel = d && COACH.sel.id === d.id ? { 0: COACH.sel.k } : {};
+  const msg = fixMsg; fixMsg = "";
+  const pend = COACH.hist.some((e) => e.ids.some((id) => state.fixDismissed.has(id)));
+  const title = d ? t("coDec")(i, n) : t("coNone");
+  const head = `<div class="cc-head"><h3 id="coH">${h(d ? title : t("coNone"))}</h3><span class="status" id="fxMsg" role="status">${h(msg)}</span><button type="button" class="small linkish" data-co="walker">${h(t("coByPara"))}</button></div>`;
+  const bar = n ? `<div class="cc-bar" role="progressbar" aria-labelledby="coH" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${done}" aria-valuetext="${h(title)}"><i style="width:${Math.round((done / n) * 100)}%"></i></div>` : "";
+  const a = scoreOf(R, state.fixDismissed).score;
+  const sc = d ? `<p class="cc-score">${h(t("coScore")(a, COACH.proj))}</p>` : "";
+  let body;
+  if (!d) body = `<p class="lead cc-none">${h(t("coNone"))}</p><div class="actions cc-act"><button type="button" class="primary" data-co="done" data-co-primary>${h(t("wkDone"))} →</button></div>`;
+  else body = d.kind === "batch" ? coBatchHTML(d) : d.kind === "question" ? coQuestionHTML(d) : d.kind === "note" ? coNoteHTML(d) : coChoiceHTML(d, R);
+  const nav = d ? `<div class="cc-nav"><button type="button" class="small linkish" data-co="prev"${pend ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button></div>` : "";
+  const log = state.fixLog.length ? `<details class="cc-log"${COACH.logOpen ? " open" : ""}><summary>${h(t("coLog")(state.fixLog.length))}</summary><ol class="fx-list">${wkLogItemsHTML(state.fixLog)}</ol></details>` : "";
+  const pause = typeof coachAiPauseHTML === "function" ? coachAiPauseHTML() : "";
+  return `<div class="topfix coach" data-coach>${head}${bar}${sc}${pause}<section class="cc-dec" role="region" aria-label="${h(t("coRegion") + (d ? ": " + title : ""))}" tabindex="-1">${body}</section>${nav}${log}</div>`;
+}
+
+// ---- painting the spot ----
+function coachPaint() {
+  if (!wkReady() || !WK.ok) return;
+  const d = COACH.list[0];
+  if (d && d.at) WK.i = Math.max(0, wkBlockAt(WK.blocks, d.at.start));
+  else if (WK.i < 0 || WK.i >= WK.blocks.length) WK.i = 0;
+  wkPaint(false);
+}
+function coachShow() {
+  const d = COACH.list[0];
+  if (!d || !d.at || !wkReady() || !WK.ok || d.id !== COACH.curId) return;
+  const r = wkRange(d.at.start, Math.max(d.at.end, d.at.start + 1));
+  if (r) { wkScrollTo(r); wkFlash([r]); }
+}
+function coachAfterRender() {
+  const root = document.querySelector(".topfix.coach");
+  if (!root) return;
+  const go = WK.pending; WK.pending = false;
+  wkDock(go);
+  // the lead under the panel names the buttons of this panel («Saltar», not «Ahora no»)
+  const lead = root.nextElementSibling;
+  if (lead && lead.matches("p.lead")) lead.textContent = t("coLead");
+  coachPaint();
+  clearTimeout(COACH.tm);
+  // right after an Apply the changed text is flashed first; the next decision's spot follows a moment later
+  if (COACH.delay) { COACH.tm = setTimeout(coachShow, COACH.delay); COACH.delay = 0; } else coachShow();
+}
+function coachRefresh() {
+  const old = document.querySelector(".topfix.coach");
+  if (!old) return;
+  const tmp = document.createElement("div");
+  tmp.innerHTML = coachHTML(state.result);
+  old.replaceWith(tmp.firstElementChild);
+  wireFixes();
+  coachPaint();
+}
+
+// ---- actions ----
+function coachSkip(d) {
+  const ids = d.ids && d.ids.length ? d.ids : [d.id];
+  const bis = d.card ? fxBlocksOf(d.card) : [];
+  ids.forEach((id) => state.fixDismissed.add(id));
+  const label = d.kind === "batch" ? t("coBatchLbl") : d.card ? plainLabel(d.card.id, d.card.label) : t("coAsk")[d.ask];
+  (bis.length ? bis : [-1]).forEach((bi) => state.fixLog.push({ id: ids[0], ids, label, kind: "skip", bi }));
+  COACH.hist.push({ ids });
+  COACH.delay = 0;
+  renderResults();
+}
+// Brings back the last skipped decision. Applied changes are taken back from "Cambios hechos" (Revertir), never silently.
+function coachPrev() {
+  let e;
+  while ((e = COACH.hist.pop())) if (e.ids.some((id) => state.fixDismissed.has(id))) break; else e = null;
+  if (!e) return;
+  e.ids.forEach((id) => state.fixDismissed.delete(id));
+  state.fixLog = state.fixLog.filter((x) => !(x.kind === "skip" && x.ids.some((id) => e.ids.includes(id))));
+  COACH.delay = 0;
+  renderResults();
+}
+// One combined patch (one review run), one "done" entry per item so each can be reverted on its own from the log.
+function coachApplyBatch(d) {
+  if (state.text.trimEnd() !== $("script").value.trimEnd()) { rerunReview(t("fxStale")); return; }
+  const before = state.text, items = [...d.items].sort((a, b) => a.start - b.start);
+  const after = applyPatches(before, items.map((x) => ({ start: x.start, end: x.end, rep: x.rep })));
+  if (after === before) { rerunReview(t("fxNoChange")); return; }
+  state.fixUndo.push(snapshotForUndo());
+  if (state.fixUndo.length > 20) state.fixUndo.shift();
+  const sc0 = scoreOf(state.result, state.fixDismissed).score, grp = ++fxUid, words = (x) => (x.match(/\S+/g) || []).length;
+  const prev = { cold: JSON.parse(JSON.stringify(G.cold)), field: null };
+  let delta = 0;
+  const entries = items.map((it) => {
+    const at = it.start + delta, bi = WK.ok ? wkBlockAt(WK.blocks, it.start) : -1;
+    const chg = fxChgOf(before, after, it.start, it.end, at, at + it.rep.length);
+    delta += it.rep.length - (it.end - it.start);
+    const tm = bi >= 0 && typeof RL !== "undefined" && RL.bt && RL.bt[bi] != null ? fmtTime(RL.bt[bi]) : "";
+    return { uid: ++fxUid, grp, pk: "patch", why: "", para: bi >= 0 && bi < WK.blocks.length ? bi + 1 : 0, tm, dw: words(it.rep) - words(before.slice(it.start, it.end)), prev, field: null, sc: [sc0, null], id: it.cardId, ids: [it.cardId], label: plainLabel(it.cardId, rowLabel(state.result, it.cardId)), kind: "done", bi, what: t("coBatchLbl"), where: "script", chg };
+  });
+  $("script").value = after;
+  state.fixLog.push(...entries);
+  state.fixSel = {}; state.fixAi = {};
+  COACH.delay = 1100;
+  rerunReview(t("coBatchDone")(entries.length));
+  const sc1 = scoreOf(state.result, state.fixDismissed).score;
+  entries.forEach((e) => { e.sc[1] = sc1; });
+  if (WK.ok) { const r = wkRange(items[0].start, items[0].start + Math.max(1, items[0].rep.length)); if (r) { wkScrollTo(r); wkFlash([r]); } }
+}
+function coachAnswer(d) {
+  const box = $("coAns"), rd = document.querySelector('input[name="coChoice"]:checked'), ch = coChoices(d);
+  const v = rd && rd.value !== "own" && ch[+rd.value] ? ch[+rd.value].text.trim() : box ? box.value.trim() : "";
+  if (!v) { const e = $("coAnsErr"); if (e) e.hidden = false; if (box) box.focus(); return; }
+  const a = d.ask;
+  if (a === "nextEp") G.nextEp = v;
+  else {
+    const el = $(a);
+    if (!el) return;
+    el.value = v; el.dispatchEvent(new Event("input", { bubbles: true }));
+    if (a === "keyword" || a === "title") { const ex = $("extraFields"); if (ex) ex.open = true; }
+  }
+  markDirty();
+  COACH.delay = 0;
+  rerunReview(t("coSaved"));
+}
+function coachManual(d) {
+  const w = COACH.write, box = $("coW");
+  if (!w || !box) return;
+  w.value = box.value;
+  const c = d.card;
+  const p = c.field ? { kind: "field", field: c.field.name, value: w.value.trim(), label: t("coManual") } : { kind: "patch", label: t("coManual"), patches: [{ start: d.at.start, end: d.at.end, rep: w.value }] };
+  p.check = verifyProposal(state.text, state.opts, state.result, p);
+  w.p = p;
+  coachRefresh();
+}
+// Manual clicks only (step 4 adds the automatic ones). Each result becomes one more choice; titles keep the 60-character limit.
+async function coachAiRun(fn) {
+  const id = COACH.q.id;
+  COACH.q.busy = true; COACH.q.err = ""; coachRefresh();
+  try { const r = await fn(); if (COACH.q.id === id) { const before = coChoices(COACH.list[0]).length; COACH.q.ai.push(...r); if (r.length) COACH.q.sel = before; } }
+  catch (e) { if (COACH.q.id === id) COACH.q.err = e && e.code === "no_sample" ? t("aiPickNeed") : errText(e); }
+  if (COACH.q.id === id) { COACH.q.busy = false; coachRefresh(); }
+}
+function coachAiTitles() {
+  coachAiRun(async () => {
+    const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
+    const R = state.result, kw = (state.opts.keyword || R.keyword || ""), prom = R.promiseSent ? R.promiseSent.text : state.text.slice(0, 600);
+    const prompt = `Para un episodio de un pódcast cristiano de enseñanza bíblica en YouTube, en ${R.lang === "en" ? "inglés" : "español"}, escribe cinco títulos de 60 caracteres o menos${kw ? `, con "${kw}" dentro de los primeros 60 caracteres` : ""}. Al menos dos como la pregunta que alguien escribiría en YouTube. Cada título debe prometer exactamente lo que promete la apertura del guion. Sin mayúsculas sostenidas, sin groserías, sin términos gráficos, sin prometer sanidad o dinero.
+Responde solo con JSON: {"titles": ["..."]}
+
+PROMESA DE LA APERTURA: ${prom.slice(0, 600)}
+
+GUION (inicio):
+"""
+${state.text.slice(0, 6000)}
+"""`;
+    const res = await sample.json(prompt, { modelTier: "default" });
+    const ts = (res && Array.isArray(res.titles) ? res.titles : []).map((x) => String(x).trim()).filter((x) => x && x.length <= 60).slice(0, 5);
+    if (!ts.length) throw { code: "invalid_json" };
+    return ts;
+  });
+}
+function coachAiIdea() {
+  coachAiRun(async () => {
+    const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
+    IDEA.busy = false;
+    await ideaSuggest(true);
+    const v = IDEA.sug; IDEA.sug = ""; if (typeof renderIdeaSug === "function") renderIdeaSug(); // the suggestion lives here as a choice, not in the Prepare card
+    if (!v) throw { code: "invalid_json" };
+    return [v];
+  });
+}
+function coachAct(act) {
+  const d = COACH.list[0];
+  if (act === "walker") return coachSetOn(false);
+  if (act === "done") return goStep(3);
+  if (!d) return;
+  const opts = coOptions(d), k = COACH.sel.id === d.id && opts.length ? COACH.sel.k % opts.length : 0;
+  if (act === "skip") coachSkip(d);
+  else if (act === "prev") coachPrev();
+  else if (act === "batch") coachApplyBatch(d);
+  else if (act === "answer") coachAnswer(d);
+  else if (act === "apply") { COACH.delay = 1100; applyProposal(opts[k], d.card); }
+  else if (act === "other") { COACH.sel = { id: d.id, k: (k + 1) % opts.length }; coachRefresh(); }
+  else if (act === "write") { COACH.write = { id: d.id, value: d.card.field ? d.card.field.value : state.text.slice(d.at.start, d.at.end), p: null }; coachRefresh(); const b = $("coW"); if (b) b.focus(); }
+  else if (act === "ai-title") coachAiTitles();
+  else if (act === "ai-idea") coachAiIdea();
+  else if (act === "wcancel") { COACH.write = null; coachRefresh(); }
+  else if (act === "wcheck") coachManual(d);
+  else if (act === "wapply" && COACH.write && COACH.write.p) { COACH.delay = 1100; const p = COACH.write.p; COACH.write = null; applyProposal(p, d.card); }
+}
+
+function coachWire() {
+  const walk = document.querySelector(".topfix.walk .fx-head");
+  if (walk && !walk.querySelector("#coBack")) {
+    const b = document.createElement("button");
+    b.type = "button"; b.id = "coBack"; b.className = "small linkish"; b.textContent = t("coBack");
+    b.addEventListener("click", () => coachSetOn(true));
+    walk.appendChild(b);
+  }
+  const root = document.querySelector(".topfix.coach");
+  if (!root) return;
+  root.querySelectorAll("[data-co]").forEach((b) => b.addEventListener("click", () => coachAct(b.dataset.co)));
+  const show = (a, b) => { const r = wkRange(a, b); if (r) { wkScrollTo(r); wkFlash([r]); } };
+  root.querySelectorAll("[data-co-it]").forEach((b) => b.addEventListener("click", () => { const it = COACH.list[0].items[+b.dataset.coIt]; if (it) show(it.start, Math.max(it.end, it.start + 1)); }));
+  root.querySelectorAll(".fx-ev[data-es]").forEach((el) => {
+    el.setAttribute("role", "button"); el.tabIndex = 0; el.title = t("wkLoc");
+    const go = () => show(+el.dataset.es, +el.dataset.ee);
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+  root.querySelectorAll("li.fx-done > .fx-top").forEach((top) => {
+    const tg = () => { const li = top.closest("li"), on = !li.classList.contains("open"); li.classList.toggle("open", on); top.setAttribute("aria-expanded", on ? "true" : "false"); };
+    top.addEventListener("click", tg);
+    top.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tg(); } });
+  });
+  const lg = root.querySelector("details.cc-log");
+  if (lg) lg.addEventListener("toggle", () => { COACH.logOpen = lg.open; });
+  root.querySelectorAll('input[name="coChoice"]').forEach((r) => r.addEventListener("change", () => {
+    COACH.q.sel = r.value === "own" ? -1 : +r.value;
+    const b = $("coOwnBox"); if (b) { b.hidden = r.value !== "own"; if (r.value === "own") $("coAns").focus(); }
+  }));
+  const w = $("coW");
+  if (w) w.addEventListener("input", () => { if (COACH.write) COACH.write.value = w.value; });
+  // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button/link keeps its own meaning
+  root.addEventListener("keydown", (e) => {
+    const tg = e.target;
+    if (e.altKey || e.ctrlKey || e.metaKey || /^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
+    const click = (sel) => { const b = root.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (e.key === "ArrowRight") click('[data-co="skip"]');
+    else if (e.key === "ArrowLeft") click('[data-co="prev"]');
+    else if (e.key === "Enter" && !/^(BUTTON|A|SUMMARY)$/.test(tg.tagName) && !tg.closest("[role=button]")) click("[data-co-primary]");
+  });
+}
+
+// ---- hooks (this file loads after walk_ui.js and rail_ui.js so it can wrap them) ----
+const _topFixHTMLC = topFixHTML;
+topFixHTML = function (R) { return coachOn() && wkBuild() ? coachHTML(R) : _topFixHTMLC(R); };
+const _wireFixesC = wireFixes;
+wireFixes = function () { _wireFixesC(); coachWire(); };
+const _renderGuideC = renderGuide;
+renderGuide = function () { _renderGuideC(); coachAfterRender(); };
+const _renderResultsC = renderResults;
+renderResults = function () { _renderResultsC(); if (!V.guided) coachAfterRender(); };
+$("runBtn").addEventListener("click", () => { Object.assign(COACH, { order: [], key: "", R: null, total: 0, hist: [], sel: { id: "", k: 0 }, write: null, curId: "", delay: 0 }); }, true);
+
+// Score popover rows and timeline / minimap markers: in coach mode they jump to the decision that holds that check or paragraph.
+// No such decision (already resolved, or not in the queue): the walker behaviour as before.
+function coachJump(k) {
+  const d = COACH.list[k];
+  COACH.list.splice(k, 1); COACH.list.unshift(d);
+  COACH.sel = { id: "", k: 0 }; COACH.write = null; COACH.curId = "";
+  COACH.delay = 0;
+  if (V.guided) renderGuide(); else renderResults();
+}
+const _scGoRowC = scGoRow;
+scGoRow = function (id) {
+  if (!V.guided || !coachOn()) return _scGoRowC(id);
+  scClosePop();
+  if (!ensureReview()) return;
+  if (V.step !== 2) goStep(2);
+  if (!wkBuild()) return _scGoRowC(id);
+  coachBuild();
+  const k = COACH.list.findIndex((d) => d.id === id || (d.ids && d.ids.includes(id)));
+  if (k < 0) return _scGoRowC(id);
+  coachJump(k);
+};
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".timeline .mk, .rl-mini .mk");
+  if (!b || !coachOn() || !V.guided || V.step !== 2 || !wkBuild()) return;
+  const pos = wkMarkerPos(b);
+  if (pos < 0) return;
+  coachBuild();
+  const bi = wkBlockAt(WK.blocks, pos), k = COACH.list.findIndex((d) => d.at && wkBlockAt(WK.blocks, d.at.start) === bi);
+  if (k < 0) return;
+  e.stopImmediatePropagation(); // walk_ui's handler would open the walker paragraph
+  coachJump(k);
+}, true);
+/* ===== Coach: automatic AI proposals, batched and capped ===== */
+// (jadri47, 2026-10-22: "automatic AI, capped"; "one decision at a time" needs a ready answer, not a button to press)
+// When the coach shows a review, the next decisions that have no rule-made option (needsAi) get their proposals in ONE call per batch
+// of up to 8, with at most one call in flight. Scripture never goes to the model as text: verses become ⟦Vn⟧ tokens
+// (coachAiMask / polish_logic) and an option that loses, duplicates or alters one is dropped (vetSection).
+// Every option is verified against all the checks when it is shown (verifyProposal), so a result computed before an Apply is
+// re-located by its fragment text instead of by position.
+Object.assign(T.es, {
+  coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…",
+  coAiPauseMonth: (n) => `Sugerencias automáticas en pausa: se llegó al límite de $${n} del mes`, coAiPauseDay: "Sugerencias automáticas en pausa por hoy",
+});
+Object.assign(T.en, {
+  coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…",
+  coAiPauseMonth: (n) => `Automatic suggestions paused: this month's $${n} limit was reached`, coAiPauseDay: "Automatic suggestions paused for today",
+});
+
+const COACH_AI_MONTH_USD = 5; // (jadri47, 2026-10-21: "$5 per month")
+const COACH_AI_BATCH = 8, COACH_AI_ARTIFACT_CALLS = 3;
+const COAI = { cache: {}, busy: false, stop: "", calls: 0, noSample: false, epoch: 0 };
+
+// One place that says whether automatic calls may happen. The month cost is only known in the standalone site (sd-ai-cost event /
+// sd_month_cost); without it (the Claude artifact) a review gets 3 automatic calls and then the manual button only.
+function coachAiBudget() {
+  if (COAI.stop) return { ok: false, reason: COAI.stop === "auto_paused" ? "month" : "day" };
+  const month = typeof MONTH_COST !== "undefined" ? MONTH_COST : null;
+  if (month != null && month >= COACH_AI_MONTH_USD) return { ok: false, reason: "month" };
+  if (COAI.noSample) return { ok: false, reason: "nosample" };
+  if (month == null && COAI.calls >= COACH_AI_ARTIFACT_CALLS) return { ok: false, reason: "calls" };
+  return { ok: true, reason: "" };
+}
+function coachAiPauseHTML() {
+  const b = coachAiBudget();
+  if (b.ok || (b.reason !== "month" && b.reason !== "day")) return "";
+  return `<p class="hint cc-pause" role="status">${h(b.reason === "month" ? t("coAiPauseMonth")(COACH_AI_MONTH_USD) : t("coAiPauseDay"))}</p>`;
+}
+const coHash = (s) => { let x = 5381; for (let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0; return s.length + ":" + x; };
+
+// ---- the request ----
+function coachAiItem(d, k, spans) {
+  const c = d.card, a = c.ai, text = state.text, field = a.field || null;
+  if (field) {
+    const m = coachAiMask(text, spans, 0, 0, 2500);
+    return { id: "i" + k, d, field, orig: state.opts[field] || "", toks: [], frag: state.opts[field] || "", ctx: m ? m.ctx.masked : "" };
+  }
+  const from = a.start != null ? a.start : d.at && d.at.start, to = a.end != null ? a.end : d.at && d.at.end;
+  if (from == null || to == null || to <= from) return null;
+  const m = coachAiMask(text, spans, from, to, 400);
+  if (!m) return null; // a verse crosses the edge of the fragment: cannot be protected, so it is not sent
+  const orig = text.slice(from, to);
+  return { id: "i" + k, d, orig, lead: orig.match(/^\s*/)[0], trail: orig.match(/\s*$/)[0], toks: m.frag.toks, frag: m.frag.masked, ctx: m.ctx.masked };
+}
+function coachAiPrompt(items) {
+  const blocks = items.map((it) => {
+    const c = it.d.card, a = c.ai;
+    return `=== ${it.id}
+Problema detectado: «${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(a)}
+CONTEXTO (no lo reescribas):
+"""
+${it.ctx}
+"""
+FRAGMENTO A REESCRIBIR:
+"""
+${it.frag}
+"""`;
+  }).join("\n\n");
+  return `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. ${voice()}
+Abajo hay ${items.length} fragmento(s) del mismo guion, cada uno con su problema. Para CADA uno escribe hasta 2 opciones distintas que reescriban SOLO ese fragmento para resolver ese problema. Mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧, ⟦V2⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden; copia exacto cualquier versículo entre comillas.
+Cada fragmento reescrito va en ${scriptLangName()}. ${t("outLang")}
+Responde solo con JSON: {"items": [{"id": "i1", "options": [{"text": "...", "why": "una frase"}]}]}
+
+${blocks}`;
+}
+
+async function coachAiRun(items, epoch) {
+  const ids = items.map((it) => it.d.card.id);
+  ids.forEach((id, i) => { COAI.cache[id] = { status: "loading", orig: items[i].orig, lead: items[i].lead || "", trail: items[i].trail || "", field: items[i].field, raw: [], mat: null }; });
+  const stop0 = COAI.stop;
+  try {
+    const sample = await caps.sample;
+    if (!sample) { COAI.noSample = true; throw { code: "no_sample" }; }
+    const res = await sample.json(coachAiPrompt(items), { modelTier: "default", auto: true });
+    const got = res && Array.isArray(res.items) ? res.items : [];
+    items.forEach((it) => {
+      const e = COAI.cache[it.d.card.id];
+      const mine = got.find((g) => g && g.id === it.id);
+      const raw = [];
+      for (const o of ((mine && Array.isArray(mine.options)) ? mine.options : []).slice(0, 2)) {
+        if (!o || typeof o.text !== "string") continue;
+        const v = vetSection(it.orig, it.toks, o.text, []);
+        if (v.ok) raw.push({ text: v.text.trim(), why: String(o.why || "") });
+      }
+      e.raw = raw; e.status = raw.length ? "done" : "none";
+    });
+  } catch (err) {
+    const code = err && err.code;
+    if (code === "daily_limit" || code === "rate_limited" || code === "auto_paused") COAI.stop = code; // for the rest of the session
+    items.forEach((it) => { COAI.cache[it.d.card.id].status = "error"; }); // never retried by itself
+  }
+  COAI.busy = false;
+  if (epoch !== COAI.epoch) { coachAiPump(); return; }
+  const d0 = COACH.list[0];
+  if (document.querySelector(".topfix.coach") && d0 && d0.kind !== "question" && !COACH.write && (ids.includes(d0.card && d0.card.id) || COAI.stop !== stop0)) coachRefresh();
+  coachAiPump();
+}
+
+// Called after every coach render. A batch goes out when the current decision has no proposal yet, or when 2 or fewer of the
+// decisions ahead still have one.
+function coachAiPump() {
+  if (COAI.busy || !state.result || !COACH.list.length || !document.querySelector(".topfix.coach")) return;
+  if (!coachAiBudget().ok) return;
+  const L = COACH.list, ahead = L.filter((d) => d.needsAi && d.card && d.card.ai);
+  const todo = coachAiPick(L, (id) => !!COAI.cache[id], COACH_AI_BATCH);
+  if (!todo.length) return;
+  const cachedAhead = ahead.filter((d) => COAI.cache[d.card.id]).length;
+  if (COAI.cache[ahead[0].card.id] && cachedAhead > 2) return;
+  const spans = verseSpans(state.text, state.result);
+  const items = [];
+  todo.forEach((d) => { const it = coachAiItem(d, items.length + 1, spans); if (it) items.push(it); else COAI.cache[d.card.id] = { status: "none", raw: [], mat: null }; });
+  if (!items.length) { coachAiPump(); return; }
+  COAI.busy = true; COAI.calls++;
+  const epoch = COAI.epoch;
+  coachAiRun(items, epoch);
+  if (document.querySelector(".topfix.coach") && L[0].card && items.some((it) => it.d === L[0])) coachRefresh(); // shows «Preparando una propuesta…»
+}
+
+// The verified options of a decision, for the coach to show. Shape = what applyProposal takes.
+function coachAiOptions(d) {
+  const e = d.card && COAI.cache[d.card.id];
+  if (!e || e.status !== "done") return [];
+  const key = coHash(state.text) + "|" + (e.field ? state.opts[e.field] || "" : "");
+  if (e.mat && e.mat.key === key) return e.mat.options;
+  const out = [];
+  let at = -1;
+  if (!e.field) { at = locateUnique(state.text, e.orig); if (at < 0) { e.mat = { key, options: [] }; return []; } } // text changed there: stale result ignored
+  for (const o of e.raw) {
+    const p = e.field ? { kind: "field", field: e.field, value: o.text, label: "IA", why: o.why } : { kind: "patch", patches: [{ start: at, end: at + e.orig.length, rep: e.lead + o.text + e.trail }], label: "IA", why: o.why };
+    if (p.kind === "patch" && state.text.slice(at, at + e.orig.length) + "" === p.patches[0].rep) continue;
+    p.check = verifyProposal(state.text, state.opts, state.result, p);
+    if (p.check.broke.length) continue; // an option that breaks another check is not offered
+    out.push(p);
+  }
+  e.mat = { key, options: out };
+  return out;
+}
+const coachAiLoading = (d) => !!(d.card && COAI.cache[d.card.id] && COAI.cache[d.card.id].status === "loading");
+
+const _coachAfterRenderA = coachAfterRender;
+coachAfterRender = function () { _coachAfterRenderA(); coachAiPump(); };
+// a new review starts over (the pause for the session stays)
+$("runBtn").addEventListener("click", () => { COAI.cache = {}; COAI.calls = 0; COAI.epoch++; }, true);
 /* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
 Object.assign(T.es, {
   atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",
