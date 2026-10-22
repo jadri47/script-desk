@@ -78,7 +78,12 @@ function buildDecisions(text, R, opts, dismissed) {
   }
   const order = (a, b) => b.gain - a.gain || pos(a.card) - pos(b.card);
   const part = (k) => rest.filter((d) => d.kind === k).sort(order);
-  return [...part("risk"), ...decisions, ...part("question"), ...part("choice"), ...part("note")];
+  // The keyword check passes on the app's own pick (R.keyword), so it never raises a card; but with the field empty and a few real
+  // candidates, confirming one is a one-tap question. (jadri47, 2026-10-22: "keyword: candidates by rule, R.keyword first")
+  const qs = part("question");
+  if (!(opts.keyword || "").trim() && (R.kwCands || []).length >= 2 && !qs.some((d) => d.ask === "keyword") && !dismissed.has("kw-ask"))
+    qs.push({ kind: "question", id: "kw-ask", ids: ["kw-ask"], card: null, options: [], at: null, gain: 0, ask: "keyword" });
+  return [...part("risk"), ...decisions, ...qs, ...part("choice"), ...part("note")];
 }
 
 // The score if every decision's first option were applied. A decision goes in whole or not at all (its patches must
@@ -95,4 +100,41 @@ function projectedScore(text, R, opts, decisions, dismissed) {
     if (p.kind === "cold") o2.coldOpen = { hook: p.hook ? p.hook.text : "", promise: p.promise ? p.promise.text : "", mode: [p.hook, p.promise].filter(Boolean).every((x) => x.mode === "move") ? "move" : "dup" };
   }
   return scoreOf(analyze(applyPatches(text, taken), o2), dismissed).score;
+}
+
+// Ready answers for a question, only from the script or the rules (never invented text). Each: {text, n?, src}.
+// (jadri47, 2026-10-22: "Choices must be real text from the script or the rules")
+function coachOneSentence(x, max) {
+  const s = (x || "").replace(/\s+/g, " ").trim().replace(/^[«"“]|[»"”]$/g, "");
+  if (!s) return "";
+  if (s.split(" ").length < 6) return ""; // "vamos a ver" is not an idea
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max), c = Math.max(cut.lastIndexOf(","), cut.lastIndexOf(";"));
+  return c > 40 ? cut.slice(0, c) : ""; // a clause that ends on its own, or nothing: no half sentence
+}
+function coachQuestionChoices(ask, R, opts, card, extra) {
+  const en = R.lang === "en", out = [], add = (c) => { if (c.text && !out.some((x) => norm(x.text) === norm(c.text))) out.push(c); };
+  extra = extra || {};
+  if (ask === "keyword") for (const k of R.kwCands || []) add({ text: k.phrase, n: k.n, src: "kw" });
+  else if (ask === "title") {
+    for (const p of (card && card.proposals) || []) if (p.kind === "field" && p.field === "title") add({ text: p.value, src: "rule" });
+    for (const k of (R.kwCands || []).filter((x) => x.n >= 3).slice(0, 3)) { // only phrases said often: a weak phrase makes a silly title
+      const t = en ? `What does the Bible say about ${k.phrase}?` : `¿Qué dice la Biblia sobre ${esArticle(k.phrase)}${k.phrase}?`;
+      if (t.length <= 60) add({ text: t, src: "rule" });
+    }
+  } else if (ask === "nextEp") {
+    const cur = extra.pubDate || "";
+    const nx = (extra.prods || []).filter((p) => p.id !== extra.curId && (p.title || "").trim() && p.pubDate && cur && p.pubDate > cur).sort((a, b) => a.pubDate.localeCompare(b.pubDate))[0];
+    if (nx) add({ text: nx.title.trim(), src: "plan" });
+  } else if (ask === "bigIdea") {
+    // promiseSent is the matched phrase ("vas a descubrir"); the choice is the whole sentence it sits in
+    const ps = R.promiseSent && (R.sents || []).find((x) => x.start <= R.promiseSent.start && R.promiseSent.start < x.start + x.text.length);
+    const p = ps && coachOneSentence(ps.text, 140);
+    if (p) add({ text: p, src: "promise" });
+    const late = (R.msg && R.msg.lateStart) || 0;
+    const rc = [...(R.sents || [])].reverse().find((x) => x.start >= late && hasPhrase(x.text, RECAP));
+    const r = rc && coachOneSentence(rc.text, 140);
+    if (r) add({ text: r, src: "recap" });
+  }
+  return out;
 }

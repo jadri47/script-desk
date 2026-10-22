@@ -133,6 +133,53 @@ async def main():
             else: ok(n + ": a question exists", False)
             ok(n + ": no page errors", not errs, errs)
             await pg.close()
+        # ---- question choices (radios): keyword, bigIdea ----
+        seen_idea = 0
+        for vpn, vp in [("desktop", {"width": 1400, "height": 900}), ("phone", {"width": 390, "height": 844})]:
+            for ui in ["es", "en"]:
+                for demo in ["bad", "mid", "good"]:
+                    n = f"{vpn}-{ui}-{demo}-choices"
+                    pg, errs = await open_page(b, vp, ui, demo)
+                    await pg.evaluate("$('keyword').value=''; $('bigIdea').value=''"); await pg.evaluate("rerunReview('')"); await pg.wait_for_timeout(1500)
+                    asks = await pg.evaluate("COACH.list.filter(d=>d.kind==='question').map(d=>d.ask)")
+                    ok(n + ": keyword question is asked", "keyword" in asks, asks)
+                    async def to_ask(a):
+                        for _ in range(40):
+                            c = await pg.evaluate("(()=>{const d=COACH.list[0];return d?[d.kind,d.ask||'']:null})()")
+                            if not c or (c[0] == "question" and c[1] == a): return bool(c)
+                            await pg.click("[data-co=skip]"); await pg.wait_for_timeout(450)
+                        return False
+                    if await to_ask("bigIdea"):
+                        want = await pg.evaluate("coachQuestionChoices('bigIdea', state.result, state.opts, COACH.list[0].card, {}).map(c=>c.text)")
+                        got = await pg.evaluate("[...document.querySelectorAll('input[name=coChoice]')].map(r=>r.nextElementSibling.firstChild.textContent.trim())")
+                        if want:
+                            seen_idea += 1
+                            ok(n + ": bigIdea shows the promise sentence as a choice", got[:len(want)] == want and len(got) == len(want) + 1, (want, got))
+                        else: ok(n + ": no candidate: only the box", len(got) == 0 and await pg.locator("#coAns").is_visible(), got)
+                        if want: ok(n + ": bigIdea has the AI suggestion button", await pg.locator("[data-co=ai-idea]").count() == 1)
+                        await pg.click("[data-co=skip]"); await pg.wait_for_timeout(450)
+                    if await to_ask("keyword"):
+                        rg = await pg.evaluate("(()=>{const g=document.querySelector('[role=radiogroup]');return g?[g.getAttribute('aria-labelledby'),!!document.getElementById(g.getAttribute('aria-labelledby')).textContent.trim()]:null})()")
+                        ok(n + ": radiogroup is labelled", rg is not None and rg[1], rg)
+                        rad = await pg.evaluate("[...document.querySelectorAll('input[name=coChoice]')].map(r=>[r.value,r.checked])")
+                        kw = await pg.evaluate("state.result.keyword")
+                        ok(n + ": at least 2 keyword choices plus the own box", len(rad) >= 3 and rad[-1][0] == "own", rad)
+                        ok(n + ": first choice preselected", rad[0][1] and not any(r[1] for r in rad[1:]), rad)
+                        first = await pg.evaluate("document.querySelector('input[name=coChoice]').nextElementSibling.firstChild.textContent.trim()")
+                        ok(n + ": first choice is R.keyword", first == kw, (first, kw))
+                        ok(n + ": each shows how often it appears", await pg.evaluate("document.querySelector('.cc-radio .hint').textContent.includes('·')"))
+                        ok(n + ": the own box is hidden until chosen", not await pg.locator("#coAns").is_visible())
+                        if vpn == "phone":
+                            ov = await pg.evaluate("[document.documentElement.scrollWidth, innerWidth]")
+                            ok(n + ": no horizontal overflow at 390 (question)", ov[0] <= ov[1], ov)
+                            await pg.screenshot(path=os.path.join(SHOTS, f"coach-question-phone-{ui}-{demo}.png"))
+                        second = await pg.evaluate("document.querySelectorAll('input[name=coChoice]')[1].nextElementSibling.firstChild.textContent.trim()")
+                        await pg.locator("input[name=coChoice]").nth(1).check(); await pg.click("[data-co=answer]"); await pg.wait_for_timeout(1500)
+                        ok(n + ": the second choice lands in #keyword", await pg.evaluate("$('keyword').value") == second, second)
+                        ok(n + ": the keyword question is gone", "keyword" not in await pg.evaluate("COACH.list.filter(d=>d.kind==='question').map(d=>d.ask)"))
+                    ok(n + ": no page errors", not errs, errs)
+                    await pg.close()
+        ok("some demo gave a bigIdea candidate", seen_idea > 0, seen_idea)
         # ---- score popover jump ----
         for ui in ["es", "en"]:
             pg, errs = await open_page(b, {"width": 1400, "height": 900}, ui, "bad")

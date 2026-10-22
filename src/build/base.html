@@ -901,6 +901,19 @@ function analyze(text, opts = {}) {
   }
   const bestGram = Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0];
   const bestWord = top.find(([w, c]) => c > 1 && !COMMON.has(w));
+  // Keyword candidates for the coach question: the same pick as `keyword` first, then the next frequent phrases/words that do not overlap it.
+  // (jadri47, 2026-10-22: "R.keyword first, then up to 3 other frequent content phrases", extends the pick above, no second algorithm)
+  const kwCands = [];
+  {
+    const pool = [...Object.entries(grams).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length), ...top.filter(([w, c]) => c > 1 && !COMMON.has(w))];
+    const first = bestGram || bestWord;
+    if (first) kwCands.push({ phrase: first[0], n: first[1] });
+    for (const [ph, c] of pool) {
+      if (kwCands.length >= 4) break;
+      if (kwCands.some((x) => x.phrase === ph || x.phrase.includes(ph) || ph.includes(x.phrase))) continue;
+      kwCands.push({ phrase: ph, n: c });
+    }
+  }
   const keyword = (opts.keyword || "").trim().toLowerCase() || (bestGram ? bestGram[0] : bestWord ? bestWord[0] : "");
   const kwRe = keyword ? new RegExp("(?<![\\p{L}])" + esc(norm(keyword)) + "(?![\\p{L}])", "giu") : null;
   const normText = norm(text);
@@ -947,7 +960,7 @@ function analyze(text, opts = {}) {
   const passed = allRows.filter((r) => r.passed).length;
   const worst = preflight.some((p) => p.level === "rojo") || packaging.some((p) => p.level === "rojo") ? "rojo" : preflight.some((p) => p.level === "amarillo") || packaging.some((p) => p.level === "amarillo") ? "amarillo" : "verde";
 
-  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits };
+  return { lang, k, wc, sc, totalSyl, runtimeSec, readSec, readability, sections, passed, total: allRows.length, preflight, packaging, dense, worst, inauth, refs, quotes, pairs, orphanQuotes, keyword, kwCands, promiseSent: firstPromise ? { start: firstPromise.start, text: firstPromise.text } : null, marks: resolved, quoteSpans: quotes, tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, contentT, kwFirstT, timeAt, transHits, chapterPts, riskHits, mulHits };
 }
 
 if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences };

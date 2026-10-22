@@ -66,6 +66,28 @@ for (const lg of ["es", "en"]) {
   ok(`${lg}: bare options raise questions`, asks.length > 0, asks.join());
   ok(`${lg}: no question asked twice`, new Set(asks).size === asks.length, asks.join());
 }
+// question choices: real text from the script or the rules, R.keyword first (jadri47, 2026-10-22)
+for (const lg of ["es", "en"]) for (const k of ["worst", "bad", "mid", "good"]) {
+  const e = ex[lg][k], o = opts(e, lg, { bigIdea: "", keyword: "", nextEp: "", title: "" }), R = L.analyze(e.text, o), tag = `${lg}/${k}`;
+  const flat = (x) => x.replace(/\s+/g, " ").toLowerCase(), body = flat(e.text), kc = R.kwCands || [];
+  ok(`${tag}: R.keyword equals the first candidate`, !R.keyword || (kc[0] && kc[0].phrase === R.keyword), JSON.stringify(kc[0]) + " / " + R.keyword);
+  ok(`${tag}: at most 4 distinct candidates`, kc.length <= 4 && new Set(kc.map((x) => x.phrase)).size === kc.length);
+  ok(`${tag}: every keyword candidate is in the script and counted`, kc.every((x) => x.n >= 1 && body.includes(x.phrase)), JSON.stringify(kc));
+  const D = L.buildDecisions(e.text, R, o, new Set());
+  for (const d of D.filter((x) => x.kind === "question")) {
+    const ch = L.coachQuestionChoices(d.ask, R, o, d.card, {});
+    if (d.ask === "keyword") ok(`${tag}: keyword choices start with R.keyword`, !R.keyword || (ch[0] && ch[0].text === R.keyword), JSON.stringify(ch));
+    if (d.ask === "bigIdea") ok(`${tag}: bigIdea choices are script sentences of at most 140 chars`, ch.every((c) => c.text.length <= 140 && body.includes(flat(c.text))), JSON.stringify(ch));
+    if (d.ask === "title") ok(`${tag}: title choices fit 60 chars`, ch.every((c) => c.text.length <= 60), JSON.stringify(ch));
+  }
+}
+{
+  const R = { lang: "es", kwCands: [] };
+  const prods = [{ id: "a", title: "Hoy", pubDate: "2026-10-01" }, { id: "b", title: "Más adelante", pubDate: "2026-10-15" }, { id: "c", title: "Después", pubDate: "2026-10-22" }, { id: "d", title: "", pubDate: "2026-10-10" }];
+  const ch = L.coachQuestionChoices("nextEp", R, {}, null, { prods, curId: "a", pubDate: "2026-10-01" });
+  ok("nextEp: the next planned episode by date, untitled ones skipped", ch.length === 1 && ch[0].text === "Más adelante", JSON.stringify(ch));
+  ok("nextEp: no plan, no choice", L.coachQuestionChoices("nextEp", R, {}, null, { prods: [], curId: "a", pubDate: "2026-10-01" }).length === 0);
+}
 if (process.argv.includes("-v")) console.log(stats.join("\n"));
 console.log(fails ? `${fails} FAIL` : "ALL PASS");
 process.exit(fails ? 1 : 0);

@@ -12,7 +12,7 @@ Object.assign(T.es, {
   coWrite: "Lo escribo yo", coWriteLbl: "Escribe cómo debe quedar", coCheck: "Comprobar", coWriteApply: "Aplicar lo escrito", coCancel: "Cancelar", coManual: "A mano",
   coAsk: { bigIdea: "¿Cuál es la idea central del episodio?", keyword: "¿Qué frase buscaría alguien en YouTube para encontrar este episodio?", nextEp: "¿De qué trata el próximo episodio?", title: "¿Qué título le pones?" },
   coAskHint: { bigIdea: "Saldrá al inicio y al cierre." }, coAnsLbl: "Tu respuesta", coEmptyAns: "Escribe una respuesta o salta esta pregunta.", coSaved: "Guardado.",
-  coLead: "Toca «Aplicar» para aceptar el cambio o «Saltar» para dejarlo. Todo se puede revertir en «Cambios hechos».", coNone: "Listo: no quedan decisiones", coLog: (n) => `Cambios hechos (${n})`, coRisk: "Aviso rojo",
+  coLead: "Toca «Aplicar» para aceptar el cambio o «Saltar» para dejarlo. Todo se puede revertir en «Cambios hechos».", coOwn: "Escribirla yo", coTimes: (n) => `${n} ${n === 1 ? "vez" : "veces"}`, coSrc: { promise: "tu promesa del inicio", recap: "tu cierre", plan: "del plan de la serie" }, coAiTitles: "Más ideas con IA", coAiIdea: "Sugerir con IA", coNone: "Listo: no quedan decisiones", coLog: (n) => `Cambios hechos (${n})`, coRisk: "Aviso rojo",
 });
 Object.assign(T.en, {
   coDec: (i, n) => `Decision ${i} of ${n}`, coScore: (a, b) => `Score ${a} → ${b} if you accept the suggestions`, coByPara: "See by paragraph", coBack: "Back to one decision at a time",
@@ -23,10 +23,10 @@ Object.assign(T.en, {
   coWrite: "I'll write it", coWriteLbl: "Write how it should read", coCheck: "Check", coWriteApply: "Apply what I wrote", coCancel: "Cancel", coManual: "By hand",
   coAsk: { bigIdea: "What is the central idea of the episode?", keyword: "What phrase would someone search on YouTube to find this episode?", nextEp: "What is the next episode about?", title: "What title do you give it?" },
   coAskHint: { bigIdea: "It will be heard at the start and at the close." }, coAnsLbl: "Your answer", coEmptyAns: "Write an answer or skip this question.", coSaved: "Saved.",
-  coLead: "Tap “Apply” to accept the change or “Skip” to leave it. Everything can be reverted under “Changes made”.", coNone: "Done: no decisions left", coLog: (n) => `Changes made (${n})`, coRisk: "Red warning",
+  coLead: "Tap “Apply” to accept the change or “Skip” to leave it. Everything can be reverted under “Changes made”.", coOwn: "Write my own", coTimes: (n) => `${n} ${n === 1 ? "time" : "times"}`, coSrc: { promise: "your opening promise", recap: "your close", plan: "from your series plan" }, coAiTitles: "More ideas with AI", coAiIdea: "Suggest with AI", coNone: "Done: no decisions left", coLog: (n) => `Changes made (${n})`, coRisk: "Red warning",
 });
 
-const COACH = { order: [], key: "", R: null, list: [], proj: 0, total: 0, hist: [], sel: { id: "", k: 0 }, write: null, curId: "", delay: 0, tm: 0 };
+const COACH = { order: [], key: "", R: null, list: [], proj: 0, total: 0, hist: [], sel: { id: "", k: 0 }, write: null, q: { id: "", sel: 0, ai: [], err: "", busy: false }, curId: "", delay: 0, tm: 0 };
 const coachOn = () => { try { return localStorage.getItem("sd-coach-off") !== "1"; } catch (e) { return true; /* best effort: storage blocked: the coach stays the default */ } };
 function coachSetOn(on) {
   try { if (on) localStorage.removeItem("sd-coach-off"); else localStorage.setItem("sd-coach-off", "1"); } catch (e) { /* best effort: storage blocked: the choice isn't remembered after a reload */ }
@@ -43,7 +43,7 @@ function coachBuild() {
   COACH.total = Math.max(COACH.total, COACH.list.length);
   if (!COACH.order.length) COACH.order = COACH.list.map((d) => d.id); // the queue as it was at the start: the header position follows it, also after a jump from the score popover
   const id = COACH.list[0] ? COACH.list[0].id : "";
-  if (id !== COACH.curId) { COACH.sel = { id: "", k: 0 }; COACH.write = null; }
+  if (id !== COACH.curId) { COACH.sel = { id: "", k: 0 }; COACH.write = null; COACH.q = { id, sel: 0, ai: [], err: "", busy: false }; }
 }
 
 const coFlat = (x) => x.replace(/\s+/g, " ");
@@ -78,12 +78,23 @@ function coChoiceHTML(d, R) {
     <div class="actions cc-act">${p ? `<button type="button" class="small primary" data-co="apply"${w && w.p ? "" : " data-co-primary"}>${h(t("fxApply"))}</button>` : ""}${d.options.length > 1 ? `<button type="button" class="small" data-co="other">${h(t("fxOther"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-co="write">${h(t("coWrite"))}</button>` : ""}${d.needsAi && c.ai ? `<button type="button" class="small" data-fxai="0">${h(ai ? t("fxAiAgain") : t("fxAi"))}</button>` : ""}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>
     <div class="fx-ai" id="fxai-0">${ai ? aiOptionsHTML(0, ai) : ""}</div>`;
 }
+// Ready answers (coachQuestionChoices: from the script or the rules) as radios, the first one chosen, plus «Escribirla yo».
+// Without any candidate only the box shows, as before. (jadri47, 2026-10-22: "radios in a radiogroup, first choice preselected")
+function coChoices(d) {
+  const extra = { prods: G.prods || [], curId: G.prodId, pubDate: G.pubDate || "" };
+  const base = coachQuestionChoices(d.ask, state.result, state.opts, d.card, extra);
+  for (const x of COACH.q.ai) if (!base.some((c) => norm(c.text) === norm(x))) base.push({ text: x, src: "ai" });
+  return base;
+}
 function coQuestionHTML(d) {
-  const a = d.ask, hint = (t("coAskHint") || {})[a];
-  const cur = a === "title" ? $("title").value : "";
-  return `<div class="cc-top"><b class="cc-t" id="coQ">${h(t("coAsk")[a])}</b></div>${hint ? `<p class="hint">${h(hint)}</p>` : ""}
-    <label class="cc-lbl" for="coAns">${h(t("coAnsLbl"))}</label><textarea id="coAns" rows="2"${a === "title" ? ' maxlength="100"' : ""}>${h(cur)}</textarea><p class="status err" id="coAnsErr" hidden>${h(t("coEmptyAns"))}</p>
-    <div class="actions cc-act"><button type="button" class="small primary" data-co="answer" data-co-primary>${h(t("fxUse"))}</button><button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>`;
+  const a = d.ask, hint = (t("coAskHint") || {})[a], ch = coChoices(d), q = COACH.q;
+  const sel = ch.length ? (q.sel >= 0 && q.sel < ch.length ? q.sel : q.sel === -1 ? -1 : 0) : -1, own = sel === -1;
+  const ml = a === "title" ? ' maxlength="100"' : "";
+  const radios = ch.length ? `<div class="cc-radios" role="radiogroup" aria-labelledby="coQ">${ch.map((c, i) => `<label class="cc-radio"><input type="radio" name="coChoice" value="${i}"${sel === i ? " checked" : ""}><span>${h(c.text)}${c.n ? ` <span class="hint">· ${h(t("coTimes")(c.n))}</span>` : ""}${c.src && t("coSrc")[c.src] ? ` <span class="hint">· ${h(t("coSrc")[c.src])}</span>` : ""}</span></label>`).join("")}<label class="cc-radio"><input type="radio" name="coChoice" value="own"${own ? " checked" : ""}><span>${h(t("coOwn"))}</span></label></div>` : "";
+  const aiBtn = a === "title" || a === "bigIdea" ? `<button type="button" class="small" data-co="${a === "title" ? "ai-title" : "ai-idea"}"${q.busy ? " disabled" : ""}>${h(q.busy ? t("thinking") : a === "title" ? t("coAiTitles") : t("coAiIdea"))}</button>` : "";
+  return `<div class="cc-top"><b class="cc-t" id="coQ">${h(t("coAsk")[a])}</b></div>${hint ? `<p class="hint">${h(hint)}</p>` : ""}${radios}
+    <div id="coOwnBox"${ch.length && !own ? " hidden" : ""}><label class="cc-lbl" for="coAns">${h(t("coAnsLbl"))}</label><textarea id="coAns" rows="2"${ml}></textarea></div><p class="status err" id="coAnsErr" hidden>${h(t("coEmptyAns"))}</p>${q.err ? `<p class="status err">${h(q.err)}</p>` : ""}
+    <div class="actions cc-act"><button type="button" class="small primary" data-co="answer" data-co-primary>${h(t("fxUse"))}</button>${aiBtn}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>`;
 }
 function coNoteHTML(d) {
   const c = d.card;
@@ -154,7 +165,7 @@ function coachSkip(d) {
   const ids = d.ids && d.ids.length ? d.ids : [d.id];
   const bis = d.card ? fxBlocksOf(d.card) : [];
   ids.forEach((id) => state.fixDismissed.add(id));
-  const label = d.kind === "batch" ? t("coBatchLbl") : plainLabel(d.card.id, d.card.label);
+  const label = d.kind === "batch" ? t("coBatchLbl") : d.card ? plainLabel(d.card.id, d.card.label) : t("coAsk")[d.ask];
   (bis.length ? bis : [-1]).forEach((bi) => state.fixLog.push({ id: ids[0], ids, label, kind: "skip", bi }));
   COACH.hist.push({ ids });
   COACH.delay = 0;
@@ -198,7 +209,8 @@ function coachApplyBatch(d) {
   if (WK.ok) { const r = wkRange(items[0].start, items[0].start + Math.max(1, items[0].rep.length)); if (r) { wkScrollTo(r); wkFlash([r]); } }
 }
 function coachAnswer(d) {
-  const box = $("coAns"), v = box ? box.value.trim() : "";
+  const box = $("coAns"), rd = document.querySelector('input[name="coChoice"]:checked'), ch = coChoices(d);
+  const v = rd && rd.value !== "own" && ch[+rd.value] ? ch[+rd.value].text.trim() : box ? box.value.trim() : "";
   if (!v) { const e = $("coAnsErr"); if (e) e.hidden = false; if (box) box.focus(); return; }
   const a = d.ask;
   if (a === "nextEp") G.nextEp = v;
@@ -222,6 +234,43 @@ function coachManual(d) {
   w.p = p;
   coachRefresh();
 }
+// Manual clicks only (step 4 adds the automatic ones). Each result becomes one more choice; titles keep the 60-character limit.
+async function coachAiRun(fn) {
+  const id = COACH.q.id;
+  COACH.q.busy = true; COACH.q.err = ""; coachRefresh();
+  try { const r = await fn(); if (COACH.q.id === id) { const before = coChoices(COACH.list[0]).length; COACH.q.ai.push(...r); if (r.length) COACH.q.sel = before; } }
+  catch (e) { if (COACH.q.id === id) COACH.q.err = e && e.code === "no_sample" ? t("aiPickNeed") : errText(e); }
+  if (COACH.q.id === id) { COACH.q.busy = false; coachRefresh(); }
+}
+function coachAiTitles() {
+  coachAiRun(async () => {
+    const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
+    const R = state.result, kw = (state.opts.keyword || R.keyword || ""), prom = R.promiseSent ? R.promiseSent.text : state.text.slice(0, 600);
+    const prompt = `Para un episodio de un pódcast cristiano de enseñanza bíblica en YouTube, en ${R.lang === "en" ? "inglés" : "español"}, escribe cinco títulos de 60 caracteres o menos${kw ? `, con "${kw}" dentro de los primeros 60 caracteres` : ""}. Al menos dos como la pregunta que alguien escribiría en YouTube. Cada título debe prometer exactamente lo que promete la apertura del guion. Sin mayúsculas sostenidas, sin groserías, sin términos gráficos, sin prometer sanidad o dinero.
+Responde solo con JSON: {"titles": ["..."]}
+
+PROMESA DE LA APERTURA: ${prom.slice(0, 600)}
+
+GUION (inicio):
+"""
+${state.text.slice(0, 6000)}
+"""`;
+    const res = await sample.json(prompt, { modelTier: "default" });
+    const ts = (res && Array.isArray(res.titles) ? res.titles : []).map((x) => String(x).trim()).filter((x) => x && x.length <= 60).slice(0, 5);
+    if (!ts.length) throw { code: "invalid_json" };
+    return ts;
+  });
+}
+function coachAiIdea() {
+  coachAiRun(async () => {
+    const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
+    IDEA.busy = false;
+    await ideaSuggest(true);
+    const v = IDEA.sug; IDEA.sug = ""; if (typeof renderIdeaSug === "function") renderIdeaSug(); // the suggestion lives here as a choice, not in the Prepare card
+    if (!v) throw { code: "invalid_json" };
+    return [v];
+  });
+}
 function coachAct(act) {
   const d = COACH.list[0];
   if (act === "walker") return coachSetOn(false);
@@ -235,6 +284,8 @@ function coachAct(act) {
   else if (act === "apply") { COACH.delay = 1100; applyProposal(d.options[k], d.card); }
   else if (act === "other") { COACH.sel = { id: d.id, k: (k + 1) % d.options.length }; coachRefresh(); }
   else if (act === "write") { COACH.write = { id: d.id, value: d.card.field ? d.card.field.value : state.text.slice(d.at.start, d.at.end), p: null }; coachRefresh(); const b = $("coW"); if (b) b.focus(); }
+  else if (act === "ai-title") coachAiTitles();
+  else if (act === "ai-idea") coachAiIdea();
   else if (act === "wcancel") { COACH.write = null; coachRefresh(); }
   else if (act === "wcheck") coachManual(d);
   else if (act === "wapply" && COACH.write && COACH.write.p) { COACH.delay = 1100; const p = COACH.write.p; COACH.write = null; applyProposal(p, d.card); }
@@ -266,6 +317,10 @@ function coachWire() {
   });
   const lg = root.querySelector("details.cc-log");
   if (lg) lg.addEventListener("toggle", () => { COACH.logOpen = lg.open; });
+  root.querySelectorAll('input[name="coChoice"]').forEach((r) => r.addEventListener("change", () => {
+    COACH.q.sel = r.value === "own" ? -1 : +r.value;
+    const b = $("coOwnBox"); if (b) { b.hidden = r.value !== "own"; if (r.value === "own") $("coAns").focus(); }
+  }));
   const w = $("coW");
   if (w) w.addEventListener("input", () => { if (COACH.write) COACH.write.value = w.value; });
   // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button/link keeps its own meaning

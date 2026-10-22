@@ -572,3 +572,8 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 .cc-see summary,.cc-log summary{list-style:none}.cc-see summary::-webkit-details-marker,.cc-log summary::-webkit-details-marker{display:none}
 .cc-see summary:focus-visible,.cc-log summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .topfix.coach{padding-bottom:8px}
+.cc-radios{display:grid;gap:6px;margin:8px 0}
+.cc-radio{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:1px solid var(--rule);border-radius:10px;background:var(--paper);cursor:pointer;min-height:40px;line-height:1.4;overflow-wrap:anywhere}
+.cc-radio:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cc-radio input{margin-top:3px;flex:none;accent-color:var(--accent)}
+.cc-radio:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
