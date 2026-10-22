@@ -34,17 +34,17 @@ async def main():
             ok(f"{n}: placement", (s1["cls"].find("docked") >= 0) == (n == "d"), s1["cls"])
             # step 2: verdict shows the same number
             await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(600)
-            if not await pg.query_selector("[data-fxapply]"):
+            if not await pg.query_selector("[data-fxapply], [data-co=apply], [data-co=batch]"):
                 for k in ["bad", "worst", "good"]:
                     await pg.evaluate(f"startDemo('{k}')"); await pg.wait_for_timeout(1500); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(600)
-                    if await pg.query_selector("[data-fxapply]"): break
+                    if await pg.query_selector("[data-fxapply], [data-co=apply], [data-co=batch]"): break
             vn = await pg.evaluate("(document.querySelector('.gv-n')||{}).childNodes ? document.querySelector('.gv-n').childNodes[0].textContent : null")
             ok(f"{n}: verdict number equals pill", vn is not None and int(vn) == int((await pg.evaluate(PILL))["n"]), f"{vn}")
             before = int((await pg.evaluate(PILL))["n"])
             # apply first quick fix
-            btn = await pg.query_selector("[data-fxapply]")
+            btn = await pg.query_selector("[data-fxapply], [data-co=apply], [data-co=batch]")
             if btn:
-                await pg.evaluate("document.querySelector('[data-fxapply]').click()"); await pg.wait_for_timeout(1800)
+                await pg.evaluate("document.querySelector('[data-fxapply], [data-co=apply], [data-co=batch]').click()"); await pg.wait_for_timeout(1800)
                 after = int((await pg.evaluate(PILL))["n"])
                 ok(f"{n}: first fix keeps or raises score", after >= before, f"{before} -> {after}")
             else: ok(f"{n}: fix button exists", False)
