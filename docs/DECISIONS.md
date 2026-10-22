@@ -1,5 +1,15 @@
 # Decisions (newest first)
 
+## 2026-10-22: step 2 becomes a coach (Adrian: "walk him through the process and just ask him questions like you do here")
+
+Picks (2026-10-21/22): **A auto AI, capped** · **A one decision at a time** · **safe fixes: preview, one tap** · **$5 per month** · verdict **A by score**.
+- Correction said once: there was no monthly cap before (server: 60 calls/day only). The client now stops automatic AI at a known month cost of $5; the server guard (`auto: true` → `auto_paused`) is step 4b and is **not deployed** (waits for Adrian's go).
+- Step 2 shows «Decisión i de n», «Nota a → b si aceptas lo propuesto», the spot in the script, Aplicar / Otra opción / Lo escribo yo / Saltar. Safe fixes are one batch with a per-family count and one log entry per fix (each revertible; Deshacer undoes the batch). Questions offer choices taken from the script (keyword candidates with counts, the promise sentence as central idea, the next planned episode, rule titles); AI ideas on click. «Ver por párrafos» keeps the walker.
+- A keyword question (`kw-ask`) is asked when the keyword field is empty and there are 2+ candidates (the keyword check passes on the app's own pick, so nothing asked before).
+- Verdict: «Casi listo» only from 70 up; below, «Le falta trabajo: n cosas por mejorar».
+- Fixed on the way: «súper importante» became «muy importante» (another weak phrase); the live pill ignored partial credit (53 vs 48); no split before «porque/because»; the +0 reason shows once per check.
+- Open: AI answer quality with the real model (tests use a mock); real phone; timeline-marker jump has no automated test.
+
 ## 2026-10-21: paragraph review: points that are real, suggestions that are specific (Adrian: "most recommendations either don't increase the rating or don't suggest anything specific")
 
 Audit of the walker over the 8 demos: ~250 cards offered only "Proponer con IA" and ~200 showed "+1..+16" while applying the suggestion moved the score 0.
