@@ -66,6 +66,8 @@ function weakPatch(text, hit) {
   const key = hit.text.toLowerCase();
   if (!WEAK_SAFE[key]) return null;
   let alt = hit.alts[0];
+  // "súper importante" → "muy importante" swapped one weak word for another: drop the intensifier instead (jadri47, 2026-10-21)
+  if (key === "súper") { let e = hit.end; while (text[e] === " ") e++; const nx = text[e] || ""; return hit.text[0] === hit.text[0].toUpperCase() && nx ? { start: hit.start, end: e + 1, rep: nx.toUpperCase() } : { start: hit.start, end: e, rep: "" }; }
   if (key === "cosas") { const prev = (text.slice(Math.max(0, hit.start - 12), hit.start).match(/(\p{L}+)\s*$/u) || [])[1] || ""; alt = /as$/i.test(prev) ? "verdades" : "aspectos"; if (/as$/i.test(prev) && /^(las|unas|estas|esas|muchas|otras|todas|algunas|tantas)$/i.test(prev)) alt = "verdades"; }
   if (hit.text[0] === hit.text[0].toUpperCase()) alt = alt[0].toUpperCase() + alt.slice(1);
   return { start: hit.start, end: hit.end, rep: alt };

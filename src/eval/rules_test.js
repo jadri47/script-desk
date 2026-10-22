@@ -61,5 +61,9 @@ const base = "Hoy vamos a hablar de la fe en medio de la tormenta y de cómo Dio
   const p = props(cards, "desc");
   ok("desc: opens with the topic", p.length === 1 && p[0].kind === "field" && /^Hoy hablamos de /.test(p[0].value) && p[0].check.fixed.includes("desc"), p.map((x) => x.value));
 }
+{ // an intensifier is dropped, not swapped for another weak word
+  const { cards } = run(`${base} Esto es súper importante para tu fe. Es súper importante que lo sepas. Y súper bonito también. Es súper claro.`);
+  ok("weak: «súper importante» never becomes «muy importante»", texts(cards, "weak").length > 0 && texts(cards, "weak").every((x) => !/muy importante/.test(x)), texts(cards, "weak"));
+}
 console.log(fails ? `FAILS: ${fails}` : "ALL PASS");
 process.exit(fails ? 1 : 0);
