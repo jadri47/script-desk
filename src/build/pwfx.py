@@ -16,11 +16,12 @@ JS = r"""(() => {
     wkGo(i, false);
     const cards = state.fixCards, cur = scoreOf(state.result, state.fixDismissed).score;
     const lis = [...document.querySelectorAll(".topfix.walk li.fx[data-ci]")];
+    const seenWhy = {}; lis.forEach((x) => { if (x.querySelector(".fx-why")) { seenWhy[x.dataset.fid] = (seenWhy[x.dataset.fid] || 0) + 1; if (seenWhy[x.dataset.fid] === 2) (stat.dups = stat.dups || []).push(`p${i} ${x.dataset.fid}`); } });
     cards.forEach((c, ci) => {
       const li = lis.find((x) => +x.dataset.ci === ci); if (!li) return;
       const p = c.proposals[Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1))];
       if (li.classList.contains("fx-note")) { if (li.querySelector("[data-fxapply]") || li.querySelector(".fix-pts") || !li.querySelector("[data-fxskip]") || !["refs", "reading"].includes(c.id)) bad.push(`p${i} ${c.id}: note has Apply/badge or lost Ahora no`); stat.notes = (stat.notes || 0) + 1; return; }
-      const badge = li.querySelector(".fix-pts"), txt = badge ? badge.textContent.trim() : "", why = !!li.querySelector(".fx-why");
+      const badge = li.querySelector(".fix-pts"), txt = badge ? badge.textContent.trim() : "", why = !!li.querySelector(".fx-why") || (!!badge && !!badge.title && badge.title !== t("scPtsTip")); // the reason is the visible line (first card of a check) or the badge title (later ones)
       stat.cards++;
       if (!p) { stat.upTo += /^(Hasta|Up to) \+\d+$/.test(txt) || txt === "" ? 1 : 0; if (txt && !/^(Hasta|Up to) \+\d+$/.test(txt)) bad.push(`p${i} ${c.id}: no suggestion but badge "${txt}"`); return; }
       stat.withProp++;
@@ -29,6 +30,10 @@ JS = r"""(() => {
       else { stat.zero++; if (txt !== "+0") bad.push(`p${i} ${c.id}: real ${real}, badge "${txt}"`); if (why) stat.zeroWhy++; }
     });
   }
+  // the demos rarely put two cards of one check id in one view, so also render a doubled list on purpose
+  let twice = null;
+  for (let i = 0; i <= WK.blocks.length && !twice; i++) { wkGo(i, false); const c0 = (state.fixCards || []).find((c) => !FX_NOTES.has(c.id) && document.querySelector(`li.fx[data-fid="${c.id}"] .fx-why`)); if (c0) { const d = document.createElement("div"); d.innerHTML = fixItemsHTML([c0, c0], state.result); twice = { why: d.querySelectorAll(".fx-why").length, badges: d.querySelectorAll(".fix-pts0").length, titled: [...d.querySelectorAll(".fix-pts0")].every((b) => b.title && b.title !== t("scPtsTip")) }; } }
+  stat.twice = twice;
   return { bad, stat };
 })()"""
 async def main():
@@ -46,6 +51,8 @@ async def main():
                 r = await pg.evaluate(JS); s = r["stat"]
                 ok(f"{ui}-{demo}: badges match the real score change", not r["bad"], r["bad"][:5])
                 ok(f"{ui}-{demo}: a +0 badge always says why", s["zero"] == s["zeroWhy"] or s["zero"] == 0, s)
+                ok(f"{ui}-{demo}: no check id shows its +0 reason line twice in one paragraph view", not s.get("dups"), s.get("dups"))
+                if s["twice"]: ok(f"{ui}-{demo}: a doubled card shows its +0 reason line once, the second keeps it in the badge title", s["twice"]["why"] == 1 and s["twice"]["titled"], s["twice"])
                 ok(f"{ui}-{demo}: no page errors", not errs, errs)
                 print(f"{ui}-{demo}: {s}")
                 await pg.close()

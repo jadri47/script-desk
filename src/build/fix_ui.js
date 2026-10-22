@@ -101,6 +101,7 @@ function fxPtsHTML(c, p, R) {
 const FX_NOTES = new Set(["refs", "reading"]);
 function fixItemsHTML(cards, R) {
   const meta = Object.fromEntries(sectionMeta().map(([k, n]) => [k, n]));
+  const whySeen = new Set(); // the "+0 reason" line shows once per check id in one list; later cards keep it in the badge title (jadri47, 2026-10-21: "it repeated on every card")
   const items = cards.map((c, ci) => {
     if (FX_NOTES.has(c.id)) return `<li class="fx fx-note" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
       <div class="fx-top"><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(t("fxNoteTag"))}</span></div>
@@ -110,6 +111,7 @@ function fixItemsHTML(cards, R) {
     const p = c.proposals[sel];
     const ai = state.fixAi[c.id];
     const pts = fxPtsHTML(c, p, R);
+    if (pts.why) { if (whySeen.has(c.id)) pts.why = ""; else whySeen.add(c.id); }
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
     return `<li class="fx${open ? "" : " fx-closed"}" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
