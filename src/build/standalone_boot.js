@@ -64,7 +64,7 @@
         r = await fetch(SB_URL + "/functions/v1/sd-ai", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token, apikey: SB_KEY },
-          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible }),
+          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible, auto: !!opts.auto }),
           signal: opts.signal,
         });
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }

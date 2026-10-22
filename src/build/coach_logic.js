@@ -138,3 +138,23 @@ function coachQuestionChoices(ask, R, opts, card, extra) {
   }
   return out;
 }
+
+// Masks the Bible text inside [from,to) with ⟦Vn⟧ tokens (numbered over the whole script, so a token means one verse in the
+// fragment and its context alike). null when a verse crosses the edge of the fragment: that range cannot be protected, so it
+// is never sent. The context range grows to whole verses. (jadri47, 2026-10-22: "Scripture must never be rewritten")
+function coachAiMask(text, spans, a, b, pad) {
+  const verse = spans.filter((s) => s.kind !== "ref").sort((x, y) => x.start - y.start);
+  for (const s of verse) if (s.start < b && s.end > a && (s.start < a || s.end > b)) return null;
+  let c0 = Math.max(0, a - pad), c1 = Math.min(text.length, b + pad);
+  for (let k = 0; k < 4; k++) for (const s of verse) { if (s.start < c0 && s.end > c0) c0 = s.start; if (s.start < c1 && s.end > c1) c1 = s.end; }
+  const mask = (from, to) => {
+    let out = "", pos = from; const toks = [];
+    verse.forEach((s, i) => { if (s.start >= from && s.end <= to) { const tok = `⟦V${i + 1}⟧`; out += text.slice(pos, s.start) + tok; toks.push({ tok, text: text.slice(s.start, s.end) }); pos = s.end; } });
+    return { masked: out + text.slice(pos, to), toks };
+  };
+  return { frag: mask(a, b), ctx: mask(c0, c1) };
+}
+// Up to `max` decisions that need an AI proposal and have none yet, in queue order.
+function coachAiPick(list, have, max) {
+  return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
+}

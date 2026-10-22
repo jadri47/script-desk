@@ -256,6 +256,18 @@ function undoFix() {
   rerunReview(t("fxUndone"));
 }
 
+// The per-card instructions of an AI rewrite (keyword, question, note, sensitive terms, field rules); the coach prefetch reuses them.
+function fxAiExtra(a) {
+  return [
+    a.keyword ? `Incluye la palabra clave «${a.keyword}» de forma natural.` : "",
+    a.insertQuestion ? "Añade al final una pregunta directa al oyente o un anticipo de lo que viene, para recuperar su atención." : "",
+    a.note || "",
+    a.keepTerms ? "No cambies los términos sensibles por eufemismos: quita el detalle gráfico, la garantía de resultados o el lenguaje deshumanizante, y conserva el tema." : "",
+    a.field === "title" ? "Es el título del video: 60 caracteres o menos, con la palabra clave al inicio, como la pregunta que alguien escribiría en YouTube, prometiendo solo lo que el guion entrega." : "",
+    a.field === "thumb" ? "Es el texto de la miniatura: 1 a 4 palabras (24 caracteres como máximo), sin repetir el título." : "",
+    a.field === "description" ? "Es la descripción: los primeros 150 caracteres dicen la promesa con la palabra clave." : "",
+  ].filter(Boolean).join(" ");
+}
 async function aiFix(ci) {
   const c = state.fixCards[ci], sample = await caps.sample;
   if (!sample) { state.fixAi[c.id] = { error: t("aiOnlyClaude") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; }
@@ -265,15 +277,7 @@ async function aiFix(ci) {
   const fieldMode = !!a.field;
   const frag = fieldMode ? (state.opts[a.field] || "") : text.slice(a.start, a.end);
   const ctx = fieldMode ? text.slice(0, 2500) : text.slice(Math.max(0, a.start - 400), Math.min(text.length, a.end + 400));
-  const extra = [
-    a.keyword ? `Incluye la palabra clave «${a.keyword}» de forma natural.` : "",
-    a.insertQuestion ? "Añade al final una pregunta directa al oyente o un anticipo de lo que viene, para recuperar su atención." : "",
-    a.note || "",
-    a.keepTerms ? "No cambies los términos sensibles por eufemismos: quita el detalle gráfico, la garantía de resultados o el lenguaje deshumanizante, y conserva el tema." : "",
-    a.field === "title" ? "Es el título del video: 60 caracteres o menos, con la palabra clave al inicio, como la pregunta que alguien escribiría en YouTube, prometiendo solo lo que el guion entrega." : "",
-    a.field === "thumb" ? "Es el texto de la miniatura: 1 a 4 palabras (24 caracteres como máximo), sin repetir el título." : "",
-    a.field === "description" ? "Es la descripción: los primeros 150 caracteres dicen la promesa con la palabra clave." : "",
-  ].filter(Boolean).join(" ");
+  const extra = fxAiExtra(a);
   const prompt = `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. ${voice()}
 Problema detectado: «${c.label}». ${c.info || ""} ${c.fix || ""}
 Reescribe SOLO el fragmento de abajo para resolver ese problema. Escribe 3 opciones distintas. Mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; copia exacto cualquier versículo entre comillas; sin frases de plantilla. ${extra}

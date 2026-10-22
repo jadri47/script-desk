@@ -88,6 +88,28 @@ for (const lg of ["es", "en"]) for (const k of ["worst", "bad", "mid", "good"]) 
   ok("nextEp: the next planned episode by date, untitled ones skipped", ch.length === 1 && ch[0].text === "Más adelante", JSON.stringify(ch));
   ok("nextEp: no plan, no choice", L.coachQuestionChoices("nextEp", R, {}, null, { prods: [], curId: "a", pubDate: "2026-10-01" }).length === 0);
 }
+// automatic AI: Scripture is masked before sending and an option that touches a token is dropped (jadri47, 2026-10-22)
+{
+  const text = "Hoy empezamos, o sea, con calma. En Juan 3:16 dice: «Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree no se pierda, mas tenga vida eterna». Eso es todo lo que hace falta, ya sabes, para entender el evangelio.";
+  const R = L.analyze(text, { title: "", keyword: "", thumb: "", description: "", translation: "RVR1960", lang: "es" }), spans = L.verseSpans(text, R);
+  const v = spans.find((x) => x.kind !== "ref");
+  ok("ai mask: the verse is a span", !!v);
+  const outside = L.coachAiMask(text, spans, 0, v.start - 10, 400);
+  ok("ai mask: a fragment before the verse has no tokens and its context holds the verse as one token", outside && outside.frag.toks.length === 0 && outside.ctx.toks.length === 1 && !outside.ctx.masked.includes("Porque de tal manera"), JSON.stringify(outside && outside.ctx.masked));
+  ok("ai mask: a fragment cutting a verse is refused", L.coachAiMask(text, spans, v.start + 5, v.end + 10, 400) === null);
+  const whole = L.coachAiMask(text, spans, 20, text.length, 400), orig = text.slice(20);
+  ok("ai mask: the fragment masks the verse", whole.frag.toks.length === 1 && whole.frag.masked.includes(whole.frag.toks[0].tok) && !whole.frag.masked.includes("Porque de tal manera"));
+  const tok = whole.frag.toks[0].tok;
+  const good = whole.frag.masked.replace("Eso es todo lo que hace falta, ya sabes, para", "Eso es todo lo que hace falta para");
+  ok("ai vet: the same tokens come back untouched", L.vetSection(orig, whole.frag.toks, good, []).ok);
+  ok("ai vet: an altered token is dropped", !L.vetSection(orig, whole.frag.toks, good.replace(tok, "⟦V9⟧"), []).ok);
+  ok("ai vet: a missing token is dropped", !L.vetSection(orig, whole.frag.toks, good.replace(tok, ""), []).ok);
+  ok("ai vet: a duplicated token is dropped", !L.vetSection(orig, whole.frag.toks, good + " " + tok, []).ok);
+  ok("ai vet: rewritten Bible text is dropped", !L.vetSection(orig, whole.frag.toks, good.replace(tok, "«Porque Dios amó tanto al mundo»"), []).ok);
+  const d = (id, ai, needs) => ({ id, needsAi: needs, card: { id, ai } });
+  const list = [d("a", {}, true), d("b", {}, false), d("c", {}, true), d("e", null, true), d("f", {}, true)];
+  ok("ai pick: only needsAi with a range, not yet requested, in order, capped", L.coachAiPick(list, (x) => x === "a", 8).map((x) => x.id).join() === "c,f" && L.coachAiPick(list, () => false, 1).length === 1);
+}
 if (process.argv.includes("-v")) console.log(stats.join("\n"));
 console.log(fails ? `${fails} FAIL` : "ALL PASS");
 process.exit(fails ? 1 : 0);

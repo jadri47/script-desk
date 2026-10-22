@@ -577,3 +577,5 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 .cc-radio:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .cc-radio input{margin-top:3px;flex:none;accent-color:var(--accent)}
 .cc-radio:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.cc-ai{color:var(--accent);border-color:var(--accent)}
+.cc-pause{margin:0 0 8px}

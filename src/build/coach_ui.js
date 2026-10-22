@@ -62,9 +62,12 @@ function coBatchHTML(d) {
     <details class="cc-see"><summary>${h(t("coSeeEach"))}</summary>${coItemsHTML(d)}</details>
     <div class="actions cc-act"><button type="button" class="small primary" data-co="batch" data-co-primary>${h(t("coApplyAll")(n))}</button><button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>`;
 }
+// Rule options first, then the automatic AI ones (coach_ai.js, already verified).
+const coOptions = (d) => d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []);
+const coAiBusy = (d) => typeof coachAiLoading === "function" && coachAiLoading(d);
 function coChoiceHTML(d, R) {
   const c = d.card, w = COACH.write && COACH.write.id === d.id ? COACH.write : null;
-  const k = COACH.sel.id === d.id && d.options.length ? COACH.sel.k % d.options.length : 0, p = d.options[k];
+  const opts = coOptions(d), k = COACH.sel.id === d.id && opts.length ? COACH.sel.k % opts.length : 0, p = opts[k];
   const pts = fxPtsHTML(c, p, R), ai = state.fixAi[c.id];
   const canWrite = !!(d.at || c.field);
   const writeBox = w ? `<div class="cc-write"><label for="coW">${h(t("coWriteLbl"))}</label><textarea id="coW" rows="3">${h(w.value)}</textarea>
@@ -73,9 +76,9 @@ function coChoiceHTML(d, R) {
   return `<div class="cc-top"><b class="cc-t">${h(plainLabel(c.id, c.label))}</b>${d.kind === "risk" ? `<span class="cc-tag">${h(t("coRisk"))}: ${h(t("cat_hi"))}</span>` : ""}${pts.html}</div>
     ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}${pts.why ? `<div class="hint fx-why">${h(pts.why)}</div>` : ""}
     <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
-    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
+    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span>${p.label === "IA" ? ` <span class="cc-tag cc-ai">${h(t("coAiTag"))}</span>` : ""}</div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : coAiBusy(d) ? `<p class="hint cc-prep" role="status">${h(t("coAiPrep"))}</p>` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${writeBox}
-    <div class="actions cc-act">${p ? `<button type="button" class="small primary" data-co="apply"${w && w.p ? "" : " data-co-primary"}>${h(t("fxApply"))}</button>` : ""}${d.options.length > 1 ? `<button type="button" class="small" data-co="other">${h(t("fxOther"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-co="write">${h(t("coWrite"))}</button>` : ""}${d.needsAi && c.ai ? `<button type="button" class="small" data-fxai="0">${h(ai ? t("fxAiAgain") : t("fxAi"))}</button>` : ""}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>
+    <div class="actions cc-act">${p ? `<button type="button" class="small primary" data-co="apply"${w && w.p ? "" : " data-co-primary"}>${h(t("fxApply"))}</button>` : ""}${opts.length > 1 ? `<button type="button" class="small" data-co="other">${h(t("fxOther"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-co="write">${h(t("coWrite"))}</button>` : ""}${d.needsAi && c.ai ? `<button type="button" class="small" data-fxai="0">${h(ai ? t("fxAiAgain") : t("fxAi"))}</button>` : ""}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>
     <div class="fx-ai" id="fxai-0">${ai ? aiOptionsHTML(0, ai) : ""}</div>`;
 }
 // Ready answers (coachQuestionChoices: from the script or the rules) as radios, the first one chosen, plus «Escribirla yo».
@@ -120,7 +123,8 @@ function coachHTML(R) {
   else body = d.kind === "batch" ? coBatchHTML(d) : d.kind === "question" ? coQuestionHTML(d) : d.kind === "note" ? coNoteHTML(d) : coChoiceHTML(d, R);
   const nav = d ? `<div class="cc-nav"><button type="button" class="small linkish" data-co="prev"${pend ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button></div>` : "";
   const log = state.fixLog.length ? `<details class="cc-log"${COACH.logOpen ? " open" : ""}><summary>${h(t("coLog")(state.fixLog.length))}</summary><ol class="fx-list">${wkLogItemsHTML(state.fixLog)}</ol></details>` : "";
-  return `<div class="topfix coach" data-coach>${head}${bar}${sc}<section class="cc-dec" role="region" aria-label="${h(t("coRegion") + (d ? ": " + title : ""))}" tabindex="-1">${body}</section>${nav}${log}</div>`;
+  const pause = typeof coachAiPauseHTML === "function" ? coachAiPauseHTML() : "";
+  return `<div class="topfix coach" data-coach>${head}${bar}${sc}${pause}<section class="cc-dec" role="region" aria-label="${h(t("coRegion") + (d ? ": " + title : ""))}" tabindex="-1">${body}</section>${nav}${log}</div>`;
 }
 
 // ---- painting the spot ----
@@ -276,13 +280,13 @@ function coachAct(act) {
   if (act === "walker") return coachSetOn(false);
   if (act === "done") return goStep(3);
   if (!d) return;
-  const k = COACH.sel.id === d.id && d.options.length ? COACH.sel.k % d.options.length : 0;
+  const opts = coOptions(d), k = COACH.sel.id === d.id && opts.length ? COACH.sel.k % opts.length : 0;
   if (act === "skip") coachSkip(d);
   else if (act === "prev") coachPrev();
   else if (act === "batch") coachApplyBatch(d);
   else if (act === "answer") coachAnswer(d);
-  else if (act === "apply") { COACH.delay = 1100; applyProposal(d.options[k], d.card); }
-  else if (act === "other") { COACH.sel = { id: d.id, k: (k + 1) % d.options.length }; coachRefresh(); }
+  else if (act === "apply") { COACH.delay = 1100; applyProposal(opts[k], d.card); }
+  else if (act === "other") { COACH.sel = { id: d.id, k: (k + 1) % opts.length }; coachRefresh(); }
   else if (act === "write") { COACH.write = { id: d.id, value: d.card.field ? d.card.field.value : state.text.slice(d.at.start, d.at.end), p: null }; coachRefresh(); const b = $("coW"); if (b) b.focus(); }
   else if (act === "ai-title") coachAiTitles();
   else if (act === "ai-idea") coachAiIdea();
