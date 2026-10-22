@@ -54,10 +54,10 @@ async def main():
             ok(f"{n}: popover top rows carry +N, sorted desc", v2["pts"] and all(x.startswith("+") for x in v2["pts"]) and [int(x[1:]) for x in v2["pts"]] == sorted([int(x[1:]) for x in v2["pts"]], reverse=True), v2["pts"])
             ok(f"{n}: popover has lamp line and how-it's-scored", v2["how"] and v2["lamp"], v2)
             ok(f"{n}: popover says how many points are left", "puntos" in v2["left"] or "punto" in v2["left"], v2["left"])
-            ok(f"{n}: baseline key is v2", await pg.evaluate("scKey().startsWith('sd-score-base-v2:')"))
+            ok(f"{n}: baseline key is v3", await pg.evaluate("scKey().startsWith('sd-score-base-v3:')"))
             await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
             fxp = await pg.evaluate("[...document.querySelectorAll('.fix-pts')].map(x=>x.textContent)")
-            ok(f"{n}: fix cards show +N", all(x.startswith("+") for x in fxp), fxp)
+            ok(f"{n}: fix cards show +N (or 'Hasta +N' with no suggestion, jadri47 2026-10-21)", all(x.startswith("+") or x.startswith("Hasta +") for x in fxp), fxp)
             # dismiss a fix
             b0 = int((await pg.evaluate(PILL))["n"])
             sk = await pg.query_selector("[data-fxskip]")

@@ -34,7 +34,8 @@ if (typeof HELP !== "undefined") {
 
 const SC = { w: null, seq: 0, pending: 0, guard: null, timer: null, delay: 700, ms: 0, R: null, S: null, base: null, baseKey: null, shown: null, off: lsGet("sd-bubble") === "off", where: "", pop: false, noWorker: false, liveAt: 0 };
 window.SC = SC;
-const scKey = () => "sd-score-base-v2:" + (G.prodId || "draft");
+// v3: the score recipe changed on 2026-10-21 (partial credit); "since last time" must not compare scores from two recipes
+const scKey = () => "sd-score-base-v3:" + (G.prodId || "draft");
 const scDemo = () => typeof DEMO !== "undefined" && !!DEMO;
 const scReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -44,8 +45,9 @@ function scStartWorker() {
   try {
     const el = document.getElementById("engineSrc");
     if (!el || !el.textContent.trim()) { SC.noWorker = true; return; }
+    // the slim rows keep n/lim: partial credit (weightOf) needs them, or the pill and the verdict disagree (53 vs 48)
     const code = el.textContent.replace(/<\\\/script/g, "</script") + `
-;(function(){function slim(s){var o={};for(var k in s)o[k]=s[k].map(function(r){return{id:r.id,label:r.label,passed:r.passed,warn:r.warn,level:r.level}});return o}
+;(function(){function slim(s){var o={};for(var k in s)o[k]=s[k].map(function(r){return{id:r.id,label:r.label,passed:r.passed,warn:r.warn,level:r.level,n:r.n,lim:r.lim}});return o}
 onmessage=function(e){var d=e.data;try{var t0=Date.now();var R=analyze(d.text,d.opts);postMessage({seq:d.seq,ms:Date.now()-t0,R:{worst:R.worst,passed:R.passed,total:R.total,sections:slim(R.sections)}})}catch(err){postMessage({seq:d.seq,error:String(err&&err.message||err)})}}})();`;
     const w = new Worker(URL.createObjectURL(new Blob([code], { type: "text/javascript" })));
     w.onmessage = (e) => {
