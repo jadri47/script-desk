@@ -65,5 +65,9 @@ const base = "Hoy vamos a hablar de la fe en medio de la tormenta y de cómo Dio
   const { cards } = run(`${base} Esto es súper importante para tu fe. Es súper importante que lo sepas. Y súper bonito también. Es súper claro.`);
   ok("weak: «súper importante» never becomes «muy importante»", texts(cards, "weak").length > 0 && texts(cards, "weak").every((x) => !/muy importante/.test(x)), texts(cards, "weak"));
 }
+{ // the central idea is said right after the promise (fix_logic read R.firstPromise, which analyze never returned, so it went after the first long sentence instead)
+  const { cards } = run(`Bienvenidos de nuevo a este canal de enseñanza bíblica cada semana. Hoy vas a descubrir cómo Dios te sostiene en la ansiedad. Empecemos con una historia que conoces bien de la Biblia.`, { bigIdea: "La paz de Cristo guarda tu corazón" });
+  ok("bigidea: «La idea de hoy es esta» goes after the promise sentence", texts(cards, "bigidea").some((x) => x.includes("en la ansiedad. La idea de hoy es esta: La paz de Cristo guarda tu corazón.")), texts(cards, "bigidea"));
+}
 console.log(fails ? `FAILS: ${fails}` : "ALL PASS");
 process.exit(fails ? 1 : 0);
