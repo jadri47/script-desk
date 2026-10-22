@@ -170,8 +170,9 @@ function wkInfoHTML(x) {
   const words = x.dw ? `${x.dw > 0 ? "+" : "−"}${Math.abs(x.dw)}` : "";
   return row(t("fxWhy"), h(x.why || x.label)) + row(t("fxOpt"), h(x.what || "")) + row(t("fxWhere"), x.para ? h(t("fxParaN")(x.para, x.tm)) : h((t("fxField") || {})[x.where] || "")) + row(t("fxWords"), h(words)) + row(t("fxScore"), h(sc));
 }
-function wkLogHTML(i) {
-  return wkLogFor(i).map((x) => x.kind === "done"
+const wkLogHTML = (i) => wkLogItemsHTML(wkLogFor(i));
+function wkLogItemsHTML(list) {
+  return list.map((x) => x.kind === "done"
     ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${wkInfoHTML(x)}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}<div class="actions"><button type="button" class="small" data-fxrevert="${x.uid}">${h(t("fxRevert"))}</button></div></div></li>`
     : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
 }

@@ -11,7 +11,7 @@ def ok(n,c,x=""):
 async def run(b,ui,vp,ex):
     n=f"{ui}/{vp['width']}/{ex}"
     pg=await b.new_page(viewport=vp); errs=[]; pg.on("pageerror",lambda e:errs.append(str(e)))
-    await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}')")
+    await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); localStorage.setItem('sd-coach-off','1')")
     await pg.route("**/supabase.min.js",lambda r:r.fulfill(body=SB,content_type="application/javascript"))
     await pg.goto(URL); await pg.wait_for_timeout(500)
     await pg.evaluate(f"startDemo('{ex}')"); await pg.wait_for_timeout(900)

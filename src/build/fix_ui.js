@@ -193,6 +193,13 @@ function fxBlocksOf(c) {
   if (WK.glob.some((x) => x.id === c.id)) out.push(WK.blocks.length);
   return out;
 }
+// The before/after record of one change: [pre, aEnd) of `before` became [pre2, post) of `after`, shown with a little context.
+// cPre/cPost come from `after` (what revert looks for); the batch passes its own positions per item.
+function fxChgOf(before, after, pre, aEnd, pre2, post) {
+  const clip = (x) => (x.length > 260 ? x.slice(0, 120) + " … " + x.slice(-120) : x);
+  const c0 = Math.max(0, pre - 40), c1 = Math.min(before.length, aEnd + 40), d1 = Math.min(after.length, post + 40);
+  return { rawFrom: before.slice(pre, aEnd), rawTo: after.slice(pre2, post), cPre: after.slice(Math.max(0, pre2 - 30), pre2), cPost: after.slice(post, post + 30), pre: (c0 > 0 ? "…" : "") + before.slice(c0, pre), from: clip(before.slice(pre, aEnd)), to: clip(after.slice(pre2, post)), post: after.slice(post, d1) + (c1 < before.length ? "…" : "") };
+}
 function applyProposal(p, c) {
   // the walker stays clickable after the person types: never apply a fix computed on older text
   if (state.text.trimEnd() !== $("script").value.trimEnd()) { rerunReview(t("fxStale")); return; }
@@ -211,9 +218,7 @@ function applyProposal(p, c) {
     let a = before.length, b = after.length;
     while (a > pre && b > pre && before[a - 1] === after[b - 1]) { a--; b--; }
     post = b; aEnd = a;
-    const clip = (x) => (x.length > 260 ? x.slice(0, 120) + " … " + x.slice(-120) : x);
-    const c0 = Math.max(0, pre - 40), c1 = Math.min(before.length, aEnd + 40), d1 = Math.min(after.length, post + 40);
-    chg = { rawFrom: before.slice(pre, aEnd), rawTo: after.slice(pre, post), cPre: before.slice(Math.max(0, pre - 30), pre), cPost: after.slice(post, post + 30), pre: (c0 > 0 ? "…" : "") + before.slice(c0, pre), from: clip(before.slice(pre, aEnd)), to: clip(after.slice(pre, post)), post: after.slice(post, d1) + (c1 < before.length ? "…" : "") };
+    chg = fxChgOf(before, after, pre, aEnd, pre, post);
     $("script").value = after;
   }
   if (p.kind === "cold") {
@@ -245,7 +250,7 @@ function fxRestore(id) {
 function undoFix() {
   const s = state.fixUndo.pop();
   if (!s) return;
-  { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) state.fixLog.splice(k, 1); }
+  { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) { const g = state.fixLog[k].grp; if (g) state.fixLog = state.fixLog.filter((x) => x.grp !== g); else state.fixLog.splice(k, 1); } } // grp: the entries of one coach batch go together
   $("script").value = s.text; $("title").value = s.title; $("keyword").value = s.keyword; $("thumb").value = s.thumb; $("description").value = s.description; G.cold = s.cold;
   state.fixSel = {}; state.fixAi = {};
   rerunReview(t("fxUndone"));
