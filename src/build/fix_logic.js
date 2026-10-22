@@ -81,7 +81,8 @@ function regionalPatch(text, hit) {
 }
 // Split a long sentence at the connector nearest its middle, never inside a quote.
 function splitPatch(text, s, quotes) {
-  const re = /(,\s+)(y|pero|porque|así que|entonces|and|but|because|so)\s|(;\s+)/giu;
+  // No «porque»/«because»: a clause that starts with it is not a sentence (". Porque no lo sabía.") (jadri47, 2026-10-21: "stop splitting before porque")
+  const re = /(,\s+)(y|pero|así que|entonces|and|but|so)\s|(;\s+)/giu;
   const body = text.slice(s.start, s.end), mid = body.length / 2;
   let best = null, m;
   while ((m = re.exec(body))) {

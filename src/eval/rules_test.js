@@ -25,6 +25,15 @@ const base = "Hoy vamos a hablar de la fe en medio de la tormenta y de cómo Dio
   const mid = run(`${base} Pónganse de pie los que están viendo esto en casa. Dios nos ama.`);
   ok("pulpit: a phrase that starts a sentence is not cut out", !texts(mid.cards, "pulpit").some((x) => !x.includes("los que están viendo")), texts(mid.cards, "pulpit"));
 }
+{ // splitting a long sentence never leaves a fragment: «porque» is not a split point, «pero» still is (jadri47, 2026-10-21: "no '. Porque no lo sabía.'")
+  const L1 = "Muchas personas en nuestra iglesia pasaron años enteros sintiéndose lejos de Dios y de los demás";
+  const R1 = "nunca le contaron a nadie lo que realmente sentían en su corazón cada domingo por la mañana";
+  const lg = (conn) => run(`${base} ${L1}, ${conn} ${R1}. Dios nos ama.`);
+  const split = (conn, re) => texts(lg(conn).cards, "long").some((x) => re.test(x));
+  ok("long: «, porque» is not a split point", !split("porque", /\. Porque /), texts(lg("porque").cards, "long"));
+  ok("long: «, because» is not a split point (EN)", !texts(run(`${base} ${L1}, because ${R1}. Dios nos ama.`, { lang: "en", uiLang: "en" }).cards, "long").some((x) => /\. Because /.test(x)));
+  ok("long: «, pero» still splits into two sentences", split("pero", /Dios y de los demás\. Pero nunca le contaron /), texts(lg("pero").cards, "long"));
+}
 { // a technical term gets its everyday-words line; an adjective after it blocks the rule
   const { cards } = run(`${base} La santificación es un proceso que dura toda la vida.`);
   ok("jargon: «santificación» gets «es decir, …»", texts(cards, "jargon").some((x) => x.includes("La santificación, es decir, el proceso de parecernos más a Cristo, es un proceso")), texts(cards, "jargon"));
