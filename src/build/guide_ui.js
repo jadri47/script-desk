@@ -13,7 +13,7 @@ Object.assign(T.es, {
   s4Help: "Con teclado o pedal: Espacio empieza o pausa · flechas ↑ ↓ cambian la velocidad · Esc sale. En el celular o la tableta: toca la pantalla para empezar o pausar.",
   s5Lead: "Apunta el próximo episodio, elige clips cortos para Shorts y, cuando el video lleve unos días publicado, mira dónde se fue la gente.",
   next: "Siguiente", back: "Atrás", approve: "Aprobar el guion", approved: "Guion aprobado", toReview: "Ver todas las revisiones",
-  vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
+  vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vYellowLow: (n) => `Le falta trabajo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
   vGreenD: "No hay nada importante que cambiar.", vYellowD: "Nada impide grabar, pero estos cambios ayudan a que la gente se quede.", vRedD: "Hay algo que puede quitar los anuncios del video. Arréglalo primero.",
   needText: "Primero pega un guion en el paso 1.", statusLbl: "Estado",
   plain: {
@@ -39,7 +39,7 @@ Object.assign(T.en, {
   s4Help: "With a keyboard or pedal: Space starts or pauses · ↑ ↓ change speed · Esc exits. On a phone or tablet: tap the screen to start or pause.",
   s5Lead: "Note the next episode, pick short clips for Shorts and, once the video has been up a few days, see where people left.",
   next: "Next", back: "Back", approve: "Approve the script", approved: "Script approved", toReview: "See every check",
-  vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
+  vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vYellowLow: (n) => `Needs work: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
   vGreenD: "Nothing important to change.", vYellowD: "Nothing stops you from recording, but these changes help people stay.", vRedD: "Something could remove ads from the video. Fix it first.",
   needText: "First paste a script in step 1.", statusLbl: "Status",
   plain: {
@@ -65,7 +65,7 @@ function plainLabel(id, fallback) {
 }
 function verdictOf(R) {
   const S = scoreOf(R, state.fixDismissed), n = S.open.length;
-  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: t("vYellow")(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
+  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (S.score >= 70 ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } /* "almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score") */ : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
 }
 const hasScript = () => !!$("script").value.trim();
 function ensureReview() {
