@@ -11,6 +11,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const DAILY_LIMIT = Number(Deno.env.get("SD_DAILY_LIMIT") || "60");
+const AUTO_MONTH_USD = Number(Deno.env.get("SD_AUTO_MONTH_USD") || "5");
 // Sonnet for every AI feature. Override per tier with secrets (SD_MODEL_COMPLEX / SD_MODEL_DEFAULT) without redeploying.
 const MODELS: Record<string, string> = {
   complex: Deno.env.get("SD_MODEL_COMPLEX") || "claude-sonnet-5-5",
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
   const key = Deno.env.get("ANTHROPIC_API_KEY");
   if (!key) return json({ code: "no_key" }, 503);
 
-  let body: { prompt?: string; tier?: string; bible?: string; noBible?: boolean };
+  let body: { prompt?: string; tier?: string; bible?: string; noBible?: boolean; auto?: boolean };
   try { body = await req.json(); } catch { return json({ code: "bad_request" }, 400); }
   const prompt = String(body.prompt || "");
   if (!prompt || prompt.length > 120000) return json({ code: "bad_request" }, 400);
@@ -91,6 +92,12 @@ Deno.serve(async (req) => {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { count } = await sb.from("sd_ai_usage").select("id", { count: "exact", head: true }).eq("user_id", userData.user.id).gte("at", since);
   if ((count || 0) >= DAILY_LIMIT) return json({ code: "daily_limit" }, 429);
+  // Automatic suggestions (the coach) stop at the month's budget, without calling Anthropic; manual requests are unaffected.
+  // (jadri47, 2026-10-21: "$5 per month"). If the month's cost can't be read, auto goes ahead: the client caps it per review.
+  if (body.auto === true) {
+    const { data: spent } = await sb.rpc("sd_month_cost");
+    if (spent != null && Number(spent) >= AUTO_MONTH_USD) return json({ code: "auto_paused", usage: { month_cost_usd: Number(spent) } }, 429);
+  }
 
   const model = MODELS[tier];
   // One static system block (house rules + the chosen Bible version), cached. Everything that changes per request — the task
