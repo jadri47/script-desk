@@ -932,6 +932,7 @@ mark.fx-hl.fx-pol{background:none;box-shadow:none;text-decoration:underline wavy
 }
 
 /* accepted / ignored suggestions stay in the paragraph review */
+.fx.fx-note{border-style:dashed}
 .fx.fx-done{background:var(--verde-bg);border:1px solid var(--verde);border-left-width:5px}
 .fx.fx-done .fx-top,.fx.fx-skipped .fx-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .fx-st{font-weight:800;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:13px}
@@ -2156,8 +2157,8 @@ function analyze(text, opts = {}) {
   const monotone = sentLens.length >= 10 && sd < 4;
   const inauth = { monotone, sd, repeatedOpeners, aiHits };
   add("auth", { id: "rhythm", label: L("Ritmo variado de oraciones", "Varied sentence rhythm"), passed: !monotone, info: sentLens.length < 10 ? L("Muy pocas oraciones para medir el ritmo.", "Too few sentences to measure rhythm.") : L(`Desviación de largo de oración: ${sd.toFixed(1)} palabras (meta propia: 4 o más).`, `Sentence-length spread: ${sd.toFixed(1)} words (our cutoff: 4 or more).`), fix: monotone ? L("Mezcla oraciones cortas con algunas largas; el texto plano suena a plantilla.", "Mix short and long sentences; flat rhythm sounds templated.") : null });
-  add("auth", { id: "openers", label: L("Inicios de oración variados", "Varied sentence openings"), passed: !repeatedOpeners.length, info: repeatedOpeners.length ? L(`Se repiten: ${repeatedOpeners.map(([w, n]) => `«${w}…» ×${n}`).join(", ")}.`, `Repeated: ${repeatedOpeners.map(([w, n]) => `"${w}…" ×${n}`).join(", ")}.`) : L("Ningún inicio se repite más de 3 veces.", "No opening repeats more than 3 times."), fix: repeatedOpeners.length ? L("Varía cómo empiezas las oraciones.", "Vary how sentences start.") : null });
-  add("auth", { id: "aitell", label: L("Sin frases típicas de texto generado por IA", "No typical AI-generated phrases"), passed: !aiHits.length, info: aiHits.length ? L(`Encontradas: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube llama a esto contenido no auténtico desde julio de 2025 cuando es masivo o repetitivo.`, `Found: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube calls mass-produced text inauthentic content since July 2025.`) : L("Ninguna.", "None."), fix: aiHits.length ? L("Dilo con tus propias palabras.", "Say it in your own words.") : null });
+  add("auth", { id: "openers", n: repeatedOpeners.reduce((a, [, k]) => a + k, 0), lim: repeatedOpeners.length * 3, label: L("Inicios de oración variados", "Varied sentence openings"), passed: !repeatedOpeners.length, info: repeatedOpeners.length ? L(`Se repiten: ${repeatedOpeners.map(([w, n]) => `«${w}…» ×${n}`).join(", ")}.`, `Repeated: ${repeatedOpeners.map(([w, n]) => `"${w}…" ×${n}`).join(", ")}.`) : L("Ningún inicio se repite más de 3 veces.", "No opening repeats more than 3 times."), fix: repeatedOpeners.length ? L("Varía cómo empiezas las oraciones.", "Vary how sentences start.") : null });
+  add("auth", { id: "aitell", n: aiHits.length, lim: 0, label: L("Sin frases típicas de texto generado por IA", "No typical AI-generated phrases"), passed: !aiHits.length, info: aiHits.length ? L(`Encontradas: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube llama a esto contenido no auténtico desde julio de 2025 cuando es masivo o repetitivo.`, `Found: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube calls mass-produced text inauthentic content since July 2025.`) : L("Ninguna.", "None."), fix: aiHits.length ? L("Dilo con tus propias palabras.", "Say it in your own words.") : null });
 
   // ===== Structure (C.2) =====
   const firstSent = sents[0] ? sents[0].text : "";
@@ -2260,7 +2261,7 @@ function analyze(text, opts = {}) {
   const clusters = [];
   for (const c of ctaSorted) { const t = timeAt(c.start); const last = clusters[clusters.length - 1]; if (last && t - last.t <= Math.min(30, runtimeSec / 6)) last.items.push(c); else clusters.push({ t, items: [c] }); }
   const ctaOk = clusters.length === 1;
-  add("structure", { id: "cta", label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
+  add("structure", { id: "cta", ...(clusters.length > 1 ? { n: clusters.length, lim: 1 } : {}), label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
 
   // Ending: the next-episode line counts in the last 90 s, or up to 45 s before a closing prayer or blessing (which can run as long as it needs).
   // YouTube's end screen only uses the last 5–20 s.
@@ -2297,7 +2298,7 @@ function analyze(text, opts = {}) {
   // Scripture inside quotation marks can't be split, so only the presenter's own words count.
   const spokenOutsideQuotes = (s) => words.filter((w) => w.start >= s.start && w.end <= s.end && !insideAny(quotes, w.start, w.end)).length;
   const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);
-  add("spoken", { id: "long", label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
+  add("spoken", { id: "long", n: longSents.length, lim: 0, label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
 
   add("spoken", { id: "runtime", soft: runtimeSec >= 480, label: L("Duración razonable para un episodio de enseñanza", "Reasonable length for a teaching episode"), passed: runtimeSec >= 480 && runtimeSec <= 2700, info: L(`Enseñando: ${fmtTime(runtimeSec)} · leído de corrido: ${fmtTime(readSec)}. Calculado por sílabas (${totalSyl}) a ${readRate.toFixed(2)} sílabas/s (Pellegrino et al., 2011) × factor de ritmo ${k.toFixed(2)}${opts.kCalibrated ? " calibrado con sus episodios" : opts.kReh ? " ajustado con ensayos" : " (supuesto; se calibra con episodios reales)"}.${co ? ` La apertura en frío suma ≈${Math.round(coSec)} s al video${co.mode === "move" ? " si se duplica; al moverla no cambia el total" : ""}.` : ""}`, `Teaching: ${fmtTime(runtimeSec)} · straight read: ${fmtTime(readSec)}. From ${totalSyl} syllables at ${readRate.toFixed(2)} syllables/s (Pellegrino et al., 2011) × pace factor ${k.toFixed(2)}${opts.kCalibrated ? " calibrated from your episodes" : opts.kReh ? " adjusted from rehearsals" : " (assumed; calibrates from real episodes)"}.${co ? ` The cold open adds ≈${Math.round(coSec)} s to the video${co.mode === "move" ? " if duplicated; moved, the total doesn't change" : ""}.` : ""}`), fix: runtimeSec < 480 ? L("Menos de 8 minutos: según guías de creadores, YouTube no permite anuncios intermedios por debajo de 8 min; confírmalo en YouTube Studio → Monetización.", "Under 8 minutes: creator guides say YouTube allows no mid-roll ads below 8 min; confirm it in YouTube Studio → Monetization.") : runtimeSec > 2700 ? L("Más de 45 minutos. Las guías de creadores coinciden en que el porcentaje visto baja en los videos más largos, aunque los minutos vistos suben; no encontramos una cifra verificable para enseñanza bíblica. Decide con tu propia retención (pestaña Resultados).", "Over 45 minutes. Creator guides agree that percentage watched falls on longer videos while minutes watched rise; we found no verifiable figure for Bible teaching. Decide from your own retention (Results tab).") : null });
 
@@ -2314,7 +2315,7 @@ function analyze(text, opts = {}) {
   const mulRate = wc ? (mulHits.length * 100) / wc : 0;
   const mulCount = {}; mulHits.forEach((h) => (mulCount[h.label] = (mulCount[h.label] || 0) + 1));
   const topMul = Object.entries(mulCount).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  add("spoken", { id: "muletillas", soft: true, label: L("Muletillas bajo control", "Filler words under control"), passed: mulRate <= 1.5, info: L(`${mulHits.length} muletilla(s), ${mulRate.toFixed(1)} por cada 100 palabras (meta propia: 1,5 o menos). Solo cuenta las muletillas escritas en el guion; las que se dicen al grabar se notan en el modo Ensayo.`, `${mulHits.length} filler(s), ${mulRate.toFixed(1)} per 100 words (our cutoff: 1.5). Only fillers written in the script are counted; the ones spoken while recording show up in Rehearsal mode.`) + (topMul.length ? L(" Más frecuentes: ", " Most frequent: ") + topMul.map(([w, n]) => `${w} ×${n}`).join(", ") + "." : ""), fix: mulRate <= 1.5 ? null : L("Quítalas del guion; en la grabación tienden a aumentar, no a bajar.", "Cut them in the script; they increase on camera, not decrease.") });
+  add("spoken", { id: "muletillas", n: mulHits.length, lim: Math.floor((1.5 * wc) / 100), soft: true, label: L("Muletillas bajo control", "Filler words under control"), passed: mulRate <= 1.5, info: L(`${mulHits.length} muletilla(s), ${mulRate.toFixed(1)} por cada 100 palabras (meta propia: 1,5 o menos). Solo cuenta las muletillas escritas en el guion; las que se dicen al grabar se notan en el modo Ensayo.`, `${mulHits.length} filler(s), ${mulRate.toFixed(1)} per 100 words (our cutoff: 1.5). Only fillers written in the script are counted; the ones spoken while recording show up in Rehearsal mode.`) + (topMul.length ? L(" Más frecuentes: ", " Most frequent: ") + topMul.map(([w, n]) => `${w} ×${n}`).join(", ") + "." : ""), fix: mulRate <= 1.5 ? null : L("Quítalas del guion; en la grabación tienden a aumentar, no a bajar.", "Cut them in the script; they increase on camera, not decrease.") });
 
   const weakHits = [];
   for (const [w, alts] of Object.entries(WEAK)) for (const h of findPhrases(text, [w], "weak")) if (!insideAny(protectedSpans, h.start, h.end)) weakHits.push({ ...h, alts });
@@ -2326,11 +2327,11 @@ function analyze(text, opts = {}) {
       weakHits.push({ start: m.index, end: m.index + m[0].length, text: m[0], kind: "weak", alts });
     }
   }
-  add("spoken", { id: "weak", label: L("Palabras precisas", "Precise words"), passed: weakHits.length < Math.max(2, Math.ceil(wc / 150)), info: weakHits.length ? L(`${weakHits.length} palabra(s) genérica(s); las expresiones fijas («Buen Pastor», «todas las cosas») y las citas bíblicas no se marcan.`, `${weakHits.length} generic word(s); fixed phrases and scripture quotes are skipped.`) : L("Vocabulario específico.", "Specific vocabulary."), fix: weakHits.length >= Math.max(2, Math.ceil(wc / 150)) ? L("Toca cada palabra marcada en el guion para ver alternativas.", "Tap each marked word in the script for alternatives.") : null });
+  add("spoken", { id: "weak", n: weakHits.length, lim: Math.max(2, Math.ceil(wc / 150)), label: L("Palabras precisas", "Precise words"), passed: weakHits.length < Math.max(2, Math.ceil(wc / 150)), info: weakHits.length ? L(`${weakHits.length} palabra(s) genérica(s); las expresiones fijas («Buen Pastor», «todas las cosas») y las citas bíblicas no se marcan.`, `${weakHits.length} generic word(s); fixed phrases and scripture quotes are skipped.`) : L("Vocabulario específico.", "Specific vocabulary."), fix: weakHits.length >= Math.max(2, Math.ceil(wc / 150)) ? L("Toca cada palabra marcada en el guion para ver alternativas.", "Tap each marked word in the script for alternatives.") : null });
 
   const regHits = [];
   if (lang === "es") for (const r of REGIONAL.filter((r) => regFlags(r, opts.audience))) { r.re.lastIndex = 0; let m; while ((m = r.re.exec(text))) if (!insideAny(quotes, m.index, m.index + m[0].length)) regHits.push({ start: m.index + (m[0].length - m[0].trimStart().replace(/^,\s*/, "").length), end: m.index + m[0].length, text: m[0].replace(/^,\s*/, ""), kind: "regional", fix: r.fix }); }
-  if (lang === "es") add("spoken", { id: "regional", label: L("Español neutro", "Neutral Spanish"), passed: !regHits.length, info: regHits.length ? L(`${regHits.length} regionalismo(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. La audiencia va de Centroamérica a España; las citas bíblicas (que usan «vosotros» en la RVR1960) no se marcan.`, `${regHits.length} regional form(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. The audience spans Central America to Spain; Bible quotes (RVR1960 uses "vosotros") are not marked.`) : L("Sin regionalismos marcados.", "No regional forms marked."), fix: regHits.length ? L("Toca cada palabra marcada en el guion para ver la forma neutra.", "Tap each marked word in the script to see the neutral form.") : null });
+  if (lang === "es") add("spoken", { id: "regional", n: regHits.length, lim: 0, label: L("Español neutro", "Neutral Spanish"), passed: !regHits.length, info: regHits.length ? L(`${regHits.length} regionalismo(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. La audiencia va de Centroamérica a España; las citas bíblicas (que usan «vosotros» en la RVR1960) no se marcan.`, `${regHits.length} regional form(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. The audience spans Central America to Spain; Bible quotes (RVR1960 uses "vosotros") are not marked.`) : L("Sin regionalismos marcados.", "No regional forms marked."), fix: regHits.length ? L("Toca cada palabra marcada en el guion para ver la forma neutra.", "Tap each marked word in the script to see the neutral form.") : null });
 
   // ===== Discoverability (C.10) =====
   const contentWords = words.map((w) => w.w.toLowerCase()).filter((w) => w.length > 3 && !STOP.has(w) && !STOP.has(norm(w)));
@@ -2884,7 +2885,9 @@ function verifyProposal(text, opts, R, p) {
   if (p.kind === "field") o2[p.field] = p.value;
   const R2 = analyze(t2, o2);
   const before = failIds(R), after = failIds(R2);
-  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2 };
+  // score after the change, with what the person already ignored, so a card's badge shows the real gain (jadri47, 2026-10-21)
+  const dis = typeof state !== "undefined" && state.fixDismissed ? state.fixDismissed : undefined;
+  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2, score: scoreOf(R2, dis).score };
 }
 
 // Filler removal keeps the sentence grammatical: commas, closing tag questions and capitals.
@@ -2960,7 +2963,7 @@ function aiTellPatch(text, hit) {
 }
 
 // Spanish article guess for a bare keyword ("ansiedad" → "la ansiedad"); names and phrases with an article stay as they are.
-const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
+const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "señal", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
 const FEMN = new Set([...FEM].map(norm));
 const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
 function esArticle(kw) {
@@ -2971,6 +2974,47 @@ function esArticle(kw) {
   const fem = FEMN.has(k) || FEMN.has(first) || FEMN.has(sing) || (/(a|ion|dad|tad|tud|ez|umbre|sis)$/.test(sing) && !/(ma|pa)$/.test(sing));
   return plural ? (fem ? "las " : "los ") : fem ? "la " : "el ";
 }
+
+// Live-service phrases → what a person watching alone would hear. "" = remove. Phrases that state a fact
+// ("el domingo pasado", "en el servicio de hoy") have no rule: a rule would have to invent what replaces them.
+const PULPIT_FIX = { "abran sus biblias": "busca conmigo", "abran su biblia": "busca conmigo", "abramos nuestras biblias": "busca conmigo", "abramos la biblia": "busca conmigo", "abrid vuestras biblias": "busca conmigo", "abrid la biblia": "busca conmigo",
+  "querida congregación": "querido oyente",
+  "¿amén?": "", "¿me dicen amén?": "", "¿me decís amén?": "", "digan amén": "", "decid amén": "", "un aplauso": "", "pueden sentarse": "", "podéis sentaros": "", "pónganse de pie": "", "póngase de pie": "", "poneos de pie": "", "levanten la mano": "", "levanten sus manos": "", "levantad la mano": "",
+  "open your bibles": "turn with me", "turn in your bibles": "turn with me", "dear congregation": "dear friend", "church family": "friend",
+  "can i get an amen": "", "say amen": "", "please stand": "", "you may be seated": "", "raise your hand": "" };
+function pulpitPatch(text, hit, U) {
+  const k = hit.text.toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(PULPIT_FIX, k)) return null;
+  const to = PULPIT_FIX[k], after = text.slice(hit.end, hit.end + 12);
+  if (/^(?:busca|turn with)/.test(to) && !/^\s+(?:en|a|to)\s+(?=\p{Lu}|\d)/u.test(after)) return null; // only when a passage follows: "Abran sus Biblias en Juan 3"
+  if (to === "" && !(/\?$/.test(hit.text) || /^\s*(?:[.!?…]|\n|$)/.test(after))) return null; // only when the phrase ends its sentence
+  if (to === "" && !/\?$/.test(hit.text) && /^\s*\?/.test(after)) { // "…respeto, can I get an amen?" → "…respeto."
+    let s2 = hit.start; while (s2 > 0 && /[\s,]/.test(text[s2 - 1])) s2--;
+    return { start: s2, end: hit.end + after.indexOf("?") + 1, rep: "." };
+  }
+  if (to === "") {
+    const u = unitAtPos(U, hit.start), bare = (x) => x.toLowerCase().replace(/[\s¿?¡!.,;:]/g, "");
+    return u && bare(u.text) === bare(hit.text) ? delUnitPatch(text, u) : fillerPatch(text, hit);
+  }
+  let end = hit.end, rep = to;
+  const m = /^\s+a\s+(?=\p{Lu}|\d)/u.exec(text.slice(end, end + 6)); // "abran sus Biblias a Juan 3" → "busca conmigo en Juan 3"
+  if (m && /^busca/.test(to)) { end += m[0].length; rep = to + " en "; }
+  if (hit.text[0] === hit.text[0].toUpperCase() && /\p{L}/u.test(hit.text[0])) rep = rep[0].toUpperCase() + rep.slice(1);
+  return { start: hit.start, end, rep };
+}
+// Plain-words explanations for technical terms, one fixed line each (Adrian reads and approves the wording).
+const JARGON_GLOSS = { "justificación": "ser declarado justo ante Dios por la fe", "santificación": "el proceso de parecernos más a Cristo", "propiciación": "el sacrificio que satisface la justicia de Dios", "expiación": "el pago por el pecado", "regeneración": "el nuevo nacimiento", "escatología": "lo que la Biblia enseña sobre el final de los tiempos", "hermenéutica": "cómo interpretar la Biblia", "exégesis": "explicar lo que el texto dice en su contexto", "parusía": "la segunda venida de Cristo", "teofanía": "una aparición visible de Dios",
+  "justification": "being declared righteous before God by faith", "sanctification": "the process of becoming more like Christ", "propitiation": "the sacrifice that satisfies God's justice", "expiation": "the payment that removes sin", "regeneration": "the new birth", "eschatology": "what the Bible teaches about the end times", "hermeneutics": "how to interpret the Bible", "exegesis": "explaining what the text says in its context", "parousia": "the second coming of Christ", "theophany": "a visible appearance of God" };
+const JARGON_NEXT = /^(?:es|son|está|están|fue|era|se|nos|que|y|o|no|en|para|por|con|según|ya|porque|pero|como|a|al|la|el|les|le|lo|sí|is|are|was|were|that|and|or|not|in|for|by|with|according|already|because|but|as|to|the|it|which|does|will|they|we|you|i|he|she)$/i;
+function jargonPatch(text, hit, en) {
+  const g = JARGON_GLOSS[hit.text.toLowerCase()];
+  if (!g) return null;
+  const nx = (text.slice(hit.end, hit.end + 20).match(/^\s*(\p{L}+)/u) || [])[1];
+  if (nx && !JARGON_NEXT.test(nx)) return null; // "la escatología dispensacionalista": inserting here would cut the phrase in two
+  const closes = /^\s*[.!?;:,)]/.test(text.slice(hit.end, hit.end + 3)) || hit.end >= text.length;
+  return { start: hit.end, end: hit.end, rep: (en ? ", that is, " : ", es decir, ") + g + (closes ? "" : ",") };
+}
+const OPENER_CONNECT = /^(y|entonces|bueno|pues|ahora|así que|and|so|well|now|then)(?=[\s,])/i;
 
 // Build cards in priority order until `max` cards exist.
 // cap = how many places each check lists as evidence (4 for the short list; Infinity when every place is needed, as in the paragraph walk).
@@ -3094,6 +3138,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (row.id === "readability") {
       const hard = U.filter((u) => u.wc >= 8).map((u) => ({ u, d: (u.syl / u.wc) * 10 + u.wc })).sort((a, b) => b.d - a.d).slice(0, 3).map((x) => x.u).sort((a, b) => a.i - b.i);
       card.evidence = hard.map((u) => ev(u, []));
+      const rs = hard.map((u) => splitPatch(text, u, R.quotes || [])).filter(Boolean);
+      if (rs.length) card.proposals.push({ kind: "patch", label: L("Partir la oración más difícil en el conector más natural", "Split the hardest sentence at its most natural connector"), patches: rs });
       card.ai = hard[0] ? { start: hard[0].start, end: hard[0].end } : null;
     } else if (row.id === "rehook" && R.blocks) {
       const miss = R.blocks.filter((b) => !b.has);
@@ -3109,12 +3155,17 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (row.id === "rhythm") {
       let best = null;
       for (let i = 0; i + 4 <= U.length; i++) { const w = U.slice(i, i + 4).map((u) => u.wc), m = w.reduce((a, b) => a + b, 0) / 4, v = w.reduce((a, b) => a + (b - m) ** 2, 0); if (!best || v < best.v) best = { i, v }; }
-      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); card.ai = { start: us[0].start, end: us[3].end }; }
+      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); const lg = [...us].sort((a, b) => b.wc - a.wc)[0], sp = splitPatch(text, lg, R.quotes || []); if (sp) card.proposals.push({ kind: "patch", label: L("Partir la oración más larga para variar el ritmo", "Split the longest sentence to vary the rhythm"), patches: [sp] }); card.ai = { start: us[0].start, end: us[3].end }; }
     } else if (row.id === "openers" && R.inauth) {
       const op = (R.inauth.repeatedOpeners[0] || [])[0];
       const us = op ? U.filter((u) => norm(u.text).startsWith(norm(op))) : [];
       card.evidence = us.slice(0, cap).map((u) => ev(u, [[u.start, u.start + op.length]]));
       card.more = Math.max(0, us.length - cap);
+      const cm = op ? OPENER_CONNECT.exec(op) : null;
+      if (cm) { // keep the first three, drop the connector from the rest: "Y Dios dijo…" → "Dios dijo…"
+        const ps = us.slice(3).map((u) => { const m = /^[\s,]*/.exec(text.slice(u.start + cm[0].length)); const e = u.start + cm[0].length + m[0].length; return { start: u.start, end: e + 1, rep: (text[e] || "").toUpperCase() }; }).filter((x) => x.rep.trim());
+        if (ps.length) card.proposals.push({ kind: "patch", label: L(`Quitar «${cm[0]}» al inicio de las oraciones repetidas`, `Drop "${cm[0]}" from the repeated openings`), patches: ps });
+      }
       card.ai = us[1] ? { start: us[1].start, end: us[1].end } : null;
     } else if (row.id === "kwspread" && R.keyword) {
       const tot = Math.max(1, R.runtimeSec), kw = norm(R.keyword);
@@ -3158,6 +3209,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
       card.evidence = us.slice(0, cap).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
       card.more = Math.max(0, us.length - cap);
       const term = hits[0] ? hits[0].text : "";
+      const ps = row.id === "pulpit" ? hits.map((x) => pulpitPatch(text, x, U)).filter(Boolean) : hits.map((x) => jargonPatch(text, x, en)).filter(Boolean);
+      if (ps.length) card.proposals.push({ kind: "patch", label: row.id === "pulpit" ? L("Decirlo a quien te ve", "Say it to the person watching") : L("Explicar el término con palabras de todos los días", "Explain the term in everyday words"), patches: ps, of: hits.length });
       card.ai = us[0] ? { start: us[0].start, end: us[0].end, note: row.id === "pulpit"
         ? L("Convierte esta frase de culto en vivo en una frase para alguien que mira el video solo en su teléfono. Conserva exactamente el mismo contenido.", "Turn this live-service sentence into one for someone watching alone on their phone. Keep exactly the same content.")
         : L(`Conserva el término «${term}» y añade justo después una explicación breve con palabras de todos los días. No cambies la doctrina.`, `Keep the term “${term}” and add right after it a short everyday-words explanation. Don't change the doctrine.`) } : null;
@@ -3172,10 +3225,16 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (/^pack-/.test(row.id) || row.id === "desc") {
       const f = /Title|Título/.test(row.id) ? "title" : /iniatura|humbnail/.test(row.id) ? "thumb" : "description";
       card.field = { name: f, value: (opts[f] || "").trim() };
+      const kw = (opts.keyword || R.keyword || "").trim();
+      if (row.id === "desc" && kw) card.proposals.push({ kind: "field", field: "description", value: (en ? `Today we're talking about ${kw}. ` : `Hoy hablamos de ${esArticle(kw)}${kw}. `) + card.field.value, label: L("Empezar con el tema y la palabra clave", "Open with the topic and keyword") });
       card.ai = { field: f };
     } else {
       const u = row.id === "kwopen" ? U[0] : null;
-      if (u) { card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword }; }
+      if (u) {
+        card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword };
+        const kw = (opts.keyword || R.keyword || "").trim();
+        if (kw) card.proposals.push({ kind: "patch", label: L("Nombrar el tema justo después de la primera oración", "Name the topic right after the first sentence"), patches: [{ start: u.end, end: u.end, rep: " " + (en ? `Today we're talking about ${kw}.` : `Hoy hablamos de ${esArticle(kw)}${kw}.`) }] });
+      }
     }
     // keep only proposals that fix at least one of the card's checks and break nothing
     card.proposals = card.proposals.map((p) => ({ ...p, check: verifyProposal(text, opts, R, p) })).filter((p) => !p.check.broke.length && (p.check.fixed.some((id) => ids.includes(id)) || (p.of && p.patches.length < p.of)));
@@ -3252,7 +3311,7 @@ function messageChecks(text, opts, ctx) {
 
   // 2. Pulpit phrases: on video each person watches alone.
   out.pulpit = findPhrases(text, PULPIT, "pulpit").filter((x) => !insideQuote(x.start));
-  add("message", { id: "pulpit", label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
+  add("message", { id: "pulpit", n: out.pulpit.length, lim: 0, label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
     info: out.pulpit.length ? L(`Frases de culto en vivo: ${[...new Set(out.pulpit.map((x) => "«" + x.text + "»"))].slice(0, 4).join(", ")}. En video cada persona escucha sola, en su teléfono.`, `Live-service phrases: ${[...new Set(out.pulpit.map((x) => "“" + x.text + "”"))].slice(0, 4).join(", ")}. On video each person listens alone, on their phone.`)
       : L("Le hablas a una persona, como en una conversación.", "You speak to one person, like a conversation."),
     fix: out.pulpit.length ? L("Habla a «tú» y muestra el versículo en pantalla con [TEXTO: …] en vez de pedir que abran la Biblia.", "Speak to “you” and show the verse on screen with [TEXTO: …] instead of asking people to open their Bibles.") : null });
@@ -3260,7 +3319,7 @@ function messageChecks(text, opts, ctx) {
   // 3. Technical theology words without a plain explanation nearby.
   const jhits = findPhrases(text, JARGON, "jargon").filter((x) => !insideQuote(x.start));
   out.jargon = jhits.filter((x) => !EXPLAIN_RE.test(text.slice(x.end, x.end + 160)) && !EXPLAIN_RE.test(text.slice(Math.max(0, x.start - 40), x.start)));
-  add("message", { id: "jargon", label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
+  add("message", { id: "jargon", n: out.jargon.length, lim: 0, label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
     info: out.jargon.length ? L(`Sin explicar: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. Tú los conoces bien; quien llega por YouTube quizá no.`, `Not explained: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. You know them well; someone arriving from YouTube may not.`)
       : L("Ningún término técnico queda sin explicar.", "No technical term is left unexplained."),
     fix: out.jargon.length ? L("Añade una frase corta que lo explique con palabras de todos los días; no hace falta quitarlo.", "Add a short everyday-words explanation; no need to remove the term.") : null });
@@ -3276,7 +3335,7 @@ function messageChecks(text, opts, ctx) {
     if (!shown && /\[(TEXTO|CITA)\s*:/i.test(text.slice(a, b))) continue;
     if (!shown) out.offscreen.push({ ref: pr.ref, quote: pr.quote, paraStart: a });
   }
-  add("message", { id: "onscreen", label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
+  add("message", { id: "onscreen", n: out.offscreen.length, lim: 0, label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
     info: out.offscreen.length ? L(`${out.offscreen.length} pasaje(s) sin [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Quien escucha sin Biblia a mano lo sigue mejor si lo ve.`, `${out.offscreen.length} passage(s) without [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Viewers without a Bible at hand follow better when they see it.`)
       : L("Los pasajes que lees tienen su señal para el editor.", "The passages you read have their cue for the editor."),
     fix: out.offscreen.length ? L("Añade [TEXTO: libro capítulo:versículo] antes del párrafo para que el editor lo ponga en pantalla.", "Add [TEXTO: book chapter:verse] before the paragraph so the editor shows it.") : null });
@@ -3454,9 +3513,13 @@ const SCORE_W = {
 const SCORE_TIER = { pf: "A", pack: "A", promise: "B", content: "B", greeting: "B", cta: "B", ending: "B", hook: "B", rehook: "B", prayer: "B",
   bigidea: "C", recap: "C", application: "C", onscreen: "C", jargon: "C", pulpit: "C", reading: "C", refs: "C",
   kw: "D", title: "D", desc: "D", search: "D", kwspread: "D", chapters: "D", support: "D", kwopen: "D" };
+// Checks that count instances over the whole script give partial credit: each instance over the allowed number costs
+// a point, up to the cap, so fixing one paragraph moves the score (jadri47, 2026-10-21: "B: partial credit").
+const SCORE_CAP = { long: 4, muletillas: 3, weak: 3, regional: 3, aitell: 3, onscreen: 3, jargon: 3, pulpit: 3, openers: 2, cta: 3 };
 function weightOf(r) {
   if (/^pf-/.test(r.id)) return r.level === "rojo" ? 30 : 8;
   if (/^pack-/.test(r.id)) return 6;
+  if (r.n != null && Object.prototype.hasOwnProperty.call(SCORE_CAP, r.id)) return Math.min(SCORE_CAP[r.id], Math.max(1, r.n - (r.lim || 0)));
   return Object.prototype.hasOwnProperty.call(SCORE_W, r.id) ? SCORE_W[r.id] : 2;
 }
 function tierOf(r) { return /^pf-/.test(r.id) ? "A" : /^pack-/.test(r.id) ? "A" : SCORE_TIER[r.id] || "E"; }
@@ -4124,8 +4187,8 @@ function analyze(text, opts = {}) {
   const monotone = sentLens.length >= 10 && sd < 4;
   const inauth = { monotone, sd, repeatedOpeners, aiHits };
   add("auth", { id: "rhythm", label: L("Ritmo variado de oraciones", "Varied sentence rhythm"), passed: !monotone, info: sentLens.length < 10 ? L("Muy pocas oraciones para medir el ritmo.", "Too few sentences to measure rhythm.") : L(`Desviación de largo de oración: ${sd.toFixed(1)} palabras (meta propia: 4 o más).`, `Sentence-length spread: ${sd.toFixed(1)} words (our cutoff: 4 or more).`), fix: monotone ? L("Mezcla oraciones cortas con algunas largas; el texto plano suena a plantilla.", "Mix short and long sentences; flat rhythm sounds templated.") : null });
-  add("auth", { id: "openers", label: L("Inicios de oración variados", "Varied sentence openings"), passed: !repeatedOpeners.length, info: repeatedOpeners.length ? L(`Se repiten: ${repeatedOpeners.map(([w, n]) => `«${w}…» ×${n}`).join(", ")}.`, `Repeated: ${repeatedOpeners.map(([w, n]) => `"${w}…" ×${n}`).join(", ")}.`) : L("Ningún inicio se repite más de 3 veces.", "No opening repeats more than 3 times."), fix: repeatedOpeners.length ? L("Varía cómo empiezas las oraciones.", "Vary how sentences start.") : null });
-  add("auth", { id: "aitell", label: L("Sin frases típicas de texto generado por IA", "No typical AI-generated phrases"), passed: !aiHits.length, info: aiHits.length ? L(`Encontradas: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube llama a esto contenido no auténtico desde julio de 2025 cuando es masivo o repetitivo.`, `Found: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube calls mass-produced text inauthentic content since July 2025.`) : L("Ninguna.", "None."), fix: aiHits.length ? L("Dilo con tus propias palabras.", "Say it in your own words.") : null });
+  add("auth", { id: "openers", n: repeatedOpeners.reduce((a, [, k]) => a + k, 0), lim: repeatedOpeners.length * 3, label: L("Inicios de oración variados", "Varied sentence openings"), passed: !repeatedOpeners.length, info: repeatedOpeners.length ? L(`Se repiten: ${repeatedOpeners.map(([w, n]) => `«${w}…» ×${n}`).join(", ")}.`, `Repeated: ${repeatedOpeners.map(([w, n]) => `"${w}…" ×${n}`).join(", ")}.`) : L("Ningún inicio se repite más de 3 veces.", "No opening repeats more than 3 times."), fix: repeatedOpeners.length ? L("Varía cómo empiezas las oraciones.", "Vary how sentences start.") : null });
+  add("auth", { id: "aitell", n: aiHits.length, lim: 0, label: L("Sin frases típicas de texto generado por IA", "No typical AI-generated phrases"), passed: !aiHits.length, info: aiHits.length ? L(`Encontradas: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube llama a esto contenido no auténtico desde julio de 2025 cuando es masivo o repetitivo.`, `Found: ${[...new Set(aiHits.map((h) => h.text.toLowerCase()))].join(", ")}. YouTube calls mass-produced text inauthentic content since July 2025.`) : L("Ninguna.", "None."), fix: aiHits.length ? L("Dilo con tus propias palabras.", "Say it in your own words.") : null });
 
   // ===== Structure (C.2) =====
   const firstSent = sents[0] ? sents[0].text : "";
@@ -4228,7 +4291,7 @@ function analyze(text, opts = {}) {
   const clusters = [];
   for (const c of ctaSorted) { const t = timeAt(c.start); const last = clusters[clusters.length - 1]; if (last && t - last.t <= Math.min(30, runtimeSec / 6)) last.items.push(c); else clusters.push({ t, items: [c] }); }
   const ctaOk = clusters.length === 1;
-  add("structure", { id: "cta", label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
+  add("structure", { id: "cta", ...(clusters.length > 1 ? { n: clusters.length, lim: 1 } : {}), label: L("Una sola llamada a la acción", "A single call to action"), passed: ctaOk, info: clusters.length === 0 ? L("No hay ninguna llamada a la acción.", "No call to action.") : L(`${clusters.length} bloque(s) de llamada a la acción, en ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`, `${clusters.length} call-to-action block(s), at ${clusters.map((c) => fmtTime(c.t)).join(", ")}.`) + (ctaOk && clusters[0].t < runtimeSec * 0.5 ? L(" Está antes de la mitad; funciona mejor después de entregar la enseñanza.", " It's before the midpoint; it works better after the payoff.") : ""), fix: ctaOk ? null : clusters.length === 0 ? L("Añade una sola petición clara al final (comentar, suscribirse o ver el siguiente episodio).", "Add one clear ask near the end.") : L("Deja solo la última y quita las demás.", "Keep only the last one.") });
 
   // Ending: the next-episode line counts in the last 90 s, or up to 45 s before a closing prayer or blessing (which can run as long as it needs).
   // YouTube's end screen only uses the last 5–20 s.
@@ -4265,7 +4328,7 @@ function analyze(text, opts = {}) {
   // Scripture inside quotation marks can't be split, so only the presenter's own words count.
   const spokenOutsideQuotes = (s) => words.filter((w) => w.start >= s.start && w.end <= s.end && !insideAny(quotes, w.start, w.end)).length;
   const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);
-  add("spoken", { id: "long", label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
+  add("spoken", { id: "long", n: longSents.length, lim: 0, label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
 
   add("spoken", { id: "runtime", soft: runtimeSec >= 480, label: L("Duración razonable para un episodio de enseñanza", "Reasonable length for a teaching episode"), passed: runtimeSec >= 480 && runtimeSec <= 2700, info: L(`Enseñando: ${fmtTime(runtimeSec)} · leído de corrido: ${fmtTime(readSec)}. Calculado por sílabas (${totalSyl}) a ${readRate.toFixed(2)} sílabas/s (Pellegrino et al., 2011) × factor de ritmo ${k.toFixed(2)}${opts.kCalibrated ? " calibrado con sus episodios" : opts.kReh ? " ajustado con ensayos" : " (supuesto; se calibra con episodios reales)"}.${co ? ` La apertura en frío suma ≈${Math.round(coSec)} s al video${co.mode === "move" ? " si se duplica; al moverla no cambia el total" : ""}.` : ""}`, `Teaching: ${fmtTime(runtimeSec)} · straight read: ${fmtTime(readSec)}. From ${totalSyl} syllables at ${readRate.toFixed(2)} syllables/s (Pellegrino et al., 2011) × pace factor ${k.toFixed(2)}${opts.kCalibrated ? " calibrated from your episodes" : opts.kReh ? " adjusted from rehearsals" : " (assumed; calibrates from real episodes)"}.${co ? ` The cold open adds ≈${Math.round(coSec)} s to the video${co.mode === "move" ? " if duplicated; moved, the total doesn't change" : ""}.` : ""}`), fix: runtimeSec < 480 ? L("Menos de 8 minutos: según guías de creadores, YouTube no permite anuncios intermedios por debajo de 8 min; confírmalo en YouTube Studio → Monetización.", "Under 8 minutes: creator guides say YouTube allows no mid-roll ads below 8 min; confirm it in YouTube Studio → Monetization.") : runtimeSec > 2700 ? L("Más de 45 minutos. Las guías de creadores coinciden en que el porcentaje visto baja en los videos más largos, aunque los minutos vistos suben; no encontramos una cifra verificable para enseñanza bíblica. Decide con tu propia retención (pestaña Resultados).", "Over 45 minutes. Creator guides agree that percentage watched falls on longer videos while minutes watched rise; we found no verifiable figure for Bible teaching. Decide from your own retention (Results tab).") : null });
 
@@ -4282,7 +4345,7 @@ function analyze(text, opts = {}) {
   const mulRate = wc ? (mulHits.length * 100) / wc : 0;
   const mulCount = {}; mulHits.forEach((h) => (mulCount[h.label] = (mulCount[h.label] || 0) + 1));
   const topMul = Object.entries(mulCount).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  add("spoken", { id: "muletillas", soft: true, label: L("Muletillas bajo control", "Filler words under control"), passed: mulRate <= 1.5, info: L(`${mulHits.length} muletilla(s), ${mulRate.toFixed(1)} por cada 100 palabras (meta propia: 1,5 o menos). Solo cuenta las muletillas escritas en el guion; las que se dicen al grabar se notan en el modo Ensayo.`, `${mulHits.length} filler(s), ${mulRate.toFixed(1)} per 100 words (our cutoff: 1.5). Only fillers written in the script are counted; the ones spoken while recording show up in Rehearsal mode.`) + (topMul.length ? L(" Más frecuentes: ", " Most frequent: ") + topMul.map(([w, n]) => `${w} ×${n}`).join(", ") + "." : ""), fix: mulRate <= 1.5 ? null : L("Quítalas del guion; en la grabación tienden a aumentar, no a bajar.", "Cut them in the script; they increase on camera, not decrease.") });
+  add("spoken", { id: "muletillas", n: mulHits.length, lim: Math.floor((1.5 * wc) / 100), soft: true, label: L("Muletillas bajo control", "Filler words under control"), passed: mulRate <= 1.5, info: L(`${mulHits.length} muletilla(s), ${mulRate.toFixed(1)} por cada 100 palabras (meta propia: 1,5 o menos). Solo cuenta las muletillas escritas en el guion; las que se dicen al grabar se notan en el modo Ensayo.`, `${mulHits.length} filler(s), ${mulRate.toFixed(1)} per 100 words (our cutoff: 1.5). Only fillers written in the script are counted; the ones spoken while recording show up in Rehearsal mode.`) + (topMul.length ? L(" Más frecuentes: ", " Most frequent: ") + topMul.map(([w, n]) => `${w} ×${n}`).join(", ") + "." : ""), fix: mulRate <= 1.5 ? null : L("Quítalas del guion; en la grabación tienden a aumentar, no a bajar.", "Cut them in the script; they increase on camera, not decrease.") });
 
   const weakHits = [];
   for (const [w, alts] of Object.entries(WEAK)) for (const h of findPhrases(text, [w], "weak")) if (!insideAny(protectedSpans, h.start, h.end)) weakHits.push({ ...h, alts });
@@ -4294,11 +4357,11 @@ function analyze(text, opts = {}) {
       weakHits.push({ start: m.index, end: m.index + m[0].length, text: m[0], kind: "weak", alts });
     }
   }
-  add("spoken", { id: "weak", label: L("Palabras precisas", "Precise words"), passed: weakHits.length < Math.max(2, Math.ceil(wc / 150)), info: weakHits.length ? L(`${weakHits.length} palabra(s) genérica(s); las expresiones fijas («Buen Pastor», «todas las cosas») y las citas bíblicas no se marcan.`, `${weakHits.length} generic word(s); fixed phrases and scripture quotes are skipped.`) : L("Vocabulario específico.", "Specific vocabulary."), fix: weakHits.length >= Math.max(2, Math.ceil(wc / 150)) ? L("Toca cada palabra marcada en el guion para ver alternativas.", "Tap each marked word in the script for alternatives.") : null });
+  add("spoken", { id: "weak", n: weakHits.length, lim: Math.max(2, Math.ceil(wc / 150)), label: L("Palabras precisas", "Precise words"), passed: weakHits.length < Math.max(2, Math.ceil(wc / 150)), info: weakHits.length ? L(`${weakHits.length} palabra(s) genérica(s); las expresiones fijas («Buen Pastor», «todas las cosas») y las citas bíblicas no se marcan.`, `${weakHits.length} generic word(s); fixed phrases and scripture quotes are skipped.`) : L("Vocabulario específico.", "Specific vocabulary."), fix: weakHits.length >= Math.max(2, Math.ceil(wc / 150)) ? L("Toca cada palabra marcada en el guion para ver alternativas.", "Tap each marked word in the script for alternatives.") : null });
 
   const regHits = [];
   if (lang === "es") for (const r of REGIONAL.filter((r) => regFlags(r, opts.audience))) { r.re.lastIndex = 0; let m; while ((m = r.re.exec(text))) if (!insideAny(quotes, m.index, m.index + m[0].length)) regHits.push({ start: m.index + (m[0].length - m[0].trimStart().replace(/^,\s*/, "").length), end: m.index + m[0].length, text: m[0].replace(/^,\s*/, ""), kind: "regional", fix: r.fix }); }
-  if (lang === "es") add("spoken", { id: "regional", label: L("Español neutro", "Neutral Spanish"), passed: !regHits.length, info: regHits.length ? L(`${regHits.length} regionalismo(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. La audiencia va de Centroamérica a España; las citas bíblicas (que usan «vosotros» en la RVR1960) no se marcan.`, `${regHits.length} regional form(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. The audience spans Central America to Spain; Bible quotes (RVR1960 uses "vosotros") are not marked.`) : L("Sin regionalismos marcados.", "No regional forms marked."), fix: regHits.length ? L("Toca cada palabra marcada en el guion para ver la forma neutra.", "Tap each marked word in the script to see the neutral form.") : null });
+  if (lang === "es") add("spoken", { id: "regional", n: regHits.length, lim: 0, label: L("Español neutro", "Neutral Spanish"), passed: !regHits.length, info: regHits.length ? L(`${regHits.length} regionalismo(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. La audiencia va de Centroamérica a España; las citas bíblicas (que usan «vosotros» en la RVR1960) no se marcan.`, `${regHits.length} regional form(s): ${[...new Set(regHits.map((h) => h.text.toLowerCase()))].slice(0, 6).join(", ")}. The audience spans Central America to Spain; Bible quotes (RVR1960 uses "vosotros") are not marked.`) : L("Sin regionalismos marcados.", "No regional forms marked."), fix: regHits.length ? L("Toca cada palabra marcada en el guion para ver la forma neutra.", "Tap each marked word in the script to see the neutral form.") : null });
 
   // ===== Discoverability (C.10) =====
   const contentWords = words.map((w) => w.w.toLowerCase()).filter((w) => w.length > 3 && !STOP.has(w) && !STOP.has(norm(w)));
@@ -4852,7 +4915,9 @@ function verifyProposal(text, opts, R, p) {
   if (p.kind === "field") o2[p.field] = p.value;
   const R2 = analyze(t2, o2);
   const before = failIds(R), after = failIds(R2);
-  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2 };
+  // score after the change, with what the person already ignored, so a card's badge shows the real gain (jadri47, 2026-10-21)
+  const dis = typeof state !== "undefined" && state.fixDismissed ? state.fixDismissed : undefined;
+  return { fixed: [...before].filter((x) => !after.has(x)), broke: [...after].filter((x) => !before.has(x) && x !== "runtime"), text: t2, opts: o2, score: scoreOf(R2, dis).score };
 }
 
 // Filler removal keeps the sentence grammatical: commas, closing tag questions and capitals.
@@ -4928,7 +4993,7 @@ function aiTellPatch(text, hit) {
 }
 
 // Spanish article guess for a bare keyword ("ansiedad" → "la ansiedad"); names and phrases with an article stay as they are.
-const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
+const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "señal", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
 const FEMN = new Set([...FEM].map(norm));
 const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
 function esArticle(kw) {
@@ -4939,6 +5004,47 @@ function esArticle(kw) {
   const fem = FEMN.has(k) || FEMN.has(first) || FEMN.has(sing) || (/(a|ion|dad|tad|tud|ez|umbre|sis)$/.test(sing) && !/(ma|pa)$/.test(sing));
   return plural ? (fem ? "las " : "los ") : fem ? "la " : "el ";
 }
+
+// Live-service phrases → what a person watching alone would hear. "" = remove. Phrases that state a fact
+// ("el domingo pasado", "en el servicio de hoy") have no rule: a rule would have to invent what replaces them.
+const PULPIT_FIX = { "abran sus biblias": "busca conmigo", "abran su biblia": "busca conmigo", "abramos nuestras biblias": "busca conmigo", "abramos la biblia": "busca conmigo", "abrid vuestras biblias": "busca conmigo", "abrid la biblia": "busca conmigo",
+  "querida congregación": "querido oyente",
+  "¿amén?": "", "¿me dicen amén?": "", "¿me decís amén?": "", "digan amén": "", "decid amén": "", "un aplauso": "", "pueden sentarse": "", "podéis sentaros": "", "pónganse de pie": "", "póngase de pie": "", "poneos de pie": "", "levanten la mano": "", "levanten sus manos": "", "levantad la mano": "",
+  "open your bibles": "turn with me", "turn in your bibles": "turn with me", "dear congregation": "dear friend", "church family": "friend",
+  "can i get an amen": "", "say amen": "", "please stand": "", "you may be seated": "", "raise your hand": "" };
+function pulpitPatch(text, hit, U) {
+  const k = hit.text.toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(PULPIT_FIX, k)) return null;
+  const to = PULPIT_FIX[k], after = text.slice(hit.end, hit.end + 12);
+  if (/^(?:busca|turn with)/.test(to) && !/^\s+(?:en|a|to)\s+(?=\p{Lu}|\d)/u.test(after)) return null; // only when a passage follows: "Abran sus Biblias en Juan 3"
+  if (to === "" && !(/\?$/.test(hit.text) || /^\s*(?:[.!?…]|\n|$)/.test(after))) return null; // only when the phrase ends its sentence
+  if (to === "" && !/\?$/.test(hit.text) && /^\s*\?/.test(after)) { // "…respeto, can I get an amen?" → "…respeto."
+    let s2 = hit.start; while (s2 > 0 && /[\s,]/.test(text[s2 - 1])) s2--;
+    return { start: s2, end: hit.end + after.indexOf("?") + 1, rep: "." };
+  }
+  if (to === "") {
+    const u = unitAtPos(U, hit.start), bare = (x) => x.toLowerCase().replace(/[\s¿?¡!.,;:]/g, "");
+    return u && bare(u.text) === bare(hit.text) ? delUnitPatch(text, u) : fillerPatch(text, hit);
+  }
+  let end = hit.end, rep = to;
+  const m = /^\s+a\s+(?=\p{Lu}|\d)/u.exec(text.slice(end, end + 6)); // "abran sus Biblias a Juan 3" → "busca conmigo en Juan 3"
+  if (m && /^busca/.test(to)) { end += m[0].length; rep = to + " en "; }
+  if (hit.text[0] === hit.text[0].toUpperCase() && /\p{L}/u.test(hit.text[0])) rep = rep[0].toUpperCase() + rep.slice(1);
+  return { start: hit.start, end, rep };
+}
+// Plain-words explanations for technical terms, one fixed line each (Adrian reads and approves the wording).
+const JARGON_GLOSS = { "justificación": "ser declarado justo ante Dios por la fe", "santificación": "el proceso de parecernos más a Cristo", "propiciación": "el sacrificio que satisface la justicia de Dios", "expiación": "el pago por el pecado", "regeneración": "el nuevo nacimiento", "escatología": "lo que la Biblia enseña sobre el final de los tiempos", "hermenéutica": "cómo interpretar la Biblia", "exégesis": "explicar lo que el texto dice en su contexto", "parusía": "la segunda venida de Cristo", "teofanía": "una aparición visible de Dios",
+  "justification": "being declared righteous before God by faith", "sanctification": "the process of becoming more like Christ", "propitiation": "the sacrifice that satisfies God's justice", "expiation": "the payment that removes sin", "regeneration": "the new birth", "eschatology": "what the Bible teaches about the end times", "hermeneutics": "how to interpret the Bible", "exegesis": "explaining what the text says in its context", "parousia": "the second coming of Christ", "theophany": "a visible appearance of God" };
+const JARGON_NEXT = /^(?:es|son|está|están|fue|era|se|nos|que|y|o|no|en|para|por|con|según|ya|porque|pero|como|a|al|la|el|les|le|lo|sí|is|are|was|were|that|and|or|not|in|for|by|with|according|already|because|but|as|to|the|it|which|does|will|they|we|you|i|he|she)$/i;
+function jargonPatch(text, hit, en) {
+  const g = JARGON_GLOSS[hit.text.toLowerCase()];
+  if (!g) return null;
+  const nx = (text.slice(hit.end, hit.end + 20).match(/^\s*(\p{L}+)/u) || [])[1];
+  if (nx && !JARGON_NEXT.test(nx)) return null; // "la escatología dispensacionalista": inserting here would cut the phrase in two
+  const closes = /^\s*[.!?;:,)]/.test(text.slice(hit.end, hit.end + 3)) || hit.end >= text.length;
+  return { start: hit.end, end: hit.end, rep: (en ? ", that is, " : ", es decir, ") + g + (closes ? "" : ",") };
+}
+const OPENER_CONNECT = /^(y|entonces|bueno|pues|ahora|así que|and|so|well|now|then)(?=[\s,])/i;
 
 // Build cards in priority order until `max` cards exist.
 // cap = how many places each check lists as evidence (4 for the short list; Infinity when every place is needed, as in the paragraph walk).
@@ -5062,6 +5168,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (row.id === "readability") {
       const hard = U.filter((u) => u.wc >= 8).map((u) => ({ u, d: (u.syl / u.wc) * 10 + u.wc })).sort((a, b) => b.d - a.d).slice(0, 3).map((x) => x.u).sort((a, b) => a.i - b.i);
       card.evidence = hard.map((u) => ev(u, []));
+      const rs = hard.map((u) => splitPatch(text, u, R.quotes || [])).filter(Boolean);
+      if (rs.length) card.proposals.push({ kind: "patch", label: L("Partir la oración más difícil en el conector más natural", "Split the hardest sentence at its most natural connector"), patches: rs });
       card.ai = hard[0] ? { start: hard[0].start, end: hard[0].end } : null;
     } else if (row.id === "rehook" && R.blocks) {
       const miss = R.blocks.filter((b) => !b.has);
@@ -5077,12 +5185,17 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (row.id === "rhythm") {
       let best = null;
       for (let i = 0; i + 4 <= U.length; i++) { const w = U.slice(i, i + 4).map((u) => u.wc), m = w.reduce((a, b) => a + b, 0) / 4, v = w.reduce((a, b) => a + (b - m) ** 2, 0); if (!best || v < best.v) best = { i, v }; }
-      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); card.ai = { start: us[0].start, end: us[3].end }; }
+      if (best) { const us = U.slice(best.i, best.i + 4); card.evidence = us.map((u) => ev(u, [])); const lg = [...us].sort((a, b) => b.wc - a.wc)[0], sp = splitPatch(text, lg, R.quotes || []); if (sp) card.proposals.push({ kind: "patch", label: L("Partir la oración más larga para variar el ritmo", "Split the longest sentence to vary the rhythm"), patches: [sp] }); card.ai = { start: us[0].start, end: us[3].end }; }
     } else if (row.id === "openers" && R.inauth) {
       const op = (R.inauth.repeatedOpeners[0] || [])[0];
       const us = op ? U.filter((u) => norm(u.text).startsWith(norm(op))) : [];
       card.evidence = us.slice(0, cap).map((u) => ev(u, [[u.start, u.start + op.length]]));
       card.more = Math.max(0, us.length - cap);
+      const cm = op ? OPENER_CONNECT.exec(op) : null;
+      if (cm) { // keep the first three, drop the connector from the rest: "Y Dios dijo…" → "Dios dijo…"
+        const ps = us.slice(3).map((u) => { const m = /^[\s,]*/.exec(text.slice(u.start + cm[0].length)); const e = u.start + cm[0].length + m[0].length; return { start: u.start, end: e + 1, rep: (text[e] || "").toUpperCase() }; }).filter((x) => x.rep.trim());
+        if (ps.length) card.proposals.push({ kind: "patch", label: L(`Quitar «${cm[0]}» al inicio de las oraciones repetidas`, `Drop "${cm[0]}" from the repeated openings`), patches: ps });
+      }
       card.ai = us[1] ? { start: us[1].start, end: us[1].end } : null;
     } else if (row.id === "kwspread" && R.keyword) {
       const tot = Math.max(1, R.runtimeSec), kw = norm(R.keyword);
@@ -5126,6 +5239,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
       card.evidence = us.slice(0, cap).map((u) => ev(u, hits.filter((x) => x.start >= u.start && x.end <= u.end).map((x) => [x.start, x.end])));
       card.more = Math.max(0, us.length - cap);
       const term = hits[0] ? hits[0].text : "";
+      const ps = row.id === "pulpit" ? hits.map((x) => pulpitPatch(text, x, U)).filter(Boolean) : hits.map((x) => jargonPatch(text, x, en)).filter(Boolean);
+      if (ps.length) card.proposals.push({ kind: "patch", label: row.id === "pulpit" ? L("Decirlo a quien te ve", "Say it to the person watching") : L("Explicar el término con palabras de todos los días", "Explain the term in everyday words"), patches: ps, of: hits.length });
       card.ai = us[0] ? { start: us[0].start, end: us[0].end, note: row.id === "pulpit"
         ? L("Convierte esta frase de culto en vivo en una frase para alguien que mira el video solo en su teléfono. Conserva exactamente el mismo contenido.", "Turn this live-service sentence into one for someone watching alone on their phone. Keep exactly the same content.")
         : L(`Conserva el término «${term}» y añade justo después una explicación breve con palabras de todos los días. No cambies la doctrina.`, `Keep the term “${term}” and add right after it a short everyday-words explanation. Don't change the doctrine.`) } : null;
@@ -5140,10 +5255,16 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
     } else if (/^pack-/.test(row.id) || row.id === "desc") {
       const f = /Title|Título/.test(row.id) ? "title" : /iniatura|humbnail/.test(row.id) ? "thumb" : "description";
       card.field = { name: f, value: (opts[f] || "").trim() };
+      const kw = (opts.keyword || R.keyword || "").trim();
+      if (row.id === "desc" && kw) card.proposals.push({ kind: "field", field: "description", value: (en ? `Today we're talking about ${kw}. ` : `Hoy hablamos de ${esArticle(kw)}${kw}. `) + card.field.value, label: L("Empezar con el tema y la palabra clave", "Open with the topic and keyword") });
       card.ai = { field: f };
     } else {
       const u = row.id === "kwopen" ? U[0] : null;
-      if (u) { card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword }; }
+      if (u) {
+        card.evidence = [ev(u, [])]; card.ai = { start: u.start, end: u.end, keyword: R.keyword };
+        const kw = (opts.keyword || R.keyword || "").trim();
+        if (kw) card.proposals.push({ kind: "patch", label: L("Nombrar el tema justo después de la primera oración", "Name the topic right after the first sentence"), patches: [{ start: u.end, end: u.end, rep: " " + (en ? `Today we're talking about ${kw}.` : `Hoy hablamos de ${esArticle(kw)}${kw}.`) }] });
+      }
     }
     // keep only proposals that fix at least one of the card's checks and break nothing
     card.proposals = card.proposals.map((p) => ({ ...p, check: verifyProposal(text, opts, R, p) })).filter((p) => !p.check.broke.length && (p.check.fixed.some((id) => ids.includes(id)) || (p.of && p.patches.length < p.of)));
@@ -5220,7 +5341,7 @@ function messageChecks(text, opts, ctx) {
 
   // 2. Pulpit phrases: on video each person watches alone.
   out.pulpit = findPhrases(text, PULPIT, "pulpit").filter((x) => !insideQuote(x.start));
-  add("message", { id: "pulpit", label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
+  add("message", { id: "pulpit", n: out.pulpit.length, lim: 0, label: L("Habla a quien te ve, no a una congregación", "Speak to the viewer, not to a congregation"), passed: !out.pulpit.length,
     info: out.pulpit.length ? L(`Frases de culto en vivo: ${[...new Set(out.pulpit.map((x) => "«" + x.text + "»"))].slice(0, 4).join(", ")}. En video cada persona escucha sola, en su teléfono.`, `Live-service phrases: ${[...new Set(out.pulpit.map((x) => "“" + x.text + "”"))].slice(0, 4).join(", ")}. On video each person listens alone, on their phone.`)
       : L("Le hablas a una persona, como en una conversación.", "You speak to one person, like a conversation."),
     fix: out.pulpit.length ? L("Habla a «tú» y muestra el versículo en pantalla con [TEXTO: …] en vez de pedir que abran la Biblia.", "Speak to “you” and show the verse on screen with [TEXTO: …] instead of asking people to open their Bibles.") : null });
@@ -5228,7 +5349,7 @@ function messageChecks(text, opts, ctx) {
   // 3. Technical theology words without a plain explanation nearby.
   const jhits = findPhrases(text, JARGON, "jargon").filter((x) => !insideQuote(x.start));
   out.jargon = jhits.filter((x) => !EXPLAIN_RE.test(text.slice(x.end, x.end + 160)) && !EXPLAIN_RE.test(text.slice(Math.max(0, x.start - 40), x.start)));
-  add("message", { id: "jargon", label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
+  add("message", { id: "jargon", n: out.jargon.length, lim: 0, label: L("Los términos técnicos se explican", "Technical terms are explained"), passed: !out.jargon.length,
     info: out.jargon.length ? L(`Sin explicar: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. Tú los conoces bien; quien llega por YouTube quizá no.`, `Not explained: ${[...new Set(out.jargon.map((x) => x.text.toLowerCase()))].slice(0, 5).join(", ")}. You know them well; someone arriving from YouTube may not.`)
       : L("Ningún término técnico queda sin explicar.", "No technical term is left unexplained."),
     fix: out.jargon.length ? L("Añade una frase corta que lo explique con palabras de todos los días; no hace falta quitarlo.", "Add a short everyday-words explanation; no need to remove the term.") : null });
@@ -5244,7 +5365,7 @@ function messageChecks(text, opts, ctx) {
     if (!shown && /\[(TEXTO|CITA)\s*:/i.test(text.slice(a, b))) continue;
     if (!shown) out.offscreen.push({ ref: pr.ref, quote: pr.quote, paraStart: a });
   }
-  add("message", { id: "onscreen", label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
+  add("message", { id: "onscreen", n: out.offscreen.length, lim: 0, label: L("Cada pasaje que lees aparece en pantalla", "Every passage you read appears on screen"), passed: !out.offscreen.length,
     info: out.offscreen.length ? L(`${out.offscreen.length} pasaje(s) sin [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Quien escucha sin Biblia a mano lo sigue mejor si lo ve.`, `${out.offscreen.length} passage(s) without [TEXTO: …]: ${out.offscreen.slice(0, 3).map((x) => x.ref.canonical).join(", ")}. Viewers without a Bible at hand follow better when they see it.`)
       : L("Los pasajes que lees tienen su señal para el editor.", "The passages you read have their cue for the editor."),
     fix: out.offscreen.length ? L("Añade [TEXTO: libro capítulo:versículo] antes del párrafo para que el editor lo ponga en pantalla.", "Add [TEXTO: book chapter:verse] before the paragraph so the editor shows it.") : null });
@@ -5422,9 +5543,13 @@ const SCORE_W = {
 const SCORE_TIER = { pf: "A", pack: "A", promise: "B", content: "B", greeting: "B", cta: "B", ending: "B", hook: "B", rehook: "B", prayer: "B",
   bigidea: "C", recap: "C", application: "C", onscreen: "C", jargon: "C", pulpit: "C", reading: "C", refs: "C",
   kw: "D", title: "D", desc: "D", search: "D", kwspread: "D", chapters: "D", support: "D", kwopen: "D" };
+// Checks that count instances over the whole script give partial credit: each instance over the allowed number costs
+// a point, up to the cap, so fixing one paragraph moves the score (jadri47, 2026-10-21: "B: partial credit").
+const SCORE_CAP = { long: 4, muletillas: 3, weak: 3, regional: 3, aitell: 3, onscreen: 3, jargon: 3, pulpit: 3, openers: 2, cta: 3 };
 function weightOf(r) {
   if (/^pf-/.test(r.id)) return r.level === "rojo" ? 30 : 8;
   if (/^pack-/.test(r.id)) return 6;
+  if (r.n != null && Object.prototype.hasOwnProperty.call(SCORE_CAP, r.id)) return Math.min(SCORE_CAP[r.id], Math.max(1, r.n - (r.lim || 0)));
   return Object.prototype.hasOwnProperty.call(SCORE_W, r.id) ? SCORE_W[r.id] : 2;
 }
 function tierOf(r) { return /^pf-/.test(r.id) ? "A" : /^pack-/.test(r.id) ? "A" : SCORE_TIER[r.id] || "E"; }
@@ -7511,7 +7636,7 @@ function wireRetChart() {
 Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras 3 con IA",
   fxMulti: (n) => `resuelve ${n} revisiones`, fxPartial: (n, m) => `Arregla ${n} de ${m}; el resto, con IA o a mano.`, fxApplied: "Aplicado.", fxUndo: "Deshacer", fxUndone: "Deshecho.",
-  fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
+  fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxUpTo: "Hasta", fxNoteTag: "Nota", fxNoteHow: "Sin cambio automático: es una decisión tuya (no inventamos la referencia ni acortamos el pasaje).", fxZeroMore: (n) => `La nota sube cuando quedan menos: faltan ${n} en otros párrafos.`, fxZeroFloor: "La nota ya está en 0: empieza a subir cuando arregles varias cosas más.", fxZeroRed: "Un aviso rojo limita la nota a 69 hasta que lo arregles.", fxZeroCap: "Ya cuentas el máximo de puntos por esto; la nota sube al arreglar varios.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
   fxField: { title: "Título", keyword: "Palabra clave", thumb: "Miniatura", description: "Descripción" }, fxNotFixed: "No resuelve la revisión todavía.",
   fxSkip: "Ahora no", fxDone: "Aplicado", fxWhy: "Qué corrige", fxOpt: "Opción elegida", fxWhere: "Dónde", fxWords: "Palabras", fxScore: "Puntuación", fxRevert: "Revertir este cambio", fxReverted: "Cambio revertido.", fxCantRevert: "No se puede revertir solo este cambio: el texto ya cambió en ese lugar. Usa Deshacer o corrígelo a mano.", fxParaN: (n, tm) => `Párrafo ${n}${tm ? " · " + tm : ""}`, fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
@@ -7519,7 +7644,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
   fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
   fxMulti: (n) => `fixes ${n} checks`, fxPartial: (n, m) => `Fixes ${n} of ${m}; the rest with AI or by hand.`, fxApplied: "Applied.", fxUndo: "Undo", fxUndone: "Undone.",
-  fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
+  fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxUpTo: "Up to", fxNoteTag: "Note", fxNoteHow: "No automatic change: this one is your call (we don't invent the reference or shorten the passage).", fxZeroMore: (n) => `The score moves once fewer remain: ${n} left in other paragraphs.`, fxZeroFloor: "The score is already at 0: it starts rising once you fix several more.", fxZeroRed: "A red warning holds the score at 69 until it's fixed.", fxZeroCap: "This already counts the most points it can; the score rises as you fix several.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
   fxField: { title: "Title", keyword: "Keyword", thumb: "Thumbnail", description: "Description" }, fxNotFixed: "Doesn't pass the check yet.",
   fxSkip: "Not now", fxDone: "Applied", fxWhy: "What it fixes", fxOpt: "Option chosen", fxWhere: "Where", fxWords: "Words", fxScore: "Score", fxRevert: "Revert this change", fxReverted: "Change reverted.", fxCantRevert: "This change can't be reverted on its own: the text has changed there since. Use Undo or fix it by hand.", fxParaN: (n, tm) => `Paragraph ${n}${tm ? " · " + tm : ""}`, fxBefore: "Before", fxAfter: "After", fxShowChange: "See the change", fxEmptyChg: "(removed)", fxSkipped: "Ignored", fxRestore: "Restore", fxStale: "The script changed meanwhile: the review was refreshed. Apply again.", fxNoChange: "This didn't change the script text.", fxOut: (f) => `Applied to "${f}" (in Prepare), not inside the script.`, fxOutCold: "Applied to the cold open (first seconds), not inside the script text.", fxRestored: "Restored.", fxAiFrom: "Only this fragment changes. Every option goes through all the checks again.", fxNone: "Nothing urgent: every check with text to fix passes.",
@@ -7591,17 +7716,38 @@ function evidenceHTML(card) {
   return card.evidence.map((e) => `<div class="fx-ev" data-es="${e.start}" data-ee="${e.end}"><span class="fx-t">${fmtTime(e.t)}</span><span>${markedSlice(text, e.start, e.end, e.marks, cls)}</span></div>`).join("") + (card.more ? `<div class="hint">${h(t("fxMore")(card.more))}</div>` : "");
 }
 
+// The badge shows what applying the selected proposal really does to the score. With no proposal it shows the most the
+// check could be worth ("Up to"). A 0 says why (jadri47, 2026-10-21: "most recommendations don't increase the rating").
+function fxPtsHTML(c, p, R) {
+  const rows = (c.ids || [c.id]).map((id) => Object.values(R.sections).flat().find((q) => q.id === id)).filter(Boolean);
+  const w = rows.reduce((x, r) => x + weightOf(r), 0);
+  if (!p || p.check.score == null) return { html: w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">${h(t("fxUpTo"))} +${w}</span>` : "", why: "" };
+  const cur = scoreOf(R, state.fixDismissed), gain = p.check.score - cur.score;
+  if (gain > 0) return { html: `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${gain}</span>`, why: "" };
+  const row = rows.find((r) => r.n != null);
+  const left = row ? Math.max(0, row.n - (p.patches ? p.patches.length : 0)) : 0;
+  const why = cur.score === 0 ? t("fxZeroFloor") : cur.band === "rojo" && cur.score >= 69 ? t("fxZeroRed") : row && left > (row.lim || 0) ? t("fxZeroMore")(left) : row ? t("fxZeroCap") : "";
+  return { html: `<span class="fix-pts fix-pts0" title="${h(why || t("scPtsTip"))}">+0</span>`, why };
+}
+// Advice the rules forbid turning into a text change: shown as a note (no Apply, no points badge, no "Ahora no"). It still counts in the score.
+// (jadri47, 2026-10-21: "Notes, not cards")
+const FX_NOTES = new Set(["refs", "reading"]);
 function fixItemsHTML(cards, R) {
   const meta = Object.fromEntries(sectionMeta().map(([k, n]) => [k, n]));
   const items = cards.map((c, ci) => {
+    if (FX_NOTES.has(c.id)) return `<li class="fx fx-note" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
+      <div class="fx-top"><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span><span class="fx-meta">${h(t("fxNoteTag"))}</span></div>
+      ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
+      <p class="hint">${h(t("fxNoteHow"))}</p><div class="actions fx-act"><button class="small linkish" data-fxskip="${ci}">${h(t("fxSkip"))}</button><a class="tf-go" href="#sec-${c.sec}" data-open="${c.sec}">${h(t("seeIn"))} ${h(meta[c.sec] || c.sec)} →</a></div></li>`; // "Ahora no" stays: the person may decide it does not apply
     const sel = Math.min(state.fixSel[ci] || 0, Math.max(0, c.proposals.length - 1));
     const p = c.proposals[sel];
     const ai = state.fixAi[c.id];
+    const pts = fxPtsHTML(c, p, R);
     // In the guided (step) view the fixes are the whole step, so every card stays open; in the review page only the first does.
     const open = ci === 0 || (state.fixOpen && state.fixOpen.has(c.id));
     return `<li class="fx${open ? "" : " fx-closed"}" data-cat="${typeof catOfCard === "function" ? catOfCard(c) : "pol"}" data-ci="${ci}" data-fid="${h(c.id)}">
-      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${(() => { const w = (c.ids || [c.id]).reduce((x, id) => { const r = Object.values(R.sections).flat().find((q) => q.id === id); return x + (r ? weightOf(r) : 0); }, 0); return w ? `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${w}</span>` : ""; })()}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
-      ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}
+      <div class="fx-top"${open ? "" : ` role="button" tabindex="0" aria-expanded="false" title="${h(t("fxOpen"))}"`}><span class="tf-t">${h(typeof plainLabel === "function" ? plainLabel(c.id, c.label) : c.label)}</span>${pts.html}<span class="fx-meta">${h(meta[c.sec] || c.sec)}${c.ids.length > 1 ? " · " + h(t("fxMulti")(c.ids.length)) : ""}</span></div>
+      ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}${pts.why ? `<div class="hint fx-why">${h(pts.why)}</div>` : ""}
       <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
       <div class="fx-lbl">${h(t("fxWould"))}${p && c.proposals.length > 1 ? ` <span class="hint">· ${h(p.label)}</span>` : p ? ` <span class="hint">· ${h(p.label)}</span>` : ""}</div>
       ${p ? proposalHTML(c, p, state.result) : `<p class="hint">${h(t("fxNoProp"))}</p>`}
@@ -8952,6 +9098,7 @@ Object.assign(T.es, {
   lvl: { verde: "Anuncios: sin riesgo", amarillo: "Anuncios: podrían limitarse", rojo: "Anuncios: riesgo alto" },
   plainPackTitle: "El título tiene palabras que limitan anuncios",
   plainPackThumb: "El texto de la miniatura tiene palabras que limitan anuncios",
+  plainPackDesc: "La descripción tiene palabras que limitan anuncios",
   introTitle: "Bienvenido a Script Desk",
   introBody: "Pegas tu guion y la app te dice qué ajustar para que funcione en YouTube como pódcast: que enganche, que se entienda fuera de la iglesia y que no pierda anuncios. Tu mensaje y tu doctrina no se tocan; cada cambio lo decides tú.",
   introTry: "Probar con un ejemplo",
@@ -8974,6 +9121,7 @@ Object.assign(T.en, {
   lvl: { verde: "Ads: no risk", amarillo: "Ads: could be limited", rojo: "Ads: high risk" },
   plainPackTitle: "The title has words that limit ads",
   plainPackThumb: "The thumbnail text has words that limit ads",
+  plainPackDesc: "The description has words that limit ads",
   introTitle: "Welcome to Script Desk",
   introBody: "Paste your script and the app shows what to adjust so it works on YouTube as a podcast: it hooks, it's understood outside church, and it keeps its ads. Your message and doctrine aren't touched; you decide every change.",
   introTry: "Try an example",
@@ -9001,7 +9149,7 @@ failedRows = function (R) {
 
 const _plainLabelM = plainLabel;
 plainLabel = function (id, fallback) {
-  if (V.guided && /^pack-/.test(id)) return /Título|Title/.test(id) ? t("plainPackTitle") : t("plainPackThumb");
+  if (V.guided && /^pack-/.test(id)) return /Título|Title/.test(id) ? t("plainPackTitle") : /Descripci|Description/.test(id) ? t("plainPackDesc") : t("plainPackThumb");
   return _plainLabelM(id, fallback);
 };
 const _verdictHTMLM = verdictHTML;
