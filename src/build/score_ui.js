@@ -14,7 +14,7 @@ Object.assign(T.es, {
   scHow: ["Anuncios: 20 puntos. Un término grave pone la nota en rojo (máx. 69).", "Empaque (título, miniatura, descripción, capítulos, palabra clave): 12 puntos.", "Duración y cierre (8 minutos o más, invitación, final): 8 puntos.", "Valoración del editor: 6 áreas de 1 a 5, hasta 60 puntos. Cambia solo al volver a evaluar.", "Lo de «Más detalles» (muletillas, frases largas…) no cuenta en la nota."],
   scParts: (p, e) => `Anuncios ${p.ads}/20 · Empaque ${p.pack}/12 · Duración y cierre ${p.len}/8 · ${e == null ? "Editor: sin informe" : `Editor ${e}/60`}.`,
   scPtsTip: "Puntos que sube la nota al arreglarlo",
-  scNew: "Nueva puntuación: cada revisión pesa según su impacto. Si tu número bajó, el guion no cambió; ahora ves qué arreglar primero.",
+  scNew: "Nueva nota: «Preparado para YouTube». Suma anuncios, empaque y duración, más la valoración del editor. Si tu número cambió, tu guion no cambió.",
   scSince: (a, b) => `Desde que empezaste: ${a} → ${b}`, scTop: "Lo que más sube la nota", scNone: "Nada pendiente.",
   scIgnored: (n) => `Ignoraste ${n} ${n === 1 ? "revisión" : "revisiones"}`, scShowAgain: "Volver a mostrar",
   scNote: `${RP_INFO.es} No es la nota de YouTube.`,
@@ -28,7 +28,7 @@ Object.assign(T.en, {
   scHow: ["Ads: 20 points. One serious term turns the score red (max 69).", "Packaging (title, thumbnail, description, chapters, keyword): 12 points.", "Length and close (8 minutes or more, call to action, ending): 8 points.", "Editor's rating: 6 areas from 1 to 5, up to 60 points. It changes only when you re-evaluate.", "What's under “More details” (fillers, long sentences…) doesn't count in the score."],
   scParts: (p, e) => `Ads ${p.ads}/20 · Packaging ${p.pack}/12 · Length and close ${p.len}/8 · ${e == null ? "Editor: no report" : `Editor ${e}/60`}.`,
   scPtsTip: "Points this adds to the score when fixed",
-  scNew: "New score: each check weighs by its impact. If your number dropped, the script did not change; now you see what to fix first.",
+  scNew: "New score: “YouTube-ready”. It adds ads, packaging and length, plus the editor's rating. If your number changed, your script didn't.",
   scSince: (a, b) => `Since you started: ${a} → ${b}`, scTop: "What raises it most", scNone: "Nothing pending.",
   scIgnored: (n) => `You dismissed ${n} ${n === 1 ? "check" : "checks"}`, scShowAgain: "Show again",
   scNote: `${RP_INFO.en} It is not YouTube's score.`,
@@ -129,8 +129,9 @@ function scApply() {
   SC.S = S; SC.RD = RD; SC.cur = cur; SC.kind = kind; scPaint(); scNewToast();
 }
 function scNewToast() {
-  if (scDemo() || SC.off || !hasScript() || lsGet("sd-score-v2-seen") === "1") return;
-  lsSet("sd-score-v2-seen", "1");
+  // v4-seen: the readiness score is a new recipe, so someone who saw the v2 notice sees this one once (2026-10-22)
+  if (scDemo() || SC.off || !hasScript() || lsGet("sd-score-v4-seen") === "1") return;
+  lsSet("sd-score-v4-seen", "1");
   let el = $("scToast");
   if (!el) { el = document.createElement("div"); el.id = "scToast"; el.className = "cost-toast"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
   el.innerHTML = `<span>${h(t("scNew"))}</span><button type="button" aria-label="${h(t("scClose"))}">×</button>`;
