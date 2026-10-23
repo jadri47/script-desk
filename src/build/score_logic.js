@@ -45,3 +45,35 @@ function scoreOf(R, dismissed) {
   if (band === "amarillo") score = Math.min(score, 99);
   return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
+
+/* ===== Preparado para YouTube (readiness, 0–100) =====
+   (jadri47, 2026-10-22: "one score, readiness, recalibrated") 40 puntos que calcula la app sola + 60 de la valoración del editor.
+   Las revisiones línea por línea (muletillas, frases largas, regionalismos…) ya NO cuentan: viven en «Más detalles» con scoreOf. */
+const REPORT_AREAS = ["hook", "promise", "retention", "voice", "close", "return"];
+// A 4/5 is still good: 9 of 10 (jadri47, 2026-10-22).
+const RATING_PTS = { 1: 0, 2: 4, 3: 7, 4: 9, 5: 10 };
+const READY_BUCKET = { ads: 20, pack: 12, len: 8 };
+const READY_PACK_IDS = new Set(["title", "desc", "chapters", "kw"]);
+const READY_LEN_IDS = new Set(["runtime", "cta", "ending"]);
+// scoreOf weighs runtime 0 (it is not a fault in the text), but under 8 min there are no mid-roll ads: here it costs.
+const READY_W = { runtime: 4 };
+// report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
+// (no invented number). dismissed: rows the person ignored count as passed here.
+function readinessOf(R, report, dismissed) {
+  dismissed = dismissed || new Set();
+  const rows = Object.values(R.sections).flat();
+  const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
+  const lose = (pred) => open.filter(pred).reduce((a, r) => a + (READY_W[r.id] ?? weightOf(r)), 0);
+  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  const ads = red ? 0 : Math.max(0, READY_BUCKET.ads - lose((r) => /^pf-/.test(r.id)));
+  const pack = Math.max(0, READY_BUCKET.pack - lose((r) => /^pack-/.test(r.id) || READY_PACK_IDS.has(r.id)));
+  const len = Math.max(0, READY_BUCKET.len - lose((r) => READY_LEN_IDS.has(r.id)));
+  const rules = ads + pack + len;
+  const parts = { ads, pack, len };
+  if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts };
+  // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
+  const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  let score = rules + editor;
+  if (red) score = Math.min(score, 69);
+  return { score, rules, rulesMax: 40, editor, red, parts };
+}
