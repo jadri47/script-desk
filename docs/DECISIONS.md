@@ -1,5 +1,16 @@
 # Decisions (newest first)
 
+## 2026-10-22: refocus — 3 steps, an editor's report, a readiness score (Adrian: "the app has become too complex and has lost its initial scope… directed to a PhD person… from a 90 level to a 95-100")
+
+Picks (2026-10-22): **A refocus** · calibrate on «excelente» as Juan's level (no real scripts yet) · **one score, readiness, recalibrated** · **merge «Grabar» and «Después» into step 3**.
+- Measured before: «excelente» scored 100 with 0 decisions, «bueno» 91 with 4. The 60+ rules catch an untrained speaker's faults and say nothing about hook, retention, spoken voice, close or the return viewer.
+- Step 2 «Mejorar» = the editor's report: one AI call (complex tier, ~$0.03 per script, a guess on token counts), 6 rated areas + ads, at most 7 changes, each vetted in code (exact unique original, no verse touched, no new ad risk). Not sent as `auto`: the $5 automatic pause would otherwise block the core feature; the daily limit still applies.
+- Readiness = rules 40 (ads 20, packaging 12, length/close 8) + editor 60. Line-level checks no longer count. Without a report only «r/40» shows. Runtime under 8 min costs 4 (no mid-roll ads), though `scoreOf` weighs it 0.
+- Step 3 «Publicar»: packaging, next episode, cold open, approve, record card, then «Después de grabar» (closed). Structure card → «Más detalles».
+- Nothing deleted: coach, walker, rail, colour families, more checks and Ask Claude are behind step 2's «Más detalles»; full mode unchanged.
+- Server guard (`auto_paused` at $5/month) deployed as sd-ai v10 the same day.
+- Open: real-model ratings on «excelente» (needs one paid call, Adrian's yes); real phone; pw7, pwh, pwd2, pwdl, pw8 have stale locators (fail on the commit before too).
+
 ## 2026-10-22: step 2 becomes a coach (Adrian: "walk him through the process and just ask him questions like you do here")
 
 Picks (2026-10-21/22): **A auto AI, capped** · **A one decision at a time** · **safe fixes: preview, one tap** · **$5 per month** · verdict **A by score**.
