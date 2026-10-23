@@ -270,7 +270,7 @@ function coachAiIdea() {
     const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
     IDEA.busy = false;
     await ideaSuggest(true);
-    const v = IDEA.sug; IDEA.sug = ""; if (typeof renderIdeaSug === "function") renderIdeaSug(); // the suggestion lives here as a choice, not in the Prepare card
+    const v = IDEA.sug; IDEA.sug = ""; if (typeof renderIdeaSug === "function") renderIdeaSug(); // the suggestion lives here as a choice, not in the Publish step
     if (!v) throw { code: "invalid_json" };
     return [v];
   });

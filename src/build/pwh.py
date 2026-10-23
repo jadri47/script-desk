@@ -16,7 +16,7 @@ async def main():
                 await pg.screenshot(path=f"qh_{n}_{tag}.png", full_page=True)
             await shot("s1")
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(900)
-            for s in [2,3,4,5]:
+            for s in [2,3]:  # 3 steps now (jadri47, 2026-10-22): old steps 4 and 5 live inside step 3
                 await pg.evaluate(f"goStep({s})"); await pg.wait_for_timeout(500)
                 if s==2: await pg.evaluate("document.querySelectorAll('.g-more-d').forEach(d=>d.open=true)"); await pg.wait_for_timeout(200)
                 await shot(f"s{s}")

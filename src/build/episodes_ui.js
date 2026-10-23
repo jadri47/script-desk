@@ -1,6 +1,6 @@
-/* ===== Tus episodios: lista sencilla en una hoja aparte, y «planea el próximo» en el paso 5 ===== */
+/* ===== Tus episodios: lista sencilla en una hoja aparte, y «planea el próximo» en «Después de grabar» (paso 3) ===== */
 // The old calendar sat in step 1, before writing, with raw date boxes. Now: one line on top of every step
-// says which episode is open, «Mis episodios» opens the list, and step 5 plans the next one right after recording.
+// says which episode is open, «Mis episodios» opens the list, and «Después de grabar» (step 3) plans the next one right after recording.
 Object.assign(T.es, {
   srTitle: "Tus episodios", srLead: "Toca un episodio para abrirlo.",
   epNow: "Episodio", epNew: "Episodio nuevo", epNoDate: "sin fecha de publicación", epOut: (d) => `sale el ${d}`,
@@ -152,10 +152,10 @@ renderGuide = function () {
   const top = $("guideTop");
   if (top && !$("epStrip")) { const s = document.createElement("div"); s.id = "epStrip"; s.className = "ep-strip"; top.prepend(s); }
   renderEpStrip();
-  if (V.step === 5) renderNextPlan();
+  if (V.step === 3) renderNextPlan(); // inside «Después de grabar» (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
 };
 
-// ---------- step 5: plan the next one right after recording ----------
+// ---------- step 3, «Después de grabar»: plan the next one right after recording ----------
 function renderNextPlan() {
   const el = $("gNextPlan");
   if (!el) return;

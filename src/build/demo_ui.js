@@ -137,7 +137,7 @@ function renderExPick() {
   el.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { el.querySelectorAll("[data-ex]").forEach((x) => (x.disabled = true)); startDemo(b.dataset.ex); }));
 }
 
-// Step 5 / Results: let a practice run load sample retention data.
+// Step 3 «Después de grabar» / Results: let a practice run load sample retention data.
 const _renderResultsCardD = renderResultsCard;
 renderResultsCard = function () {
   _renderResultsCardD();

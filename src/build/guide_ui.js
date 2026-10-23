@@ -1,17 +1,17 @@
 
-/* ===== Modo guiado: 5 pasos, lenguaje sencillo, modo completo detrás de un interruptor ===== */
+/* ===== Modo guiado: 3 pasos, lenguaje sencillo, modo completo detrás de un interruptor ===== */
 Object.assign(T.es, {
   expert: "Modo completo",
-  steps: ["Escribir", "Arreglar", "Preparar", "Grabar", "Después"],
-  stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene arreglar antes de grabar", "Cómo empieza el video y cómo se llama", "Grabar con el prompter", "Después de grabar"],
+  // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
+  steps: ["Escribir", "Mejorar", "Publicar"],
+  stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene mejorar antes de grabar", "Publicar: empaque, apertura y grabación"],
   s1Lead: "Pega aquí el guion completo del episodio. Te diremos qué conviene arreglar antes de grabar.", s1Sample: "Probar con un guion de ejemplo", s1Continue: "Seguir con un episodio guardado", s1Open: "Abrir",
   stFold: (n, d) => `Ver las ${n} secciones · ${d}`,
   s2Lead: "Toca «Aplicar» para aceptar un cambio. Si no te convence, toca «Ahora no». Siempre puedes deshacer.",
-  s3Lead: "La apertura usa frases que ya están en tu guion: no hay que grabar nada aparte. Después escribe el título y el texto de la miniatura.",
-  s4Lead: "Abre el prompter y lee. El texto avanza solo, a tu ritmo.", s4Len: (a) => `El episodio dura unos ${a}.`, s4Clips: "Estas frases se usan al inicio del video: dilas mirando a la cámara, con una pausa antes y después.",
+  s3Lead: "Elige cómo empieza el video y cómo se llama, apruébalo y grábalo con el prompter.",
+  s4Len: (a) => `El episodio dura unos ${a}.`, s4Clips: "Estas frases se usan al inicio del video: dilas mirando a la cámara, con una pausa antes y después.",
   s4Pp: "Abrir prompter", s4Reh: "Ensayar con cronómetro", s4Sheet: "Hoja para el editor", s4Done: "Ya lo grabamos",
   s4Help: "Con teclado o pedal: Espacio empieza o pausa · flechas ↑ ↓ cambian la velocidad · Esc sale. En el celular o la tableta: toca la pantalla para empezar o pausar.",
-  s5Lead: "Apunta el próximo episodio, elige clips cortos para Shorts y, cuando el video lleve unos días publicado, mira dónde se fue la gente.",
   next: "Siguiente", back: "Atrás", approve: "Aprobar el guion", approved: "Guion aprobado", toReview: "Ver todas las revisiones",
   vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vYellowLow: (n) => `Le falta trabajo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
   vGreenD: "No hay nada importante que cambiar.", vYellowD: "Nada impide grabar, pero estos cambios ayudan a que la gente se quede.", vRedD: "Hay algo que puede quitar los anuncios del video. Arréglalo primero.",
@@ -28,16 +28,15 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   expert: "Full mode",
-  steps: ["Write", "Fix", "Prepare", "Record", "After"],
-  stepQ: ["Write or paste the episode script", "What to fix before recording", "How the video opens and what it's called", "Record with the prompter", "After recording"],
+  steps: ["Write", "Improve", "Publish"],
+  stepQ: ["Write or paste the episode script", "What's worth improving before you record", "Publish: packaging, opening and recording"],
   s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Sample: "Try a sample script", s1Continue: "Continue a saved episode", s1Open: "Open",
   stFold: (n, d) => `Show the ${n} sections · ${d}`,
   s2Lead: "Tap \"Apply\" to accept a change. If you don't like it, tap \"Not now\". You can always undo.",
-  s3Lead: "The opening uses lines already in your script: nothing extra to record. Then write the title and the thumbnail text.",
-  s4Lead: "Open the prompter and read. The text moves on its own, at your pace.", s4Len: (a) => `The episode runs about ${a}.`, s4Clips: "These lines open the video: say them to the camera, with a pause before and after.",
+  s3Lead: "Choose how the video opens and what it's called, approve it, and record it with the prompter.",
+  s4Len: (a) => `The episode runs about ${a}.`, s4Clips: "These lines open the video: say them to the camera, with a pause before and after.",
   s4Pp: "Open prompter", s4Reh: "Rehearse with stopwatch", s4Sheet: "Editor sheet", s4Done: "We recorded it",
   s4Help: "With a keyboard or pedal: Space starts or pauses · ↑ ↓ change speed · Esc exits. On a phone or tablet: tap the screen to start or pause.",
-  s5Lead: "Note the next episode, pick short clips for Shorts and, once the video has been up a few days, see where people left.",
   next: "Next", back: "Back", approve: "Approve the script", approved: "Script approved", toReview: "See every check",
   vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vYellowLow: (n) => `Needs work: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
   vGreenD: "Nothing important to change.", vYellowD: "Nothing stops you from recording, but these changes help people stay.", vRedD: "Something could remove ads from the video. Fix it first.",
@@ -77,7 +76,7 @@ function ensureReview() {
   if (!state.result || state.text !== $("script").value) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); }
   return true;
 }
-function stepForStatus(s) { return s === "grabado" ? 5 : s === "aprobado" ? 4 : 2; }
+function stepForStatus(s) { return s === "grabado" || s === "aprobado" ? 3 : 2; }
 
 function applyView() {
   const main = document.querySelector("main");
@@ -95,6 +94,7 @@ function applyView() {
 function goStep(n) {
   if (n > 1 && !ensureReview()) n = 1;
   V.step = n;
+  if (n < 3) { V.s3After = false; V.s3More = false; } // «Después de grabar» / «Más detalles» start closed on each visit
   document.querySelector("main").dataset.step = String(n);
   if (n >= 3) gCompute();
   renderGuide();
@@ -144,26 +144,29 @@ function renderGuide() {
       wireFixes();
       $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
     }
-  } else if (V.step === 3) {
+  } else {
+    // Step 3 «Publicar»: packaging → next episode → opening → approve, then the record card, then «Después de grabar».
+    // Approve and «Ya lo grabamos» only change the status and stay here (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3").
     top.innerHTML = head(3);
     const missing = packGateMissing();
-    const done = G.status === "aprobado" || G.status === "grabado";
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gStruct"></section><section class="g-card" id="gCold"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
+    const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
+    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gPack"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gCold"></section>
       <div class="g-approve">${done ? `<span class="lamp verde">${h(t("approved"))}</span>` : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : ""}`}</div>
-      ${navHTML(2, done ? t("next") : "", 'data-step="4"')}`;
-    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack();
+      ${recordCardHTML()}
+      <div class="g-approve g-recorded">${recorded ? `<span class="lamp verde">${h(t("status").grabado)}</span>` : `<button type="button" class="primary" id="gRecorded"${approved ? "" : " disabled"}>${h(t("s4Done"))}</button>`}</div>
+      <details class="rp-more g-after" id="gAfter"${V.s3After ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpAfterRec"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section></div></details>
+      <details class="rp-more g-more3" id="gMore3"${V.s3More ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpMore"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gStruct"></section></div></details>
+      ${navHTML(2)}`;
+    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack(); wireRecordCard(); renderShorts(); renderResultsCard();
+    const keep = (id, k) => { const d = $(id); if (d) d.addEventListener("toggle", () => { V[k] = d.open; }); };
+    keep("gAfter", "s3After"); keep("gMore3", "s3More");
     const ap = $("gApprove");
-    if (ap) ap.addEventListener("click", async () => { ap.disabled = true; await setStatus("aprobado"); goStep(4); });
-  } else if (V.step === 4) {
-    top.innerHTML = head(4);
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s4Lead"))}</p>${recordCardHTML()}
-      ${navHTML(3, t("s4Done"), 'id="gRecorded"')}`;
-    wireRecordCard();
-    $("gRecorded").addEventListener("click", async (e) => { e.target.disabled = true; if (G.status !== "grabado") await setStatus(G.status === "aprobado" ? "grabado" : G.status); goStep(5); });
-  } else {
-    top.innerHTML = head(5);
-    body.innerHTML = `<p class="lead">${h(t("s5Lead"))}</p><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section>${navHTML(4)}`;
-    renderShorts(); renderResultsCard();
+    if (ap) ap.addEventListener("click", async () => {
+      ap.disabled = true; await setStatus("aprobado");
+      const rc = $("gRecCard"); if (rc) rc.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
+    const rec = $("gRecorded");
+    if (rec) rec.addEventListener("click", async () => { rec.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
   }
   wireGuideNav(body);
   body.querySelectorAll("[data-see]").forEach((b) => b.remove());

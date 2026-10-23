@@ -64,7 +64,7 @@ async def main():
             await pg.reload(); await pg.wait_for_timeout(3500)
             print(n, "after reload strong:", await pg.evaluate("document.querySelector('#ed strong')?.textContent"), "| prod:", await pg.evaluate("!!G.prodId"))
             # prompter shows formatting
-            await pg.evaluate("goStep(4)"); await pg.wait_for_timeout(800)
+            await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(800)
             await pg.evaluate("openPrompter('prompter')"); await pg.wait_for_timeout(500)
             print(n, "prompter strong:", await pg.evaluate("document.querySelector('#pp strong')?.textContent"), "mark:", await pg.evaluate("document.querySelector('#pp mark')?.textContent"))
             await pg.keyboard.press("Escape"); await pg.evaluate("document.getElementById('pp') && document.querySelector('[data-pp=exit]').click()")

@@ -6,7 +6,7 @@
 // saving are unaffected). Browsers without it still get the paragraph accent and the scrolling.
 Object.assign(T.es, {
   wkTitle: "Revisión por párrafos", wkDoneN: (n) => (n === 1 ? "1 aplicada" : `${n} aplicadas`), wkSkipN: (n) => (n === 1 ? "1 ignorada" : `${n} ignoradas`), wkOf: (i, n) => `Párrafo ${i} de ${n}`, wkHere: (n) => (n === 1 ? "1 revisión" : `${n} revisiones`),
-  wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Preparar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
+  wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Publicar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
   wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
   wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
   wkEnd: "Terminaste el recorrido del guion.",
@@ -15,7 +15,7 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   wkTitle: "Paragraph-by-paragraph review", wkDoneN: (n) => `${n} applied`, wkSkipN: (n) => `${n} ignored`, wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
-  wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Prepare", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
+  wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Publish", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
   wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
   wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
   wkEnd: "You've been through the whole script.",

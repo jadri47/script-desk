@@ -164,6 +164,8 @@ html.guided .auth-cost{display:none}
 .pk-more[open]>summary,.sh-more[open]>summary{margin-bottom:8px}
 .g-approve{position:sticky;bottom:0;z-index:15;background:var(--paper);padding:10px 0 12px;margin-top:22px;border-top:1px solid var(--rule)}
 @media (max-width:899px){.g-approve{bottom:calc(62px + env(safe-area-inset-bottom,0px))}}
+/* step 3: only the Approve bar sticks; «Ya lo grabamos» sits under the record card (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3") */
+.g-approve.g-recorded{position:static;border-top:0;padding:0;margin-top:14px}
 @media (max-width:899px){html.guided #gStruct>.lead{display:none}}
 
 .st-fold{margin-top:8px}

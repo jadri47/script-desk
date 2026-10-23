@@ -65,7 +65,7 @@ async def main():
         await ctx2pg.click("#pkAi"); await ctx2pg.wait_for_timeout(800)
         print("AI no_key msg:", await ctx2pg.evaluate("($('pkStatus')||{}).textContent"))
         # download
-        await ctx2pg.evaluate("goStep(4)"); await ctx2pg.wait_for_timeout(300)
+        await ctx2pg.evaluate("goStep(3)"); await ctx2pg.wait_for_timeout(300)
         async with ctx2pg.expect_download() as dl:
             await ctx2pg.click("#gSheet")
         d = await dl.value; print("DOWNLOAD:", d.suggested_filename)

@@ -39,7 +39,7 @@ async def main():
             await pg.screenshot(path=OUT+f"ph_{name}_after.png", full_page=(name=="m"))
             # guided step 4 uses the same record card
             await pg.click("#expertToggle"); await pg.wait_for_timeout(500)
-            await pg.evaluate("goStep(4)"); await pg.wait_for_timeout(600)
+            await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(600)
             print(name, "guided rec card:", await pg.evaluate("!!document.querySelector('#guide #gRecCard')"), "errs:", errs)
             await pg.screenshot(path=OUT+f"ph_{name}_g4.png", full_page=(name=="m"))
             await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(600)
