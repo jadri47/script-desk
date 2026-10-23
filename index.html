@@ -594,6 +594,8 @@ html.guided .auth-cost{display:none}
 .pk-more[open]>summary,.sh-more[open]>summary{margin-bottom:8px}
 .g-approve{position:sticky;bottom:0;z-index:15;background:var(--paper);padding:10px 0 12px;margin-top:22px;border-top:1px solid var(--rule)}
 @media (max-width:899px){.g-approve{bottom:calc(62px + env(safe-area-inset-bottom,0px))}}
+/* step 3: only the Approve bar sticks; «Ya lo grabamos» sits under the record card (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3") */
+.g-approve.g-recorded{position:static;border-top:0;padding:0;margin-top:14px}
 @media (max-width:899px){html.guided #gStruct>.lead{display:none}}
 
 .st-fold{margin-top:8px}
@@ -1009,6 +1011,54 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 .cc-radio:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
 .cc-ai{color:var(--accent);border-color:var(--accent)}
 .cc-pause{margin:0 0 8px}
+
+/* ===== Editor's report (report_ui.js): step 2 ===== */
+.rp{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;margin:12px 0}
+.rp-head{display:grid;gap:4px;margin-bottom:10px}
+.rp-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}.rp-title h3{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+.rp-title .qh-txt{flex:1 1 100%}
+.rp-score{font:700 16px/1.35 var(--sans);color:var(--ink);overflow-wrap:anywhere}
+.rp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--ink-2)}
+.rp-rows{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.rp-row{display:grid;grid-template-columns:minmax(104px,max-content) max-content 1fr;gap:2px 12px;align-items:baseline;font-size:15px}
+.rp-a{font-weight:600}
+.rp-dots{letter-spacing:.14em;color:var(--accent);font-size:15px;white-space:nowrap}
+.rp-w{color:var(--ink-2);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.rp-st{font-weight:600}.rp-st-verde{color:var(--verde)}.rp-st-amarillo{color:var(--amarillo)}.rp-st-rojo{color:var(--rojo)}
+.rp-wait{margin:8px 0;color:var(--ink-2)}
+.rp-none{margin:8px 0 0}
+.rp-dec{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;outline:none;scroll-margin-top:12px}
+.rp-dec:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-dec-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-bottom:8px}.rp-dec-h b{font:700 16px/1.3 var(--sans)}
+.rp-tag{font-size:12px;font-weight:700;color:var(--rojo);border:1px solid var(--rojo);border-radius:999px;padding:1px 8px}
+.rp-fix{margin:0 0 6px;color:var(--ink-2);font-size:14px}
+.rp-cmp{margin:0;display:grid;gap:8px}
+.rp-c{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:baseline}
+.rp-c dt{font:600 12px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.rp-c dd{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.rp-orig[role=button]{cursor:pointer}.rp-orig:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-c del{background:var(--rojo-bg);color:var(--rojo);text-decoration:line-through}
+.rp-c ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
+.rp-write{margin-top:10px;display:grid;gap:6px}.rp-write textarea{width:100%;box-sizing:border-box}
+.rp-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rp-nav{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0}
+main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{min-height:40px}
+.rp-more{margin:12px 0}
+.rp-more>summary{cursor:pointer;font-weight:700;min-height:40px;display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;list-style:none}
+.rp-more>summary::-webkit-details-marker{display:none}
+.rp-more>summary::before{content:"▸";display:inline-block;width:1.2em;color:var(--accent)}
+.rp-more[open]>summary::before{content:"▾"}
+.rp-more>summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-more>summary .hint{font-weight:400}
+/* the old line-by-line score is not shown here: the number is readiness (report_logic.js) */
+.rp-more .fix-pts,.rp-more .fx-why,.rp-more .cc-score{display:none}
+@media (max-width:620px){
+  .rp{padding:12px}
+  .rp-row{grid-template-columns:minmax(96px,max-content) 1fr}.rp-row .rp-w{grid-column:1/-1}
+  .rp-c{grid-template-columns:1fr;gap:2px}
+}
+@media (max-width:899px),(max-height:559px){.rp-dec{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}.rp-dec button{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}}
+.score-pill .sc-of{font:600 12px/1 var(--sans);opacity:.8} .score-pill .sc-of:empty{display:none}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1049,8 +1099,6 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 main{--stepc:var(--j1);--stept:var(--j1t);--step-on:var(--j-on)}
 main[data-view="guide"][data-step="2"]{--stepc:var(--j2);--stept:var(--j2t)}
 main[data-view="guide"][data-step="3"]{--stepc:var(--j3);--stept:var(--j3t);--step-on:var(--j3-on)}
-main[data-view="guide"][data-step="4"]{--stepc:var(--j4);--stept:var(--j4t)}
-main[data-view="guide"][data-step="5"]{--stepc:var(--j5);--stept:var(--j5t)}
 
 body{font:16px/1.55 var(--sans);letter-spacing:-.003em}
 h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.012em}
@@ -1094,8 +1142,6 @@ label{font-weight:600}
 .sb li:nth-child(1){--c:var(--j1);--ct:var(--j1t);--on:var(--j-on)}
 .sb li:nth-child(2){--c:var(--j2);--ct:var(--j2t);--on:var(--j-on)}
 .sb li:nth-child(3){--c:var(--j3);--ct:var(--j3t);--on:var(--j3-on)}
-.sb li:nth-child(4){--c:var(--j4);--ct:var(--j4t);--on:var(--j-on)}
-.sb li:nth-child(5){--c:var(--j5);--ct:var(--j5t);--on:var(--j-on)}
 .sb button{border-radius:14px;padding:10px 12px;background:var(--sheet);border:1px solid var(--rule);color:var(--ink-2);font:600 14px/1.1 var(--sans)}
 .sb-n{background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--ct);font-weight:700}
 .sb button.on{background:var(--c);border-color:var(--c);color:var(--on);box-shadow:0 8px 20px -12px var(--c)}
@@ -3599,6 +3645,41 @@ function scoreOf(R, dismissed) {
   if (band === "amarillo") score = Math.min(score, 99);
   return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
+
+/* ===== Preparado para YouTube (readiness, 0–100) =====
+   (jadri47, 2026-10-22: "one score, readiness, recalibrated") 40 puntos que calcula la app sola + 60 de la valoración del editor.
+   Las revisiones línea por línea (muletillas, frases largas, regionalismos…) ya NO cuentan: viven en «Más detalles» con scoreOf. */
+const REPORT_AREAS = ["hook", "promise", "retention", "voice", "close", "return"];
+// A 4/5 is still good: 9 of 10 (jadri47, 2026-10-22).
+const RATING_PTS = { 1: 0, 2: 4, 3: 7, 4: 9, 5: 10 };
+const READY_BUCKET = { ads: 20, pack: 12, len: 8 };
+const READY_PACK_IDS = new Set(["title", "desc", "chapters", "kw"]);
+const READY_LEN_IDS = new Set(["runtime", "cta", "ending"]);
+// scoreOf weighs runtime 0 (it is not a fault in the text), but under 8 min there are no mid-roll ads: here it costs.
+const READY_W = { runtime: 4 };
+const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
+// report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
+// (no invented number). dismissed: rows the person ignored count as passed here.
+function readinessOf(R, report, dismissed) {
+  dismissed = dismissed || new Set();
+  const rows = Object.values(R.sections).flat();
+  const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
+  const lose = (pred) => open.filter(pred).reduce((a, r) => a + readyWeight(r), 0);
+  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  const ads = red ? 0 : Math.max(0, READY_BUCKET.ads - lose((r) => /^pf-/.test(r.id)));
+  const pack = Math.max(0, READY_BUCKET.pack - lose((r) => /^pack-/.test(r.id) || READY_PACK_IDS.has(r.id)));
+  const len = Math.max(0, READY_BUCKET.len - lose((r) => READY_LEN_IDS.has(r.id)));
+  const rules = ads + pack + len;
+  const parts = { ads, pack, len };
+  // the open rows that cost points here (the verdict counts them; line-level rows are not among them)
+  const openIds = open.filter((r) => /^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)).map((r) => r.id);
+  if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts, openIds };
+  // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
+  const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  let score = rules + editor;
+  if (red) score = Math.min(score, 69);
+  return { score, rules, rulesMax: 40, editor, red, parts, openIds };
+}
 // ---------- Color families for the text (pure) ----------
 // One table decides how a finding looks everywhere: the paragraph review, the fix cards and the marked script.
 // Color is never the only cue: each family also has its own line style (see guide.css).
@@ -3814,7 +3895,88 @@ function coachAiPick(list, have, max) {
   return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick };
+// ---------- Editor's report: one AI read of the whole script, vetted in code (pure, no DOM) ----------
+// (jadri47, 2026-10-22: "improve his messages from a 90 level for a YouTube video to a 95-100") The rules catch line faults;
+// hook, promise, retention, spoken voice, close and the return viewer need an editor's judgement. Scripture is masked as
+// ⟦Vn⟧ before the AI sees it (same masker as polish_logic.js) and every answer is checked here; nothing depends on the AI behaving.
+const REPORT_MAX_ITEMS = 7;
+
+function reportPrompt(text, R, opts) {
+  opts = opts || {};
+  const en = R.lang === "en";
+  const spans = verseSpans(text, R), mk = maskVerses(text, spans, 0, text.length);
+  const risk = [...new Set((R.riskHits || []).map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
+  const mins = Math.round((R.runtimeSec || 0) / 60);
+  const kw = (opts.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "—";
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "why": "...", "after": 1-5}]}`;
+  const brief = en
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. The script is in English: write every "why" and "replacement" in English.`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
+  const facts = en
+    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (do not replace them with euphemisms, do not add new ones): ${risk}. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
+    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (no los cambies por eufemismos ni añadas otros): ${risk}. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
+  const rules = en
+    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return.`
+    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return.`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+}
+
+const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
+
+// json: whatever the model sent (untrusted). Returns the normalised areas and only the items that survive every check.
+function vetReport(text, json, opts, R) {
+  const areas = {};
+  for (const k of REPORT_AREAS) {
+    const a = json && json.areas && json.areas[k];
+    areas[k] = { rating: reportRating(a && a.rating), why: String((a && a.why) || "").slice(0, 300) };
+  }
+  const list = json && Array.isArray(json.items) ? json.items : [];
+  const spans = verseSpans(text, R), verse = spans.filter((s) => s.kind !== "ref");
+  const mk = maskVerses(text, spans, 0, text.length); // same numbering the prompt used
+  const toks = mk.toks || [];
+  const items = [];
+  const riskBefore = (R.riskHits || []).length;
+  for (const it of list) {
+    if (items.length >= REPORT_MAX_ITEMS) break;
+    if (!it || !REPORT_AREAS.includes(it.area)) continue;
+    let o = typeof it.original === "string" ? it.original : "";
+    const c = typeof it.replacement === "string" ? it.replacement : "";
+    if (!o.trim() || !c.trim() || o === c || o.length > 800 || c.length > 1000) continue;
+    if (/⟦|⟧/.test(c)) continue; // a verse mark never goes into a replacement
+    for (const t of toks) o = o.split(t.tok).join(t.text); // the AI saw tokens; locate on the real text
+    if (/⟦|⟧/.test(o)) continue; // a token that is not one of ours
+    const i = text.indexOf(o);
+    if (i < 0 || text.indexOf(o, i + 1) >= 0) continue; // not found, or not unique
+    const start = i, end = i + o.length;
+    if (verse.some((s) => start < s.end && end > s.start)) continue; // never touches Scripture
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) continue;
+    if (items.some((x) => start < x.end && x.start < end)) continue; // overlaps a change already kept
+    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
+    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) continue; // no new ad or packaging problem
+    if (analyze(check.text, check.opts).riskHits.length > riskBefore) continue; // no new sensitive term, even if that check was already open
+    items.push({ area: it.area, start, end, original: o, replacement: c, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
+  }
+  return { areas, items, dropped: list.length - items.length };
+}
+
+// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
+// item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
+function projectedReadiness(text, R, opts, report) {
+  const items = (report && report.items) || [];
+  const t2 = applyPatches(text, items.map((x) => ({ start: x.start, end: x.end, rep: x.replacement })));
+  const r2 = readinessOf(analyze(t2, opts), null);
+  const areas = {};
+  for (const k of REPORT_AREAS) areas[k] = { rating: report && report.areas && report.areas[k] ? report.areas[k].rating : null };
+  for (const it of items) {
+    const cur = areas[it.area].rating, up = it.after == null ? null : Math.min(5, it.after);
+    if (up != null && up > (cur || 0)) areas[it.area].rating = up;
+  }
+  const editor = REPORT_AREAS.reduce((a, k) => a + (RATING_PTS[areas[k].rating] || 0), 0);
+  return Math.min(r2.rules + editor, r2.red ? 69 : 100);
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -5805,6 +5967,41 @@ function scoreOf(R, dismissed) {
   if (band === "amarillo") score = Math.min(score, 99);
   return { score, band, open, ignored, pts, lost, openPts, dismissPen, redOpen, total: rows.length, passed: R.passed };
 }
+
+/* ===== Preparado para YouTube (readiness, 0–100) =====
+   (jadri47, 2026-10-22: "one score, readiness, recalibrated") 40 puntos que calcula la app sola + 60 de la valoración del editor.
+   Las revisiones línea por línea (muletillas, frases largas, regionalismos…) ya NO cuentan: viven en «Más detalles» con scoreOf. */
+const REPORT_AREAS = ["hook", "promise", "retention", "voice", "close", "return"];
+// A 4/5 is still good: 9 of 10 (jadri47, 2026-10-22).
+const RATING_PTS = { 1: 0, 2: 4, 3: 7, 4: 9, 5: 10 };
+const READY_BUCKET = { ads: 20, pack: 12, len: 8 };
+const READY_PACK_IDS = new Set(["title", "desc", "chapters", "kw"]);
+const READY_LEN_IDS = new Set(["runtime", "cta", "ending"]);
+// scoreOf weighs runtime 0 (it is not a fault in the text), but under 8 min there are no mid-roll ads: here it costs.
+const READY_W = { runtime: 4 };
+const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
+// report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
+// (no invented number). dismissed: rows the person ignored count as passed here.
+function readinessOf(R, report, dismissed) {
+  dismissed = dismissed || new Set();
+  const rows = Object.values(R.sections).flat();
+  const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
+  const lose = (pred) => open.filter(pred).reduce((a, r) => a + readyWeight(r), 0);
+  const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
+  const ads = red ? 0 : Math.max(0, READY_BUCKET.ads - lose((r) => /^pf-/.test(r.id)));
+  const pack = Math.max(0, READY_BUCKET.pack - lose((r) => /^pack-/.test(r.id) || READY_PACK_IDS.has(r.id)));
+  const len = Math.max(0, READY_BUCKET.len - lose((r) => READY_LEN_IDS.has(r.id)));
+  const rules = ads + pack + len;
+  const parts = { ads, pack, len };
+  // the open rows that cost points here (the verdict counts them; line-level rows are not among them)
+  const openIds = open.filter((r) => /^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)).map((r) => r.id);
+  if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts, openIds };
+  // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
+  const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  let score = rules + editor;
+  if (red) score = Math.min(score, 69);
+  return { score, rules, rulesMax: 40, editor, red, parts, openIds };
+}
 // ---------- Color families for the text (pure) ----------
 // One table decides how a finding looks everywhere: the paragraph review, the fix cards and the marked script.
 // Color is never the only cue: each family also has its own line style (see guide.css).
@@ -6020,7 +6217,88 @@ function coachAiPick(list, have, max) {
   return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick };
+// ---------- Editor's report: one AI read of the whole script, vetted in code (pure, no DOM) ----------
+// (jadri47, 2026-10-22: "improve his messages from a 90 level for a YouTube video to a 95-100") The rules catch line faults;
+// hook, promise, retention, spoken voice, close and the return viewer need an editor's judgement. Scripture is masked as
+// ⟦Vn⟧ before the AI sees it (same masker as polish_logic.js) and every answer is checked here; nothing depends on the AI behaving.
+const REPORT_MAX_ITEMS = 7;
+
+function reportPrompt(text, R, opts) {
+  opts = opts || {};
+  const en = R.lang === "en";
+  const spans = verseSpans(text, R), mk = maskVerses(text, spans, 0, text.length);
+  const risk = [...new Set((R.riskHits || []).map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
+  const mins = Math.round((R.runtimeSec || 0) / 60);
+  const kw = (opts.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "—";
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "why": "...", "after": 1-5}]}`;
+  const brief = en
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. The script is in English: write every "why" and "replacement" in English.`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
+  const facts = en
+    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (do not replace them with euphemisms, do not add new ones): ${risk}. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
+    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (no los cambies por eufemismos ni añadas otros): ${risk}. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
+  const rules = en
+    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return.`
+    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return.`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+}
+
+const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
+
+// json: whatever the model sent (untrusted). Returns the normalised areas and only the items that survive every check.
+function vetReport(text, json, opts, R) {
+  const areas = {};
+  for (const k of REPORT_AREAS) {
+    const a = json && json.areas && json.areas[k];
+    areas[k] = { rating: reportRating(a && a.rating), why: String((a && a.why) || "").slice(0, 300) };
+  }
+  const list = json && Array.isArray(json.items) ? json.items : [];
+  const spans = verseSpans(text, R), verse = spans.filter((s) => s.kind !== "ref");
+  const mk = maskVerses(text, spans, 0, text.length); // same numbering the prompt used
+  const toks = mk.toks || [];
+  const items = [];
+  const riskBefore = (R.riskHits || []).length;
+  for (const it of list) {
+    if (items.length >= REPORT_MAX_ITEMS) break;
+    if (!it || !REPORT_AREAS.includes(it.area)) continue;
+    let o = typeof it.original === "string" ? it.original : "";
+    const c = typeof it.replacement === "string" ? it.replacement : "";
+    if (!o.trim() || !c.trim() || o === c || o.length > 800 || c.length > 1000) continue;
+    if (/⟦|⟧/.test(c)) continue; // a verse mark never goes into a replacement
+    for (const t of toks) o = o.split(t.tok).join(t.text); // the AI saw tokens; locate on the real text
+    if (/⟦|⟧/.test(o)) continue; // a token that is not one of ours
+    const i = text.indexOf(o);
+    if (i < 0 || text.indexOf(o, i + 1) >= 0) continue; // not found, or not unique
+    const start = i, end = i + o.length;
+    if (verse.some((s) => start < s.end && end > s.start)) continue; // never touches Scripture
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) continue;
+    if (items.some((x) => start < x.end && x.start < end)) continue; // overlaps a change already kept
+    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
+    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) continue; // no new ad or packaging problem
+    if (analyze(check.text, check.opts).riskHits.length > riskBefore) continue; // no new sensitive term, even if that check was already open
+    items.push({ area: it.area, start, end, original: o, replacement: c, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
+  }
+  return { areas, items, dropped: list.length - items.length };
+}
+
+// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
+// item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
+function projectedReadiness(text, R, opts, report) {
+  const items = (report && report.items) || [];
+  const t2 = applyPatches(text, items.map((x) => ({ start: x.start, end: x.end, rep: x.replacement })));
+  const r2 = readinessOf(analyze(t2, opts), null);
+  const areas = {};
+  for (const k of REPORT_AREAS) areas[k] = { rating: report && report.areas && report.areas[k] ? report.areas[k].rating : null };
+  for (const it of items) {
+    const cur = areas[it.area].rating, up = it.after == null ? null : Math.min(5, it.after);
+    if (up != null && up > (cur || 0)) areas[it.area].rating = up;
+  }
+  const editor = REPORT_AREAS.reduce((a, k) => a + (RATING_PTS[areas[k].rating] || 0), 0);
+  return Math.min(r2.rules + editor, r2.red ? 69 : 100);
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -8354,19 +8632,19 @@ const _renderResultsFx = renderResults;
 renderResults = function () { _renderResultsFx(); wireFixes(); };
 $("runBtn").addEventListener("click", () => { state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); state.fixLog = []; }, true);
 
-/* ===== Modo guiado: 5 pasos, lenguaje sencillo, modo completo detrás de un interruptor ===== */
+/* ===== Modo guiado: 3 pasos, lenguaje sencillo, modo completo detrás de un interruptor ===== */
 Object.assign(T.es, {
   expert: "Modo completo",
-  steps: ["Escribir", "Arreglar", "Preparar", "Grabar", "Después"],
-  stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene arreglar antes de grabar", "Cómo empieza el video y cómo se llama", "Grabar con el prompter", "Después de grabar"],
+  // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
+  steps: ["Escribir", "Mejorar", "Publicar"],
+  stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene mejorar antes de grabar", "Publicar: empaque, apertura y grabación"],
   s1Lead: "Pega aquí el guion completo del episodio. Te diremos qué conviene arreglar antes de grabar.", s1Sample: "Probar con un guion de ejemplo", s1Continue: "Seguir con un episodio guardado", s1Open: "Abrir",
   stFold: (n, d) => `Ver las ${n} secciones · ${d}`,
   s2Lead: "Toca «Aplicar» para aceptar un cambio. Si no te convence, toca «Ahora no». Siempre puedes deshacer.",
-  s3Lead: "La apertura usa frases que ya están en tu guion: no hay que grabar nada aparte. Después escribe el título y el texto de la miniatura.",
-  s4Lead: "Abre el prompter y lee. El texto avanza solo, a tu ritmo.", s4Len: (a) => `El episodio dura unos ${a}.`, s4Clips: "Estas frases se usan al inicio del video: dilas mirando a la cámara, con una pausa antes y después.",
+  s3Lead: "Elige cómo empieza el video y cómo se llama, apruébalo y grábalo con el prompter.",
+  s4Len: (a) => `El episodio dura unos ${a}.`, s4Clips: "Estas frases se usan al inicio del video: dilas mirando a la cámara, con una pausa antes y después.",
   s4Pp: "Abrir prompter", s4Reh: "Ensayar con cronómetro", s4Sheet: "Hoja para el editor", s4Done: "Ya lo grabamos",
   s4Help: "Con teclado o pedal: Espacio empieza o pausa · flechas ↑ ↓ cambian la velocidad · Esc sale. En el celular o la tableta: toca la pantalla para empezar o pausar.",
-  s5Lead: "Apunta el próximo episodio, elige clips cortos para Shorts y, cuando el video lleve unos días publicado, mira dónde se fue la gente.",
   next: "Siguiente", back: "Atrás", approve: "Aprobar el guion", approved: "Guion aprobado", toReview: "Ver todas las revisiones",
   vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vYellowLow: (n) => `Le falta trabajo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
   vGreenD: "No hay nada importante que cambiar.", vYellowD: "Nada impide grabar, pero estos cambios ayudan a que la gente se quede.", vRedD: "Hay algo que puede quitar los anuncios del video. Arréglalo primero.",
@@ -8383,16 +8661,15 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   expert: "Full mode",
-  steps: ["Write", "Fix", "Prepare", "Record", "After"],
-  stepQ: ["Write or paste the episode script", "What to fix before recording", "How the video opens and what it's called", "Record with the prompter", "After recording"],
+  steps: ["Write", "Improve", "Publish"],
+  stepQ: ["Write or paste the episode script", "What's worth improving before you record", "Publish: packaging, opening and recording"],
   s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Sample: "Try a sample script", s1Continue: "Continue a saved episode", s1Open: "Open",
   stFold: (n, d) => `Show the ${n} sections · ${d}`,
   s2Lead: "Tap \"Apply\" to accept a change. If you don't like it, tap \"Not now\". You can always undo.",
-  s3Lead: "The opening uses lines already in your script: nothing extra to record. Then write the title and the thumbnail text.",
-  s4Lead: "Open the prompter and read. The text moves on its own, at your pace.", s4Len: (a) => `The episode runs about ${a}.`, s4Clips: "These lines open the video: say them to the camera, with a pause before and after.",
+  s3Lead: "Choose how the video opens and what it's called, approve it, and record it with the prompter.",
+  s4Len: (a) => `The episode runs about ${a}.`, s4Clips: "These lines open the video: say them to the camera, with a pause before and after.",
   s4Pp: "Open prompter", s4Reh: "Rehearse with stopwatch", s4Sheet: "Editor sheet", s4Done: "We recorded it",
   s4Help: "With a keyboard or pedal: Space starts or pauses · ↑ ↓ change speed · Esc exits. On a phone or tablet: tap the screen to start or pause.",
-  s5Lead: "Note the next episode, pick short clips for Shorts and, once the video has been up a few days, see where people left.",
   next: "Next", back: "Back", approve: "Approve the script", approved: "Script approved", toReview: "See every check",
   vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vYellowLow: (n) => `Needs work: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
   vGreenD: "Nothing important to change.", vYellowD: "Nothing stops you from recording, but these changes help people stay.", vRedD: "Something could remove ads from the video. Fix it first.",
@@ -8418,9 +8695,13 @@ function plainLabel(id, fallback) {
   if (/^pack-/.test(id)) return t("plainPack");
   return fallback;
 }
+// Same recipe as the number beside it (readinessOf): n = open rules rows that cost readiness + report changes not yet decided.
+// "Almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score"); without a report the rules part counts /40 → 28.
 function verdictOf(R) {
-  const S = scoreOf(R, state.fixDismissed), n = S.open.length;
-  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (S.score >= 70 ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } /* "almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score") */ : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
+  const rd = readinessOf(R, G.report, state.fixDismissed);
+  const items = typeof rpStates === "function" && R === state.result ? rpStates().filter((x) => x.st === "pending").length : 0;
+  const n = rd.openIds.length + items, high = rd.score != null ? rd.score >= 70 : rd.rules >= 28;
+  return rd.red ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (high ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
 }
 const hasScript = () => !!$("script").value.trim();
 function ensureReview() {
@@ -8428,7 +8709,7 @@ function ensureReview() {
   if (!state.result || state.text !== $("script").value) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); }
   return true;
 }
-function stepForStatus(s) { return s === "grabado" ? 5 : s === "aprobado" ? 4 : 2; }
+function stepForStatus(s) { return s === "grabado" || s === "aprobado" ? 3 : 2; }
 
 function applyView() {
   const main = document.querySelector("main");
@@ -8446,6 +8727,7 @@ function applyView() {
 function goStep(n) {
   if (n > 1 && !ensureReview()) n = 1;
   V.step = n;
+  if (n < 3) { V.s3After = false; V.s3More = false; } // «Después de grabar» / «Más detalles» start closed on each visit
   document.querySelector("main").dataset.step = String(n);
   if (n >= 3) gCompute();
   renderGuide();
@@ -8462,8 +8744,10 @@ function navHTML(prev, nextLabel, nextAttr) {
   return `<div class="g-nav-steps">${prev ? `<button type="button" data-step="${prev}">← ${h(t("back"))}</button>` : "<span></span>"}${nextLabel ? `<button type="button" class="primary" ${nextAttr}>${h(nextLabel)} →</button>` : ""}</div>`;
 }
 function verdictHTML(R) {
-  const v = verdictOf(R), S = typeof scoreOf === "function" ? scoreOf(R, state.fixDismissed) : null;
-  return `<div class="gv gv-${v.k}">${S ? `<div class="gv-top"><span class="gv-n">${S.score}<small>/100</small></span><span class="gv-l">${h(t("scTitle"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
+  // The number is readiness (score_logic.js readinessOf): with the editor's report /100, without it only the rules part /40.
+  const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed) : null;
+  const n = rd ? (rd.score != null ? rd.score : rd.rules) : 0, full = !!(rd && rd.score != null);
+  return `<div class="gv gv-${v.k}">${rd ? `<div class="gv-top"><span class="gv-n">${n}<small>/${full ? 100 : rd.rulesMax}</small></span><span class="gv-l">${h(t(full ? "rpName" : "rpRulesName"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
 }
 
 function renderGuide() {
@@ -8483,30 +8767,39 @@ function renderGuide() {
   const R = state.result;
   if (V.step === 2) {
     top.innerHTML = head(2);
-    body.innerHTML = `${verdictHTML(R)}${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
-      <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>${navHTML(1, t("next"), 'data-step="3"')}`;
-    wireFixes();
-    $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
-  } else if (V.step === 3) {
+    // The editor's report (report_ui.js) comes first; today's coach / walker / rail / legend / more checks / Ask Claude sit behind
+    // «Más detalles» and are only built while it is open, so nothing paints over the script until then.
+    const rep = typeof reportHTML === "function", more = rep ? rpMoreOpen() : true;
+    const inner = more ? `${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
+      <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>` : "";
+    body.innerHTML = `${verdictHTML(R)}${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
+    if (more) {
+      wireFixes();
+      $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
+    }
+  } else {
+    // Step 3 «Publicar»: packaging → next episode → opening → approve, then the record card, then «Después de grabar».
+    // Approve and «Ya lo grabamos» only change the status and stay here (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3").
     top.innerHTML = head(3);
     const missing = packGateMissing();
-    const done = G.status === "aprobado" || G.status === "grabado";
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gStruct"></section><section class="g-card" id="gCold"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gPack"></section>
+    const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
+    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gPack"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gCold"></section>
       <div class="g-approve">${done ? `<span class="lamp verde">${h(t("approved"))}</span>` : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : ""}`}</div>
-      ${navHTML(2, done ? t("next") : "", 'data-step="4"')}`;
-    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack();
+      ${recordCardHTML()}
+      <div class="g-approve g-recorded">${recorded ? `<span class="lamp verde">${h(t("status").grabado)}</span>` : `<button type="button" class="primary" id="gRecorded"${approved ? "" : " disabled"}>${h(t("s4Done"))}</button>`}</div>
+      <details class="rp-more g-after" id="gAfter"${V.s3After ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpAfterRec"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section></div></details>
+      <details class="rp-more g-more3" id="gMore3"${V.s3More ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpMore"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gStruct"></section></div></details>
+      ${navHTML(2)}`;
+    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack(); wireRecordCard(); renderShorts(); renderResultsCard();
+    const keep = (id, k) => { const d = $(id); if (d) d.addEventListener("toggle", () => { V[k] = d.open; }); };
+    keep("gAfter", "s3After"); keep("gMore3", "s3More");
     const ap = $("gApprove");
-    if (ap) ap.addEventListener("click", async () => { ap.disabled = true; await setStatus("aprobado"); goStep(4); });
-  } else if (V.step === 4) {
-    top.innerHTML = head(4);
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s4Lead"))}</p>${recordCardHTML()}
-      ${navHTML(3, t("s4Done"), 'id="gRecorded"')}`;
-    wireRecordCard();
-    $("gRecorded").addEventListener("click", async (e) => { e.target.disabled = true; if (G.status !== "grabado") await setStatus(G.status === "aprobado" ? "grabado" : G.status); goStep(5); });
-  } else {
-    top.innerHTML = head(5);
-    body.innerHTML = `<p class="lead">${h(t("s5Lead"))}</p><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section>${navHTML(4)}`;
-    renderShorts(); renderResultsCard();
+    if (ap) ap.addEventListener("click", async () => {
+      ap.disabled = true; await setStatus("aprobado");
+      const rc = $("gRecCard"); if (rc) rc.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
+    const rec = $("gRecorded");
+    if (rec) rec.addEventListener("click", async () => { rec.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
   }
   wireGuideNav(body);
   body.querySelectorAll("[data-see]").forEach((b) => b.remove());
@@ -9254,7 +9547,7 @@ function renderExPick() {
   el.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { el.querySelectorAll("[data-ex]").forEach((x) => (x.disabled = true)); startDemo(b.dataset.ex); }));
 }
 
-// Step 5 / Results: let a practice run load sample retention data.
+// Step 3 «Después de grabar» / Results: let a practice run load sample retention data.
 const _renderResultsCardD = renderResultsCard;
 renderResultsCard = function () {
   _renderResultsCardD();
@@ -9944,9 +10237,9 @@ const _gOnLangL = gOnLang;
 gOnLang = function () { _gOnLangL(); renderTr(); renderIdeaSug(); };
 renderTr(); renderIdeaSug();
 { const tg = $("trToggle"); if (tg) tg.addEventListener("click", () => { TR.open = !TR.open; renderTr(); }); }
-/* ===== Tus episodios: lista sencilla en una hoja aparte, y «planea el próximo» en el paso 5 ===== */
+/* ===== Tus episodios: lista sencilla en una hoja aparte, y «planea el próximo» en «Después de grabar» (paso 3) ===== */
 // The old calendar sat in step 1, before writing, with raw date boxes. Now: one line on top of every step
-// says which episode is open, «Mis episodios» opens the list, and step 5 plans the next one right after recording.
+// says which episode is open, «Mis episodios» opens the list, and «Después de grabar» (step 3) plans the next one right after recording.
 Object.assign(T.es, {
   srTitle: "Tus episodios", srLead: "Toca un episodio para abrirlo.",
   epNow: "Episodio", epNew: "Episodio nuevo", epNoDate: "sin fecha de publicación", epOut: (d) => `sale el ${d}`,
@@ -10098,10 +10391,10 @@ renderGuide = function () {
   const top = $("guideTop");
   if (top && !$("epStrip")) { const s = document.createElement("div"); s.id = "epStrip"; s.className = "ep-strip"; top.prepend(s); }
   renderEpStrip();
-  if (V.step === 5) renderNextPlan();
+  if (V.step === 3) renderNextPlan(); // inside «Después de grabar» (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
 };
 
-// ---------- step 5: plan the next one right after recording ----------
+// ---------- step 3, «Después de grabar»: plan the next one right after recording ----------
 function renderNextPlan() {
   const el = $("gNextPlan");
   if (!el) return;
@@ -11273,9 +11566,7 @@ const HELP = {
     expert: "Apagado: la app te lleva paso a paso y muestra solo lo esencial. Encendido: ves todas las revisiones y herramientas en una sola pantalla.",
     step1: "Primer paso: pega el guion tal como lo vas a leer. La app solo sugiere; nada cambia en tu texto sin que toques «Aplicar».",
     step2: "La app revisa el guion con las reglas de anuncios de YouTube y con buenas prácticas para enseñar en voz alta. Aquí ves solo lo más importante, con el cambio ya escrito.",
-    step3: "Antes de grabar se decide cómo empieza el video y cómo se llama. Cuando las revisiones obligatorias pasan, apruebas el guion y queda listo para grabar.",
-    step4: "«Abrir prompter» muestra el guion en letra grande y lo hace avanzar solo. «Ensayar con cronómetro» mide cuánto tardas en cada sección y corrige los tiempos. «Hoja para el editor» descarga las secciones, tiempos y clips para quien edita. Dentro del prompter: ▶ empieza o pausa, − y + cambian la velocidad, A− y A+ el tamaño de letra.",
-    step5: "Después de publicar: elige clips para Shorts y, a los pocos días, trae la retención de YouTube Studio para ver en qué parte del guion se fue la gente.",
+    step3: "Elige el título, la miniatura y cómo empieza el video. Cuando las revisiones obligatorias pasan, aprueba el guion. «Abrir prompter» muestra el guion en letra grande y lo hace avanzar solo. «Ensayar con cronómetro» mide cuánto tardas en cada sección. «Hoja para el editor» descarga las secciones, tiempos y clips. En el prompter: ▶ empieza o pausa, − y + cambian la velocidad, A− y A+ el tamaño. Después de grabar: elige clips para Shorts y, a los pocos días, trae la retención de YouTube Studio.",
     examples: "Tres guiones de práctica: uno flojo, uno regular y uno muy bueno. Ábrelos para ver qué marca la app y cómo propone arreglarlo. Mientras practicas nada se guarda; toca «Salir del ejemplo» para volver a tu trabajo.",
     audience: "La variante del español en que hablas al canal. Cambia qué se marca como regionalismo y cómo escribe la IA: con «Español de España» no se marcan «vosotros», «-áis/-éis», «vale» ni «coger»; con «Español latinoamericano» no se marcan «ahorita» ni «platicar». «Español neutro» marca todo lo que no se entiende igual en ambos lados.",
     ask: "Escribe con tus palabras lo que quieres mejorar, por ejemplo «hazlo más cálido» o «dame un ejemplo de la vida diaria». Elige un párrafo o todo el guion. Claude responde y, si propone texto nuevo, ves cómo quedaría antes de tocar «Aplicar». Cada pregunta tiene un pequeño costo, que aparece abajo al terminar.",
@@ -11347,9 +11638,7 @@ const HELP = {
     expert: "Off: the app walks you step by step and shows only what matters. On: every check and tool on one screen.",
     step1: "First step: paste the script exactly as you'll read it. The app only suggests; nothing in your text changes until you tap “Apply”.",
     step2: "The app checks the script against YouTube's ad rules and good practice for teaching out loud. Here you see only the most important items, with the change already written.",
-    step3: "Before recording you decide how the video opens and what it's called. Once the required checks pass, you approve the script and it's ready to record.",
-    step4: "“Open prompter” shows the script in large type and scrolls it for you. “Rehearse with timer” measures how long each section takes and corrects the timings. “Editor sheet” downloads the sections, timings and clips for whoever edits. Inside the prompter: ▶ starts or pauses, − and + change the speed, A− and A+ the text size.",
-    step5: "After publishing: pick clips for Shorts and, a few days later, bring in the retention data from YouTube Studio to see where in the script people left.",
+    step3: "Pick the title, the thumbnail and how the video opens. Once the required checks pass, approve the script. “Open prompter” shows the script in large type and scrolls it for you. “Rehearse with timer” measures each section. “Editor sheet” downloads the sections, timings and clips. In the prompter: ▶ starts or pauses, − and + change the speed, A− and A+ the text size. After recording: pick clips for Shorts and, a few days later, bring in the retention data from YouTube Studio.",
     examples: "Three practice scripts: a weak one, an average one and a very good one. Open them to see what the app flags and how it proposes fixes. Nothing is saved while you practice; tap “Leave the example” to return to your work.",
     audience: "The Spanish variant you speak to the channel in; only matters for Spanish scripts. It changes what counts as regional and how the AI writes: with “Spain Spanish”, vosotros, -áis/-éis, vale and coger aren't flagged; with “Latin American Spanish”, ahorita and platicar aren't. “Neutral Spanish” flags anything not understood the same on both sides.",
     ask: "Type what you want to improve in your own words, e.g. “make it warmer” or “give me an everyday example”. Pick one paragraph or the whole script. Claude answers and, if it proposes new text, you see how it would read before tapping “Apply”. Each question has a small cost, shown at the bottom when it finishes.",
@@ -11614,19 +11903,25 @@ function editMarks(R, text) {
   return (_EM = { text, R, list: out }).list;
 }
 /* ===== Burbuja de puntuación: un número 0–100 que sigue al usuario y se actualiza al cambiar el guion ===== */
-// scoreOf() vive en score_logic.js (banda primero, posición dentro de la banda). El análisis en vivo corre en un
+// readinessOf() vive en score_logic.js (reglas 40 + editor 60). El análisis en vivo corre en un
 // Web Worker con el mismo motor que la revisión; si no hay worker, corre en la pausa del navegador con "debounce".
+// The (i) text of the score (editor's report, 2026-10-22); report_ui.js puts it behind the «?» of the report and the popover shows it.
+const RP_INFO = {
+  es: "La nota suma dos partes: lo que la app comprueba sola (anuncios, empaque, duración) y la valoración del editor. La del editor cambia solo al volver a evaluar.",
+  en: "The score adds two parts: what the app checks by itself (ads, packaging, length) and the editor's rating. The editor's part changes only when you re-evaluate.",
+};
 Object.assign(T.es, {
   scTitle: "Puntuación Script Desk", scWord: "Puntuación", scBand: { rojo: "Anuncios en riesgo", amarillo: "Sin riesgo grave de anuncios", verde: "Listo para grabar" },
   scLamp: { rojo: "Anuncios en riesgo: hay un término que YouTube no perdona.", amarillo: "Sin riesgo grave de anuncios.", verde: "Limpio: nada pendiente." },
   scLeft: (n, p) => `Te ${n === 1 ? "falta 1 revisión, que vale" : `faltan ${n} revisiones, que valen`} ${p} ${p === 1 ? "punto" : "puntos"}.`,
   scHowT: "Cómo se calcula",
-  scHow: ["Anuncios (términos de riesgo): 6–8 puntos cada uno; un término grave pone la nota en rojo (máx. 69).", "Primeros 30 segundos y estructura: 1–5 puntos.", "Que el mensaje se entienda (idea central, cierre, citas): 1–4 puntos.", "Que te encuentren (palabra clave, título, descripción): 1–3 puntos.", "Cómo suena (lecturas, muletillas, regionalismos): 1–2 puntos. Lo que descartas cuesta la mitad."],
+  scHow: ["Anuncios: 20 puntos. Un término grave pone la nota en rojo (máx. 69).", "Empaque (título, miniatura, descripción, capítulos, palabra clave): 12 puntos.", "Duración y cierre (8 minutos o más, invitación, final): 8 puntos.", "Valoración del editor: 6 áreas de 1 a 5, hasta 60 puntos. Cambia solo al volver a evaluar.", "Lo de «Más detalles» (muletillas, frases largas…) no cuenta en la nota."],
+  scParts: (p, e) => `Anuncios ${p.ads}/20 · Empaque ${p.pack}/12 · Duración y cierre ${p.len}/8 · ${e == null ? "Editor: sin informe" : `Editor ${e}/60`}.`,
   scPtsTip: "Puntos que sube la nota al arreglarlo",
-  scNew: "Nueva puntuación: cada revisión pesa según su impacto. Si tu número bajó, el guion no cambió; ahora ves qué arreglar primero.",
+  scNew: "Nueva nota: «Preparado para YouTube». Suma anuncios, empaque y duración, más la valoración del editor. Si tu número cambió, tu guion no cambió.",
   scSince: (a, b) => `Desde que empezaste: ${a} → ${b}`, scTop: "Lo que más sube la nota", scNone: "Nada pendiente.",
-  scIgnored: (n, x) => `Ignoraste ${n} ${n === 1 ? "revisión" : "revisiones"} (−${x} ${x === 1 ? "punto" : "puntos"})`, scShowAgain: "Volver a mostrar",
-  scNote: "Puntuación de Script Desk: 100 menos lo que pesa cada revisión pendiente. No es la nota de YouTube.",
+  scIgnored: (n) => `Ignoraste ${n} ${n === 1 ? "revisión" : "revisiones"}`, scShowAgain: "Volver a mostrar",
+  scNote: `${RP_INFO.es} No es la nota de YouTube.`,
   scHide: "Ocultar burbuja", scShow: "Mostrar puntuación", scAria: (n) => `Puntuación ${n} de 100`, scChecks: (p, n) => `${p} de ${n} revisiones pasan`, scClose: "Cerrar",
 });
 Object.assign(T.en, {
@@ -11634,23 +11929,24 @@ Object.assign(T.en, {
   scLamp: { rojo: "Ads at risk: a term YouTube doesn't forgive.", amarillo: "No serious ad risk.", verde: "Clean: nothing pending." },
   scLeft: (n, p) => `${n} ${n === 1 ? "check" : "checks"} left, worth ${p} ${p === 1 ? "point" : "points"}.`,
   scHowT: "How it's scored",
-  scHow: ["Ads (risk terms): 6–8 points each; one serious term turns the score red (max 69).", "First 30 seconds and structure: 1–5 points.", "That the message lands (central idea, close, quotes): 1–4 points.", "That people find it (keyword, title, description): 1–3 points.", "How it sounds (readings, fillers, regionalisms): 1–2 points. What you dismiss costs half."],
+  scHow: ["Ads: 20 points. One serious term turns the score red (max 69).", "Packaging (title, thumbnail, description, chapters, keyword): 12 points.", "Length and close (8 minutes or more, call to action, ending): 8 points.", "Editor's rating: 6 areas from 1 to 5, up to 60 points. It changes only when you re-evaluate.", "What's under “More details” (fillers, long sentences…) doesn't count in the score."],
+  scParts: (p, e) => `Ads ${p.ads}/20 · Packaging ${p.pack}/12 · Length and close ${p.len}/8 · ${e == null ? "Editor: no report" : `Editor ${e}/60`}.`,
   scPtsTip: "Points this adds to the score when fixed",
-  scNew: "New score: each check weighs by its impact. If your number dropped, the script did not change; now you see what to fix first.",
+  scNew: "New score: “YouTube-ready”. It adds ads, packaging and length, plus the editor's rating. If your number changed, your script didn't.",
   scSince: (a, b) => `Since you started: ${a} → ${b}`, scTop: "What raises it most", scNone: "Nothing pending.",
-  scIgnored: (n, x) => `You dismissed ${n} ${n === 1 ? "check" : "checks"} (−${x} ${x === 1 ? "point" : "points"})`, scShowAgain: "Show again",
-  scNote: "Script Desk score: 100 minus the weight of each pending check. It is not YouTube's score.",
+  scIgnored: (n) => `You dismissed ${n} ${n === 1 ? "check" : "checks"}`, scShowAgain: "Show again",
+  scNote: `${RP_INFO.en} It is not YouTube's score.`,
   scHide: "Hide bubble", scShow: "Show score", scAria: (n) => `Score ${n} out of 100`, scChecks: (p, n) => `${p} of ${n} checks pass`, scClose: "Close",
 });
 if (typeof HELP !== "undefined") {
-  HELP.es.verdictCard = "Resumen de la revisión. El círculo muestra la puntuación de Script Desk (0 a 100): cada revisión pendiente resta según su impacto, las de anuncios primero. No es la nota de YouTube. La etiqueta de color habla solo de los anuncios.";
-  HELP.en.verdictCard = "Review summary. The ring shows the Script Desk score (0 to 100): each pending check subtracts by its impact, ads first. It is not YouTube's score. The colored label is about ads only.";
+  HELP.es.verdictCard = `Resumen de la revisión. ${RP_INFO.es} No es la nota de YouTube.`;
+  HELP.en.verdictCard = `Review summary. ${RP_INFO.en} It is not YouTube's score.`;
 }
 
-const SC = { w: null, seq: 0, pending: 0, guard: null, timer: null, delay: 700, ms: 0, R: null, S: null, base: null, baseKey: null, shown: null, off: lsGet("sd-bubble") === "off", where: "", pop: false, noWorker: false, liveAt: 0 };
+const SC = { RD: null, cur: 0, kind: "", baseKind: "", w: null, seq: 0, pending: 0, guard: null, timer: null, delay: 700, ms: 0, R: null, S: null, base: null, baseKey: null, shown: null, off: lsGet("sd-bubble") === "off", where: "", pop: false, noWorker: false, liveAt: 0 };
 window.SC = SC;
-// v3: the score recipe changed on 2026-10-21 (partial credit); "since last time" must not compare scores from two recipes
-const scKey = () => "sd-score-base-v3:" + (G.prodId || "draft");
+// v4: the number is readiness since 2026-10-22 (v3 was the partial-credit score); "since last time" must not compare two recipes
+const scKey = () => "sd-score-base-v4:" + (G.prodId || "draft");
 const scDemo = () => typeof DEMO !== "undefined" && !!DEMO;
 const scReduced = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -11681,7 +11977,7 @@ function scAdapt() { SC.delay = SC.ms > 250 ? Math.min(2000, SC.delay * 2) : SC.
 const scIdle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0));
 function scSlim(R) {
   const sections = {};
-  for (const k of Object.keys(R.sections)) sections[k] = R.sections[k].map((r) => ({ id: r.id, label: r.label, passed: r.passed, warn: r.warn, level: r.level }));
+  for (const k of Object.keys(R.sections)) sections[k] = R.sections[k].map((r) => ({ id: r.id, label: r.label, passed: r.passed, warn: r.warn, level: r.level, n: r.n, lim: r.lim })); // n/lim: the readiness recipe needs them too, as in the worker
   return { worst: R.worst, passed: R.passed, total: R.total, sections };
 }
 
@@ -11719,20 +12015,27 @@ function scRun() {
 // ---- state → pill ----
 function scApply() {
   if (!SC.R) { scPaint(); return; }
-  const S = scoreOf(SC.R, state.fixDismissed);
+  // The number is readiness: with the editor's report /100, without it only the rules part /40 (never a made-up editor part).
+  const RD = readinessOf(SC.R, G.report, state.fixDismissed), kind = RD.score != null ? "100" : "40", cur = RD.score != null ? RD.score : RD.rules;
+  // The band and the popover rows use the same recipe as the number: only rows that cost readiness, at what they cost there.
+  const rows = Object.values(SC.R.sections).flat(), inReady = new Set(RD.openIds);
+  const open = rows.filter((r) => inReady.has(r.id)), pts = new Map(open.map((r) => [r.id, readyWeight(r)]));
+  const ignored = rows.filter((r) => (!r.passed || r.warn) && state.fixDismissed.has(r.id) && (/^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)));
+  const S = { band: RD.red ? "rojo" : open.length ? "amarillo" : "verde", open, pts, openPts: open.reduce((a, r) => a + pts.get(r.id), 0), ignored };
   const key = scKey();
-  if (SC.baseKey !== key || SC.base == null) {
-    SC.baseKey = key;
+  if (SC.baseKey !== key || SC.base == null || SC.baseKind !== kind) {
+    SC.baseKey = key; SC.baseKind = kind;
     let b = null;
-    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number") b = o.score; } catch (e) { /* best effort: unreadable saved baseline: show no change arrow */ } }
-    if (b == null) { b = S.score; if (!scDemo()) lsSet(key, JSON.stringify({ score: b, at: Date.now() })); }
+    if (!scDemo()) { try { const o = JSON.parse(lsGet(key) || "null"); if (o && typeof o.score === "number" && o.kind === kind) b = o.score; } catch (e) { /* best effort: unreadable saved baseline: show no change arrow */ } }
+    if (b == null) { b = cur; if (!scDemo()) lsSet(key, JSON.stringify({ score: b, kind, at: Date.now() })); }
     SC.base = b;
   }
-  SC.S = S; scPaint(); scNewToast();
+  SC.S = S; SC.RD = RD; SC.cur = cur; SC.kind = kind; scPaint(); scNewToast();
 }
 function scNewToast() {
-  if (scDemo() || SC.off || !hasScript() || lsGet("sd-score-v2-seen") === "1") return;
-  lsSet("sd-score-v2-seen", "1");
+  // v4-seen: the readiness score is a new recipe, so someone who saw the v2 notice sees this one once (2026-10-22)
+  if (scDemo() || SC.off || !hasScript() || lsGet("sd-score-v4-seen") === "1") return;
+  lsSet("sd-score-v4-seen", "1");
   let el = $("scToast");
   if (!el) { el = document.createElement("div"); el.id = "scToast"; el.className = "cost-toast"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
   el.innerHTML = `<span>${h(t("scNew"))}</span><button type="button" aria-label="${h(t("scClose"))}">×</button>`;
@@ -11744,7 +12047,7 @@ function scEnsure() {
   if (p) return p;
   p = document.createElement("button"); p.type = "button"; p.id = "scorePill"; p.className = "score-pill float"; p.hidden = true;
   p.setAttribute("aria-haspopup", "dialog"); p.setAttribute("aria-expanded", "false");
-  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-d" id="scD"></span>`;
+  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-of" id="scOf" aria-hidden="true"></span><span class="sc-d" id="scD"></span>`;
   p.addEventListener("click", (e) => { e.stopPropagation(); SC.pop ? scClosePop() : scOpenPop(); });
   document.body.appendChild(p);
   const live = document.createElement("div"); live.id = "scLive"; live.className = "vh"; live.setAttribute("role", "status"); live.setAttribute("aria-live", "polite"); document.body.appendChild(live);
@@ -11771,12 +12074,13 @@ function scPaint() {
   pill.hidden = !on;
   scShowBtn();
   if (!on) { scClosePop(); return; }
-  const S = SC.S, d = S.score - SC.base;
+  const S = SC.S, d = SC.cur - SC.base;
   pill.className = `score-pill band-${S.band} ${SC.where === "dock" ? "docked" : "float"}${SC.lift ? " lift" : ""}`;
-  const from = SC.shown; SC.shown = S.score;
-  scTween($("scN"), from, S.score);
+  const from = SC.shown; SC.shown = SC.cur;
+  scTween($("scN"), from, SC.cur);
+  $("scOf").textContent = SC.kind === "40" ? "/40" : "";
   const dEl = $("scD"); dEl.textContent = d ? (d > 0 ? "▲" : "▼") + Math.abs(d) : ""; dEl.className = "sc-d" + (d > 0 ? " up" : d < 0 ? " down" : "");
-  const lbl = `${t("scAria")(S.score)} · ${t("scBand")[S.band]}`;
+  const lbl = `${SC.kind === "40" ? t("rpRulesLbl")(SC.cur) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
   pill.setAttribute("aria-label", lbl); pill.title = t("scNote");
   const now = Date.now();
   if (now - SC.liveAt > 5000) { SC.liveAt = now; $("scLive").textContent = lbl; }
@@ -11791,15 +12095,15 @@ function scTopRows(S) {
 const scLabel = (r) => (typeof plainLabel === "function" ? plainLabel(r.id, r.label) : r.label);
 function scRenderPop() {
   const pop = $("scPop"); if (!pop || !SC.S) return;
-  const S = SC.S, d = S.score - SC.base;
+  const S = SC.S, d = SC.cur - SC.base;
   const top = scTopRows(S);
-  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${S.score}<small>/100</small></span><span class="sc-band">${h(t("scBand")[S.band])}</span><button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
+  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${SC.cur}<small>/${SC.kind}</small></span><span class="sc-band">${h(t("scBand")[S.band])}</span><button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
     <p class="sc-lamp">${h(t("scLamp")[S.band])}</p>
-    <p class="hint sc-checks">${S.open.length ? h(t("scLeft")(S.open.length, S.openPts)) + " " : ""}${h(t("scChecks")(S.passed, S.total))}</p>
-    ${d ? `<p class="sc-since">${h(t("scSince")(SC.base, S.score))}</p>` : ""}
+    <p class="hint sc-checks">${S.open.length ? h(t("scLeft")(S.open.length, S.openPts)) + " " : ""}${h(t("scParts")(SC.RD.parts, SC.RD.editor))}</p>
+    ${d ? `<p class="sc-since">${h(t("scSince")(SC.base, SC.cur))}</p>` : ""}
     <div class="sc-k">${h(t("scTop"))}</div>
     ${top.length ? `<ul class="sc-rows">${top.map((r) => `<li><button type="button" data-scrow="${h(r.id)}"><span>${h(scLabel(r))}</span><b class="sc-pts">+${S.pts.get(r.id)}</b></button></li>`).join("")}</ul>` : `<p class="hint">${h(t("scNone"))}</p>`}
-    ${S.ignored.length ? `<div class="sc-ign"><b>${h(t("scIgnored")(S.ignored.length, S.dismissPen))}</b><ul>${S.ignored.map((r) => `<li><span>${h(scLabel(r))}</span><button type="button" class="small" data-scshow="${h(r.id)}">${h(t("scShowAgain"))}</button></li>`).join("")}</ul></div>` : ""}
+    ${S.ignored.length ? `<div class="sc-ign"><b>${h(t("scIgnored")(S.ignored.length))}</b><ul>${S.ignored.map((r) => `<li><span>${h(scLabel(r))}</span><button type="button" class="small" data-scshow="${h(r.id)}">${h(t("scShowAgain"))}</button></li>`).join("")}</ul></div>` : ""}
     <details class="sc-how"><summary>${h(t("scHowT"))}</summary><ul>${t("scHow").map((x) => `<li>${h(x)}</li>`).join("")}</ul></details>
     <p class="hint sc-note">${h(t("scNote"))}</p>
     <button type="button" class="linkish sc-hide" id="scHide">${h(t("scHide"))}</button>`;
@@ -11902,7 +12206,7 @@ if (hasScript()) scQueue(true);
 // saving are unaffected). Browsers without it still get the paragraph accent and the scrolling.
 Object.assign(T.es, {
   wkTitle: "Revisión por párrafos", wkDoneN: (n) => (n === 1 ? "1 aplicada" : `${n} aplicadas`), wkSkipN: (n) => (n === 1 ? "1 ignorada" : `${n} ignoradas`), wkOf: (i, n) => `Párrafo ${i} de ${n}`, wkHere: (n) => (n === 1 ? "1 revisión" : `${n} revisiones`),
-  wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Preparar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
+  wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Publicar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
   wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
   wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
   wkEnd: "Terminaste el recorrido del guion.",
@@ -11911,7 +12215,7 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   wkTitle: "Paragraph-by-paragraph review", wkDoneN: (n) => `${n} applied`, wkSkipN: (n) => `${n} ignored`, wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
-  wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Prepare", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
+  wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Publish", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
   wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
   wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
   wkEnd: "You've been through the whole script.",
@@ -12833,7 +13137,7 @@ function coachAiIdea() {
     const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
     IDEA.busy = false;
     await ideaSuggest(true);
-    const v = IDEA.sug; IDEA.sug = ""; if (typeof renderIdeaSug === "function") renderIdeaSug(); // the suggestion lives here as a choice, not in the Prepare card
+    const v = IDEA.sug; IDEA.sug = ""; if (typeof renderIdeaSug === "function") renderIdeaSug(); // the suggestion lives here as a choice, not in the Publish step
     if (!v) throw { code: "invalid_json" };
     return [v];
   });
@@ -13094,6 +13398,323 @@ const _coachAfterRenderA = coachAfterRender;
 coachAfterRender = function () { _coachAfterRenderA(); coachAiPump(); };
 // a new review starts over (the pause for the session stays)
 $("runBtn").addEventListener("click", () => { COAI.cache = {}; COAI.calls = 0; COAI.epoch++; }, true);
+/* ===== Editor's report: step 2 shows one AI read of the whole script, then one change at a time ===== */
+// (jadri47, 2026-10-22: "improve his messages from a 90 level for a YouTube video to a 95-100") The pure part is report_logic.js
+// (prompt, vetting, readiness). This file asks for the report once per script version, keeps it with the episode (G.report), and walks
+// the person through the rule-based ad risks first and then the report's changes. Today's coach / walker / rail / legend / «Más
+// revisiones» / Ask Claude live behind «Más detalles» and are only built (so only painted) while that is open.
+Object.assign(T.es, {
+  rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
+  rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
+  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "Leyendo tu guion como lo haría un editor…",
+  rpNoAI: "El informe del editor necesita la IA. Mientras tanto ves los avisos de anuncios y de empaque.",
+  rpArea: { hook: "Gancho", promise: "Promesa", retention: "Retención", voice: "Voz hablada", close: "Cierre", return: "Que vuelvan", ads: "Anuncios" },
+  rpAdsOk: "✓ sin riesgo", rpOf5: (n) => `${n} de 5`, rpNoRate: "sin valorar", rpChange: (i, n) => `Cambio ${i} de ${n}`, rpWhy: "Por qué",
+  rpMore: "Más detalles", rpMoreHint: "(revisión línea por línea, muletillas, colores, por párrafos)", rpAfterRec: "Después de grabar",
+  rpGone: "Este fragmento cambió después del informe, así que no se puede aplicar. Sáltalo o vuelve a evaluar.", rpWriteHere: "Escribe cómo debe quedar",
+  rpHeadRisk: "Aviso rojo", rpListLbl: "Áreas del informe", rpDecLbl: "Decisión actual",
+});
+Object.assign(T.en, {
+  rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
+  rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
+  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "Reading your script the way an editor would…",
+  rpNoAI: "The editor's report needs the AI. Meanwhile you see the ad and packaging warnings.",
+  rpArea: { hook: "Hook", promise: "Promise", retention: "Retention", voice: "Spoken voice", close: "Close", return: "Return viewers", ads: "Ads" },
+  rpAdsOk: "✓ no risk", rpOf5: (n) => `${n} of 5`, rpNoRate: "not rated", rpChange: (i, n) => `Change ${i} of ${n}`, rpWhy: "Why",
+  rpMore: "More details", rpMoreHint: "(line-by-line review, fillers, colours, by paragraph)", rpAfterRec: "After recording",
+  rpGone: "This passage changed after the report, so it can't be applied. Skip it or re-evaluate.", rpWriteHere: "Write how it should read",
+  rpHeadRisk: "Red warning", rpListLbl: "Report areas", rpDecLbl: "Current decision",
+});
+if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
+if (typeof HELP_ANCHORS !== "undefined") HELP_ANCHORS.push(["rpReport", ".rp-title h3", "row"]);
+
+// more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null };
+const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
+const rpMoreOpen = () => RP.more;
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; }
+
+// A stored report is untrusted (old versions, other devices): keep only what has the right shape.
+function rpClean(r) {
+  if (!r || typeof r !== "object" || !r.areas || typeof r.areas !== "object" || !Array.isArray(r.items)) return null;
+  const areas = {};
+  for (const k of REPORT_AREAS) { const a = r.areas[k]; areas[k] = { rating: reportRating(a && a.rating), why: String((a && a.why) || "").slice(0, 300) }; }
+  const items = r.items.filter((x) => x && REPORT_AREAS.includes(x.area) && typeof x.original === "string" && x.original && typeof x.replacement === "string" && x.replacement)
+    .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, dropped: Number(r.dropped) || 0 };
+}
+const _applyProdR = applyProd;
+applyProd = function (id, d) { _applyProdR(id, d); G.report = rpClean(d && d.report); rpReset(); };
+const _prodBodyR = prodBody;
+prodBody = function (now) { return { ..._prodBodyR(now), report: G.report || null }; };
+const _doClearScriptR = doClearScript;
+doClearScript = function () { _doClearScriptR(); G.report = null; rpReset(); };
+// Changes made from this panel keep the report "fresh": the text moved because of the report, not behind its back.
+const _updateLiveR = updateLive;
+updateLive = function () { _updateLiveR(); if (RP.applying && G.report && G.report.key === RP.applying) G.report.key = rpKey(); };
+
+// ---- the one AI call ----
+async function rpRun(force) {
+  if (RP.busy) return;
+  const epoch = RP.epoch;
+  RP.busy = true; RP.err = ""; if (force) RP.failed = false;
+  let out = null;
+  try {
+    const sample = await caps.sample;
+    if (!sample) { RP.noAI = true; return; }
+    const text = state.text, R = state.result, opts = state.opts, key = rpKey();
+    RP.calls++;
+    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex" }); // not auto: the $5 automatic pause must not block the core feature
+    const v = vetReport(text, res, opts, R);
+    if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
+    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, why: x.why, after: x.after })), dropped: v.dropped };
+  } catch (e) {
+    if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
+    else { RP.err = errText(e); RP.failed = true; }
+  } finally {
+    if (epoch === RP.epoch) {
+      RP.busy = false;
+      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; if (G.prodId) markDirty(); }
+      if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
+      if (V.guided && V.step === 2) renderGuide();
+    }
+  }
+}
+// Called before step 2 is drawn: starts the single call for this script version when there is no report yet.
+function rpPrepare() {
+  if (!hasScript() || !ensureReview()) return;
+  if (G.report || RP.busy || RP.failed || RP.noAI) return;
+  rpRun(false);
+}
+
+// ---- what is left to decide ----
+function rpRiskList() {
+  const key = state.text + "|" + [...state.fixDismissed].sort().join(",");
+  if (RP.riskKey !== key || RP.riskR !== state.result) {
+    RP.risk = buildDecisions(state.text, state.result, state.opts, state.fixDismissed).filter((d) => d.kind === "risk");
+    RP.riskKey = key; RP.riskR = state.result;
+  }
+  return RP.risk;
+}
+// One entry per report item: applied (in the decision log), skipped, pending (its original text is found exactly once), or lost.
+function rpStates() {
+  const rep = G.report;
+  if (!rep) return [];
+  const text = state.text, done = new Set((state.fixLog || []).filter((x) => x.kind === "done").map((x) => x.id));
+  return rep.items.map((it, i) => {
+    if (done.has("rp-" + i)) return { i, st: "applied" };
+    if (RP.skip.has(i)) return { i, st: "skipped" };
+    const a = text.indexOf(it.original);
+    if (a >= 0 && text.indexOf(it.original, a + 1) < 0) return { i, st: "pending", start: a, end: a + it.original.length };
+    if (text.includes(it.replacement)) return { i, st: "applied" }; // applied earlier, the log was reset since
+    return { i, st: "lost" };
+  });
+}
+function rpCurrent() {
+  if (RP.busy) return null;
+  const d = rpRiskList()[0];
+  if (d) return { type: "risk", id: "risk:" + d.id, d, start: d.at ? d.at.start : null, end: d.at ? d.at.end : null };
+  const s = rpStates().find((x) => x.st === "pending" || x.st === "lost");
+  if (!s) return null;
+  const it = G.report.items[s.i];
+  return { type: "item", id: "item:" + s.i, i: s.i, it, st: s.st, start: s.start, end: s.end };
+}
+const rpCardOf = (cur) => cur.type === "risk" ? cur.d.card : { id: "rp-" + cur.i, ids: ["rp-" + cur.i], label: t("rpArea")[cur.it.area], fix: cur.it.why };
+
+// ---- html ----
+const rpDots = (n) => (n == null ? "○○○○○" : "●".repeat(n) + "○".repeat(5 - n));
+function rpTime(at) {
+  const d = new Date(at);
+  return isNaN(d) ? "" : d.toLocaleTimeString(UI, { hour: "numeric", minute: "2-digit" });
+}
+function rpRowsHTML(R, rd) {
+  const rep = G.report, A = t("rpArea");
+  const rows = rep ? REPORT_AREAS.map((k) => {
+    const a = rep.areas[k], n = a.rating;
+    return `<li class="rp-row" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}</span></span><span class="rp-w">${h(a.why)}</span></li>`;
+  }) : [];
+  const band = rd.red ? "rojo" : Object.values(R.sections).flat().some((r) => /^pf-/.test(r.id) && (!r.passed || r.warn) && !state.fixDismissed.has(r.id)) ? "amarillo" : "verde";
+  const word = band === "verde" ? t("rpAdsOk") : t("scBand")[band];
+  rows.push(`<li class="rp-row rp-ads" data-area="ads"><span class="rp-a">${h(A.ads)}</span><span class="rp-st rp-st-${band}">${h(word)}</span></li>`);
+  return `<ul class="rp-rows" aria-label="${h(t("rpListLbl"))}">${rows.join("")}</ul>`;
+}
+function rpWriteHTML(cur) {
+  const w = RP.write && RP.write.id === cur.id ? RP.write : null;
+  if (!w) return "";
+  return `<div class="rp-write"><label for="rpW">${h(t("rpWriteHere"))}</label><textarea id="rpW" rows="3">${h(w.value)}</textarea>${w.err ? `<p class="status err" role="alert">${h(w.err)}</p>` : ""}
+    <div class="actions"><button type="button" class="small primary" data-rp="wapply" data-rp-primary>${h(t("coWriteApply"))}</button><button type="button" class="small linkish" data-rp="wcancel">${h(t("coCancel"))}</button></div></div>`;
+}
+function rpDecisionHTML(R, cur, states) {
+  const w = RP.write && RP.write.id === cur.id;
+  const prevOk = RP.hist.some((e) => (e.t === "item" ? RP.skip.has(e.i) : e.ids.some((id) => state.fixDismissed.has(id))));
+  const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
+  if (cur.type === "item") {
+    const it = cur.it, n = G.report.items.length, A = t("rpArea")[it.area], title = `${t("rpChange")(cur.i + 1, n)} · ${A}`;
+    const lost = cur.st === "lost";
+    let broke = "";
+    if (!lost) {
+      const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: it.replacement }] });
+      if (ck.broke.length) broke = `<p class="status err">${h(t("fxBreaks")(ck.broke.map((id) => rowLabel(ck.R2 || R, id)).join(", ")))}</p>`;
+    }
+    return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(title)}</b></div>
+      <dl class="rp-cmp"><div class="rp-c"><dt>${h(t("fxBefore"))}</dt><dd class="rp-orig"${lost ? "" : ` data-es="${cur.start}" data-ee="${cur.end}"`}><del>${h(it.original)}</del></dd></div>
+      <div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>
+      <div class="rp-c"><dt>${h(t("rpWhy"))}</dt><dd>${h(it.why)}</dd></div></dl>
+      ${lost ? `<p class="status err" role="status">${h(t("rpGone"))}</p>` : broke}${rpWriteHTML(cur)}
+      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
+  }
+  const d = cur.d, c = d.card, opts = d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
+  const canWrite = !!(d.at || c.field);
+  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag">${h(t("rpHeadRisk"))}: ${h(t("cat_hi"))}</span></div>
+    ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
+    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
+    ${rpWriteHTML(cur)}
+    <div class="actions rp-act">${p ? `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
+}
+function reportHTML(R) {
+  const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed);
+  const stale = !!rep && rep.key !== rpKey();
+  const states = rpStates(), live = states.filter((s) => s.st === "pending");
+  let score;
+  if (rd.score == null) score = t("rpRulesLbl")(rd.rules);
+  else {
+    const b = live.length ? projectedReadiness(state.text, R, state.opts, { areas: rep.areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) }) : rd.score;
+    score = b !== rd.score ? t("rpReadyTo")(rd.score, b) : t("rpReady")(rd.score);
+  }
+  const msg = typeof fixMsg === "string" ? fixMsg : "";
+  if (!RP.more && msg) fixMsg = ""; // with «Más detalles» open the panel there shows it
+  const meta = rep ? `<span class="rp-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" class="small${stale ? " primary" : ""}" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : RP.err ? `<button type="button" class="small primary" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : "";
+  const cur = rpCurrent();
+  let body = "";
+  if (RP.busy) body = `<p class="rp-wait" role="status">${h(t("rpReading"))}</p>`;
+  else {
+    if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p>`;
+    if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
+    body += cur ? rpDecisionHTML(R, cur, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
+  }
+  return `<section class="rp" data-rp-root aria-labelledby="rpH"><div class="rp-head"><div class="rp-title"><h3 id="rpH">${h(t("rpTitle"))}</h3></div><div class="rp-score" id="rpScore">${h(score)}</div>${meta ? `<div class="rp-meta">${meta}</div>` : ""}<span class="status" id="rpMsg" role="status">${h(msg)}</span></div>
+    ${rpRowsHTML(R, rd)}${body}</section>`;
+}
+function rpWrapMore(inner, open) {
+  return `<details class="rp-more" id="rpMore"${open ? " open" : ""}><summary id="rpMoreSum"><span class="rp-more-t">${h(t("rpMore"))}</span> <span class="hint">${h(t("rpMoreHint"))}</span></summary><div class="rp-more-body">${inner}</div></details>`;
+}
+
+// ---- actions ----
+function rpSkip(cur) {
+  if (cur.type === "item") { RP.skip.add(cur.i); RP.hist.push({ t: "item", i: cur.i }); }
+  else {
+    const d = cur.d, ids = d.ids && d.ids.length ? d.ids : [d.id], bis = d.card ? fxBlocksOf(d.card) : [];
+    ids.forEach((id) => state.fixDismissed.add(id));
+    (bis.length ? bis : [-1]).forEach((bi) => state.fixLog.push({ id: ids[0], ids, label: plainLabel(d.card.id, d.card.label), kind: "skip", bi }));
+    RP.hist.push({ t: "risk", ids });
+  }
+  RP.write = null; RP.delay = 0;
+  renderGuide();
+}
+function rpPrev() {
+  let e;
+  while ((e = RP.hist.pop())) if (e.t === "item" ? RP.skip.has(e.i) : e.ids.some((id) => state.fixDismissed.has(id))) break; else e = null;
+  if (!e) return;
+  if (e.t === "item") RP.skip.delete(e.i);
+  else {
+    e.ids.forEach((id) => state.fixDismissed.delete(id));
+    state.fixLog = state.fixLog.filter((x) => !(x.kind === "skip" && x.ids.some((id) => e.ids.includes(id))));
+  }
+  RP.write = null; RP.delay = 0;
+  renderGuide();
+}
+function rpApplyP(cur, p) {
+  if (cur.type === "item" && cur.st === "lost") { rerunReview(t("fxStale")); return; }
+  RP.applying = rpKey(); RP.delay = 1100; RP.write = null;
+  try { applyProposal(p, rpCardOf(cur)); } finally { RP.applying = null; }
+}
+function rpAct(act) {
+  const cur = rpCurrent();
+  if (act === "re") { RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
+  if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
+  if (!cur) return;
+  if (act === "skip") return rpSkip(cur);
+  if (act === "prev") return rpPrev();
+  if (act === "apply") {
+    if (cur.type === "item") return rpApplyP(cur, { kind: "patch", label: t("rpTitle"), patches: [{ start: cur.start, end: cur.end, rep: cur.it.replacement }] });
+    const opts = cur.d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(cur.d) : []);
+    return opts[0] && rpApplyP(cur, opts[0]);
+  }
+  if (act === "write") {
+    const c = rpCardOf(cur);
+    RP.write = { id: cur.id, err: "", value: cur.type === "item" ? cur.it.replacement : c.field ? c.field.value : state.text.slice(cur.start, cur.end) };
+    renderGuide(); const b = $("rpW"); if (b) b.focus(); return;
+  }
+  if (act === "wcancel") { RP.write = null; renderGuide(); return; }
+  if (act === "wapply" && RP.write) {
+    const box = $("rpW"), v = box ? box.value : RP.write.value, c = rpCardOf(cur);
+    RP.write.value = v;
+    const p = c.field ? { kind: "field", field: c.field.name, value: v.trim(), label: t("coManual") } : { kind: "patch", label: t("coManual"), patches: [{ start: cur.start, end: cur.end, rep: v }] };
+    p.check = verifyProposal(state.text, state.opts, state.result, p);
+    if (p.check.broke.length) { RP.write.err = t("fxBreaks")(p.check.broke.map((id) => rowLabel(p.check.R2 || state.result, id)).join(", ")); renderGuide(); return; }
+    rpApplyP(cur, p);
+  }
+}
+function rpShow() {
+  const cur = rpCurrent();
+  if (!cur || cur.start == null || !wkBuild()) return;
+  const r = wkRange(cur.start, Math.max(cur.end, cur.start + 1));
+  if (r) { wkScrollTo(r); wkFlash([r]); }
+}
+function rpWire() {
+  const root = document.querySelector("[data-rp-root]");
+  if (!root) return;
+  root.querySelectorAll("[data-rp]").forEach((b) => b.addEventListener("click", () => rpAct(b.dataset.rp)));
+  root.querySelectorAll(".rp-orig[data-es], .fx-ev[data-es]").forEach((el) => {
+    el.setAttribute("role", "button"); el.tabIndex = 0; el.title = t("wkLoc");
+    const go = () => { if (wkBuild()) { const r = wkRange(+el.dataset.es, +el.dataset.ee); if (r) { wkScrollTo(r); wkFlash([r]); } } };
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+  const w = $("rpW");
+  if (w) w.addEventListener("input", () => { if (RP.write) RP.write.value = w.value; });
+  // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button keeps its own meaning
+  root.addEventListener("keydown", (e) => {
+    const tg = e.target;
+    if (e.altKey || e.ctrlKey || e.metaKey || /^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
+    const click = (sel) => { const b = root.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (e.key === "ArrowRight") click('[data-rp="skip"]');
+    else if (e.key === "ArrowLeft") click('[data-rp="prev"]');
+    else if (e.key === "Enter" && !/^(BUTTON|A|SUMMARY)$/.test(tg.tagName) && !tg.closest("[role=button]")) click("[data-rp-primary]");
+  });
+  const md = $("rpMore");
+  if (md) md.addEventListener("toggle", () => {
+    if (md.open === RP.more) return; // the toggle event of a render is not a choice
+    RP.more = md.open;
+    const y = window.scrollY;
+    renderGuide(); window.scrollTo(0, y);
+    const s = $("rpMoreSum"); if (s) s.focus();
+  });
+}
+function rpAfterRender() {
+  if (!V.guided || V.step !== 2) { RP.shown = ""; return; }
+  rpWire();
+  if (!hasScript()) return;
+  try { wkBuild(); } catch (e) { /* best effort: without the editor map the spot just isn't shown */ }
+  const cur = rpCurrent(), id = cur ? cur.id : "";
+  if (id === RP.shown) { RP.delay = 0; return; }
+  RP.shown = id;
+  clearTimeout(RP.tm);
+  if (!cur) return;
+  const d = RP.delay; RP.delay = 0;
+  if (d) RP.tm = setTimeout(rpShow, d); else rpShow();
+}
+
+// ---- hooks (this file loads after coach_ai.js) ----
+const _renderGuideR = renderGuide;
+renderGuide = function () {
+  if (V.guided && V.step === 2) rpPrepare();
+  _renderGuideR();
+  rpAfterRender();
+};
+// Score rows and map markers belong to «Más detalles»: opening it is what makes them land somewhere.
+const _scGoRowR = scGoRow;
+scGoRow = function (id) { if (V.guided) RP.more = true; return _scGoRowR(id); };
 /* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
 Object.assign(T.es, {
   atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",
