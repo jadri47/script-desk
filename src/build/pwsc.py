@@ -11,12 +11,13 @@ def ok(name, cond, extra=""):
 async def mk(b, w, h, ui="es", pre=""):
     pg = await b.new_page(viewport={"width": w, "height": h}); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
-    await pg.add_init_script("window.__SB_MODE='member'; localStorage.setItem('sd-intro','1'); " + pre)
+    await pg.add_init_script("window.__SB_MODE='member'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-more-open','1'); " + pre)
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(URL); await pg.wait_for_timeout(700)
     return pg, errs
 PILL = "(()=>{const p=document.getElementById('scorePill');if(!p)return null;const r=p.getBoundingClientRect();return {hidden:p.hidden||getComputedStyle(p).display==='none',n:(document.getElementById('scN')||{}).textContent,d:(document.getElementById('scD')||{}).textContent,cls:p.className,r:[r.left,r.top,r.right,r.bottom],parent:p.parentElement.className||p.parentElement.tagName}})()"
-FRESH = "(()=>{const R=analyze($('script').value, readOpts());return scoreOf(R, state.fixDismissed).score})()"
+# the pill and the verdict show readiness (2026-10-22): the rules part /40 without an editor's report, the full score with one
+FRESH = "(()=>{const R=analyze($('script').value, readOpts());const rd=readinessOf(R, G.report, state.fixDismissed);return rd.score!=null?rd.score:rd.rules})()"
 async def main():
     async with async_playwright() as p:
         b = await getattr(p, __import__("os").environ.get("SD_BROWSER", "chromium")).launch()  # SD_BROWSER=chromium|firefox|webkit
@@ -30,7 +31,7 @@ async def main():
             ok(f"{n}: pill visible after demo", s1 and not s1["hidden"], s1)
             ok(f"{n}: worker running", await pg.evaluate("!!SC.w"), await pg.evaluate("SC.noWorker"))
             fresh = await pg.evaluate(FRESH)
-            ok(f"{n}: pill equals fresh scoreOf", s1 and int(s1["n"]) == fresh, f"{s1 and s1['n']} vs {fresh}")
+            ok(f"{n}: pill equals fresh readiness", s1 and int(s1["n"]) == fresh, f"{s1 and s1['n']} vs {fresh}")
             ok(f"{n}: placement", (s1["cls"].find("docked") >= 0) == (n == "d"), s1["cls"])
             # step 2: verdict shows the same number
             await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(600)
@@ -54,7 +55,7 @@ async def main():
             ok(f"{n}: popover top rows carry +N, sorted desc", v2["pts"] and all(x.startswith("+") for x in v2["pts"]) and [int(x[1:]) for x in v2["pts"]] == sorted([int(x[1:]) for x in v2["pts"]], reverse=True), v2["pts"])
             ok(f"{n}: popover has lamp line and how-it's-scored", v2["how"] and v2["lamp"], v2)
             ok(f"{n}: popover says how many points are left", "puntos" in v2["left"] or "punto" in v2["left"], v2["left"])
-            ok(f"{n}: baseline key is v3", await pg.evaluate("scKey().startsWith('sd-score-base-v3:')"))
+            ok(f"{n}: baseline key is v4", await pg.evaluate("scKey().startsWith('sd-score-base-v4:')"))
             await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
             fxp = await pg.evaluate("[...document.querySelectorAll('.fix-pts')].map(x=>x.textContent)")
             ok(f"{n}: fix cards show +N (or 'Hasta +N' with no suggestion, jadri47 2026-10-21)", all(x.startswith("+") or x.startswith("Hasta +") for x in fxp), fxp)

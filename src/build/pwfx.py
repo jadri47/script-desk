@@ -42,7 +42,7 @@ async def main():
         for ui in ["es", "en"]:
             for demo in ["worst", "bad", "mid", "good"]:
                 pg = await b.new_page(viewport={"width": 1400, "height": 900}); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
-                await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); localStorage.setItem('sd-coach-off','1')")
+                await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); localStorage.setItem('sd-more-open','1'); localStorage.setItem('sd-coach-off','1')")
                 await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
                 await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
                 await pg.evaluate(f"startDemo('{demo}')"); await pg.wait_for_timeout(800)

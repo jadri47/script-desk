@@ -57,23 +57,26 @@ const READY_PACK_IDS = new Set(["title", "desc", "chapters", "kw"]);
 const READY_LEN_IDS = new Set(["runtime", "cta", "ending"]);
 // scoreOf weighs runtime 0 (it is not a fault in the text), but under 8 min there are no mid-roll ads: here it costs.
 const READY_W = { runtime: 4 };
+const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
 // report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
 // (no invented number). dismissed: rows the person ignored count as passed here.
 function readinessOf(R, report, dismissed) {
   dismissed = dismissed || new Set();
   const rows = Object.values(R.sections).flat();
   const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
-  const lose = (pred) => open.filter(pred).reduce((a, r) => a + (READY_W[r.id] ?? weightOf(r)), 0);
+  const lose = (pred) => open.filter(pred).reduce((a, r) => a + readyWeight(r), 0);
   const red = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
   const ads = red ? 0 : Math.max(0, READY_BUCKET.ads - lose((r) => /^pf-/.test(r.id)));
   const pack = Math.max(0, READY_BUCKET.pack - lose((r) => /^pack-/.test(r.id) || READY_PACK_IDS.has(r.id)));
   const len = Math.max(0, READY_BUCKET.len - lose((r) => READY_LEN_IDS.has(r.id)));
   const rules = ads + pack + len;
   const parts = { ads, pack, len };
-  if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts };
+  // the open rows that cost points here (the verdict counts them; line-level rows are not among them)
+  const openIds = open.filter((r) => /^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)).map((r) => r.id);
+  if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts, openIds };
   // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
   const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
   let score = rules + editor;
   if (red) score = Math.min(score, 69);
-  return { score, rules, rulesMax: 40, editor, red, parts };
+  return { score, rules, rulesMax: 40, editor, red, parts, openIds };
 }

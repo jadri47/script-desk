@@ -23,7 +23,7 @@ MOCK = r"""([delay, mode]) => {
 }"""
 async def open_page(b, ui, demo, delay=300, mode="ok", month=None, vp=None):
     pg = await b.new_page(viewport=vp or {"width": 1400, "height": 900}); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
-    await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}')")
+    await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); localStorage.setItem('sd-more-open','1')")
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
     await pg.evaluate(MOCK, [delay, mode])

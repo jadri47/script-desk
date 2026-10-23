@@ -63,9 +63,13 @@ function plainLabel(id, fallback) {
   if (/^pack-/.test(id)) return t("plainPack");
   return fallback;
 }
+// Same recipe as the number beside it (readinessOf): n = open rules rows that cost readiness + report changes not yet decided.
+// "Almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score"); without a report the rules part counts /40 → 28.
 function verdictOf(R) {
-  const S = scoreOf(R, state.fixDismissed), n = S.open.length;
-  return S.band === "rojo" ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (S.score >= 70 ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } /* "almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score") */ : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
+  const rd = readinessOf(R, G.report, state.fixDismissed);
+  const items = typeof rpStates === "function" && R === state.result ? rpStates().filter((x) => x.st === "pending").length : 0;
+  const n = rd.openIds.length + items, high = rd.score != null ? rd.score >= 70 : rd.rules >= 28;
+  return rd.red ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (high ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
 }
 const hasScript = () => !!$("script").value.trim();
 function ensureReview() {
@@ -107,8 +111,10 @@ function navHTML(prev, nextLabel, nextAttr) {
   return `<div class="g-nav-steps">${prev ? `<button type="button" data-step="${prev}">← ${h(t("back"))}</button>` : "<span></span>"}${nextLabel ? `<button type="button" class="primary" ${nextAttr}>${h(nextLabel)} →</button>` : ""}</div>`;
 }
 function verdictHTML(R) {
-  const v = verdictOf(R), S = typeof scoreOf === "function" ? scoreOf(R, state.fixDismissed) : null;
-  return `<div class="gv gv-${v.k}">${S ? `<div class="gv-top"><span class="gv-n">${S.score}<small>/100</small></span><span class="gv-l">${h(t("scTitle"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
+  // The number is readiness (score_logic.js readinessOf): with the editor's report /100, without it only the rules part /40.
+  const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed) : null;
+  const n = rd ? (rd.score != null ? rd.score : rd.rules) : 0, full = !!(rd && rd.score != null);
+  return `<div class="gv gv-${v.k}">${rd ? `<div class="gv-top"><span class="gv-n">${n}<small>/${full ? 100 : rd.rulesMax}</small></span><span class="gv-l">${h(t(full ? "rpName" : "rpRulesName"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
 }
 
 function renderGuide() {
@@ -128,10 +134,16 @@ function renderGuide() {
   const R = state.result;
   if (V.step === 2) {
     top.innerHTML = head(2);
-    body.innerHTML = `${verdictHTML(R)}${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
-      <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>${navHTML(1, t("next"), 'data-step="3"')}`;
-    wireFixes();
-    $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
+    // The editor's report (report_ui.js) comes first; today's coach / walker / rail / legend / more checks / Ask Claude sit behind
+    // «Más detalles» and are only built while it is open, so nothing paints over the script until then.
+    const rep = typeof reportHTML === "function", more = rep ? rpMoreOpen() : true;
+    const inner = more ? `${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
+      <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>` : "";
+    body.innerHTML = `${verdictHTML(R)}${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
+    if (more) {
+      wireFixes();
+      $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
+    }
   } else if (V.step === 3) {
     top.innerHTML = head(3);
     const missing = packGateMissing();

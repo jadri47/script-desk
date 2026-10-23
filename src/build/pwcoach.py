@@ -14,7 +14,7 @@ HEAD = "document.querySelector('.topfix.coach h3').textContent.trim()"
 FRESH = "buildDecisions(state.text, state.result, state.opts, state.fixDismissed)"
 async def open_page(b, vp, ui, demo, extra=""):
     pg = await b.new_page(viewport=vp); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
-    await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); {extra}")
+    await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); localStorage.setItem('sd-more-open','1'); {extra}")
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
     await pg.evaluate(f"startDemo('{demo}')"); await pg.wait_for_timeout(800)

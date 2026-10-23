@@ -579,3 +579,51 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 .cc-radio:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
 .cc-ai{color:var(--accent);border-color:var(--accent)}
 .cc-pause{margin:0 0 8px}
+
+/* ===== Editor's report (report_ui.js): step 2 ===== */
+.rp{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;margin:12px 0}
+.rp-head{display:grid;gap:4px;margin-bottom:10px}
+.rp-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}.rp-title h3{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+.rp-title .qh-txt{flex:1 1 100%}
+.rp-score{font:700 16px/1.35 var(--sans);color:var(--ink);overflow-wrap:anywhere}
+.rp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--ink-2)}
+.rp-rows{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.rp-row{display:grid;grid-template-columns:minmax(104px,max-content) max-content 1fr;gap:2px 12px;align-items:baseline;font-size:15px}
+.rp-a{font-weight:600}
+.rp-dots{letter-spacing:.14em;color:var(--accent);font-size:15px;white-space:nowrap}
+.rp-w{color:var(--ink-2);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.rp-st{font-weight:600}.rp-st-verde{color:var(--verde)}.rp-st-amarillo{color:var(--amarillo)}.rp-st-rojo{color:var(--rojo)}
+.rp-wait{margin:8px 0;color:var(--ink-2)}
+.rp-none{margin:8px 0 0}
+.rp-dec{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;outline:none;scroll-margin-top:12px}
+.rp-dec:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-dec-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-bottom:8px}.rp-dec-h b{font:700 16px/1.3 var(--sans)}
+.rp-tag{font-size:12px;font-weight:700;color:var(--rojo);border:1px solid var(--rojo);border-radius:999px;padding:1px 8px}
+.rp-fix{margin:0 0 6px;color:var(--ink-2);font-size:14px}
+.rp-cmp{margin:0;display:grid;gap:8px}
+.rp-c{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:baseline}
+.rp-c dt{font:600 12px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.rp-c dd{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.rp-orig[role=button]{cursor:pointer}.rp-orig:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-c del{background:var(--rojo-bg);color:var(--rojo);text-decoration:line-through}
+.rp-c ins{background:color-mix(in srgb,var(--verde) 22%,transparent);text-decoration:none;font-weight:600}
+.rp-write{margin-top:10px;display:grid;gap:6px}.rp-write textarea{width:100%;box-sizing:border-box}
+.rp-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rp-nav{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0}
+main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{min-height:40px}
+.rp-more{margin:12px 0}
+.rp-more>summary{cursor:pointer;font-weight:700;min-height:40px;display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;list-style:none}
+.rp-more>summary::-webkit-details-marker{display:none}
+.rp-more>summary::before{content:"▸";display:inline-block;width:1.2em;color:var(--accent)}
+.rp-more[open]>summary::before{content:"▾"}
+.rp-more>summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-more>summary .hint{font-weight:400}
+/* the old line-by-line score is not shown here: the number is readiness (report_logic.js) */
+.rp-more .fix-pts,.rp-more .fx-why,.rp-more .cc-score{display:none}
+@media (max-width:620px){
+  .rp{padding:12px}
+  .rp-row{grid-template-columns:minmax(96px,max-content) 1fr}.rp-row .rp-w{grid-column:1/-1}
+  .rp-c{grid-template-columns:1fr;gap:2px}
+}
+@media (max-width:899px),(max-height:559px){.rp-dec{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}.rp-dec button{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}}
+.score-pill .sc-of{font:600 12px/1 var(--sans);opacity:.8} .score-pill .sc-of:empty{display:none}

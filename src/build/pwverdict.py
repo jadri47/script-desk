@@ -18,10 +18,12 @@ async def main():
                 await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
                 await pg.evaluate(f"startDemo('{demo}')"); await pg.wait_for_timeout(800)
                 await pg.click("#runBtn"); await pg.wait_for_timeout(1500)
-                r = await pg.evaluate("(() => { const S = scoreOf(state.result, state.fixDismissed), v = verdictOf(state.result); return { s: S.score, band: S.band, t: v.t }; })()")
+                # readiness since 2026-10-22: with a report the bar is 70/100; without one (guest: no AI) it is 28/40
+                r = await pg.evaluate("(() => { const D = readinessOf(state.result, G.report, state.fixDismissed), v = verdictOf(state.result); return { s: D.score, rules: D.rules, band: v.k, t: v.t }; })()")
                 if r["band"] == "amarillo":
                     almost = r["t"].startswith("Casi listo") or r["t"].startswith("Almost ready")
-                    ok(f"{ui}-{demo}: score {r['s']} -> '{r['t']}'", almost == (r["s"] >= 70), r)
+                    high = r["s"] >= 70 if r["s"] is not None else r["rules"] >= 28
+                    ok(f"{ui}-{demo}: readiness {r['s']} / rules {r['rules']} -> '{r['t']}'", almost == high, r)
                 else: print(f"--   {ui}-{demo}: band {r['band']}, not yellow")
                 await pg.close()
         print("FAILS:", fails); await b.close()
