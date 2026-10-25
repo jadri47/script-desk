@@ -595,7 +595,34 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 .rp-dots{letter-spacing:.14em;color:var(--accent);font-size:15px;white-space:nowrap}
 .rp-w{color:var(--ink-2);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
 .rp-st{font-weight:600}.rp-st-verde{color:var(--verde)}.rp-st-amarillo{color:var(--amarillo)}.rp-st-rojo{color:var(--rojo)}
-.rp-wait{margin:8px 0;color:var(--ink-2)}
+.rp-wait{margin:8px 0;padding:14px 16px;border-radius:14px;background:var(--weak-bg);color:var(--ink)}
+.rp-wait-h{display:flex;align-items:center;gap:10px}
+.rp-wait p{margin:6px 0 0;font-size:14px;line-height:1.5}
+.rp-row-wait .rp-w{color:var(--ink-2)}
+/* AI status bubble on the score (aistatus_ui.js) */
+.ai-bub{position:fixed;z-index:35;box-sizing:border-box;padding:12px 14px;border-radius:14px;background:var(--sheet);color:var(--ink);border:2px solid var(--accent);box-shadow:var(--lift);font:400 14px/1.4 var(--sans)}
+.ai-bub[hidden]{display:none}
+.ai-bub::before{content:"";position:absolute;right:var(--ai-tail,40px);width:14px;height:14px;background:inherit;border:inherit;border-width:0;transform:rotate(45deg)}
+.ai-bub[data-tail="up"]::before{top:-9px;border-left-width:2px;border-top-width:2px}
+.ai-bub[data-tail="down"]::before{bottom:-9px;border-right-width:2px;border-bottom-width:2px}
+.ai-bub.done{background:var(--verde-bg);border-color:var(--verde)}
+.ai-bub.fail{background:var(--rojo-bg);border-color:var(--rojo)}
+.ai-h{display:flex;align-items:center;gap:10px}
+.ai-h b{font-size:15px}
+.ai-bub.done .ai-h b{color:var(--verde)} .ai-bub.fail .ai-h b{color:var(--rojo)}
+.ai-bub p{margin:6px 0 0;font-size:13px;color:var(--ink-2)}
+.ai-bub .actions{margin-top:8px}
+.ai-el{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px}
+.rp-wait .ai-el{margin-left:0;color:inherit;font-size:inherit}
+.ai-x{margin-left:4px;min-width:44px;min-height:44px;margin-block:-12px;border:0;background:transparent;color:var(--ink-2);font:400 20px/1 var(--sans);cursor:pointer}
+.ai-ok path,.sc-ai path{fill:none;stroke:var(--verde);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.ai-dots,.sc-ai.busy{display:inline-flex;gap:4px;align-items:center}
+.ai-dots i,.sc-ai.busy i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:aipulse 1.2s infinite ease-in-out}
+.sc-ai.busy i{width:6px;height:6px}
+.ai-dots i:nth-child(2),.sc-ai.busy i:nth-child(2){animation-delay:.15s} .ai-dots i:nth-child(3),.sc-ai.busy i:nth-child(3){animation-delay:.3s}
+.sc-ai:empty{display:none} .sc-ai{margin-left:2px} .sc-ai.done{display:inline-flex}
+@keyframes aipulse{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.ai-dots i,.sc-ai.busy i{animation:none;opacity:.8}}
 .rp-none{margin:8px 0 0}
 .rp-dec{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;outline:none;scroll-margin-top:12px}
 .rp-dec:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
@@ -629,3 +656,5 @@ main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{mi
 }
 @media (max-width:899px),(max-height:559px){.rp-dec{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}.rp-dec button{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}}
 .score-pill .sc-of{font:600 12px/1 var(--sans);opacity:.8} .score-pill .sc-of:empty{display:none}
+.lamp.espera{color:var(--accent);background:var(--weak-bg)}
+.gv-espera{box-shadow:inset 5px 0 0 var(--accent),var(--lift)}

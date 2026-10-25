@@ -68,8 +68,8 @@ async def main():
                 ok(f"{n}: the demo gave real sentences, a verse and a repeated phrase", all(picks["safe"]) and picks["dup"] and picks["verse"], picks)
                 ok(f"{n}: no call before the review", n0 == 0)
                 await pg.wait_for_timeout(400)
-                wait = {"es": "Leyendo tu guion como lo haría un editor…", "en": "Reading your script the way an editor would…"}[ui]
-                ok(f"{n}: the loading line shows while the call runs", (await pg.inner_text(".rp-wait")).strip() == wait if await pg.locator(".rp-wait").count() else False)
+                wait = {"es": "La IA está leyendo tu guion como lo haría un editor", "en": "The AI is reading your script the way an editor would"}[ui]
+                ok(f"{n}: the loading line shows while the call runs", (await pg.inner_text(".rp-wait-h")).strip() == wait if await pg.locator(".rp-wait-h").count() else False)
                 await pg.wait_for_timeout(1500)
                 ok(f"{n}: exactly one AI call on entering step 2", await pg.evaluate("RP.calls") == 1 and len(await pg.evaluate("window.__calls")) == 1, await pg.evaluate("window.__calls"))
                 c0 = (await pg.evaluate("window.__calls"))[0]
