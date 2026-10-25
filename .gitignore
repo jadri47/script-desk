@@ -10,3 +10,8 @@ src/**/*.png
 !src/build/site_assets/*.png
 __pycache__/
 node_modules/
+
+# agent skills installed locally (npx skills add); the symlink is machine-specific (Adrian, 2026-10-25: "A")
+.agents/
+.claude/skills/
+skills-lock.json
