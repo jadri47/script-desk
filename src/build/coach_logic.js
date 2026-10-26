@@ -154,6 +154,22 @@ function coachAiMask(text, spans, a, b, pad) {
   };
   return { frag: mask(a, b), ctx: mask(c0, c1) };
 }
+// One request item for a decision that needs an AI proposal: the masked fragment and context, and what is needed to put the answer
+// back (orig, lead, trail, toks), or null when no fragment can be sent (a verse crosses its edge). Used by the coach's own batches
+// (coach_ai.js) and by the editor's report (report_ui.js), so both send the same thing. opts = the review options (state.opts).
+function fixItem(d, id, text, opts, spans) {
+  const c = d.card, a = c.ai;
+  if (a.field) {
+    const m = coachAiMask(text, spans, 0, 0, 2500);
+    return { id, d, field: a.field, orig: opts[a.field] || "", toks: [], frag: opts[a.field] || "", ctx: m ? m.ctx.masked : "" };
+  }
+  const from = a.start != null ? a.start : d.at && d.at.start, to = a.end != null ? a.end : d.at && d.at.end;
+  if (from == null || to == null || to <= from) return null;
+  const m = coachAiMask(text, spans, from, to, 400);
+  if (!m) return null;
+  const orig = text.slice(from, to);
+  return { id, d, orig, lead: orig.match(/^\s*/)[0], trail: orig.match(/\s*$/)[0], toks: m.frag.toks, frag: m.frag.masked, ctx: m.ctx.masked };
+}
 // Up to `max` decisions that need an AI proposal and have none yet, in queue order.
 function coachAiPick(list, have, max) {
   return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);

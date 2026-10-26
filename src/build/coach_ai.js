@@ -36,19 +36,8 @@ function coachAiPauseHTML() {
 const coHash = (s) => { let x = 5381; for (let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0; return s.length + ":" + x; };
 
 // ---- the request ----
-function coachAiItem(d, k, spans) {
-  const c = d.card, a = c.ai, text = state.text, field = a.field || null;
-  if (field) {
-    const m = coachAiMask(text, spans, 0, 0, 2500);
-    return { id: "i" + k, d, field, orig: state.opts[field] || "", toks: [], frag: state.opts[field] || "", ctx: m ? m.ctx.masked : "" };
-  }
-  const from = a.start != null ? a.start : d.at && d.at.start, to = a.end != null ? a.end : d.at && d.at.end;
-  if (from == null || to == null || to <= from) return null;
-  const m = coachAiMask(text, spans, from, to, 400);
-  if (!m) return null; // a verse crosses the edge of the fragment: cannot be protected, so it is not sent
-  const orig = text.slice(from, to);
-  return { id: "i" + k, d, orig, lead: orig.match(/^\s*/)[0], trail: orig.match(/\s*$/)[0], toks: m.frag.toks, frag: m.frag.masked, ctx: m.ctx.masked };
-}
+// null when a verse crosses the edge of the fragment: it cannot be protected, so it is not sent (fixItem, coach_logic.js)
+function coachAiItem(d, k, spans) { return fixItem(d, "i" + k, state.text, state.opts, spans); }
 function coachAiPrompt(items) {
   const blocks = items.map((it) => {
     const c = it.d.card, a = c.ai;
