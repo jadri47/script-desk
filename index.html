@@ -1025,12 +1025,52 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 .rp-dots{letter-spacing:.14em;color:var(--accent);font-size:15px;white-space:nowrap}
 .rp-w{color:var(--ink-2);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
 .rp-st{font-weight:600}.rp-st-verde{color:var(--verde)}.rp-st-amarillo{color:var(--amarillo)}.rp-st-rojo{color:var(--rojo)}
-.rp-wait{margin:8px 0;color:var(--ink-2)}
+.rp-wait{margin:8px 0;padding:14px 16px;border-radius:14px;background:var(--weak-bg);color:var(--ink)}
+.rp-wait-h{display:flex;align-items:center;gap:10px}
+.rp-wait p{margin:6px 0 0;font-size:14px;line-height:1.5}
+.rp-row-wait .rp-w{color:var(--ink-2)}
+/* alternatives: other ways to write a change, other words for a flagged term (report_ui.js) */
+.rp-pick,.rp-words{border:0;margin:0;padding:0;display:flex;gap:8px}
+.rp-pick{flex-direction:column}
+.rp-words{flex-wrap:wrap;margin:6px 0 10px}
+.rp-words legend{padding:0;margin-bottom:6px;font-weight:600}
+.rp-opt,.rp-chip{display:flex;gap:10px;align-items:flex-start;min-height:44px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);cursor:pointer}
+.rp-opt:has(input:checked),.rp-chip:has(input:checked){border:2px solid var(--accent);background:var(--weak-bg);padding:9px 11px}
+.rp-opt input,.rp-chip input{margin:3px 0 0;accent-color:var(--accent);flex:none}
+.rp-opt input:focus-visible,.rp-chip input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rp-opt-b,.rp-chip-b{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rp-opt-t{font-family:var(--serif);font-size:16px;line-height:1.45;overflow-wrap:anywhere}
+.rp-safe{font-size:12px;color:var(--verde)}
+/* AI status bubble on the score (aistatus_ui.js) */
+.ai-bub{position:fixed;z-index:35;box-sizing:border-box;padding:12px 14px;border-radius:14px;background:var(--sheet);color:var(--ink);border:2px solid var(--accent);box-shadow:var(--lift);font:400 14px/1.4 var(--sans)}
+.ai-bub[hidden]{display:none}
+.ai-bub::before{content:"";position:absolute;right:var(--ai-tail,40px);width:14px;height:14px;background:inherit;border:inherit;border-width:0;transform:rotate(45deg)}
+.ai-bub[data-tail="up"]::before{top:-9px;border-left-width:2px;border-top-width:2px}
+.ai-bub[data-tail="down"]::before{bottom:-9px;border-right-width:2px;border-bottom-width:2px}
+.ai-bub.done{background:var(--verde-bg);border-color:var(--verde)}
+.ai-bub.fail{background:var(--rojo-bg);border-color:var(--rojo)}
+.ai-h{display:flex;align-items:center;gap:10px}
+.ai-h b{font-size:15px}
+.ai-bub.done .ai-h b{color:var(--verde)} .ai-bub.fail .ai-h b{color:var(--rojo)}
+.ai-bub p{margin:6px 0 0;font-size:13px;color:var(--ink-2)}
+.ai-bub .actions{margin-top:8px}
+.ai-el{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px}
+.rp-wait .ai-el{margin-left:0;color:inherit;font-size:inherit}
+.ai-x{margin-left:4px;min-width:44px;min-height:44px;margin-block:-12px;border:0;background:transparent;color:var(--ink-2);font:400 20px/1 var(--sans);cursor:pointer}
+.ai-ok path,.sc-ai path{fill:none;stroke:var(--verde);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.ai-dots,.sc-ai.busy{display:inline-flex;gap:4px;align-items:center}
+.ai-dots i,.sc-ai.busy i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:aipulse 1.2s infinite ease-in-out}
+.sc-ai.busy i{width:6px;height:6px}
+.ai-dots i:nth-child(2),.sc-ai.busy i:nth-child(2){animation-delay:.15s} .ai-dots i:nth-child(3),.sc-ai.busy i:nth-child(3){animation-delay:.3s}
+.sc-ai:empty{display:none} .sc-ai{margin-left:2px} .sc-ai.done{display:inline-flex}
+@keyframes aipulse{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.ai-dots i,.sc-ai.busy i{animation:none;opacity:.8}}
 .rp-none{margin:8px 0 0}
 .rp-dec{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;outline:none;scroll-margin-top:12px}
 .rp-dec:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .rp-dec-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-bottom:8px}.rp-dec-h b{font:700 16px/1.3 var(--sans)}
 .rp-tag{font-size:12px;font-weight:700;color:var(--rojo);border:1px solid var(--rojo);border-radius:999px;padding:1px 8px}
+.rp-tag.soft{color:var(--amarillo);border-color:var(--amarillo)}
 .rp-fix{margin:0 0 6px;color:var(--ink-2);font-size:14px}
 .rp-cmp{margin:0;display:grid;gap:8px}
 .rp-c{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:baseline}
@@ -1059,6 +1099,8 @@ main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{mi
 }
 @media (max-width:899px),(max-height:559px){.rp-dec{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}.rp-dec button{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}}
 .score-pill .sc-of{font:600 12px/1 var(--sans);opacity:.8} .score-pill .sc-of:empty{display:none}
+.lamp.espera{color:var(--accent);background:var(--weak-bg)}
+.gv-espera{box-shadow:inset 5px 0 0 var(--accent),var(--lift)}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -3890,6 +3932,22 @@ function coachAiMask(text, spans, a, b, pad) {
   };
   return { frag: mask(a, b), ctx: mask(c0, c1) };
 }
+// One request item for a decision that needs an AI proposal: the masked fragment and context, and what is needed to put the answer
+// back (orig, lead, trail, toks), or null when no fragment can be sent (a verse crosses its edge). Used by the coach's own batches
+// (coach_ai.js) and by the editor's report (report_ui.js), so both send the same thing. opts = the review options (state.opts).
+function fixItem(d, id, text, opts, spans) {
+  const c = d.card, a = c.ai;
+  if (a.field) {
+    const m = coachAiMask(text, spans, 0, 0, 2500);
+    return { id, d, field: a.field, orig: opts[a.field] || "", toks: [], frag: opts[a.field] || "", ctx: m ? m.ctx.masked : "" };
+  }
+  const from = a.start != null ? a.start : d.at && d.at.start, to = a.end != null ? a.end : d.at && d.at.end;
+  if (from == null || to == null || to <= from) return null;
+  const m = coachAiMask(text, spans, from, to, 400);
+  if (!m) return null;
+  const orig = text.slice(from, to);
+  return { id, d, orig, lead: orig.match(/^\s*/)[0], trail: orig.match(/\s*$/)[0], toks: m.frag.toks, frag: m.frag.masked, ctx: m.ctx.masked };
+}
 // Up to `max` decisions that need an AI proposal and have none yet, in queue order.
 function coachAiPick(list, have, max) {
   return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
@@ -3900,6 +3958,12 @@ function coachAiPick(list, have, max) {
 // hook, promise, retention, spoken voice, close and the return viewer need an editor's judgement. Scripture is masked as
 // ⟦Vn⟧ before the AI sees it (same masker as polish_logic.js) and every answer is checked here; nothing depends on the AI behaving.
 const REPORT_MAX_ITEMS = 7;
+// (jadri47, 2026-10-25: "Provide synonyms or alternatives to problematic words when suggesting changes"; picked A: the same call
+// returns them, each one checked here.) Up to 2 other ways to write each change, up to 3 replacements for each flagged word.
+const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
+// (jadri47, 2026-10-25: "read the text once, instead of every time the user taps sugerir con IA"; picked A.) The same call also
+// answers the problems the rules flagged but could not fix by themselves (what «Proponer con IA» and the coach ask one at a time).
+const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
@@ -3908,18 +3972,24 @@ function reportPrompt(text, R, opts) {
   const risk = [...new Set((R.riskHits || []).map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
   const mins = Math.round((R.runtimeSec || 0) / 60);
   const kw = (opts.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "—";
-  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "why": "...", "after": 1-5}]}`;
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const brief = en
     ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. The script is in English: write every "why" and "replacement" in English.`
     : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
   const facts = en
-    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (do not replace them with euphemisms, do not add new ones): ${risk}. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
-    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (no los cambies por eufemismos ni añadas otros): ${risk}. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
+    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (YouTube can limit ads for them; do not add new ones): ${risk}. Do not change them inside "items". In "words" give, for each of them, up to ${REPORT_MAX_WORD_ALTS} alternatives: plain words that state the same fact without the term YouTube flags, in the same grammatical form (gender, number, tense) so they drop into the same sentence, without softening what the text says happened. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
+    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (YouTube puede limitar los anuncios por ellos; no añadas otros): ${risk}. No los cambies dentro de "items". En "words" da, para cada uno, hasta ${REPORT_MAX_WORD_ALTS} alternativas: palabras sencillas que dicen el mismo hecho sin el término que YouTube marca, en la misma forma gramatical (género, número, tiempo) para que encajen en la misma frase, sin suavizar lo que el texto dice que pasó. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
   const rules = en
-    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return.`
-    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return.`;
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
+    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
+  const fixes = (opts.fixes || []).slice(0, REPORT_MAX_FIXES);
+  const fixBlock = fixes.length ? "\n\n" + (en
+    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order. These are separate from "items".`
+    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden. Esto va aparte de "items".`)
+    + "\n\n" + fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n") : "";
+  const shape2 = fixes.length ? shape.replace(/\}$/, `, "fixes": [{"id": "${fixes[0].id}", "options": [{"text": "...", "why": "..."}]}]}`) : shape;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape2;
+  return `${brief}\n\n${facts}\n\n${rules}${fixBlock}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
@@ -3937,28 +4007,110 @@ function vetReport(text, json, opts, R) {
   const toks = mk.toks || [];
   const items = [];
   const riskBefore = (R.riskHits || []).length;
+  // a replacement (or one of its alternatives) for text[start, end): its check, or null when it breaks any rule
+  const vetRep = (o, start, end, c) => {
+    if (typeof c !== "string" || !c.trim() || c === o || c.length > 1000) return null;
+    if (/⟦|⟧/.test(c)) return null; // a verse mark never goes into a replacement
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) return null;
+    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
+    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) return null; // no new ad or packaging problem
+    if (analyze(check.text, check.opts).riskHits.length > riskBefore) return null; // no new sensitive term, even if that check was already open
+    return check;
+  };
   for (const it of list) {
     if (items.length >= REPORT_MAX_ITEMS) break;
     if (!it || !REPORT_AREAS.includes(it.area)) continue;
     let o = typeof it.original === "string" ? it.original : "";
     const c = typeof it.replacement === "string" ? it.replacement : "";
     if (!o.trim() || !c.trim() || o === c || o.length > 800 || c.length > 1000) continue;
-    if (/⟦|⟧/.test(c)) continue; // a verse mark never goes into a replacement
     for (const t of toks) o = o.split(t.tok).join(t.text); // the AI saw tokens; locate on the real text
     if (/⟦|⟧/.test(o)) continue; // a token that is not one of ours
     const i = text.indexOf(o);
     if (i < 0 || text.indexOf(o, i + 1) >= 0) continue; // not found, or not unique
     const start = i, end = i + o.length;
     if (verse.some((s) => start < s.end && end > s.start)) continue; // never touches Scripture
-    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) continue;
     if (items.some((x) => start < x.end && x.start < end)) continue; // overlaps a change already kept
-    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
-    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) continue; // no new ad or packaging problem
-    if (analyze(check.text, check.opts).riskHits.length > riskBefore) continue; // no new sensitive term, even if that check was already open
-    items.push({ area: it.area, start, end, original: o, replacement: c, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
+    const check = vetRep(o, start, end, c);
+    if (!check) continue;
+    const alts = [];
+    for (const a of Array.isArray(it.alts) ? it.alts : []) {
+      if (alts.length >= REPORT_MAX_ALTS) break;
+      if (typeof a === "string" && a !== c && !alts.includes(a) && vetRep(o, start, end, a)) alts.push(a);
+    }
+    items.push({ area: it.area, start, end, original: o, replacement: c, alts, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
   }
-  return { areas, items, dropped: list.length - items.length };
+  return { areas, items, words: vetWords(text, json, opts, R, verse), dropped: list.length - items.length };
 }
+
+// The AI's options for the fragments sent in "fixes", keyed by item id: [{ text, why }]. items = what was sent (fixItem results:
+// id, orig, toks). Each option goes through vetSection (polish_logic.js): a verse mark lost, duplicated, moved or invented, a new
+// reference or quote, or a length far from the original drops it. Unknown ids and garbage are ignored.
+function vetFixes(json, items) {
+  const out = {}, got = json && Array.isArray(json.fixes) ? json.fixes : [];
+  for (const it of items || []) {
+    const mine = got.find((g) => g && g.id === it.id);
+    const raw = [];
+    for (const o of mine && Array.isArray(mine.options) ? mine.options : []) {
+      if (raw.length >= REPORT_MAX_FIX_OPTS) break;
+      if (!o || typeof o.text !== "string") continue;
+      const v = vetSection(it.orig, it.toks || [], o.text, []);
+      if (v.ok && v.text.trim() && v.text.trim() !== it.orig.trim() && !raw.some((r) => r.text === v.text.trim())) raw.push({ text: v.text.trim(), why: String(o.why || "").slice(0, 300) });
+    }
+    if (raw.length) out[it.id] = raw;
+  }
+  return out;
+}
+
+// The flagged words' alternatives, keyed by the lower-case term. An alternative is kept only if it is short plain text (no verse
+// mark, reference or quote) and, put in place of the term's first occurrence outside Scripture, leaves fewer sensitive terms and
+// none inside the replaced span. A term found only inside a verse gets none: Scripture is never changed.
+function vetWords(text, json, opts, R, verse) {
+  const out = {}, list = json && Array.isArray(json.words) ? json.words : [];
+  const hits = (R.riskHits || []).filter((x) => !verse.some((s) => x.start < s.end && x.end > s.start));
+  const before = (R.riskHits || []).length;
+  for (const w of list) {
+    const term = w && typeof w.term === "string" ? w.term.trim().toLowerCase() : "";
+    if (!term || out[term]) continue;
+    const hit = hits.find((x) => x.text.toLowerCase() === term);
+    if (!hit) continue; // not a term the rules flagged here
+    const alts = [];
+    for (const a of Array.isArray(w.alts) ? w.alts : []) {
+      if (alts.length >= REPORT_MAX_WORD_ALTS) break;
+      const v = typeof a === "string" ? a.trim() : "";
+      if (!v || v.length > 80 || v.split(/\s+/).length > 8 || v.toLowerCase() === term || alts.includes(v)) continue;
+      if (/⟦|⟧/.test(v) || findReferences(v).length || findQuotes(v).length) continue;
+      const rv = matchCase(hit.text, v), e2 = hit.start + rv.length;
+      const r2 = analyze(applyPatches(text, [{ start: hit.start, end: hit.end, rep: rv }]), opts).riskHits;
+      if (r2.length >= before || r2.some((x) => x.start < e2 && x.end > hit.start)) continue;
+      alts.push(v);
+    }
+    if (alts.length) out[term] = alts;
+  }
+  return out;
+}
+
+// The rows of an ad-risk card that can take a word from the report: one row per term of that category that has alternatives, with
+// every place it occurs outside Scripture (one choice per word, not per occurrence: «pandemia» eight times is one decision).
+// pick: { [term in lower case]: index } (default 0). Returns the rows and the one patch that applies them all.
+function reportWordRows(text, R, cat, words, pick) {
+  const verse = verseSpans(text, R).filter((s) => s.kind !== "ref");
+  const hits = (R.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start))
+    .sort((a, b) => a.start - b.start)
+    .filter((x, i, a) => !a.some((y, j) => j < i && x.start < y.end)); // overlapping hits: keep the first
+  const rows = [];
+  for (const x of hits) {
+    const key = x.text.toLowerCase(), alts = (words || {})[key] || [];
+    if (!alts.length) continue;
+    let r = rows.find((y) => y.key === key);
+    if (!r) rows.push((r = { key, term: x.text, alts, hits: [] }));
+    r.hits.push({ start: x.start, end: x.end, text: x.text });
+  }
+  const patches = rows.flatMap((r) => { const v = r.alts[Math.min((pick || {})[r.key] || 0, r.alts.length - 1)]; return r.hits.map((x) => ({ start: x.start, end: x.end, rep: matchCase(x.text, v) })); })
+    .sort((a, b) => a.start - b.start);
+  return { rows, patches };
+}
+// «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
+function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }
 
 // The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
 // item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
@@ -3976,7 +4128,7 @@ function projectedReadiness(text, R, opts, report) {
   return Math.min(r2.rules + editor, r2.red ? 69 : 100);
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -6212,6 +6364,22 @@ function coachAiMask(text, spans, a, b, pad) {
   };
   return { frag: mask(a, b), ctx: mask(c0, c1) };
 }
+// One request item for a decision that needs an AI proposal: the masked fragment and context, and what is needed to put the answer
+// back (orig, lead, trail, toks), or null when no fragment can be sent (a verse crosses its edge). Used by the coach's own batches
+// (coach_ai.js) and by the editor's report (report_ui.js), so both send the same thing. opts = the review options (state.opts).
+function fixItem(d, id, text, opts, spans) {
+  const c = d.card, a = c.ai;
+  if (a.field) {
+    const m = coachAiMask(text, spans, 0, 0, 2500);
+    return { id, d, field: a.field, orig: opts[a.field] || "", toks: [], frag: opts[a.field] || "", ctx: m ? m.ctx.masked : "" };
+  }
+  const from = a.start != null ? a.start : d.at && d.at.start, to = a.end != null ? a.end : d.at && d.at.end;
+  if (from == null || to == null || to <= from) return null;
+  const m = coachAiMask(text, spans, from, to, 400);
+  if (!m) return null;
+  const orig = text.slice(from, to);
+  return { id, d, orig, lead: orig.match(/^\s*/)[0], trail: orig.match(/\s*$/)[0], toks: m.frag.toks, frag: m.frag.masked, ctx: m.ctx.masked };
+}
 // Up to `max` decisions that need an AI proposal and have none yet, in queue order.
 function coachAiPick(list, have, max) {
   return list.filter((d) => d.needsAi && d.card && d.card.ai && !have(d.card.id)).slice(0, max);
@@ -6222,6 +6390,12 @@ function coachAiPick(list, have, max) {
 // hook, promise, retention, spoken voice, close and the return viewer need an editor's judgement. Scripture is masked as
 // ⟦Vn⟧ before the AI sees it (same masker as polish_logic.js) and every answer is checked here; nothing depends on the AI behaving.
 const REPORT_MAX_ITEMS = 7;
+// (jadri47, 2026-10-25: "Provide synonyms or alternatives to problematic words when suggesting changes"; picked A: the same call
+// returns them, each one checked here.) Up to 2 other ways to write each change, up to 3 replacements for each flagged word.
+const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
+// (jadri47, 2026-10-25: "read the text once, instead of every time the user taps sugerir con IA"; picked A.) The same call also
+// answers the problems the rules flagged but could not fix by themselves (what «Proponer con IA» and the coach ask one at a time).
+const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
@@ -6230,18 +6404,24 @@ function reportPrompt(text, R, opts) {
   const risk = [...new Set((R.riskHits || []).map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
   const mins = Math.round((R.runtimeSec || 0) / 60);
   const kw = (opts.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "—";
-  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "why": "...", "after": 1-5}]}`;
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const brief = en
     ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. The script is in English: write every "why" and "replacement" in English.`
     : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
   const facts = en
-    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (do not replace them with euphemisms, do not add new ones): ${risk}. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
-    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (no los cambies por eufemismos ni añadas otros): ${risk}. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
+    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (YouTube can limit ads for them; do not add new ones): ${risk}. Do not change them inside "items". In "words" give, for each of them, up to ${REPORT_MAX_WORD_ALTS} alternatives: plain words that state the same fact without the term YouTube flags, in the same grammatical form (gender, number, tense) so they drop into the same sentence, without softening what the text says happened. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
+    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (YouTube puede limitar los anuncios por ellos; no añadas otros): ${risk}. No los cambies dentro de "items". En "words" da, para cada uno, hasta ${REPORT_MAX_WORD_ALTS} alternativas: palabras sencillas que dicen el mismo hecho sin el término que YouTube marca, en la misma forma gramatical (género, número, tiempo) para que encajen en la misma frase, sin suavizar lo que el texto dice que pasó. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
   const rules = en
-    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return.`
-    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return.`;
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
+    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
+  const fixes = (opts.fixes || []).slice(0, REPORT_MAX_FIXES);
+  const fixBlock = fixes.length ? "\n\n" + (en
+    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order. These are separate from "items".`
+    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden. Esto va aparte de "items".`)
+    + "\n\n" + fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n") : "";
+  const shape2 = fixes.length ? shape.replace(/\}$/, `, "fixes": [{"id": "${fixes[0].id}", "options": [{"text": "...", "why": "..."}]}]}`) : shape;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape2;
+  return `${brief}\n\n${facts}\n\n${rules}${fixBlock}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
@@ -6259,28 +6439,110 @@ function vetReport(text, json, opts, R) {
   const toks = mk.toks || [];
   const items = [];
   const riskBefore = (R.riskHits || []).length;
+  // a replacement (or one of its alternatives) for text[start, end): its check, or null when it breaks any rule
+  const vetRep = (o, start, end, c) => {
+    if (typeof c !== "string" || !c.trim() || c === o || c.length > 1000) return null;
+    if (/⟦|⟧/.test(c)) return null; // a verse mark never goes into a replacement
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) return null;
+    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
+    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) return null; // no new ad or packaging problem
+    if (analyze(check.text, check.opts).riskHits.length > riskBefore) return null; // no new sensitive term, even if that check was already open
+    return check;
+  };
   for (const it of list) {
     if (items.length >= REPORT_MAX_ITEMS) break;
     if (!it || !REPORT_AREAS.includes(it.area)) continue;
     let o = typeof it.original === "string" ? it.original : "";
     const c = typeof it.replacement === "string" ? it.replacement : "";
     if (!o.trim() || !c.trim() || o === c || o.length > 800 || c.length > 1000) continue;
-    if (/⟦|⟧/.test(c)) continue; // a verse mark never goes into a replacement
     for (const t of toks) o = o.split(t.tok).join(t.text); // the AI saw tokens; locate on the real text
     if (/⟦|⟧/.test(o)) continue; // a token that is not one of ours
     const i = text.indexOf(o);
     if (i < 0 || text.indexOf(o, i + 1) >= 0) continue; // not found, or not unique
     const start = i, end = i + o.length;
     if (verse.some((s) => start < s.end && end > s.start)) continue; // never touches Scripture
-    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) continue;
     if (items.some((x) => start < x.end && x.start < end)) continue; // overlaps a change already kept
-    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
-    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) continue; // no new ad or packaging problem
-    if (analyze(check.text, check.opts).riskHits.length > riskBefore) continue; // no new sensitive term, even if that check was already open
-    items.push({ area: it.area, start, end, original: o, replacement: c, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
+    const check = vetRep(o, start, end, c);
+    if (!check) continue;
+    const alts = [];
+    for (const a of Array.isArray(it.alts) ? it.alts : []) {
+      if (alts.length >= REPORT_MAX_ALTS) break;
+      if (typeof a === "string" && a !== c && !alts.includes(a) && vetRep(o, start, end, a)) alts.push(a);
+    }
+    items.push({ area: it.area, start, end, original: o, replacement: c, alts, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
   }
-  return { areas, items, dropped: list.length - items.length };
+  return { areas, items, words: vetWords(text, json, opts, R, verse), dropped: list.length - items.length };
 }
+
+// The AI's options for the fragments sent in "fixes", keyed by item id: [{ text, why }]. items = what was sent (fixItem results:
+// id, orig, toks). Each option goes through vetSection (polish_logic.js): a verse mark lost, duplicated, moved or invented, a new
+// reference or quote, or a length far from the original drops it. Unknown ids and garbage are ignored.
+function vetFixes(json, items) {
+  const out = {}, got = json && Array.isArray(json.fixes) ? json.fixes : [];
+  for (const it of items || []) {
+    const mine = got.find((g) => g && g.id === it.id);
+    const raw = [];
+    for (const o of mine && Array.isArray(mine.options) ? mine.options : []) {
+      if (raw.length >= REPORT_MAX_FIX_OPTS) break;
+      if (!o || typeof o.text !== "string") continue;
+      const v = vetSection(it.orig, it.toks || [], o.text, []);
+      if (v.ok && v.text.trim() && v.text.trim() !== it.orig.trim() && !raw.some((r) => r.text === v.text.trim())) raw.push({ text: v.text.trim(), why: String(o.why || "").slice(0, 300) });
+    }
+    if (raw.length) out[it.id] = raw;
+  }
+  return out;
+}
+
+// The flagged words' alternatives, keyed by the lower-case term. An alternative is kept only if it is short plain text (no verse
+// mark, reference or quote) and, put in place of the term's first occurrence outside Scripture, leaves fewer sensitive terms and
+// none inside the replaced span. A term found only inside a verse gets none: Scripture is never changed.
+function vetWords(text, json, opts, R, verse) {
+  const out = {}, list = json && Array.isArray(json.words) ? json.words : [];
+  const hits = (R.riskHits || []).filter((x) => !verse.some((s) => x.start < s.end && x.end > s.start));
+  const before = (R.riskHits || []).length;
+  for (const w of list) {
+    const term = w && typeof w.term === "string" ? w.term.trim().toLowerCase() : "";
+    if (!term || out[term]) continue;
+    const hit = hits.find((x) => x.text.toLowerCase() === term);
+    if (!hit) continue; // not a term the rules flagged here
+    const alts = [];
+    for (const a of Array.isArray(w.alts) ? w.alts : []) {
+      if (alts.length >= REPORT_MAX_WORD_ALTS) break;
+      const v = typeof a === "string" ? a.trim() : "";
+      if (!v || v.length > 80 || v.split(/\s+/).length > 8 || v.toLowerCase() === term || alts.includes(v)) continue;
+      if (/⟦|⟧/.test(v) || findReferences(v).length || findQuotes(v).length) continue;
+      const rv = matchCase(hit.text, v), e2 = hit.start + rv.length;
+      const r2 = analyze(applyPatches(text, [{ start: hit.start, end: hit.end, rep: rv }]), opts).riskHits;
+      if (r2.length >= before || r2.some((x) => x.start < e2 && x.end > hit.start)) continue;
+      alts.push(v);
+    }
+    if (alts.length) out[term] = alts;
+  }
+  return out;
+}
+
+// The rows of an ad-risk card that can take a word from the report: one row per term of that category that has alternatives, with
+// every place it occurs outside Scripture (one choice per word, not per occurrence: «pandemia» eight times is one decision).
+// pick: { [term in lower case]: index } (default 0). Returns the rows and the one patch that applies them all.
+function reportWordRows(text, R, cat, words, pick) {
+  const verse = verseSpans(text, R).filter((s) => s.kind !== "ref");
+  const hits = (R.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start))
+    .sort((a, b) => a.start - b.start)
+    .filter((x, i, a) => !a.some((y, j) => j < i && x.start < y.end)); // overlapping hits: keep the first
+  const rows = [];
+  for (const x of hits) {
+    const key = x.text.toLowerCase(), alts = (words || {})[key] || [];
+    if (!alts.length) continue;
+    let r = rows.find((y) => y.key === key);
+    if (!r) rows.push((r = { key, term: x.text, alts, hits: [] }));
+    r.hits.push({ start: x.start, end: x.end, text: x.text });
+  }
+  const patches = rows.flatMap((r) => { const v = r.alts[Math.min((pick || {})[r.key] || 0, r.alts.length - 1)]; return r.hits.map((x) => ({ start: x.start, end: x.end, rep: matchCase(x.text, v) })); })
+    .sort((a, b) => a.start - b.start);
+  return { rows, patches };
+}
+// «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
+function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }
 
 // The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
 // item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
@@ -6298,7 +6560,7 @@ function projectedReadiness(text, R, opts, report) {
   return Math.min(r2.rules + editor, r2.red ? 69 : 100);
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -8572,7 +8834,11 @@ function fxAiExtra(a) {
   ].filter(Boolean).join(" ");
 }
 async function aiFix(ci) {
-  const c = state.fixCards[ci], sample = await caps.sample;
+  const c = state.fixCards[ci];
+  // already answered by the editor's report (or the coach) for this very fragment: show it, no new read of the script
+  const ready = typeof coachAiOptions === "function" ? coachAiOptions({ card: c }) : [];
+  if (ready.length) { state.fixAi[c.id] = { options: ready }; const bx = $("fxai-" + ci); if (bx) { bx.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(bx); } return; }
+  const sample = await caps.sample;
   if (!sample) { state.fixAi[c.id] = { error: t("aiOnlyClaude") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; }
   state.fixAi[c.id] = { loading: true };
   $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]);
@@ -8646,7 +8912,7 @@ Object.assign(T.es, {
   s4Pp: "Abrir prompter", s4Reh: "Ensayar con cronómetro", s4Sheet: "Hoja para el editor", s4Done: "Ya lo grabamos",
   s4Help: "Con teclado o pedal: Espacio empieza o pausa · flechas ↑ ↓ cambian la velocidad · Esc sale. En el celular o la tableta: toca la pantalla para empezar o pausar.",
   next: "Siguiente", back: "Atrás", approve: "Aprobar el guion", approved: "Guion aprobado", toReview: "Ver todas las revisiones",
-  vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vYellowLow: (n) => `Le falta trabajo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto",
+  vGreen: "Listo para grabar", vYellow: (n) => `Casi listo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vYellowLow: (n) => `Le falta trabajo: ${n} ${n === 1 ? "cosa" : "cosas"} por mejorar`, vRed: "Antes de grabar, revisa esto", vWait: "Esperando el informe del editor", vWaitD: "La IA aún no ha respondido. La nota completa llega con su informe.",
   vGreenD: "No hay nada importante que cambiar.", vYellowD: "Nada impide grabar, pero estos cambios ayudan a que la gente se quede.", vRedD: "Hay algo que puede quitar los anuncios del video. Arréglalo primero.",
   needText: "Primero pega un guion en el paso 1.", statusLbl: "Estado",
   plain: {
@@ -8671,7 +8937,7 @@ Object.assign(T.en, {
   s4Pp: "Open prompter", s4Reh: "Rehearse with stopwatch", s4Sheet: "Editor sheet", s4Done: "We recorded it",
   s4Help: "With a keyboard or pedal: Space starts or pauses · ↑ ↓ change speed · Esc exits. On a phone or tablet: tap the screen to start or pause.",
   next: "Next", back: "Back", approve: "Approve the script", approved: "Script approved", toReview: "See every check",
-  vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vYellowLow: (n) => `Needs work: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this",
+  vGreen: "Ready to record", vYellow: (n) => `Almost ready: ${n} ${n === 1 ? "thing" : "things"} to improve`, vYellowLow: (n) => `Needs work: ${n} ${n === 1 ? "thing" : "things"} to improve`, vRed: "Before recording, check this", vWait: "Waiting for the editor's report", vWaitD: "The AI hasn't answered yet. The full score comes with its report.",
   vGreenD: "Nothing important to change.", vYellowD: "Nothing stops you from recording, but these changes help people stay.", vRedD: "Something could remove ads from the video. Fix it first.",
   needText: "First paste a script in step 1.", statusLbl: "Status",
   plain: {
@@ -8701,7 +8967,9 @@ function verdictOf(R) {
   const rd = readinessOf(R, G.report, state.fixDismissed);
   const items = typeof rpStates === "function" && R === state.result ? rpStates().filter((x) => x.st === "pending").length : 0;
   const n = rd.openIds.length + items, high = rd.score != null ? rd.score >= 70 : rd.rules >= 28;
-  return rd.red ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : n ? { k: "amarillo", t: (high ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
+  // the report is on its way: no «Listo para grabar» from the rules alone while the AI is still reading (jadri47, 2026-10-25)
+  const waiting = !G.report && R === state.result && typeof RP !== "undefined" && RP.busy;
+  return rd.red ? { k: "rojo", t: t("vRed"), d: t("vRedD") } : waiting ? { k: "espera", t: t("vWait"), d: t("vWaitD") } : n ? { k: "amarillo", t: (high ? t("vYellow") : t("vYellowLow"))(n), d: t("vYellowD") } : { k: "verde", t: t("vGreen"), d: t("vGreenD") };
 }
 const hasScript = () => !!$("script").value.trim();
 function ensureReview() {
@@ -13286,19 +13554,8 @@ function coachAiPauseHTML() {
 const coHash = (s) => { let x = 5381; for (let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0; return s.length + ":" + x; };
 
 // ---- the request ----
-function coachAiItem(d, k, spans) {
-  const c = d.card, a = c.ai, text = state.text, field = a.field || null;
-  if (field) {
-    const m = coachAiMask(text, spans, 0, 0, 2500);
-    return { id: "i" + k, d, field, orig: state.opts[field] || "", toks: [], frag: state.opts[field] || "", ctx: m ? m.ctx.masked : "" };
-  }
-  const from = a.start != null ? a.start : d.at && d.at.start, to = a.end != null ? a.end : d.at && d.at.end;
-  if (from == null || to == null || to <= from) return null;
-  const m = coachAiMask(text, spans, from, to, 400);
-  if (!m) return null; // a verse crosses the edge of the fragment: cannot be protected, so it is not sent
-  const orig = text.slice(from, to);
-  return { id: "i" + k, d, orig, lead: orig.match(/^\s*/)[0], trail: orig.match(/\s*$/)[0], toks: m.frag.toks, frag: m.frag.masked, ctx: m.ctx.masked };
-}
+// null when a verse crosses the edge of the fragment: it cannot be protected, so it is not sent (fixItem, coach_logic.js)
+function coachAiItem(d, k, spans) { return fixItem(d, "i" + k, state.text, state.opts, spans); }
 function coachAiPrompt(items) {
   const blocks = items.map((it) => {
     const c = it.d.card, a = c.ai;
@@ -13357,6 +13614,7 @@ async function coachAiRun(items, epoch) {
 // decisions ahead still have one.
 function coachAiPump() {
   if (COAI.busy || !state.result || !COACH.list.length || !document.querySelector(".topfix.coach")) return;
+  if (typeof RP !== "undefined" && RP.busy) return; // the editor's report is reading the script and answers these problems too; renderGuide pumps again when it lands
   if (!coachAiBudget().ok) return;
   const L = COACH.list, ahead = L.filter((d) => d.needsAi && d.card && d.card.ai);
   const todo = coachAiPick(L, (id) => !!COAI.cache[id], COACH_AI_BATCH);
@@ -13406,33 +13664,41 @@ $("runBtn").addEventListener("click", () => { COAI.cache = {}; COAI.calls = 0; C
 Object.assign(T.es, {
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
-  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "Leyendo tu guion como lo haría un editor…",
+  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "La IA está leyendo tu guion como lo haría un editor",
+  rpNoAnswer: "Aún no ha respondido.", rpSoFar: "Lleva", rpWaiting: "esperando…",
   rpNoAI: "El informe del editor necesita la IA. Mientras tanto ves los avisos de anuncios y de empaque.",
   rpArea: { hook: "Gancho", promise: "Promesa", retention: "Retención", voice: "Voz hablada", close: "Cierre", return: "Que vuelvan", ads: "Anuncios" },
   rpAdsOk: "✓ sin riesgo", rpOf5: (n) => `${n} de 5`, rpNoRate: "sin valorar", rpChange: (i, n) => `Cambio ${i} de ${n}`, rpWhy: "Por qué",
   rpMore: "Más detalles", rpMoreHint: "(revisión línea por línea, muletillas, colores, por párrafos)", rpAfterRec: "Después de grabar",
   rpGone: "Este fragmento cambió después del informe, así que no se puede aplicar. Sáltalo o vuelve a evaluar.", rpWriteHere: "Escribe cómo debe quedar",
-  rpHeadRisk: "Aviso rojo", rpListLbl: "Áreas del informe", rpDecLbl: "Decisión actual",
+  rpHeadRisk: "Aviso rojo", rpHeadSoft: "Aviso amarillo", rpListLbl: "Áreas del informe", rpDecLbl: "Decisión actual",
+  rpPickLbl: "Elige cómo decirlo", rpPickMain: "Propuesta del editor", rpPickAlt: "Otra opción", rpApplyPick: "Aplicar la elegida",
+  rpWordsLbl: "Elige otra palabra", rpWordSafe: "✓ sin riesgo de anuncios", rpWordLbl: "Palabras del informe", rpTimes: (n) => `${n} veces`,
+  rpWordsRest: "Las demás palabras de este aviso no tienen alternativa: cámbialas con «Lo escribo yo».",
 });
 Object.assign(T.en, {
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
-  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "Reading your script the way an editor would…",
+  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "The AI is reading your script the way an editor would",
+  rpNoAnswer: "No answer yet.", rpSoFar: "So far", rpWaiting: "waiting…",
   rpNoAI: "The editor's report needs the AI. Meanwhile you see the ad and packaging warnings.",
   rpArea: { hook: "Hook", promise: "Promise", retention: "Retention", voice: "Spoken voice", close: "Close", return: "Return viewers", ads: "Ads" },
   rpAdsOk: "✓ no risk", rpOf5: (n) => `${n} of 5`, rpNoRate: "not rated", rpChange: (i, n) => `Change ${i} of ${n}`, rpWhy: "Why",
   rpMore: "More details", rpMoreHint: "(line-by-line review, fillers, colours, by paragraph)", rpAfterRec: "After recording",
   rpGone: "This passage changed after the report, so it can't be applied. Skip it or re-evaluate.", rpWriteHere: "Write how it should read",
-  rpHeadRisk: "Red warning", rpListLbl: "Report areas", rpDecLbl: "Current decision",
+  rpHeadRisk: "Red warning", rpHeadSoft: "Yellow warning", rpListLbl: "Report areas", rpDecLbl: "Current decision",
+  rpPickLbl: "Choose how to say it", rpPickMain: "Editor's suggestion", rpPickAlt: "Another option", rpApplyPick: "Apply the one chosen",
+  rpWordsLbl: "Choose another word", rpWordSafe: "✓ no ad risk", rpWordLbl: "Words from the report", rpTimes: (n) => `${n} times`,
+  rpWordsRest: "The other words in this warning have no alternative: change them with \"I'll write it\".",
 });
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
 if (typeof HELP_ANCHORS !== "undefined") HELP_ANCHORS.push(["rpReport", ".rp-title h3", "row"]);
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "" };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
-function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; }
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; }
 
 // A stored report is untrusted (old versions, other devices): keep only what has the right shape.
 function rpClean(r) {
@@ -13440,11 +13706,29 @@ function rpClean(r) {
   const areas = {};
   for (const k of REPORT_AREAS) { const a = r.areas[k]; areas[k] = { rating: reportRating(a && a.rating), why: String((a && a.why) || "").slice(0, 300) }; }
   const items = r.items.filter((x) => x && REPORT_AREAS.includes(x.area) && typeof x.original === "string" && x.original && typeof x.replacement === "string" && x.replacement)
-    .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, dropped: Number(r.dropped) || 0 };
+    .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: rpStrs(x.alts, REPORT_MAX_ALTS), why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
+  const words = {};
+  if (r.words && typeof r.words === "object" && !Array.isArray(r.words)) for (const [k, v] of Object.entries(r.words)) { const a = rpStrs(v, REPORT_MAX_WORD_ALTS); if (k && a.length) words[k.toLowerCase()] = a; }
+  const fixes = (Array.isArray(r.fixes) ? r.fixes : []).filter((f) => f && typeof f.id === "string" && f.id && typeof f.orig === "string" && f.orig && Array.isArray(f.options)).slice(0, REPORT_MAX_FIXES)
+    .map((f) => ({ id: f.id, orig: f.orig, lead: typeof f.lead === "string" ? f.lead : "", trail: typeof f.trail === "string" ? f.trail : "", field: typeof f.field === "string" && f.field ? f.field : null,
+      options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
+    .filter((f) => f.options.length);
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0 };
 }
+// The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
+// already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
+// that has changed since is ignored there, and a field (title, thumbnail…) is only primed while it still holds what was rated.
+function rpPrimeFixes() {
+  if (typeof COAI === "undefined" || !G.report || !G.report.fixes) return;
+  for (const f of G.report.fixes) {
+    if (COAI.cache[f.id] && COAI.cache[f.id].status === "done") continue;
+    if (f.field && (state.opts ? state.opts[f.field] || "" : ($(f.field) || {}).value || "") !== f.orig) continue;
+    COAI.cache[f.id] = { status: "done", orig: f.orig, lead: f.lead, trail: f.trail, field: f.field || undefined, raw: f.options.map((o) => ({ text: o.text, why: o.why })), mat: null, fromReport: true };
+  }
+}
+function rpStrs(a, max) { return Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.trim()).slice(0, max) : []; }
 const _applyProdR = applyProd;
-applyProd = function (id, d) { _applyProdR(id, d); G.report = rpClean(d && d.report); rpReset(); };
+applyProd = function (id, d) { _applyProdR(id, d); G.report = rpClean(d && d.report); rpReset(); rpPrimeFixes(); };
 const _prodBodyR = prodBody;
 prodBody = function (now) { return { ..._prodBodyR(now), report: G.report || null }; };
 const _doClearScriptR = doClearScript;
@@ -13464,17 +13748,30 @@ async function rpRun(force) {
     if (!sample) { RP.noAI = true; return; }
     const text = state.text, R = state.result, opts = state.opts, key = rpKey();
     RP.calls++;
-    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex" }); // not auto: the $5 automatic pause must not block the core feature
+    // The problems «Proponer con IA» and the coach would ask one at a time ride in this call: every decision whose card has the button,
+    // those with no rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. Questions and notes have their own prompts.
+    const spans = verseSpans(text, R), sent = [];
+    const cand = buildDecisions(text, R, opts, state.fixDismissed).filter((d) => d.card && d.card.ai && d.kind !== "question" && d.kind !== "note");
+    cand.sort((a, b) => (b.needsAi ? 1 : 0) - (a.needsAi ? 1 : 0));
+    for (const d of cand) {
+      if (sent.length >= REPORT_MAX_FIXES) break;
+      const it = fixItem(d, "f" + (sent.length + 1), text, opts, spans);
+      if (it) sent.push(it);
+    }
+    const fixes = sent.map((it) => { const c = it.d.card; return { id: it.id, problem: `«${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(c.ai)}`.replace(/\s+/g, " ").trim(), frag: it.frag, ctx: it.ctx }; });
+    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value, fixes }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
     const v = vetReport(text, res, opts, R);
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
-    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, why: x.why, after: x.after })), dropped: v.dropped };
+    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped };
+    const fx = vetFixes(res, sent);
+    out.fixes = sent.filter((it) => fx[it.id]).map((it) => ({ id: it.d.card.id, orig: it.orig, lead: it.lead || "", trail: it.trail || "", field: it.field || null, options: fx[it.id] }));
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
     else { RP.err = errText(e); RP.failed = true; }
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; if (G.prodId) markDirty(); }
+      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
@@ -13490,9 +13787,15 @@ function rpPrepare() {
 // ---- what is left to decide ----
 function rpRiskList() {
   const key = state.text + "|" + [...state.fixDismissed].sort().join(",");
-  if (RP.riskKey !== key || RP.riskR !== state.result) {
-    RP.risk = buildDecisions(state.text, state.result, state.opts, state.fixDismissed).filter((d) => d.kind === "risk");
-    RP.riskKey = key; RP.riskR = state.result;
+  if (RP.riskKey !== key || RP.riskR !== state.result || RP.riskRep !== G.report) {
+    const all = buildDecisions(state.text, state.result, state.opts, state.fixDismissed);
+    // A yellow ad warning («puede limitar anuncios») joins the red ones only when the report has other words for its terms: the
+    // decision is then one tap, not homework. (jadri47, 2026-10-25: "alternatives to problematic words"; in the demos only hate
+    // speech is red, so word choices would otherwise never show.)
+    const soft = G.report ? all.filter((d) => d.kind !== "risk" && d.card && /^pf-/.test(d.card.id) && d.card.level === "amarillo"
+      && reportWordRows(state.text, state.result, d.card.id.slice(3), G.report.words, {}).rows.length).map((d) => ({ ...d, kind: "risk", soft: true })) : [];
+    RP.risk = all.filter((d) => d.kind === "risk").concat(soft);
+    RP.riskKey = key; RP.riskR = state.result; RP.riskRep = G.report;
   }
   return RP.risk;
 }
@@ -13519,6 +13822,18 @@ function rpCurrent() {
   const it = G.report.items[s.i];
   return { type: "item", id: "item:" + s.i, i: s.i, it, st: s.st, start: s.start, end: s.end };
 }
+// the text an item would put in: the editor's suggestion (0) or one of its alternatives
+const rpChosen = (cur) => { const all = [cur.it.replacement, ...(cur.it.alts || [])]; return all[Math.min(RP.pick[cur.id] || 0, all.length - 1)]; };
+// an ad-risk card (red, or yellow with words) whose terms the report can replace: { rows, patches, rest } (rest = hits of that kind left without a word)
+function rpWords(cur) {
+  const c = cur.d.card;
+  if (!G.report || !c || !/^pf-/.test(c.id)) return null;
+  const cat = c.id.slice(3), w = reportWordRows(state.text, state.result, cat, G.report.words, RP.wpick);
+  if (!w.rows.length) return null;
+  const verse = verseSpans(state.text, state.result).filter((s) => s.kind !== "ref");
+  const all = (state.result.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start)).length;
+  return { ...w, rest: Math.max(0, all - w.patches.length) };
+}
 const rpCardOf = (cur) => cur.type === "risk" ? cur.d.card : { id: "rp-" + cur.i, ids: ["rp-" + cur.i], label: t("rpArea")[cur.it.area], fix: cur.it.why };
 
 // ---- html ----
@@ -13532,7 +13847,7 @@ function rpRowsHTML(R, rd) {
   const rows = rep ? REPORT_AREAS.map((k) => {
     const a = rep.areas[k], n = a.rating;
     return `<li class="rp-row" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}</span></span><span class="rp-w">${h(a.why)}</span></li>`;
-  }) : [];
+  }) : RP.busy ? REPORT_AREAS.map((k) => `<li class="rp-row rp-row-wait" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-w">${h(t("rpWaiting"))}</span></li>`) : [];
   const band = rd.red ? "rojo" : Object.values(R.sections).flat().some((r) => /^pf-/.test(r.id) && (!r.passed || r.warn) && !state.fixDismissed.has(r.id)) ? "amarillo" : "verde";
   const word = band === "verde" ? t("rpAdsOk") : t("scBand")[band];
   rows.push(`<li class="rp-row rp-ads" data-area="ads"><span class="rp-a">${h(A.ads)}</span><span class="rp-st rp-st-${band}">${h(word)}</span></li>`);
@@ -13550,26 +13865,33 @@ function rpDecisionHTML(R, cur, states) {
   const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
   if (cur.type === "item") {
     const it = cur.it, n = G.report.items.length, A = t("rpArea")[it.area], title = `${t("rpChange")(cur.i + 1, n)} · ${A}`;
-    const lost = cur.st === "lost";
+    const lost = cur.st === "lost", chosen = rpChosen(cur), many = (it.alts || []).length > 0;
     let broke = "";
     if (!lost) {
-      const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: it.replacement }] });
+      const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: chosen }] });
       if (ck.broke.length) broke = `<p class="status err">${h(t("fxBreaks")(ck.broke.map((id) => rowLabel(ck.R2 || R, id)).join(", ")))}</p>`;
     }
     return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(title)}</b></div>
       <dl class="rp-cmp"><div class="rp-c"><dt>${h(t("fxBefore"))}</dt><dd class="rp-orig"${lost ? "" : ` data-es="${cur.start}" data-ee="${cur.end}"`}><del>${h(it.original)}</del></dd></div>
-      <div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>
+      ${many ? `<div class="rp-c"><dt>${h(t("rpPickLbl"))}</dt><dd><fieldset class="rp-pick"><legend class="vh">${h(t("rpPickLbl"))}</legend>${[it.replacement, ...it.alts].map((x, k) => `<label class="rp-opt"><input type="radio" name="rpPick" value="${k}" data-rp-pick="${h(cur.id)}"${x === chosen ? " checked" : ""}><span class="rp-opt-b"><span class="rp-opt-t">${h(x)}</span><span class="hint">${h(k ? t("rpPickAlt") : t("rpPickMain"))}</span></span></label>`).join("")}</fieldset></dd></div>` : `<div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>`}
       <div class="rp-c"><dt>${h(t("rpWhy"))}</dt><dd>${h(it.why)}</dd></div></dl>
       ${lost ? `<p class="status err" role="status">${h(t("rpGone"))}</p>` : broke}${rpWriteHTML(cur)}
-      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
+      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t(many ? "rpApplyPick" : "fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
   }
-  const d = cur.d, c = d.card, opts = d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
+  const d = cur.d, c = d.card, wr = rpWords(cur);
+  const opts = wr ? [rpWordProp(wr, R)] : d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
   const canWrite = !!(d.at || c.field);
-  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag">${h(t("rpHeadRisk"))}: ${h(t("cat_hi"))}</span></div>
-    ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
+  const words = wr ? `<div class="fx-lbl">${h(t("rpWordsLbl"))}</div>${wr.rows.map((r, ri) => `<fieldset class="rp-words"><legend>«${h(r.term)}» <span class="hint">· ${h(r.hits.length > 1 ? t("rpTimes")(r.hits.length) : fmtTime(state.result.timeAt(r.hits[0].start)))}</span></legend>${r.alts.map((a, k) => `<label class="rp-chip"><input type="radio" name="rpW${ri}" value="${k}" data-rp-wpick="${h(r.key)}"${k === Math.min(RP.wpick[r.key] || 0, r.alts.length - 1) ? " checked" : ""}><span class="rp-chip-b"><b>${h(matchCase(r.term, a))}</b><span class="rp-safe">${h(t("rpWordSafe"))}</span></span></label>`).join("")}</fieldset>`).join("")}${wr.rest ? `<p class="hint">${h(t("rpWordsRest"))}</p>` : ""}` : "";
+  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
+    ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}${words}
     ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${rpWriteHTML(cur)}
     <div class="actions rp-act">${p ? `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
+}
+function rpWordProp(wr, R) {
+  const p = { kind: "patch", label: t("rpWordLbl"), patches: wr.patches };
+  p.check = verifyProposal(state.text, state.opts, R, p);
+  return p;
 }
 function reportHTML(R) {
   const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed);
@@ -13586,7 +13908,8 @@ function reportHTML(R) {
   const meta = rep ? `<span class="rp-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" class="small${stale ? " primary" : ""}" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : RP.err ? `<button type="button" class="small primary" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : "";
   const cur = rpCurrent();
   let body = "";
-  if (RP.busy) body = `<p class="rp-wait" role="status">${h(t("rpReading"))}</p>`;
+  // the wait says plainly that no answer has come yet; the seconds tick from aistatus_ui.js ([data-ai-el])
+  if (RP.busy) body = `<div class="rp-wait" role="status"><div class="rp-wait-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(t("rpReading"))}</b></div><p>${h(t("rpNoAnswer"))} <span aria-hidden="true">${h(t("rpSoFar"))} <b class="ai-el" data-ai-el>${typeof AIS !== "undefined" && AIS.n ? aiClock(Date.now() - AIS.t0) : "0:00"}</b></span></p></div>`;
   else {
     if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p>`;
     if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
@@ -13636,13 +13959,15 @@ function rpAct(act) {
   if (act === "skip") return rpSkip(cur);
   if (act === "prev") return rpPrev();
   if (act === "apply") {
-    if (cur.type === "item") return rpApplyP(cur, { kind: "patch", label: t("rpTitle"), patches: [{ start: cur.start, end: cur.end, rep: cur.it.replacement }] });
+    if (cur.type === "item") return rpApplyP(cur, { kind: "patch", label: t("rpTitle"), patches: [{ start: cur.start, end: cur.end, rep: rpChosen(cur) }] });
+    const wr = rpWords(cur);
+    if (wr) return rpApplyP(cur, rpWordProp(wr, state.result));
     const opts = cur.d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(cur.d) : []);
     return opts[0] && rpApplyP(cur, opts[0]);
   }
   if (act === "write") {
     const c = rpCardOf(cur);
-    RP.write = { id: cur.id, err: "", value: cur.type === "item" ? cur.it.replacement : c.field ? c.field.value : state.text.slice(cur.start, cur.end) };
+    RP.write = { id: cur.id, err: "", value: cur.type === "item" ? rpChosen(cur) : c.field ? c.field.value : state.text.slice(cur.start, cur.end) };
     renderGuide(); const b = $("rpW"); if (b) b.focus(); return;
   }
   if (act === "wcancel") { RP.write = null; renderGuide(); return; }
@@ -13671,6 +13996,10 @@ function rpWire() {
     el.addEventListener("click", go);
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
+  const pickRedraw = (sel) => { RP.refocus = sel; const y = window.scrollY; renderGuide(); window.scrollTo(0, y); };
+  root.querySelectorAll("input[data-rp-pick]").forEach((x) => x.addEventListener("change", () => { RP.pick[x.dataset.rpPick] = +x.value; pickRedraw(`input[name="rpPick"][value="${x.value}"]`); }));
+  root.querySelectorAll("input[data-rp-wpick]").forEach((x) => x.addEventListener("change", () => { RP.wpick[x.dataset.rpWpick] = +x.value; pickRedraw(`input[name="${x.name}"][value="${x.value}"]`); }));
+  if (RP.refocus) { const f = root.querySelector(RP.refocus); RP.refocus = ""; if (f) f.focus(); }
   const w = $("rpW");
   if (w) w.addEventListener("input", () => { if (RP.write) RP.write.value = w.value; });
   // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button keeps its own meaning
@@ -13705,6 +14034,9 @@ function rpAfterRender() {
   if (d) RP.tm = setTimeout(rpShow, d); else rpShow();
 }
 
+// a new review starts the coach cache over (coach_ai.js, capture phase); the report's answers go back in after it
+$("runBtn").addEventListener("click", () => { rpPrimeFixes(); });
+
 // ---- hooks (this file loads after coach_ai.js) ----
 const _renderGuideR = renderGuide;
 renderGuide = function () {
@@ -13715,6 +14047,147 @@ renderGuide = function () {
 // Score rows and map markers belong to «Más detalles»: opening it is what makes them land somewhere.
 const _scGoRowR = scGoRow;
 scGoRow = function (id) { if (V.guided) RP.more = true; return _scGoRowR(id); };
+/* ===== AI status: a bubble on the score while any AI call runs, then «Listo» ===== */
+// (jadri47, 2026-10-25: "clearly specify when Claude is thinking and hasn't provided an answer yet ... some bubble attached to the
+// script ranking so the user can see when the AI is thinking and when it's done"; picked A: every AI wait, the «Listo» bubble closes
+// after ~5 s and leaves a small check on the score.) Every feature reaches the AI through caps.sample, so the count lives in one
+// wrapper here instead of in each feature. caps.sample becomes a getter/setter: whatever is assigned later (bible_ui's version rule,
+// a test mock) is wrapped too, and a wrapped object is marked so a re-assignment built from it is not counted twice.
+Object.assign(T.es, {
+  aiThinking: "La IA está pensando…", aiThinkingN: (n) => `La IA está pensando… (${n} tareas)`,
+  aiWait: "Todavía no hay respuesta. Puede tardar hasta un minuto.",
+  aiDone: "Listo: la IA ha respondido", aiFail: "La IA no respondió", aiFailSub: "El aviso en pantalla dice por qué.",
+  aiRetry: "Reintentar", aiClose: "Cerrar", aiPillBusy: "La IA está pensando", aiPillDone: "La IA ha respondido",
+  aiLblReport: "Informe del editor",
+});
+Object.assign(T.en, {
+  aiThinking: "The AI is thinking…", aiThinkingN: (n) => `The AI is thinking… (${n} tasks)`,
+  aiWait: "No answer yet. It can take up to a minute.",
+  aiDone: "Done: the AI has answered", aiFail: "The AI did not answer", aiFailSub: "The message on screen says why.",
+  aiRetry: "Retry", aiClose: "Close", aiPillBusy: "The AI is thinking", aiPillDone: "The AI has answered",
+  aiLblReport: "Editor's report",
+});
+
+const AIS = { n: 0, t0: 0, label: "", retry: null, ok: false, fail: false, st: "", tick: 0, hideTm: 0, checkTm: 0, check: false, end: 0 };
+const AI_DONE_MS = 5000, AI_FAIL_MS = 12000, AI_CHECK_MS = 60000;
+const AI_MARK = Symbol.for("sd-ai-tracked");
+const aiCancelled = (e) => !!e && (e.code === "cancelled" || e.name === "AbortError");
+const aiClock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+
+function aiTrack(s) {
+  if (!s || typeof s.json !== "function" || s[AI_MARK]) return s;
+  const json = s.json;
+  const out = { ...s, json: (p, o = {}) => {
+    const { aiLabel, aiRetry, ...rest } = o; // ours only: the connection never sees them
+    aiStart(aiLabel, aiRetry);
+    let r;
+    try { r = Promise.resolve(json.call(s, p, rest)); } catch (e) { r = Promise.reject(e); }
+    r.then(() => aiEnd(true, null, aiRetry), (e) => aiEnd(false, e, aiRetry));
+    return r;
+  } };
+  Object.defineProperty(out, AI_MARK, { value: true, enumerable: true }); // enumerable: {...s} copies keep the mark
+  return out;
+}
+(function aiWrapCaps() {
+  let cur = Promise.resolve(caps.sample).then(aiTrack);
+  Object.defineProperty(caps, "sample", { configurable: true, enumerable: true, get: () => cur, set: (v) => { cur = Promise.resolve(v).then(aiTrack); } });
+})();
+
+function aiStart(label, retry) {
+  if (AIS.n === 0) { AIS.t0 = Date.now(); AIS.label = ""; AIS.retry = null; AIS.ok = false; AIS.fail = false; }
+  if (label) AIS.label = label;
+  if (retry) AIS.retry = retry;
+  AIS.n++;
+  aiShow("busy");
+}
+function aiEnd(ok, e, retry) {
+  AIS.n = Math.max(0, AIS.n - 1);
+  if (ok) AIS.ok = true;
+  else if (!aiCancelled(e)) { AIS.fail = true; if (retry) AIS.retry = retry; }
+  if (AIS.n > 0) { aiShow("busy"); return; }
+  AIS.end = Date.now();
+  aiShow(AIS.fail ? "fail" : AIS.ok ? "done" : "none"); // all cancelled: the person stopped it, nothing to say
+}
+
+function aiBubble() {
+  let b = $("aiBub");
+  if (b) return b;
+  b = document.createElement("div"); b.id = "aiBub"; b.className = "ai-bub"; b.hidden = true;
+  b.setAttribute("role", "status"); b.setAttribute("aria-live", "polite");
+  b.addEventListener("click", (e) => {
+    const x = e.target.closest("[data-ai]");
+    if (!x) return;
+    if (x.dataset.ai === "close") aiHide();
+    if (x.dataset.ai === "retry") { const f = AIS.retry; aiHide(); if (f) f(); }
+  });
+  document.body.appendChild(b);
+  return b;
+}
+function aiPillMark() {
+  const p = $("scorePill");
+  if (!p) return;
+  let m = p.querySelector(".sc-ai");
+  if (!m) { m = document.createElement("span"); m.className = "sc-ai"; p.appendChild(m); }
+  const busy = AIS.st === "busy";
+  m.className = "sc-ai" + (busy ? " busy" : AIS.check ? " done" : "");
+  m.innerHTML = busy ? `<i></i><i></i><i></i><span class="vh">${h(t("aiPillBusy"))}</span>`
+    : AIS.check ? `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg><span class="vh">${h(t("aiPillDone"))}</span>` : "";
+}
+function aiShow(st) {
+  const b = aiBubble();
+  clearTimeout(AIS.hideTm); clearInterval(AIS.tick);
+  if (st !== "done") { clearTimeout(AIS.checkTm); AIS.check = false; }
+  AIS.st = st;
+  if (st === "none") { b.hidden = true; aiPillMark(); return; }
+  b.className = "ai-bub " + st;
+  const el = `<span class="ai-el" aria-hidden="true" data-ai-el>${aiClock((st === "busy" ? Date.now() : AIS.end) - AIS.t0)}</span>`;
+  const x = `<button type="button" class="ai-x" data-ai="close" aria-label="${h(t("aiClose"))}">×</button>`;
+  if (st === "busy") {
+    b.innerHTML = `<div class="ai-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(AIS.n > 1 ? t("aiThinkingN")(AIS.n) : t("aiThinking"))}</b>${el}</div><p>${h(t("aiWait"))}</p>`;
+    AIS.tick = setInterval(aiTick, 1000);
+  } else if (st === "done") {
+    b.innerHTML = `<div class="ai-h"><svg class="ai-ok" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg><b>${h(t("aiDone"))}</b>${el}${x}</div>${AIS.label ? `<p>${h(AIS.label)}</p>` : ""}`;
+    AIS.check = true;
+    AIS.hideTm = setTimeout(aiHide, AI_DONE_MS);
+    AIS.checkTm = setTimeout(() => { AIS.check = false; aiPillMark(); }, AI_CHECK_MS);
+  } else {
+    b.innerHTML = `<div class="ai-h"><b>${h(t("aiFail"))}</b>${el}${x}</div><p>${h(t("aiFailSub"))}</p>${AIS.retry ? `<div class="actions"><button type="button" class="small primary" data-ai="retry">${h(t("aiRetry"))}</button></div>` : ""}`;
+    AIS.hideTm = setTimeout(aiHide, AI_FAIL_MS);
+  }
+  b.hidden = false;
+  aiPillMark(); aiPlace();
+}
+function aiHide() {
+  clearTimeout(AIS.hideTm); clearInterval(AIS.tick);
+  const b = $("aiBub");
+  if (b) b.hidden = true;
+  if (AIS.st !== "busy") AIS.st = "";
+  aiPillMark();
+}
+function aiTick() {
+  const s = aiClock(Date.now() - AIS.t0);
+  document.querySelectorAll("[data-ai-el]").forEach((e) => { e.textContent = s; }); // the bubble and the report panel's own line
+  aiPlace();
+}
+// Next to the score pill: below it when the pill is in the top half (docked on desktop), above it when it floats at the bottom
+// (phone, full mode). The tail points at the pill's centre. With no pill on screen the bubble sits where the floating pill would.
+function aiPlace() {
+  const b = $("aiBub");
+  if (!b || b.hidden) return;
+  const p = $("scorePill"), vw = window.innerWidth, vh = window.innerHeight, phone = vw < 600;
+  const r = p && !p.hidden && p.getClientRects().length ? p.getBoundingClientRect() : null; // not offsetParent: it is null for the fixed (floating) pill
+  const W = phone ? vw - 32 : Math.min(320, vw - 32);
+  const right = phone ? 16 : r ? Math.max(16, vw - r.right) : 12;
+  const below = !!r && r.top < vh / 2;
+  b.style.width = W + "px"; b.style.right = right + "px"; b.style.left = "auto";
+  if (below) { b.style.top = Math.round(r.bottom + 12) + "px"; b.style.bottom = "auto"; }
+  else { b.style.bottom = Math.round(r ? vh - r.top + 12 : 140) + "px"; b.style.top = "auto"; }
+  b.dataset.tail = below ? "up" : "down";
+  const tail = r ? Math.min(W - 28, Math.max(14, vw - right - (r.left + r.width / 2) - 7)) : 40; // px from the bubble's right edge
+  b.style.setProperty("--ai-tail", Math.round(tail) + "px");
+}
+window.addEventListener("resize", aiPlace);
+window.addEventListener("scroll", aiPlace, { passive: true, capture: true });
 /* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
 Object.assign(T.es, {
   atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",
