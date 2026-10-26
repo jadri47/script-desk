@@ -65,7 +65,7 @@ function plainLabel(id, fallback) {
 // Same recipe as the number beside it (readinessOf): n = open rules rows that cost readiness + report changes not yet decided.
 // "Almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score"); without a report the rules part counts /40 → 28.
 function verdictOf(R) {
-  const rd = readinessOf(R, G.report, state.fixDismissed);
+  const rd = readinessOf(R, G.report, state.fixDismissed, state.text);
   const items = typeof rpStates === "function" && R === state.result ? rpStates().filter((x) => x.st === "pending").length : 0;
   const n = rd.openIds.length + items, high = rd.score != null ? rd.score >= 70 : rd.rules >= 28;
   // the report is on its way: no «Listo para grabar» from the rules alone while the AI is still reading (jadri47, 2026-10-25)
@@ -114,7 +114,7 @@ function navHTML(prev, nextLabel, nextAttr) {
 }
 function verdictHTML(R) {
   // The number is readiness (score_logic.js readinessOf): with the editor's report /100, without it only the rules part /40.
-  const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed) : null;
+  const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed, state.text) : null;
   const n = rd ? (rd.score != null ? rd.score : rd.rules) : 0, full = !!(rd && rd.score != null);
   return `<div class="gv gv-${v.k}">${rd ? `<div class="gv-top"><span class="gv-n">${n}<small>/${full ? 100 : rd.rulesMax}</small></span><span class="gv-l">${h(t(full ? "rpName" : "rpRulesName"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
 }

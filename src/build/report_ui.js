@@ -55,7 +55,8 @@ function rpClean(r) {
     .map((f) => ({ id: f.id, orig: f.orig, lead: typeof f.lead === "string" ? f.lead : "", trail: typeof f.trail === "string" ? f.trail : "", field: typeof f.field === "string" && f.field ? f.field : null,
       options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
     .filter((f) => f.options.length);
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0 };
+  const baseline = cleanBaseline(r.baseline); // ratings of the first measurement; old reports have none
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}) };
 }
 // The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
 // already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
@@ -113,7 +114,7 @@ async function rpRun(force) {
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
+      if (out) { G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
@@ -149,10 +150,9 @@ function rpStates() {
   return rep.items.map((it, i) => {
     if (done.has("rp-" + i)) return { i, st: "applied" };
     if (RP.skip.has(i)) return { i, st: "skipped" };
-    const a = text.indexOf(it.original);
-    if (a >= 0 && text.indexOf(it.original, a + 1) < 0) return { i, st: "pending", start: a, end: a + it.original.length };
-    if (text.includes(it.replacement)) return { i, st: "applied" }; // applied earlier, the log was reset since
-    return { i, st: "lost" };
+    const st = itemState(text, it); // text-derived part lives in report_logic.js (replacement or an alternative counts as applied)
+    if (st === "pending") { const a = text.indexOf(it.original); return { i, st, start: a, end: a + it.original.length }; }
+    return { i, st }; // "applied" here also covers an earlier apply whose log was reset since
   });
 }
 function rpCurrent() {
@@ -236,13 +236,13 @@ function rpWordProp(wr, R) {
   return p;
 }
 function reportHTML(R) {
-  const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed);
+  const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed, state.text);
   const stale = !!rep && rep.key !== rpKey();
   const states = rpStates(), live = states.filter((s) => s.st === "pending");
   let score;
   if (rd.score == null) score = t("rpRulesLbl")(rd.rules);
   else {
-    const b = live.length ? projectedReadiness(state.text, R, state.opts, { areas: rep.areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) }) : rd.score;
+    const b = live.length ? projectedReadiness(state.text, R, state.opts, { areas: effectiveReport(state.text, rep).areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) }) : rd.score;
     score = b !== rd.score ? t("rpReadyTo")(rd.score, b) : t("rpReady")(rd.score);
   }
   const msg = typeof fixMsg === "string" ? fixMsg : "";

@@ -158,18 +158,71 @@ function reportWordRows(text, R, cat, words, pick) {
 // «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
 function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }
 
-// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
-// item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
+// ---- the score counts accepted changes (jadri47, 2026-10-26: plan step 1) ----
+// Text-derived state of one report item: "pending" (its original is found exactly once), "applied" (the original is gone or
+// repeated and the replacement, or one of its alternatives, is in the text) or "lost". rpStates (report_ui.js) adds the log and skips.
+function itemState(text, it) {
+  const a = text.indexOf(it.original);
+  if (a >= 0 && text.indexOf(it.original, a + 1) < 0) return "pending";
+  if (text.includes(it.replacement) || (it.alts || []).some((x) => x && text.includes(x))) return "applied";
+  return "lost";
+}
+// Applied for the score: the original is NOT in the text and the replacement or an alternative is.
+function itemApplied(text, it) {
+  if (!it || typeof it.original !== "string" || !it.original || text.includes(it.original)) return false;
+  return (typeof it.replacement === "string" && it.replacement !== "" && text.includes(it.replacement)) || (it.alts || []).some((x) => typeof x === "string" && x !== "" && text.includes(x));
+}
+// A copy of the report whose areas are raised, for each applied item, to min(5, item.after); never lowered. A raised area has est: true.
+// A new measurement replaces report.areas, and the applied items' originals are no longer in the text it was made on, so nothing is raised twice.
+function effectiveReport(text, report) {
+  if (!report) return null;
+  const areas = {};
+  for (const k of REPORT_AREAS) areas[k] = report.areas && report.areas[k] ? { ...report.areas[k] } : { rating: null };
+  for (const it of report.items || []) {
+    if (!areas[it.area] || it.after == null || !itemApplied(text, it)) continue;
+    const up = Math.min(5, it.after), cur = areas[it.area].rating;
+    if (up > (cur || 0)) { areas[it.area].rating = up; areas[it.area].est = true; }
+  }
+  return { ...report, areas };
+}
+// Points that change i adds: the readiness of the text with it applied (rep: which wording, default the replacement) minus the
+// readiness now. Same recipe as the total (readinessOf with the text), so it equals the real move. 0 when the item is not pending.
+function itemGain(text, R, opts, report, i, rep, dismissed) {
+  const it = report && report.items && report.items[i];
+  if (!it || itemState(text, it) !== "pending") return 0;
+  const a = text.indexOf(it.original), t2 = applyPatches(text, [{ start: a, end: a + it.original.length, rep: rep == null ? it.replacement : rep }]);
+  const pts = (rd) => (rd.score == null ? rd.rules : rd.score);
+  return pts(readinessOf(analyze(t2, opts), report, dismissed, t2)) - pts(readinessOf(R, report, dismissed, text));
+}
+// Ratings captured once, the first time the script was measured: this report's baseline if it has one, else the previous report's
+// baseline, else the previous report's ratings when it is for the same script key, else its own ratings. Returns a copy.
+function withBaseline(report, prev) {
+  if (!report) return report;
+  const ratings = (r) => { const o = {}; for (const k of REPORT_AREAS) { const v = r && r.areas && r.areas[k] && r.areas[k].rating; if (v != null) o[k] = v; } return o; };
+  const own = cleanBaseline(report.baseline);
+  const base = own || cleanBaseline(prev && prev.baseline) || (prev && prev.areas && prev.key === report.key && Object.keys(ratings(prev)).length ? ratings(prev) : ratings(report));
+  return { ...report, baseline: base };
+}
+// Only valid 1-5 whole numbers per known area survive; null when none do.
+function cleanBaseline(b) {
+  if (!b || typeof b !== "object") return null;
+  const o = {};
+  for (const k of REPORT_AREAS) if (Number.isInteger(b[k]) && b[k] >= 1 && b[k] <= 5) o[k] = b[k];
+  return Object.keys(o).length ? o : null;
+}
+
+// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part starts from report.areas (pass
+// effectiveReport(text, report).areas to include changes already applied, as the panel does) with each item's area raised to the rating the AI says the change earns (never above 5,
+// never lowered). Shown as "si aceptas lo propuesto". The points come from readinessOf, the one table.
 function projectedReadiness(text, R, opts, report) {
   const items = (report && report.items) || [];
   const t2 = applyPatches(text, items.map((x) => ({ start: x.start, end: x.end, rep: x.replacement })));
-  const r2 = readinessOf(analyze(t2, opts), null);
   const areas = {};
   for (const k of REPORT_AREAS) areas[k] = { rating: report && report.areas && report.areas[k] ? report.areas[k].rating : null };
   for (const it of items) {
     const cur = areas[it.area].rating, up = it.after == null ? null : Math.min(5, it.after);
     if (up != null && up > (cur || 0)) areas[it.area].rating = up;
   }
-  const editor = REPORT_AREAS.reduce((a, k) => a + (RATING_PTS[areas[k].rating] || 0), 0);
-  return Math.min(r2.rules + editor, r2.red ? 69 : 100);
+  const r2 = readinessOf(analyze(t2, opts), { areas });
+  return r2.score;
 }

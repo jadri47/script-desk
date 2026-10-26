@@ -60,7 +60,9 @@ const READY_W = { runtime: 4 };
 const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
 // report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
 // (no invented number). dismissed: rows the person ignored count as passed here.
-function readinessOf(R, report, dismissed) {
+// text (optional): the script as it is now. With it the editor part counts the report's changes already applied (effectiveReport,
+// report_logic.js): editorEst = areas raised by them, editorBase = the editor points without the raise. Without it nothing changes.
+function readinessOf(R, report, dismissed, text) {
   dismissed = dismissed || new Set();
   const rows = Object.values(R.sections).flat();
   const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
@@ -75,8 +77,13 @@ function readinessOf(R, report, dismissed) {
   const openIds = open.filter((r) => /^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)).map((r) => r.id);
   if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts, openIds };
   // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
-  const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  const editorOf = (rp) => REPORT_AREAS.reduce((a, k) => { const v = rp.areas[k] && rp.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  const editorBase = editorOf(report);
+  const eff = typeof text === "string" ? effectiveReport(text, report) : report;
+  const editor = eff === report ? editorBase : editorOf(eff);
   let score = rules + editor;
   if (red) score = Math.min(score, 69);
-  return { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  const out = { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  if (typeof text === "string") { out.editorBase = editorBase; out.editorEst = REPORT_AREAS.filter((k) => eff.areas[k] && eff.areas[k].est).length; }
+  return out;
 }

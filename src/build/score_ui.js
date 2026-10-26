@@ -112,7 +112,7 @@ function scRun() {
 function scApply() {
   if (!SC.R) { scPaint(); return; }
   // The number is readiness: with the editor's report /100, without it only the rules part /40 (never a made-up editor part).
-  const RD = readinessOf(SC.R, G.report, state.fixDismissed), kind = RD.score != null ? "100" : "40", cur = RD.score != null ? RD.score : RD.rules;
+  const RD = readinessOf(SC.R, G.report, state.fixDismissed, state.text), kind = RD.score != null ? "100" : "40", cur = RD.score != null ? RD.score : RD.rules;
   // The band and the popover rows use the same recipe as the number: only rows that cost readiness, at what they cost there.
   const rows = Object.values(SC.R.sections).flat(), inReady = new Set(RD.openIds);
   const open = rows.filter((r) => inReady.has(r.id)), pts = new Map(open.map((r) => [r.id, readyWeight(r)]));

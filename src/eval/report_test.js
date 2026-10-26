@@ -170,5 +170,70 @@ const good = { area: "hook", original: sents[0].text, replacement: sents[0].text
   const en = ex.en.best, Re = L.analyze(en.text, opts(en, "en")), pe = L.reportPrompt(en.text, Re, opts(en, "en"));
   ok("English script gets the English brief, script still last", /You are an editor/.test(pe) && /never put a mark in "replacement"/.test(pe) && pe.endsWith('\n"""') && !/Eres editor/.test(pe));
 }
+// ---- the score counts accepted changes (2026-10-26)
+{
+  const it1 = { area: "hook", original: sents[0].text, replacement: "¿Y si lo que crees saber de esto está a punto de cambiar? Quédate hasta el final.", alts: ["Antes de seguir, una pregunta que casi nadie se hace. Quédate conmigo."], why: "w", after: 5 };
+  const it2 = { area: "close", original: sents[1].text, replacement: "Gracias por acompañarnos hoy; nos vemos pronto con el próximo mensaje.", alts: [], why: "w", after: 4 };
+  const rp = { key: "k1", areas: rep(3).areas, items: [it1, it2] };
+  const tot = (t, r, d) => L.readinessOf(L.analyze(t, O), r, d, t);
+  const ap = (t, it, s) => t.replace(it.original, s == null ? it.replacement : s);
+  const base = tot(E.text, rp);
+  ok("itemState: pending / applied (replacement) / applied (alt) / lost", L.itemState(E.text, it1) === "pending" && L.itemState(ap(E.text, it1), it1) === "applied" && L.itemState(ap(E.text, it1, it1.alts[0]), it1) === "applied" && L.itemState(E.text.replace(it1.original, "otra cosa"), it1) === "lost");
+  ok("itemApplied: replacement and alt count, original present or lost does not", L.itemApplied(ap(E.text, it1), it1) && L.itemApplied(ap(E.text, it1, it1.alts[0]), it1) && !L.itemApplied(E.text, it1) && !L.itemApplied(E.text.replace(it1.original, "otra cosa"), it1));
+  ok("no text: readinessOf has no est fields and the same score", L.readinessOf(R, rp).editorEst === undefined && L.readinessOf(R, rp).score === L.readinessOf(R, rp, null, undefined).score);
+  ok("with text and nothing applied: editorEst 0, editorBase = editor", base.editorEst === 0 && base.editorBase === base.editor && base.editor === 42);
+  const eff = L.effectiveReport(ap(E.text, it1), rp);
+  ok("effectiveReport raises the applied item's area to after, flags est, leaves the original untouched", eff.areas.hook.rating === 5 && eff.areas.hook.est === true && eff.areas.close.rating === 3 && !eff.areas.close.est && rp.areas.hook.rating === 3 && eff !== rp && eff.areas !== rp.areas);
+  ok("effectiveReport: null stays null; nothing applied = same ratings", L.effectiveReport("x", null) === null && L.effectiveReport(E.text, rp).areas.hook.rating === 3);
+  // per-change gain equals the move of the total
+  for (const [name, it, s] of [["replacement", it1, null], ["alt", it1, it1.alts[0]], ["close 3 to 4", it2, null]]) {
+    const i = rp.items.indexOf(it), t2 = ap(E.text, it, s), real = tot(t2, rp).score - base.score;
+    const g = L.itemGain(E.text, R, O, rp, i, s);
+    ok(`itemGain (${name}) equals the real move of the total`, g === real && tot(t2, rp).editorEst === 1, `${g} vs ${real}`);
+  }
+  ok("hook 3 to 5 moves the editor part by +3 on the total", tot(ap(E.text, it1), rp).editor - base.editor === 3 && tot(ap(E.text, it1), rp).editorBase === base.editor);
+  // the area is already at/above `after`: the gain is the rules part only
+  const hi = { ...rp, areas: rep(5).areas }, g5 = L.itemGain(E.text, R, O, hi, 0), real5 = tot(ap(E.text, it1), hi).score - tot(E.text, hi).score;
+  ok("area already at 5: the editor part does not move, gain = rules only", g5 === real5 && tot(ap(E.text, it1), hi).editor === 60 && tot(ap(E.text, it1), hi).editorEst === 0, `${g5}`);
+  ok("an area above `after` is not lowered", L.effectiveReport(ap(E.text, it2), { ...rp, areas: { ...rp.areas, close: { rating: 5 } } }).areas.close.rating === 5);
+  // cap at 5 and ignore after == null
+  const big = { ...it1, after: 9 }, nul = { ...it2, after: null };
+  ok("rating capped at 5; after == null ignored", L.effectiveReport(ap(ap(E.text, big), nul), { ...rp, items: [big, nul] }).areas.hook.rating === 5 && L.effectiveReport(ap(E.text, nul), { ...rp, items: [nul] }).areas.close.rating === 3);
+  // not applied / lost items do not count
+  const lostT = E.text.replace(it1.original, "otra cosa bien distinta");
+  ok("a pending or lost item counts nothing; a lost one has no gain", base.editorEst === 0 && tot(lostT, rp).editorEst === 0 && L.itemGain(lostT, L.analyze(lostT, O), O, rp, 0) === 0);
+  ok("an applied item has no gain left; no report = 0", L.itemGain(ap(E.text, it1), L.analyze(ap(E.text, it1), O), O, rp, 0) === 0 && L.itemGain(E.text, R, O, null, 0) === 0);
+  // a re-measured report does not double count
+  const t1 = ap(E.text, it1), R1 = L.analyze(t1, O);
+  const re = { key: "k2", areas: rep(4).areas, items: [{ ...it2, after: 5 }] };
+  ok("re-measured report (its items no longer match the text) is its own measurement: nothing raised twice", L.readinessOf(R1, re, null, t1).editorEst === 0 && L.readinessOf(R1, re, null, t1).score === L.readinessOf(R1, re).score);
+  // red cap
+  const w = ex.es.worst, Ow = opts(w, "es"), Rw = L.analyze(w.text, Ow), sw = Rw.sents.find((s) => w.text.split(s.text).length === 2 && !/[⟦⟧]/.test(s.text));
+  const iw = { area: "hook", original: sw.text, replacement: "Una frase distinta y breve para empezar.", alts: [], why: "w", after: 5 }, rw = { key: "kw", areas: rep(2).areas, items: [iw] };
+  const tw2 = w.text.replace(iw.original, iw.replacement);
+  ok("red keeps <= 69 with changes applied", L.readinessOf(Rw, rw, null, w.text).red && L.readinessOf(L.analyze(tw2, Ow), { ...rw, areas: rep(5).areas }, null, tw2).score <= 69);
+  const gw = L.itemGain(w.text, Rw, Ow, rw, 0), realw = L.readinessOf(L.analyze(tw2, Ow), rw, null, tw2).score - L.readinessOf(Rw, rw, null, w.text).score;
+  ok("red-cap case: gain equals the real move of the total (and the editor raise shows)", gw === realw && L.readinessOf(L.analyze(tw2, Ow), rw, null, tw2).editorEst === 1, `${gw} vs ${realw}`);
+  // projected = the total after applying everything
+  const v = L.vetReport(E.text, { areas: rep(3).areas, items: [it1, it2] }, O, R), Pj = L.projectedReadiness(E.text, R, O, v);
+  const tAll = L.applyPatches(E.text, v.items.map((x) => ({ start: x.start, end: x.end, rep: x.replacement })));
+  ok("projectedReadiness equals the total after applying all", v.items.length === 2 && Pj === L.readinessOf(L.analyze(tAll, O), v, null, tAll).score, `${Pj}`);
+  const half = ap(E.text, it1);
+  const live = { ...rp, areas: L.effectiveReport(half, rp).areas, items: [{ ...it2, start: half.indexOf(it2.original), end: half.indexOf(it2.original) + it2.original.length }] };
+  ok("projected also counts a change already applied (it never falls below the current total)", L.projectedReadiness(half, L.analyze(half, O), O, live) >= tot(half, rp).score && L.projectedReadiness(half, L.analyze(half, O), O, live) === tot(L.applyPatches(half, [{ start: live.items[0].start, end: live.items[0].end, rep: it2.replacement }]), rp).score);
+  // the full report, with the applied change still in it (its span now holds the replacement): its item raises the area itself
+  const i1 = half.indexOf(it1.replacement), full = { ...rp, items: [{ ...it1, start: i1, end: i1 + it1.replacement.length }, live.items[0]] };
+  ok("projected from the full report with the applied change still among the items matches the effective-areas call", L.projectedReadiness(half, L.analyze(half, O), O, full) === L.projectedReadiness(half, L.analyze(half, O), O, live));
+  // original still in the text next to the replacement: not applied
+  ok("itemApplied is false while the original is still in the text, even if the replacement is there too", !L.itemApplied(E.text + " " + it1.replacement, it1) && L.effectiveReport(E.text + " " + it1.replacement, rp).areas.hook.rating === 3);
+  // baseline
+  const m1 = { key: "a", areas: rep(2).areas, items: [] }, m2 = { key: "a", areas: rep(4).areas, items: [] }, m3 = { key: "b", areas: rep(4).areas, items: [] };
+  const b1 = L.withBaseline(m1, null), b2 = L.withBaseline(m2, b1), b3 = L.withBaseline(m3, null), b4 = L.withBaseline(m2, m1), b5 = L.withBaseline(m3, m1);
+  ok("baseline: first measurement = its own ratings", b1.baseline.hook === 2 && b1.baseline.return === 2 && m1.baseline === undefined);
+  ok("baseline survives a re-measure and is never overwritten", b2.baseline.hook === 2 && b2.areas.hook.rating === 4 && L.withBaseline(b2, b2).baseline.hook === 2);
+  ok("baseline: previous report without one and same key -> its ratings; other key -> own", b4.baseline.hook === 2 && b5.baseline.hook === 4 && b3.baseline.hook === 4);
+  ok("cleanBaseline keeps only valid 1-5 integers per known area", JSON.stringify(L.cleanBaseline({ hook: 3, promise: 7, retention: 2.5, voice: "4", close: 1, zzz: 2 })) === '{"hook":3,"close":1}' && L.cleanBaseline({ hook: 0 }) === null && L.cleanBaseline(null) === null && L.cleanBaseline([3]) === null);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);
