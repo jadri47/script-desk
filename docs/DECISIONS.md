@@ -1,5 +1,16 @@
 # Decisions (newest first)
 
+## 2026-10-25: alternatives for problematic words, and an AI status bubble on the score (Adrian: "Provide synonyms or alternatives to problematic words when suggesting changes ... clearly specify when Claude is thinking ... some bubble attached to the script ranking"; mockup shown first)
+
+Picks (2026-10-25, "Do the three AS"): **A alternatives from the same report call** (no extra call; a few hundred more output tokens per report, a guess) · **A the bubble covers every AI wait** · **A «Listo» closes after ~5 s and leaves a check on the score**.
+- Rejected: B a fixed synonym table (free, offline, but only the words in it, and doctrine-adjacent wording Adrian would approve line by line); C table + AI.
+- Wait text says «Puede tardar hasta un minuto», not the mockup's "20–40 s": nobody measured the latency.
+- The check stays on the pill for 60 s (a judgement call: "leaves a check" with no end looked meaningless).
+- Found while building: in the demos only hate speech raises a red ad warning; violence/events words raise yellow at most, and an isolated word in a long script raises nothing (density thresholds). Word choices for red cards only would almost never show, so a yellow ad warning joins step 2 when the report has words for its terms (judgement call, named in the report).
+- One choice per word, applied to every occurrence outside Scripture («pandemia» ×5 is one decision, not five).
+- While the report runs the verdict no longer says «Listo para grabar» from the rules alone.
+- Open: real-model wording of alternatives (tests use a mock); real phone.
+
 ## 2026-10-22: refocus — 3 steps, an editor's report, a readiness score (Adrian: "the app has become too complex and has lost its initial scope… directed to a PhD person… from a 90 level to a 95-100")
 
 Picks (2026-10-22): **A refocus** · calibrate on «excelente» as Juan's level (no real scripts yet) · **one score, readiness, recalibrated** · **merge «Grabar» and «Después» into step 3**.
