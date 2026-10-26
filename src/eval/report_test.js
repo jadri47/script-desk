@@ -75,6 +75,46 @@ const good = { area: "hook", original: sents[0].text, replacement: sents[0].text
   ok("vet survives garbage", L.vetReport(E.text, null, O, R).items.length === 0 && L.vetReport(E.text, { items: "x" }, O, R).dropped === 0);
 }
 
+// ---- alternatives (2026-10-25): other ways to write a change, and words for a flagged term
+{
+  const j = (items, words) => ({ areas: rep(4).areas, items, words });
+  const a1 = sents[0].text + " Quédate conmigo hasta el final.", a2 = sents[0].text + " No te vayas todavía.";
+  const v = L.vetReport(E.text, j([{ ...good, alts: ["⟦V1⟧ " + sents[0].text, sents[0].text + " Qué mierda.", good.replacement, a1, 7, a1, a2, sents[0].text + " Y una más."] }]), O, R);
+  ok("alts: a verse mark, a profane word, the main replacement, a non-string and a repeat are dropped; at most 2 kept, in order", v.items.length === 1 && JSON.stringify(v.items[0].alts) === JSON.stringify([a1, a2]), JSON.stringify(v.items[0] && v.items[0].alts));
+  ok("alts: an item without alts gets an empty list", L.vetReport(E.text, j([good]), O, R).items[0].alts.length === 0);
+  ok("alts: a bad alt never drops the item itself", L.vetReport(E.text, j([{ ...good, alts: ["Qué mierda."] }]), O, R).items.length === 1);
+
+  // a flagged word: «tortura» is in the violence list; once in a plain sentence, once inside the first verse
+  const s0 = sents[2], at = E.text.indexOf(s0.text) + s0.text.length;
+  const T2 = E.text.slice(0, at) + " Tortura fue lo que sufrieron en la cárcel." + E.text.slice(at);
+  const R2 = L.analyze(T2, O), hit = R2.riskHits.find((x) => x.text === "Tortura");
+  ok("fixture: «Tortura» is flagged as violence", !!hit && hit.cat === "violence", JSON.stringify(R2.riskHits.map((x) => [x.text, x.cat])));
+  const w = L.vetReport(T2, j([], [{ term: "tortura", alts: ["golpes", "una masacre", "Tortura", "⟦V1⟧", "Hechos 16:22", "golpes", "azotes", "castigo con varas", "maltrato"] }, { term: "palabra que no está", alts: ["x"] }, { term: 5 }]), O, R2).words;
+  ok("words: a risky alternative, the term itself, a verse mark, a reference and a repeat are dropped; at most 3, in order", JSON.stringify(w) === JSON.stringify({ tortura: ["golpes", "azotes", "castigo con varas"] }), JSON.stringify(w));
+  ok("words: survives garbage", JSON.stringify(L.vetReport(T2, { areas: {}, items: [], words: "x" }, O, R2).words) === "{}");
+  const rw = L.reportWordRows(T2, R2, "violence", w, {});
+  ok("rows: one row per flagged term outside Scripture, the patch takes the first alternative with the term's capital", rw.rows.length === 1 && rw.rows[0].hits[0].start === hit.start && rw.patches[0].rep === "Golpes", JSON.stringify(rw));
+  ok("rows: the pick (by term) chooses the alternative", L.reportWordRows(T2, R2, "violence", w, { tortura: 2 }).patches[0].rep === "Castigo con varas");
+  // the same term twice: one row, both places in the patch, each with its own capital
+  const T2b = T2 + "\n\nLa tortura no fue el final.", R2b = L.analyze(T2b, O), rb = L.reportWordRows(T2b, R2b, "violence", w, { tortura: 1 });
+  ok("rows: a term found twice is one row and one choice that changes both places", rb.rows.length === 1 && rb.rows[0].hits.length === 2 && rb.patches.map((x) => x.rep).join("|") === "Azotes|azotes", JSON.stringify(rb));
+  ok("rows: another category gets none", L.reportWordRows(T2, R2, "drugs", w, {}).rows.length === 0);
+  const T3 = T2.slice(0, at) + " La tortura fue lo que sufrieron en la cárcel." + T2.slice(at + " Tortura fue lo que sufrieron en la cárcel.".length);
+  const R3 = L.analyze(T3, O), w3 = L.vetReport(T3, j([], [{ term: "tortura", alts: ["golpes"] }]), O, R3).words;
+  ok("matchCase: a lower-case term keeps the alternative lower-case", L.reportWordRows(T3, R3, "violence", w3, {}).patches[0].rep === "golpes", JSON.stringify(w3));
+  // the same word inside a verse: never a row, and a term found only there gets no alternatives
+  const vs = L.verseSpans(T3, R3).filter((s) => s.kind !== "ref")[0], vi = T3.indexOf(" ", vs.start + 5);
+  const T4 = T3.slice(0, vi) + " tortura" + T3.slice(vi), R4 = L.analyze(T4, O);
+  const inV = R4.riskHits.filter((x) => x.text.toLowerCase() === "tortura");
+  ok("fixture: «tortura» found twice, one of them inside a verse", inV.length === 2 && L.verseSpans(T4, R4).some((s) => s.kind !== "ref" && inV.some((x) => x.start >= s.start && x.end <= s.end)), JSON.stringify(inV.map((x) => x.start)));
+  const r4 = L.reportWordRows(T4, R4, "violence", { tortura: ["golpes"] }, {});
+  ok("rows: the hit inside a verse is never offered", r4.rows.length === 1 && r4.patches.length === 1 && !L.verseSpans(T4, R4).some((s) => s.kind !== "ref" && r4.patches[0].start >= s.start && r4.patches[0].end <= s.end), JSON.stringify(r4));
+  const T5 = E.text.slice(0, vi) + " tortura" + E.text.slice(vi), R5 = L.analyze(T5, O);
+  ok("words: a term found only inside a verse gets no alternatives", JSON.stringify(L.vetReport(T5, j([], [{ term: "tortura", alts: ["golpes"] }]), O, R5).words) === "{}");
+  const p = L.reportPrompt(T2, R2, O);
+  ok("prompt asks for alts and for words for the flagged terms", /"alts"/.test(p) && /"words"/.test(p) && p.includes("«Tortura»") && /misma forma gramatical/.test(p));
+}
+
 // ---- projected
 {
   const v = L.vetReport(E.text, { areas: rep(3).areas, items: [good, { area: "close", original: sents[1].text, replacement: sents[1].text + " Hasta pronto.", why: "w", after: 4 }] }, O, R);

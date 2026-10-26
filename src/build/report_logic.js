@@ -4,6 +4,9 @@
 // hook, promise, retention, spoken voice, close and the return viewer need an editor's judgement. Scripture is masked as
 // ⟦Vn⟧ before the AI sees it (same masker as polish_logic.js) and every answer is checked here; nothing depends on the AI behaving.
 const REPORT_MAX_ITEMS = 7;
+// (jadri47, 2026-10-25: "Provide synonyms or alternatives to problematic words when suggesting changes"; picked A: the same call
+// returns them, each one checked here.) Up to 2 other ways to write each change, up to 3 replacements for each flagged word.
+const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
@@ -12,16 +15,16 @@ function reportPrompt(text, R, opts) {
   const risk = [...new Set((R.riskHits || []).map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
   const mins = Math.round((R.runtimeSec || 0) / 60);
   const kw = (opts.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "—";
-  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "why": "...", "after": 1-5}]}`;
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const brief = en
     ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. The script is in English: write every "why" and "replacement" in English.`
     : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
   const facts = en
-    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (do not replace them with euphemisms, do not add new ones): ${risk}. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
-    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (no los cambies por eufemismos ni añadas otros): ${risk}. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
+    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (YouTube can limit ads for them; do not add new ones): ${risk}. Do not change them inside "items". In "words" give, for each of them, up to ${REPORT_MAX_WORD_ALTS} alternatives: plain words that state the same fact without the term YouTube flags, in the same grammatical form (gender, number, tense) so they drop into the same sentence, without softening what the text says happened. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
+    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (YouTube puede limitar los anuncios por ellos; no añadas otros): ${risk}. No los cambies dentro de "items". En "words" da, para cada uno, hasta ${REPORT_MAX_WORD_ALTS} alternativas: palabras sencillas que dicen el mismo hecho sin el término que YouTube marca, en la misma forma gramatical (género, número, tiempo) para que encajen en la misma frase, sin suavizar lo que el texto dice que pasó. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
   const rules = en
-    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return.`
-    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return.`;
+    ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
+    : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
   return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
@@ -41,28 +44,91 @@ function vetReport(text, json, opts, R) {
   const toks = mk.toks || [];
   const items = [];
   const riskBefore = (R.riskHits || []).length;
+  // a replacement (or one of its alternatives) for text[start, end): its check, or null when it breaks any rule
+  const vetRep = (o, start, end, c) => {
+    if (typeof c !== "string" || !c.trim() || c === o || c.length > 1000) return null;
+    if (/⟦|⟧/.test(c)) return null; // a verse mark never goes into a replacement
+    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) return null;
+    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
+    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) return null; // no new ad or packaging problem
+    if (analyze(check.text, check.opts).riskHits.length > riskBefore) return null; // no new sensitive term, even if that check was already open
+    return check;
+  };
   for (const it of list) {
     if (items.length >= REPORT_MAX_ITEMS) break;
     if (!it || !REPORT_AREAS.includes(it.area)) continue;
     let o = typeof it.original === "string" ? it.original : "";
     const c = typeof it.replacement === "string" ? it.replacement : "";
     if (!o.trim() || !c.trim() || o === c || o.length > 800 || c.length > 1000) continue;
-    if (/⟦|⟧/.test(c)) continue; // a verse mark never goes into a replacement
     for (const t of toks) o = o.split(t.tok).join(t.text); // the AI saw tokens; locate on the real text
     if (/⟦|⟧/.test(o)) continue; // a token that is not one of ours
     const i = text.indexOf(o);
     if (i < 0 || text.indexOf(o, i + 1) >= 0) continue; // not found, or not unique
     const start = i, end = i + o.length;
     if (verse.some((s) => start < s.end && end > s.start)) continue; // never touches Scripture
-    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) continue;
     if (items.some((x) => start < x.end && x.start < end)) continue; // overlaps a change already kept
-    const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
-    if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) continue; // no new ad or packaging problem
-    if (analyze(check.text, check.opts).riskHits.length > riskBefore) continue; // no new sensitive term, even if that check was already open
-    items.push({ area: it.area, start, end, original: o, replacement: c, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
+    const check = vetRep(o, start, end, c);
+    if (!check) continue;
+    const alts = [];
+    for (const a of Array.isArray(it.alts) ? it.alts : []) {
+      if (alts.length >= REPORT_MAX_ALTS) break;
+      if (typeof a === "string" && a !== c && !alts.includes(a) && vetRep(o, start, end, a)) alts.push(a);
+    }
+    items.push({ area: it.area, start, end, original: o, replacement: c, alts, why: String(it.why || "").slice(0, 300), after: reportRating(it.after), check });
   }
-  return { areas, items, dropped: list.length - items.length };
+  return { areas, items, words: vetWords(text, json, opts, R, verse), dropped: list.length - items.length };
 }
+
+// The flagged words' alternatives, keyed by the lower-case term. An alternative is kept only if it is short plain text (no verse
+// mark, reference or quote) and, put in place of the term's first occurrence outside Scripture, leaves fewer sensitive terms and
+// none inside the replaced span. A term found only inside a verse gets none: Scripture is never changed.
+function vetWords(text, json, opts, R, verse) {
+  const out = {}, list = json && Array.isArray(json.words) ? json.words : [];
+  const hits = (R.riskHits || []).filter((x) => !verse.some((s) => x.start < s.end && x.end > s.start));
+  const before = (R.riskHits || []).length;
+  for (const w of list) {
+    const term = w && typeof w.term === "string" ? w.term.trim().toLowerCase() : "";
+    if (!term || out[term]) continue;
+    const hit = hits.find((x) => x.text.toLowerCase() === term);
+    if (!hit) continue; // not a term the rules flagged here
+    const alts = [];
+    for (const a of Array.isArray(w.alts) ? w.alts : []) {
+      if (alts.length >= REPORT_MAX_WORD_ALTS) break;
+      const v = typeof a === "string" ? a.trim() : "";
+      if (!v || v.length > 80 || v.split(/\s+/).length > 8 || v.toLowerCase() === term || alts.includes(v)) continue;
+      if (/⟦|⟧/.test(v) || findReferences(v).length || findQuotes(v).length) continue;
+      const rv = matchCase(hit.text, v), e2 = hit.start + rv.length;
+      const r2 = analyze(applyPatches(text, [{ start: hit.start, end: hit.end, rep: rv }]), opts).riskHits;
+      if (r2.length >= before || r2.some((x) => x.start < e2 && x.end > hit.start)) continue;
+      alts.push(v);
+    }
+    if (alts.length) out[term] = alts;
+  }
+  return out;
+}
+
+// The rows of an ad-risk card that can take a word from the report: one row per term of that category that has alternatives, with
+// every place it occurs outside Scripture (one choice per word, not per occurrence: «pandemia» eight times is one decision).
+// pick: { [term in lower case]: index } (default 0). Returns the rows and the one patch that applies them all.
+function reportWordRows(text, R, cat, words, pick) {
+  const verse = verseSpans(text, R).filter((s) => s.kind !== "ref");
+  const hits = (R.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start))
+    .sort((a, b) => a.start - b.start)
+    .filter((x, i, a) => !a.some((y, j) => j < i && x.start < y.end)); // overlapping hits: keep the first
+  const rows = [];
+  for (const x of hits) {
+    const key = x.text.toLowerCase(), alts = (words || {})[key] || [];
+    if (!alts.length) continue;
+    let r = rows.find((y) => y.key === key);
+    if (!r) rows.push((r = { key, term: x.text, alts, hits: [] }));
+    r.hits.push({ start: x.start, end: x.end, text: x.text });
+  }
+  const patches = rows.flatMap((r) => { const v = r.alts[Math.min((pick || {})[r.key] || 0, r.alts.length - 1)]; return r.hits.map((x) => ({ start: x.start, end: x.end, rep: matchCase(x.text, v) })); })
+    .sort((a, b) => a.start - b.start);
+  return { rows, patches };
+}
+// «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
+function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }
 
 // The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
 // item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".

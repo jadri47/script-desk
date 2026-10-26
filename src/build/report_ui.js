@@ -13,7 +13,10 @@ Object.assign(T.es, {
   rpAdsOk: "✓ sin riesgo", rpOf5: (n) => `${n} de 5`, rpNoRate: "sin valorar", rpChange: (i, n) => `Cambio ${i} de ${n}`, rpWhy: "Por qué",
   rpMore: "Más detalles", rpMoreHint: "(revisión línea por línea, muletillas, colores, por párrafos)", rpAfterRec: "Después de grabar",
   rpGone: "Este fragmento cambió después del informe, así que no se puede aplicar. Sáltalo o vuelve a evaluar.", rpWriteHere: "Escribe cómo debe quedar",
-  rpHeadRisk: "Aviso rojo", rpListLbl: "Áreas del informe", rpDecLbl: "Decisión actual",
+  rpHeadRisk: "Aviso rojo", rpHeadSoft: "Aviso amarillo", rpListLbl: "Áreas del informe", rpDecLbl: "Decisión actual",
+  rpPickLbl: "Elige cómo decirlo", rpPickMain: "Propuesta del editor", rpPickAlt: "Otra opción", rpApplyPick: "Aplicar la elegida",
+  rpWordsLbl: "Elige otra palabra", rpWordSafe: "✓ sin riesgo de anuncios", rpWordLbl: "Palabras del informe", rpTimes: (n) => `${n} veces`,
+  rpWordsRest: "Las demás palabras de este aviso no tienen alternativa: cámbialas con «Lo escribo yo».",
 });
 Object.assign(T.en, {
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
@@ -25,16 +28,19 @@ Object.assign(T.en, {
   rpAdsOk: "✓ no risk", rpOf5: (n) => `${n} of 5`, rpNoRate: "not rated", rpChange: (i, n) => `Change ${i} of ${n}`, rpWhy: "Why",
   rpMore: "More details", rpMoreHint: "(line-by-line review, fillers, colours, by paragraph)", rpAfterRec: "After recording",
   rpGone: "This passage changed after the report, so it can't be applied. Skip it or re-evaluate.", rpWriteHere: "Write how it should read",
-  rpHeadRisk: "Red warning", rpListLbl: "Report areas", rpDecLbl: "Current decision",
+  rpHeadRisk: "Red warning", rpHeadSoft: "Yellow warning", rpListLbl: "Report areas", rpDecLbl: "Current decision",
+  rpPickLbl: "Choose how to say it", rpPickMain: "Editor's suggestion", rpPickAlt: "Another option", rpApplyPick: "Apply the one chosen",
+  rpWordsLbl: "Choose another word", rpWordSafe: "✓ no ad risk", rpWordLbl: "Words from the report", rpTimes: (n) => `${n} times`,
+  rpWordsRest: "The other words in this warning have no alternative: change them with \"I'll write it\".",
 });
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
 if (typeof HELP_ANCHORS !== "undefined") HELP_ANCHORS.push(["rpReport", ".rp-title h3", "row"]);
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "" };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
-function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; }
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; }
 
 // A stored report is untrusted (old versions, other devices): keep only what has the right shape.
 function rpClean(r) {
@@ -42,9 +48,12 @@ function rpClean(r) {
   const areas = {};
   for (const k of REPORT_AREAS) { const a = r.areas[k]; areas[k] = { rating: reportRating(a && a.rating), why: String((a && a.why) || "").slice(0, 300) }; }
   const items = r.items.filter((x) => x && REPORT_AREAS.includes(x.area) && typeof x.original === "string" && x.original && typeof x.replacement === "string" && x.replacement)
-    .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, dropped: Number(r.dropped) || 0 };
+    .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: rpStrs(x.alts, REPORT_MAX_ALTS), why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
+  const words = {};
+  if (r.words && typeof r.words === "object" && !Array.isArray(r.words)) for (const [k, v] of Object.entries(r.words)) { const a = rpStrs(v, REPORT_MAX_WORD_ALTS); if (k && a.length) words[k.toLowerCase()] = a; }
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, dropped: Number(r.dropped) || 0 };
 }
+function rpStrs(a, max) { return Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.trim()).slice(0, max) : []; }
 const _applyProdR = applyProd;
 applyProd = function (id, d) { _applyProdR(id, d); G.report = rpClean(d && d.report); rpReset(); };
 const _prodBodyR = prodBody;
@@ -69,14 +78,14 @@ async function rpRun(force) {
     const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
     const v = vetReport(text, res, opts, R);
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
-    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, why: x.why, after: x.after })), dropped: v.dropped };
+    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped };
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
     else { RP.err = errText(e); RP.failed = true; }
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; if (G.prodId) markDirty(); }
+      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
@@ -92,9 +101,15 @@ function rpPrepare() {
 // ---- what is left to decide ----
 function rpRiskList() {
   const key = state.text + "|" + [...state.fixDismissed].sort().join(",");
-  if (RP.riskKey !== key || RP.riskR !== state.result) {
-    RP.risk = buildDecisions(state.text, state.result, state.opts, state.fixDismissed).filter((d) => d.kind === "risk");
-    RP.riskKey = key; RP.riskR = state.result;
+  if (RP.riskKey !== key || RP.riskR !== state.result || RP.riskRep !== G.report) {
+    const all = buildDecisions(state.text, state.result, state.opts, state.fixDismissed);
+    // A yellow ad warning («puede limitar anuncios») joins the red ones only when the report has other words for its terms: the
+    // decision is then one tap, not homework. (jadri47, 2026-10-25: "alternatives to problematic words"; in the demos only hate
+    // speech is red, so word choices would otherwise never show.)
+    const soft = G.report ? all.filter((d) => d.kind !== "risk" && d.card && /^pf-/.test(d.card.id) && d.card.level === "amarillo"
+      && reportWordRows(state.text, state.result, d.card.id.slice(3), G.report.words, {}).rows.length).map((d) => ({ ...d, kind: "risk", soft: true })) : [];
+    RP.risk = all.filter((d) => d.kind === "risk").concat(soft);
+    RP.riskKey = key; RP.riskR = state.result; RP.riskRep = G.report;
   }
   return RP.risk;
 }
@@ -120,6 +135,18 @@ function rpCurrent() {
   if (!s) return null;
   const it = G.report.items[s.i];
   return { type: "item", id: "item:" + s.i, i: s.i, it, st: s.st, start: s.start, end: s.end };
+}
+// the text an item would put in: the editor's suggestion (0) or one of its alternatives
+const rpChosen = (cur) => { const all = [cur.it.replacement, ...(cur.it.alts || [])]; return all[Math.min(RP.pick[cur.id] || 0, all.length - 1)]; };
+// an ad-risk card (red, or yellow with words) whose terms the report can replace: { rows, patches, rest } (rest = hits of that kind left without a word)
+function rpWords(cur) {
+  const c = cur.d.card;
+  if (!G.report || !c || !/^pf-/.test(c.id)) return null;
+  const cat = c.id.slice(3), w = reportWordRows(state.text, state.result, cat, G.report.words, RP.wpick);
+  if (!w.rows.length) return null;
+  const verse = verseSpans(state.text, state.result).filter((s) => s.kind !== "ref");
+  const all = (state.result.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start)).length;
+  return { ...w, rest: Math.max(0, all - w.patches.length) };
 }
 const rpCardOf = (cur) => cur.type === "risk" ? cur.d.card : { id: "rp-" + cur.i, ids: ["rp-" + cur.i], label: t("rpArea")[cur.it.area], fix: cur.it.why };
 
@@ -152,26 +179,33 @@ function rpDecisionHTML(R, cur, states) {
   const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
   if (cur.type === "item") {
     const it = cur.it, n = G.report.items.length, A = t("rpArea")[it.area], title = `${t("rpChange")(cur.i + 1, n)} · ${A}`;
-    const lost = cur.st === "lost";
+    const lost = cur.st === "lost", chosen = rpChosen(cur), many = (it.alts || []).length > 0;
     let broke = "";
     if (!lost) {
-      const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: it.replacement }] });
+      const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: chosen }] });
       if (ck.broke.length) broke = `<p class="status err">${h(t("fxBreaks")(ck.broke.map((id) => rowLabel(ck.R2 || R, id)).join(", ")))}</p>`;
     }
     return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(title)}</b></div>
       <dl class="rp-cmp"><div class="rp-c"><dt>${h(t("fxBefore"))}</dt><dd class="rp-orig"${lost ? "" : ` data-es="${cur.start}" data-ee="${cur.end}"`}><del>${h(it.original)}</del></dd></div>
-      <div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>
+      ${many ? `<div class="rp-c"><dt>${h(t("rpPickLbl"))}</dt><dd><fieldset class="rp-pick"><legend class="vh">${h(t("rpPickLbl"))}</legend>${[it.replacement, ...it.alts].map((x, k) => `<label class="rp-opt"><input type="radio" name="rpPick" value="${k}" data-rp-pick="${h(cur.id)}"${x === chosen ? " checked" : ""}><span class="rp-opt-b"><span class="rp-opt-t">${h(x)}</span><span class="hint">${h(k ? t("rpPickAlt") : t("rpPickMain"))}</span></span></label>`).join("")}</fieldset></dd></div>` : `<div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>`}
       <div class="rp-c"><dt>${h(t("rpWhy"))}</dt><dd>${h(it.why)}</dd></div></dl>
       ${lost ? `<p class="status err" role="status">${h(t("rpGone"))}</p>` : broke}${rpWriteHTML(cur)}
-      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
+      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t(many ? "rpApplyPick" : "fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
   }
-  const d = cur.d, c = d.card, opts = d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
+  const d = cur.d, c = d.card, wr = rpWords(cur);
+  const opts = wr ? [rpWordProp(wr, R)] : d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
   const canWrite = !!(d.at || c.field);
-  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag">${h(t("rpHeadRisk"))}: ${h(t("cat_hi"))}</span></div>
-    ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
+  const words = wr ? `<div class="fx-lbl">${h(t("rpWordsLbl"))}</div>${wr.rows.map((r, ri) => `<fieldset class="rp-words"><legend>«${h(r.term)}» <span class="hint">· ${h(r.hits.length > 1 ? t("rpTimes")(r.hits.length) : fmtTime(state.result.timeAt(r.hits[0].start)))}</span></legend>${r.alts.map((a, k) => `<label class="rp-chip"><input type="radio" name="rpW${ri}" value="${k}" data-rp-wpick="${h(r.key)}"${k === Math.min(RP.wpick[r.key] || 0, r.alts.length - 1) ? " checked" : ""}><span class="rp-chip-b"><b>${h(matchCase(r.term, a))}</b><span class="rp-safe">${h(t("rpWordSafe"))}</span></span></label>`).join("")}</fieldset>`).join("")}${wr.rest ? `<p class="hint">${h(t("rpWordsRest"))}</p>` : ""}` : "";
+  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
+    ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}${words}
     ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${rpWriteHTML(cur)}
     <div class="actions rp-act">${p ? `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
+}
+function rpWordProp(wr, R) {
+  const p = { kind: "patch", label: t("rpWordLbl"), patches: wr.patches };
+  p.check = verifyProposal(state.text, state.opts, R, p);
+  return p;
 }
 function reportHTML(R) {
   const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed);
@@ -239,13 +273,15 @@ function rpAct(act) {
   if (act === "skip") return rpSkip(cur);
   if (act === "prev") return rpPrev();
   if (act === "apply") {
-    if (cur.type === "item") return rpApplyP(cur, { kind: "patch", label: t("rpTitle"), patches: [{ start: cur.start, end: cur.end, rep: cur.it.replacement }] });
+    if (cur.type === "item") return rpApplyP(cur, { kind: "patch", label: t("rpTitle"), patches: [{ start: cur.start, end: cur.end, rep: rpChosen(cur) }] });
+    const wr = rpWords(cur);
+    if (wr) return rpApplyP(cur, rpWordProp(wr, state.result));
     const opts = cur.d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(cur.d) : []);
     return opts[0] && rpApplyP(cur, opts[0]);
   }
   if (act === "write") {
     const c = rpCardOf(cur);
-    RP.write = { id: cur.id, err: "", value: cur.type === "item" ? cur.it.replacement : c.field ? c.field.value : state.text.slice(cur.start, cur.end) };
+    RP.write = { id: cur.id, err: "", value: cur.type === "item" ? rpChosen(cur) : c.field ? c.field.value : state.text.slice(cur.start, cur.end) };
     renderGuide(); const b = $("rpW"); if (b) b.focus(); return;
   }
   if (act === "wcancel") { RP.write = null; renderGuide(); return; }
@@ -274,6 +310,10 @@ function rpWire() {
     el.addEventListener("click", go);
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
+  const pickRedraw = (sel) => { RP.refocus = sel; const y = window.scrollY; renderGuide(); window.scrollTo(0, y); };
+  root.querySelectorAll("input[data-rp-pick]").forEach((x) => x.addEventListener("change", () => { RP.pick[x.dataset.rpPick] = +x.value; pickRedraw(`input[name="rpPick"][value="${x.value}"]`); }));
+  root.querySelectorAll("input[data-rp-wpick]").forEach((x) => x.addEventListener("change", () => { RP.wpick[x.dataset.rpWpick] = +x.value; pickRedraw(`input[name="${x.name}"][value="${x.value}"]`); }));
+  if (RP.refocus) { const f = root.querySelector(RP.refocus); RP.refocus = ""; if (f) f.focus(); }
   const w = $("rpW");
   if (w) w.addEventListener("input", () => { if (RP.write) RP.write.value = w.value; });
   // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button keeps its own meaning
