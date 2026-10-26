@@ -17,6 +17,10 @@ Object.assign(T.es, {
   rpPickLbl: "Elige cómo decirlo", rpPickMain: "Propuesta del editor", rpPickAlt: "Otra opción", rpApplyPick: "Aplicar la elegida",
   rpWordsLbl: "Elige otra palabra", rpWordSafe: "✓ sin riesgo de anuncios", rpWordLbl: "Palabras del informe", rpTimes: (n) => `${n} veces`,
   rpWordsRest: "Las demás palabras de este aviso no tienen alternativa: cámbialas con «Lo escribo yo».",
+  // the report lives in the score bubble (2026-10-26, plan "Walk Juan through it", step 2)
+  rpBy: "según el editor", rpBefore: (a) => `antes ${a}`, rpPossible: (b) => `→ ${b} posible`,
+  rpColArea: "Área", rpColOrig: "Original", rpColNow: "Ahora", rpColChange: "Cambio", rpColSaid: "Qué dijo el editor", rpSame: "sin cambio",
+  rpRe2: "Medir de nuevo con la IA", rpBubNote: "«Ahora» suma lo que el editor dijo que vale cada cambio aceptado. «Medir de nuevo» lee otra vez el guion.",
 });
 Object.assign(T.en, {
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
@@ -32,9 +36,11 @@ Object.assign(T.en, {
   rpPickLbl: "Choose how to say it", rpPickMain: "Editor's suggestion", rpPickAlt: "Another option", rpApplyPick: "Apply the one chosen",
   rpWordsLbl: "Choose another word", rpWordSafe: "✓ no ad risk", rpWordLbl: "Words from the report", rpTimes: (n) => `${n} times`,
   rpWordsRest: "The other words in this warning have no alternative: change them with \"I'll write it\".",
+  rpBy: "per the editor", rpBefore: (a) => `before ${a}`, rpPossible: (b) => `→ ${b} possible`,
+  rpColArea: "Area", rpColOrig: "Original", rpColNow: "Now", rpColChange: "Change", rpColSaid: "What the editor said", rpSame: "no change",
+  rpRe2: "Measure again with the AI", rpBubNote: "\"Now\" adds what the editor said each accepted change is worth. \"Measure again\" reads the script once more.",
 });
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
-if (typeof HELP_ANCHORS !== "undefined") HELP_ANCHORS.push(["rpReport", ".rp-title h3", "row"]);
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
 const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "" };
@@ -184,16 +190,47 @@ function rpTime(at) {
   const d = new Date(at);
   return isNaN(d) ? "" : d.toLocaleTimeString(UI, { hour: "numeric", minute: "2-digit" });
 }
-function rpRowsHTML(R, rd) {
-  const rep = G.report, A = t("rpArea");
-  const rows = rep ? REPORT_AREAS.map((k) => {
-    const a = rep.areas[k], n = a.rating;
-    return `<li class="rp-row" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}</span></span><span class="rp-w">${h(a.why)}</span></li>`;
-  }) : RP.busy ? REPORT_AREAS.map((k) => `<li class="rp-row rp-row-wait" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-w">${h(t("rpWaiting"))}</span></li>`) : [];
-  const band = rd.red ? "rojo" : Object.values(R.sections).flat().some((r) => /^pf-/.test(r.id) && (!r.passed || r.warn) && !state.fixDismissed.has(r.id)) ? "amarillo" : "verde";
-  const word = band === "verde" ? t("rpAdsOk") : t("scBand")[band];
-  rows.push(`<li class="rp-row rp-ads" data-area="ads"><span class="rp-a">${h(A.ads)}</span><span class="rp-st rp-st-${band}">${h(word)}</span></li>`);
-  return `<ul class="rp-rows" aria-label="${h(t("rpListLbl"))}">${rows.join("")}</ul>`;
+// ad band from the rules: the same reading the pill uses (red from readinessOf, yellow while a non-dismissed pf- row is open)
+function rpAdsBand(R, rd) {
+  return rd.red ? "rojo" : Object.values(R.sections).flat().some((r) => /^pf-/.test(r.id) && (!r.passed || r.warn) && !state.fixDismissed.has(r.id)) ? "amarillo" : "verde";
+}
+// The one helper for «a → b posible»: the readiness if every pending change were accepted, or null when there is none to show.
+// (the pill and the screen-reader label both use it; projectedReadiness stays the only recipe). Cached per text/report/pending set.
+const RPP = { text: null, rep: null, live: "", v: null };
+function rpProjected(rd) {
+  if (!rd || rd.score == null || !G.report || !state.result || typeof state.text !== "string") return null;
+  const rep = G.report, text = state.text, live = rpStates().filter((s) => s.st === "pending");
+  if (!live.length) return null;
+  const lk = live.map((s) => s.i).join(",");
+  if (RPP.text !== text || RPP.rep !== rep || RPP.live !== lk) {
+    RPP.text = text; RPP.rep = rep; RPP.live = lk;
+    RPP.v = projectedReadiness(text, state.result, state.opts, { areas: effectiveReport(text, rep).areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) });
+  }
+  return RPP.v !== rd.score ? RPP.v : null;
+}
+// The report inside the score bubble: { sub, table, foot } for scRenderPop (score_ui.js), or null without a report.
+function rpPopHTML(R, rd) {
+  const rep = G.report;
+  if (!rep || rd.score == null) return null;
+  const A = t("rpArea"), eff = effectiveReport(state.text, rep).areas, base = rep.baseline || null;
+  // «before» = what the same report was worth without the applied changes
+  const before = Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase), showBefore = rd.editorEst > 0 && before !== rd.score;
+  const dots = (n, k) => `<span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}${n == null ? "" : " " + n}</span></span>`;
+  const rows = REPORT_AREAS.map((k) => {
+    const a = eff[k], now = a.rating, est = !!a.est, o = base ? (base[k] != null ? base[k] : null) : undefined;
+    const from = o !== undefined ? o : est ? (rep.areas[k] || {}).rating : null;
+    const d = from != null && now != null ? now - from : 0;
+    const ch = d ? `<b class="sc-ch ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${Math.abs(d)}</b>` : `<span class="sc-ch"><span class="vh">${h(t("rpSame"))}</span><span aria-hidden="true">=</span></span>`;
+    return `<tr class="sc-r${est ? " est" : ""}" data-area="${k}"><th scope="row">${h(A[k])}</th>${base ? `<td class="sc-o">${o != null ? dots(o, k) : "–"}</td>` : ""}<td class="sc-n2${base ? " arrow" : ""}">${dots(now, k)}${est ? `<span class="sc-by">${h(t("rpBy"))}</span>` : ""}</td><td class="sc-c">${ch}</td><td class="sc-w">${h(rep.areas[k].why || "")}</td></tr>`;
+  });
+  const band = rpAdsBand(R, rd), word = band === "verde" ? t("rpAdsOk") : t("scBand")[band];
+  rows.push(`<tr class="sc-r sc-ads" data-area="ads"><th scope="row">${h(A.ads)}</th><td colspan="${base ? 3 : 2}"><span class="rp-st rp-st-${band}">${h(word)}</span></td><td class="sc-w"></td></tr>`);
+  const stale = rep.key !== rpKey();
+  return {
+    sub: showBefore ? `${t("rpBy")} · ${t("rpBefore")(before)}` : "",
+    table: `<div class="sc-tw"><table class="sc-t"><caption class="vh">${h(t("rpTitle"))}</caption><thead><tr><th scope="col">${h(t("rpColArea"))}</th>${base ? `<th scope="col">${h(t("rpColOrig"))}</th>` : ""}<th scope="col">${h(t("rpColNow"))}</th><th scope="col"><span class="vh">${h(t("rpColChange"))}</span></th><th scope="col">${h(t("rpColSaid"))}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`,
+    foot: `<div class="sc-foot"><span class="sc-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" id="scRe" class="sc-re${stale ? " primary" : ""}"${RP.busy ? " disabled" : ""}>${h(t("rpRe2"))}</button></div><p class="hint sc-bnote">${h(t("rpBubNote"))}</p>`,
+  };
 }
 function rpWriteHTML(cur) {
   const w = RP.write && RP.write.id === cur.id ? RP.write : null;
@@ -235,30 +272,23 @@ function rpWordProp(wr, R) {
   p.check = verifyProposal(state.text, state.opts, R, p);
   return p;
 }
+// Step 2's panel: only what drives the flow (the wait, an error with its retry, the current change). The number, the areas and
+// «Medir de nuevo» live in the score bubble (rpPopHTML), the one place for them.
 function reportHTML(R) {
-  const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed, state.text);
-  const stale = !!rep && rep.key !== rpKey();
-  const states = rpStates(), live = states.filter((s) => s.st === "pending");
-  let score;
-  if (rd.score == null) score = t("rpRulesLbl")(rd.rules);
-  else {
-    const b = live.length ? projectedReadiness(state.text, R, state.opts, { areas: effectiveReport(state.text, rep).areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) }) : rd.score;
-    score = b !== rd.score ? t("rpReadyTo")(rd.score, b) : t("rpReady")(rd.score);
-  }
+  const rep = G.report;
+  const states = rpStates();
   const msg = typeof fixMsg === "string" ? fixMsg : "";
   if (!RP.more && msg) fixMsg = ""; // with «Más detalles» open the panel there shows it
-  const meta = rep ? `<span class="rp-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" class="small${stale ? " primary" : ""}" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : RP.err ? `<button type="button" class="small primary" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : "";
   const cur = rpCurrent();
   let body = "";
   // the wait says plainly that no answer has come yet; the seconds tick from aistatus_ui.js ([data-ai-el])
   if (RP.busy) body = `<div class="rp-wait" role="status"><div class="rp-wait-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(t("rpReading"))}</b></div><p>${h(t("rpNoAnswer"))} <span aria-hidden="true">${h(t("rpSoFar"))} <b class="ai-el" data-ai-el>${typeof AIS !== "undefined" && AIS.n ? aiClock(Date.now() - AIS.t0) : "0:00"}</b></span></p></div>`;
   else {
-    if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p>`;
+    if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p><div class="rp-nav"><button type="button" class="small primary" data-rp="re">${h(t("rpRe"))}</button></div>`;
     if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
     body += cur ? rpDecisionHTML(R, cur, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
   }
-  return `<section class="rp" data-rp-root aria-labelledby="rpH"><div class="rp-head"><div class="rp-title"><h3 id="rpH">${h(t("rpTitle"))}</h3></div><div class="rp-score" id="rpScore">${h(score)}</div>${meta ? `<div class="rp-meta">${meta}</div>` : ""}<span class="status" id="rpMsg" role="status">${h(msg)}</span></div>
-    ${rpRowsHTML(R, rd)}${body}</section>`;
+  return `<section class="rp" data-rp-root aria-label="${h(t("rpDecLbl"))}"><span class="status" id="rpMsg" role="status">${h(msg)}</span>${body}</section>`;
 }
 function rpWrapMore(inner, open) {
   return `<details class="rp-more" id="rpMore"${open ? " open" : ""}><summary id="rpMoreSum"><span class="rp-more-t">${h(t("rpMore"))}</span> <span class="hint">${h(t("rpMoreHint"))}</span></summary><div class="rp-more-body">${inner}</div></details>`;
@@ -385,6 +415,7 @@ renderGuide = function () {
   if (V.guided && V.step === 2) rpPrepare();
   _renderGuideR();
   rpAfterRender();
+  if (typeof scPaint === "function" && typeof SC !== "undefined" && SC.S) scPaint(); // «a → b posible» follows the pending changes (skip, previous, apply)
 };
 // Score rows and map markers belong to «Más detalles»: opening it is what makes them land somewhere.
 const _scGoRowR = scGoRow;

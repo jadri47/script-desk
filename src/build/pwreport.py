@@ -55,8 +55,14 @@ async def start(pg, demo, mock=True, delay=0, ui="es"):
 EXPECT = r"""() => {
   const rd = readinessOf(state.result, G.report, state.fixDismissed), text = state.text;
   const live = G.report.items.map((it) => { const s = text.indexOf(it.original); return { area: it.area, start: s, end: s + it.original.length, replacement: it.replacement, after: it.after }; }).filter((x) => x.start >= 0);
-  return { a: rd.score, b: projectedReadiness(text, state.result, state.opts, { areas: G.report.areas, items: live }), pill: (document.getElementById('scN') || {}).textContent, gv: (document.querySelector('.gv-n') || {}).childNodes ? document.querySelector('.gv-n').childNodes[0].textContent : null };
+  return { a: rd.score, b: projectedReadiness(text, state.result, state.opts, { areas: G.report.areas, items: live }), pill: (document.getElementById('scN') || {}).textContent, lbl: document.getElementById('scorePill').getAttribute('aria-label'), pos: (document.getElementById('scPos') || {}).textContent, big: (document.querySelector('#scPop .sc-big') || {}).childNodes ? document.querySelector('#scPop .sc-big').childNodes[1].textContent : null };
 }"""
+# the report and the number live in the score bubble (2026-10-26): open it, read, close it (Esc)
+async def pop_open(pg):
+    if await pg.evaluate("SC.pop"): return
+    await pg.click("#scorePill"); await pg.wait_for_timeout(350)
+async def pop_close(pg):
+    if await pg.evaluate("SC.pop"): await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
 async def main():
     async with async_playwright() as p:
         b = await getattr(p, os.environ.get("SD_BROWSER", "chromium")).launch()
@@ -74,23 +80,29 @@ async def main():
                 ok(f"{n}: exactly one AI call on entering step 2", await pg.evaluate("RP.calls") == 1 and len(await pg.evaluate("window.__calls")) == 1, await pg.evaluate("window.__calls"))
                 c0 = (await pg.evaluate("window.__calls"))[0]
                 ok(f"{n}: the call is the complex tier, not automatic, the script comes last", c0["tier"] == "complex" and not c0["auto"] and c0["last"], c0)
-                ok(f"{n}: the report renders with 6 areas + ads", await pg.locator(".rp-row").count() == 7 and await pg.locator(".rp-row[data-area=ads]").count() == 1)
-                ads = (await pg.inner_text(".rp-row[data-area=ads] .rp-st")).strip()
+                ok(f"{n}: step 2 no longer carries the verdict card or the report header", await pg.locator("#guide .gv, #rpScore, .rp-head, .rp-row").count() == 0)
+                await pop_open(pg)
+                ok(f"{n}: the report renders (in the bubble) with 6 areas + ads", await pg.locator("#scPop tr[data-area]").count() == 7 and await pg.locator("#scPop tr[data-area=ads]").count() == 1)
+                ads = (await pg.inner_text("#scPop tr[data-area=ads] .rp-st")).strip()
                 ok(f"{n}: ads say no risk", ads == {"es": "✓ sin riesgo", "en": "✓ no risk"}[ui], ads)
-                dots = await pg.evaluate("[...document.querySelectorAll('.rp-dots')].map(e=>e.querySelector('[aria-hidden]').textContent+'|'+e.getAttribute('aria-label'))")
-                ok(f"{n}: dots with a text label", len(dots) == 6 and dots[0].startswith("●●●○○|") and ("3 de 5" in dots[0] or "3 of 5" in dots[0]), dots)
+                dots = await pg.evaluate("[...document.querySelectorAll('#scPop td.sc-n2 .rp-dots')].map(e=>e.querySelector('[aria-hidden]').textContent+'|'+e.getAttribute('aria-label'))")
+                ok(f"{n}: dots with a text label", len(dots) == 6 and dots[0].startswith("●●●○○ 3|") and ("3 de 5" in dots[0] or "3 of 5" in dots[0]), dots)
+                await pop_close(pg)
                 ok(f"{n}: the two bad items are dropped", await pg.evaluate("G.report.items.length") == 3 and await pg.evaluate("G.report.dropped") == 2 and not await pg.evaluate("G.report.items.some(i=>i.replacement==='Texto que no debe aparecer'||i.replacement==='Frase repetida cambiada')"))
                 e = await pg.evaluate(EXPECT)
-                head = (await pg.inner_text("#rpScore")).strip()
+                head = (e["lbl"] or "").split(" · ")[0].strip()
                 m = re.match(r"^(Preparado para YouTube|YouTube-ready): (\d+) → (\d+) (si aceptas lo propuesto|if you accept the suggestions)$", head)
-                ok(f"{n}: header says a → b if you accept", bool(m), head)
-                ok(f"{n}: header numbers equal readinessOf / projectedReadiness", m and int(m.group(2)) == e["a"] and int(m.group(3)) == e["b"] and e["b"] > e["a"], f"{head} vs {e}")
+                ok(f"{n}: the pill says a → b if you accept", bool(m), head)
+                ok(f"{n}: pill numbers equal readinessOf / projectedReadiness", m and int(m.group(2)) == e["a"] and int(m.group(3)) == e["b"] and e["b"] > e["a"], f"{head} vs {e}")
+                ok(f"{n}: the pill text says «→ b posible»", e["pos"] == ({"es": f"→ {e['b']} posible", "en": f"→ {e['b']} possible"}[ui]), e)
                 await pg.wait_for_timeout(900)
+                await pop_open(pg)
                 e = await pg.evaluate(EXPECT)
-                ok(f"{n}: the pill and the verdict show the same readiness", e["pill"] is not None and int(e["pill"]) == e["a"] and e["gv"] is not None and int(e["gv"]) == e["a"], e)
-                asof = (await pg.inner_text(".rp-asof")).strip()
-                ok(f"{n}: «as of» time and the re-evaluate button", re.match(r"^(según el informe de las|as of the) .+( report)?$", asof) is not None and (await pg.inner_text("[data-rp=re]")).strip() == {"es": "Volver a evaluar", "en": "Re-evaluate"}[ui], asof)
-                ok(f"{n}: «Volver a evaluar» is not highlighted while the report is fresh", "primary" not in (await pg.get_attribute("[data-rp=re]", "class")))
+                ok(f"{n}: the pill and the bubble show the same readiness", e["pill"] is not None and int(e["pill"]) == e["a"] and e["big"] is not None and int(e["big"]) == e["a"], e)
+                asof = (await pg.inner_text("#scPop .sc-asof")).strip()
+                ok(f"{n}: «as of» time and the measure-again button", re.match(r"^(según el informe de las|as of the) .+( report)?$", asof) is not None and (await pg.inner_text("#scRe")).strip() == {"es": "Medir de nuevo con la IA", "en": "Measure again with the AI"}[ui], asof)
+                ok(f"{n}: «Medir de nuevo» is not highlighted while the report is fresh", "primary" not in (await pg.get_attribute("#scRe", "class")))
+                await pop_close(pg)
                 dec = (await pg.inner_text("#rpD")).strip()
                 ok(f"{n}: change 1 of 3 with its area", dec == ({"es": "Cambio 1 de 3 · Gancho", "en": "Change 1 of 3 · Hook"}[ui]), dec)
                 labels = [x.strip().lower() for x in await pg.locator(".rp-c dt").all_inner_texts()]
@@ -109,7 +121,9 @@ async def main():
                 ok(f"{n}: Apply puts the replacement in the script", rep1 in t1 and orig1 not in t1 and t1 != t0)
                 dec = (await pg.inner_text("#rpD")).strip()
                 ok(f"{n}: the next change is change 2 of 3", dec.startswith({"es": "Cambio 2 de 3", "en": "Change 2 of 3"}[ui]), dec)
-                ok(f"{n}: the report stays fresh after our own change", "primary" not in (await pg.get_attribute("[data-rp=re]", "class")))
+                await pop_open(pg)
+                ok(f"{n}: the report stays fresh after our own change", "primary" not in (await pg.get_attribute("#scRe", "class")))
+                await pop_close(pg)
                 await pg.click("[data-rp=skip]"); await pg.wait_for_timeout(500)
                 ok(f"{n}: Skip does not touch the script", await pg.evaluate("$('script').value") == t1)
                 ok(f"{n}: and moves to change 3 of 3", (await pg.inner_text("#rpD")).strip().startswith({"es": "Cambio 3 de 3", "en": "Change 3 of 3"}[ui]))
@@ -132,11 +146,13 @@ async def main():
                 await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(500)
                 await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(300); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(500)
                 ok(f"{n}: going back and forth makes no new call", await pg.evaluate("RP.calls") == 1 and len(await pg.evaluate("window.__calls")) == 1)
-                await pg.click("[data-rp=re]"); await pg.wait_for_timeout(2200)
-                ok(f"{n}: «Re-evaluate» makes exactly one more call", await pg.evaluate("RP.calls") == 2 and len(await pg.evaluate("window.__calls")) == 2, await pg.evaluate("RP.calls"))
+                await pop_open(pg); await pg.click("#scRe"); await pg.wait_for_timeout(2200)
+                ok(f"{n}: «Measure again» makes exactly one more call", await pg.evaluate("RP.calls") == 2 and len(await pg.evaluate("window.__calls")) == 2, await pg.evaluate("RP.calls"))
                 # ---- a text typed by hand makes the report stale: highlighted, no automatic call ----
                 await pg.evaluate("$('script').value += ' Una frase nueva.'; $('script').dispatchEvent(new Event('input',{bubbles:true})); updateLive(); ensureReview(); renderGuide()"); await pg.wait_for_timeout(500)
-                ok(f"{n}: a hand edit highlights «Re-evaluate» and calls nothing", "primary" in (await pg.get_attribute("[data-rp=re]", "class")) and await pg.evaluate("RP.calls") == 2)
+                await pop_open(pg)
+                ok(f"{n}: a hand edit highlights «Measure again» and calls nothing", "primary" in (await pg.get_attribute("#scRe", "class")) and await pg.evaluate("RP.calls") == 2)
+                await pop_close(pg)
                 # ---- «Más detalles» opens today's panel ----
                 await pg.click("#rpMoreSum"); await pg.wait_for_timeout(700)
                 ok(f"{n}: opening «More details» shows today's coach", await pg.evaluate("document.getElementById('rpMore').open") and await pg.locator(".topfix.coach, .topfix.walk").count() == 1)
@@ -155,11 +171,13 @@ async def main():
             await pg.wait_for_timeout(900)
             line = {"es": "El informe del editor necesita la IA. Mientras tanto ves los avisos de anuncios y de empaque.", "en": "The editor's report needs the AI. Meanwhile you see the ad and packaging warnings."}[ui]
             ok(f"{ui}/noai: the no-AI line shows", await pg.locator(".rp-noai").count() == 1 and (await pg.inner_text(".rp-noai")).strip() == line)
-            ok(f"{ui}/noai: no report and no editor areas", await pg.evaluate("G.report===null") and await pg.locator(".rp-row").count() == 1)
-            h = (await pg.inner_text("#rpScore")).strip()
-            ok(f"{ui}/noai: the header is the rules part out of 40", re.match(r"^(Anuncios y empaque|Ads and packaging): \d+/40$", h) is not None, h)
-            gv = await pg.evaluate("document.querySelector('.gv-n').textContent")
-            ok(f"{ui}/noai: the verdict says /40 too", gv.endswith("/40") and gv.startswith(h.split(": ")[1].split("/")[0]), gv)
+            await pop_open(pg)
+            ok(f"{ui}/noai: no report and no editor areas (the bubble keeps its rules-only content)", await pg.evaluate("G.report===null") and await pg.locator("#scPop tr[data-area]").count() == 0 and await pg.locator("#scRe").count() == 0)
+            h = ((await pg.get_attribute("#scorePill", "aria-label")) or "").split(" · ")[0].strip()
+            ok(f"{ui}/noai: the pill label is the rules part out of 40", re.match(r"^(Anuncios y empaque|Ads and packaging): \d+/40$", h) is not None, h)
+            gv = await pg.evaluate("document.querySelector('#scPop .sc-big').textContent")
+            ok(f"{ui}/noai: the bubble says /40 too", gv.endswith("/40") and gv.startswith(h.split(": ")[1].split("/")[0]), gv)
+            await pop_close(pg)
             ok(f"{ui}/noai: a red ad warning is the first decision", await pg.locator(".rp-tag").count() == 1 and await pg.locator("[data-rp=skip]").count() == 1)
             ok(f"{ui}/noai: the pill shows the rules part with /40", (await pg.evaluate("document.getElementById('scOf').textContent")) == "/40")
             before = await pg.evaluate("$('script').value")

@@ -141,7 +141,7 @@ function renderGuide() {
     const rep = typeof reportHTML === "function", more = rep ? rpMoreOpen() : true;
     const inner = more ? `${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
       <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>` : "";
-    body.innerHTML = `${verdictHTML(R)}${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
+    body.innerHTML = `${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
     if (more) {
       wireFixes();
       $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });

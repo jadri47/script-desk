@@ -143,7 +143,7 @@ function scEnsure() {
   if (p) return p;
   p = document.createElement("button"); p.type = "button"; p.id = "scorePill"; p.className = "score-pill float"; p.hidden = true;
   p.setAttribute("aria-haspopup", "dialog"); p.setAttribute("aria-expanded", "false");
-  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-of" id="scOf" aria-hidden="true"></span><span class="sc-d" id="scD"></span>`;
+  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-of" id="scOf" aria-hidden="true"></span><span class="sc-pos" id="scPos"></span><span class="sc-d" id="scD"></span>`;
   p.addEventListener("click", (e) => { e.stopPropagation(); SC.pop ? scClosePop() : scOpenPop(); });
   document.body.appendChild(p);
   const live = document.createElement("div"); live.id = "scLive"; live.className = "vh"; live.setAttribute("role", "status"); live.setAttribute("aria-live", "polite"); document.body.appendChild(live);
@@ -176,7 +176,10 @@ function scPaint() {
   scTween($("scN"), from, SC.cur);
   $("scOf").textContent = SC.kind === "40" ? "/40" : "";
   const dEl = $("scD"); dEl.textContent = d ? (d > 0 ? "▲" : "▼") + Math.abs(d) : ""; dEl.className = "sc-d" + (d > 0 ? " up" : d < 0 ? " down" : "");
-  const lbl = `${SC.kind === "40" ? t("rpRulesLbl")(SC.cur) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
+  // «a → b posible»: the same figure the report used to show in the panel (rpProjected, report_ui.js); only with a report
+  const proj = SC.kind === "100" && typeof rpProjected === "function" ? rpProjected(SC.RD) : null;
+  $("scPos").textContent = proj != null ? t("rpPossible")(proj) : "";
+  const lbl = `${SC.kind === "40" ? t("rpRulesLbl")(SC.cur) : proj != null ? t("rpReadyTo")(SC.cur, proj) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
   pill.setAttribute("aria-label", lbl); pill.title = t("scNote");
   const now = Date.now();
   if (now - SC.liveAt > 5000) { SC.liveAt = now; $("scLive").textContent = lbl; }
@@ -193,7 +196,14 @@ function scRenderPop() {
   const pop = $("scPop"); if (!pop || !SC.S) return;
   const S = SC.S, d = SC.cur - SC.base;
   const top = scTopRows(S);
-  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${SC.cur}<small>/${SC.kind}</small></span><span class="sc-band">${h(t("scBand")[S.band])}</span><button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
+  // With the editor's report the bubble IS the report (report_ui.js rpPopHTML): number, areas before / now, why, ads, when, re-measure.
+  const rp = typeof rpPopHTML === "function" ? rpPopHTML(SC.R, SC.RD) : null;
+  const keep = pop.contains(document.activeElement) ? document.activeElement.id : "";
+  pop.classList.toggle("rep", !!rp); pop.setAttribute("aria-label", t(rp ? "rpTitle" : "scTitle"));
+  const money = rp && typeof failedRows === "function" && state.result && failedRows(state.result).some((r) => r.sec === "money");
+  const busyNote = !rp && typeof RP !== "undefined" && RP.busy && !G.report ? `<p class="hint sc-wait" role="status"><b>${h(t("vWait"))}</b> ${h(t("vWaitD"))}</p>` : "";
+  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${SC.cur}<small>/${SC.kind}</small></span>${rp ? `<span class="sc-name"><b>${h(t("rpName"))}</b><span class="sc-sub">${h(rp.sub || t("scBand")[S.band])}</span></span>` : `<span class="sc-band">${h(t("scBand")[S.band])}</span>`}<button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
+    ${rp ? rp.table + rp.foot + (money ? `<p class="hint gv-note">${h(t("moneyNote"))}</p>` : "") : ""}${busyNote}
     <p class="sc-lamp">${h(t("scLamp")[S.band])}</p>
     <p class="hint sc-checks">${S.open.length ? h(t("scLeft")(S.open.length, S.openPts)) + " " : ""}${h(t("scParts")(SC.RD.parts, SC.RD.editor))}</p>
     ${d ? `<p class="sc-since">${h(t("scSince")(SC.base, SC.cur))}</p>` : ""}
@@ -203,8 +213,11 @@ function scRenderPop() {
     <details class="sc-how"><summary>${h(t("scHowT"))}</summary><ul>${t("scHow").map((x) => `<li>${h(x)}</li>`).join("")}</ul></details>
     <p class="hint sc-note">${h(t("scNote"))}</p>
     <button type="button" class="linkish sc-hide" id="scHide">${h(t("scHide"))}</button>`;
-  $("scX").addEventListener("click", scClosePop);
+  $("scX").addEventListener("click", () => scClosePop(true));
   $("scHide").addEventListener("click", () => scSetOff(true));
+  const re = $("scRe");
+  if (re) re.addEventListener("click", () => { scClosePop(true); if (ensureReview()) rpAct("re"); }); // same action as the old panel button; the status bubble then shows the wait
+  if (keep) { const f = $(keep); if (f && !f.disabled) f.focus(); }
   pop.querySelectorAll("[data-scrow]").forEach((b) => b.addEventListener("click", () => scGoRow(b.dataset.scrow)));
   pop.querySelectorAll("[data-scshow]").forEach((b) => b.addEventListener("click", () => { state.fixDismissed.delete(b.dataset.scshow); scApply(); scRefreshView(); }));
 }
@@ -214,22 +227,35 @@ function scOpenPop() {
   let scrim = $("scScrim");
   if (!scrim) { scrim = document.createElement("div"); scrim.id = "scScrim"; scrim.className = "sc-scrim"; scrim.addEventListener("click", scClosePop); document.body.appendChild(scrim); }
   let pop = $("scPop");
-  if (!pop) { pop = document.createElement("div"); pop.id = "scPop"; pop.className = "sc-pop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", t("scTitle")); document.body.appendChild(pop); }
+  if (!pop) { pop = document.createElement("div"); pop.id = "scPop"; pop.className = "sc-pop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", t("scTitle")); pop.addEventListener("keydown", scTrap); document.body.appendChild(pop); }
   SC.pop = true; scrim.hidden = false; pop.hidden = false; $("scorePill").setAttribute("aria-expanded", "true");
   scRenderPop();
   if (window.innerWidth >= 900) {
-    const r = $("scorePill").getBoundingClientRect(), w = Math.min(360, window.innerWidth - 24);
+    const r = $("scorePill").getBoundingClientRect(), w = Math.min(pop.classList.contains("rep") ? 560 : 360, window.innerWidth - 24);
     pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + "px";
-    const below = r.bottom + 8, room = window.innerHeight - below - 12;
-    pop.style.top = (room > 300 ? below : Math.max(12, r.top - 8 - Math.min(pop.offsetHeight, window.innerHeight - 24))) + "px"; pop.style.bottom = "auto"; pop.style.right = "auto"; pop.style.width = w + "px";
-  } else { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = pop.style.width = ""; }
+    // under the pill when there is room (or more room than above), else above it; the dialog scrolls inside what is left
+    const below = r.bottom + 8, room = window.innerHeight - below - 12, above = r.top - 8 - 12, useBelow = room > 300 || room >= above;
+    const maxH = Math.max(160, useBelow ? room : above);
+    pop.style.maxHeight = maxH + "px"; pop.style.width = w + "px";
+    pop.style.top = (useBelow ? below : Math.max(12, r.top - 8 - Math.min(pop.offsetHeight, maxH))) + "px"; pop.style.bottom = "auto"; pop.style.right = "auto";
+  } else { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = pop.style.width = pop.style.maxHeight = ""; }
+  const x = $("scX"); if (x) x.focus(); // keyboard users land inside the dialog
 }
-function scClosePop() {
+// Tab stays inside the open dialog (the sheet dims everything else)
+function scTrap(e) {
+  if (e.key !== "Tab") return;
+  const f = [...$("scPop").querySelectorAll("button:not([disabled]),summary,[href],input,[tabindex]:not([tabindex='-1'])")].filter((x) => x.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+function scClosePop(refocus) {
   SC.pop = false;
   const pop = $("scPop"), scrim = $("scScrim"), pill = $("scorePill");
-  if (pop) pop.hidden = true; if (scrim) scrim.hidden = true; if (pill) pill.setAttribute("aria-expanded", "false");
+  if (pop) pop.hidden = true; if (scrim) scrim.hidden = true; if (pill) { pill.setAttribute("aria-expanded", "false"); if (refocus === true && !pill.hidden) pill.focus(); }
 }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SC.pop) { scClosePop(); const p = $("scorePill"); if (p) p.focus(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SC.pop) { scClosePop(true); } });
 function scGoRow(id) {
   scClosePop();
   if (!ensureReview()) return;

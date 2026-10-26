@@ -39,8 +39,12 @@ async def main():
                 for k in ["bad", "worst", "good"]:
                     await pg.evaluate(f"startDemo('{k}')"); await pg.wait_for_timeout(1500); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(600)
                     if await pg.query_selector("[data-fxapply], [data-co=apply], [data-co=batch]"): break
-            vn = await pg.evaluate("(document.querySelector('.gv-n')||{}).childNodes ? document.querySelector('.gv-n').childNodes[0].textContent : null")
-            ok(f"{n}: verdict number equals pill", vn is not None and int(vn) == int((await pg.evaluate(PILL))["n"]), f"{vn}")
+            # the verdict card left step 2 (2026-10-26): the number is read from the score bubble, and step 2 has no second copy
+            ok(f"{n}: step 2 shows the number nowhere but the bubble", await pg.locator("#guide .gv, #guide .gv-n, #rpScore").count() == 0)
+            await pg.click("#scorePill"); await pg.wait_for_timeout(300)
+            vn = await pg.evaluate("(document.querySelector('#scPop .sc-big')||{}).childNodes ? document.querySelector('#scPop .sc-big').childNodes[1].textContent : null")
+            ok(f"{n}: bubble number equals pill", vn is not None and int(vn) == int((await pg.evaluate(PILL))["n"]), f"{vn}")
+            await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
             before = int((await pg.evaluate(PILL))["n"])
             # apply first quick fix
             btn = await pg.query_selector("[data-fxapply], [data-co=apply], [data-co=batch]")
