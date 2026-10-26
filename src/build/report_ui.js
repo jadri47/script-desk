@@ -51,11 +51,26 @@ function rpClean(r) {
     .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: rpStrs(x.alts, REPORT_MAX_ALTS), why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
   const words = {};
   if (r.words && typeof r.words === "object" && !Array.isArray(r.words)) for (const [k, v] of Object.entries(r.words)) { const a = rpStrs(v, REPORT_MAX_WORD_ALTS); if (k && a.length) words[k.toLowerCase()] = a; }
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, dropped: Number(r.dropped) || 0 };
+  const fixes = (Array.isArray(r.fixes) ? r.fixes : []).filter((f) => f && typeof f.id === "string" && f.id && typeof f.orig === "string" && f.orig && Array.isArray(f.options)).slice(0, REPORT_MAX_FIXES)
+    .map((f) => ({ id: f.id, orig: f.orig, lead: typeof f.lead === "string" ? f.lead : "", trail: typeof f.trail === "string" ? f.trail : "", field: typeof f.field === "string" && f.field ? f.field : null,
+      options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
+    .filter((f) => f.options.length);
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0 };
+}
+// The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
+// already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
+// that has changed since is ignored there, and a field (title, thumbnail…) is only primed while it still holds what was rated.
+function rpPrimeFixes() {
+  if (typeof COAI === "undefined" || !G.report || !G.report.fixes) return;
+  for (const f of G.report.fixes) {
+    if (COAI.cache[f.id] && COAI.cache[f.id].status === "done") continue;
+    if (f.field && (state.opts ? state.opts[f.field] || "" : ($(f.field) || {}).value || "") !== f.orig) continue;
+    COAI.cache[f.id] = { status: "done", orig: f.orig, lead: f.lead, trail: f.trail, field: f.field || undefined, raw: f.options.map((o) => ({ text: o.text, why: o.why })), mat: null, fromReport: true };
+  }
 }
 function rpStrs(a, max) { return Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.trim()).slice(0, max) : []; }
 const _applyProdR = applyProd;
-applyProd = function (id, d) { _applyProdR(id, d); G.report = rpClean(d && d.report); rpReset(); };
+applyProd = function (id, d) { _applyProdR(id, d); G.report = rpClean(d && d.report); rpReset(); rpPrimeFixes(); };
 const _prodBodyR = prodBody;
 prodBody = function (now) { return { ..._prodBodyR(now), report: G.report || null }; };
 const _doClearScriptR = doClearScript;
@@ -75,17 +90,30 @@ async function rpRun(force) {
     if (!sample) { RP.noAI = true; return; }
     const text = state.text, R = state.result, opts = state.opts, key = rpKey();
     RP.calls++;
-    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
+    // The problems «Proponer con IA» and the coach would ask one at a time ride in this call: every decision whose card has the button,
+    // those with no rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. Questions and notes have their own prompts.
+    const spans = verseSpans(text, R), sent = [];
+    const cand = buildDecisions(text, R, opts, state.fixDismissed).filter((d) => d.card && d.card.ai && d.kind !== "question" && d.kind !== "note");
+    cand.sort((a, b) => (b.needsAi ? 1 : 0) - (a.needsAi ? 1 : 0));
+    for (const d of cand) {
+      if (sent.length >= REPORT_MAX_FIXES) break;
+      const it = fixItem(d, "f" + (sent.length + 1), text, opts, spans);
+      if (it) sent.push(it);
+    }
+    const fixes = sent.map((it) => { const c = it.d.card; return { id: it.id, problem: `«${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(c.ai)}`.replace(/\s+/g, " ").trim(), frag: it.frag, ctx: it.ctx }; });
+    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value, fixes }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
     const v = vetReport(text, res, opts, R);
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
     out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped };
+    const fx = vetFixes(res, sent);
+    out.fixes = sent.filter((it) => fx[it.id]).map((it) => ({ id: it.d.card.id, orig: it.orig, lead: it.lead || "", trail: it.trail || "", field: it.field || null, options: fx[it.id] }));
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
     else { RP.err = errText(e); RP.failed = true; }
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (G.prodId) markDirty(); }
+      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
@@ -347,6 +375,9 @@ function rpAfterRender() {
   const d = RP.delay; RP.delay = 0;
   if (d) RP.tm = setTimeout(rpShow, d); else rpShow();
 }
+
+// a new review starts the coach cache over (coach_ai.js, capture phase); the report's answers go back in after it
+$("runBtn").addEventListener("click", () => { rpPrimeFixes(); });
 
 // ---- hooks (this file loads after coach_ai.js) ----
 const _renderGuideR = renderGuide;

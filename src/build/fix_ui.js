@@ -269,7 +269,11 @@ function fxAiExtra(a) {
   ].filter(Boolean).join(" ");
 }
 async function aiFix(ci) {
-  const c = state.fixCards[ci], sample = await caps.sample;
+  const c = state.fixCards[ci];
+  // already answered by the editor's report (or the coach) for this very fragment: show it, no new read of the script
+  const ready = typeof coachAiOptions === "function" ? coachAiOptions({ card: c }) : [];
+  if (ready.length) { state.fixAi[c.id] = { options: ready }; const bx = $("fxai-" + ci); if (bx) { bx.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(bx); } return; }
+  const sample = await caps.sample;
   if (!sample) { state.fixAi[c.id] = { error: t("aiOnlyClaude") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; }
   state.fixAi[c.id] = { loading: true };
   $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]);

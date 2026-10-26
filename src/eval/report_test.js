@@ -115,6 +115,31 @@ const good = { area: "hook", original: sents[0].text, replacement: sents[0].text
   ok("prompt asks for alts and for words for the flagged terms", /"alts"/.test(p) && /"words"/.test(p) && p.includes("«Tortura»") && /misma forma gramatical/.test(p));
 }
 
+// ---- the same call answers the problems with no rule-made fix (2026-10-25: "read the text once")
+{
+  const B = ex.es.mid, OB = opts(B, "es"), RB = L.analyze(B.text, OB), spB = L.verseSpans(B.text, RB);
+  const need = L.buildDecisions(B.text, RB, OB, new Set()).filter((d) => d.needsAi && d.card && d.card.ai);
+  ok("fixture: «regular» has decisions that need the AI", need.length >= 2, need.length);
+  const items = need.map((d, k) => L.fixItem(d, "f" + (k + 1), B.text, OB, spB)).filter(Boolean);
+  ok("fixItem: masked fragment + context, what is needed to put the answer back", items.length === need.length && items.every((i) => i.frag && i.ctx && i.orig === B.text.slice(B.text.indexOf(i.orig), B.text.indexOf(i.orig) + i.orig.length)), items.length);
+  const sent = items.map((i) => ({ id: i.id, problem: "p " + i.id, frag: i.frag, ctx: i.ctx }));
+  const p = L.reportPrompt(B.text, RB, { ...OB, fixes: sent }), p0 = L.reportPrompt(B.text, RB, OB), mk = L.maskVerses(B.text, spB, 0, B.text.length);
+  ok("prompt with fixes: block before the JSON shape, every id and problem present, the script still last", p.includes("FRAGMENTOS A ARREGLAR") && sent.every((s) => p.includes("=== " + s.id) && p.includes("p " + s.id)) && p.indexOf("FRAGMENTOS A ARREGLAR") < p.indexOf("Responde solo con JSON") && p.endsWith(`"""\n${mk.masked}\n"""`) && /"fixes": \[\{"id": "f1"/.test(p));
+  ok("prompt without fixes is the one from before (no block, no \"fixes\" key)", !/FRAGMENTOS|"fixes"/.test(p0));
+  ok("prompt with fixes: no raw verse text anywhere", spB.filter((s) => s.kind !== "ref").every((s) => B.text.slice(s.start, s.end).length < 20 || !p.includes(B.text.slice(s.start, s.end))));
+  ok("prompt asks for at most 12 fixes", L.reportPrompt(B.text, RB, { ...OB, fixes: Array.from({ length: 20 }, (_, i) => ({ id: "f" + (i + 1), problem: "x", frag: "a", ctx: "b" })) }).split("=== f").length - 1 === 12);
+
+  const V = { id: "f1", orig: "Dice Juan 3:16 hoy", toks: [{ tok: "⟦V1⟧", text: "Juan 3:16" }] }, P = { id: "f2", orig: "Una frase sencilla de ejemplo", toks: [] };
+  const fx = (o1, o2) => L.vetFixes({ fixes: [{ id: "f1", options: o1 }, { id: "f2", options: o2 }, { id: "zzz", options: [{ text: "x" }] }] }, [V, P]);
+  const r = fx([{ text: "Hoy ⟦V1⟧ lo dice", why: "w" }, { text: "Hoy lo dice", why: "lost the verse" }, { text: "⟦V1⟧ ⟦V2⟧", why: "invented" }, { text: "⟦V1⟧ ⟦V1⟧", why: "twice" }, { text: "Hoy Juan 3:16 lo dice", why: "typed the verse itself" }], [{ text: "Otra frase de ejemplo", why: "a" }, { text: "Una frase sencilla de ejemplo", why: "same" }, { text: "Una tercera frase de ejemplo", why: "b" }, { text: "Una cuarta frase de ejemplo", why: "c" }]);
+  ok("vetFixes: keeps a clean option and puts the verse back", r.f1 && r.f1[0].text === "Hoy Juan 3:16 lo dice" && r.f1[0].why === "w", JSON.stringify(r.f1));
+  ok("vetFixes: drops an option that loses, invents or repeats a verse mark", r.f1.length === 1 && r.f1[0].why === "w", JSON.stringify(r.f1));
+  ok("vetFixes: the verse is never lost (every kept option still contains it, once)", r.f1.every((o) => o.text.split("Juan 3:16").length === 2), JSON.stringify(r.f1));
+  ok("vetFixes: drops a copy of the original, keeps at most 2, ignores unknown ids", r.f2.length === 2 && r.f2[0].text === "Otra frase de ejemplo" && !("zzz" in r) && !r.f2.some((o) => o.text === P.orig), JSON.stringify(r));
+  ok("vetFixes: survives garbage", JSON.stringify(L.vetFixes(null, [V])) === "{}" && JSON.stringify(L.vetFixes({ fixes: "x" }, [V])) === "{}" && JSON.stringify(L.vetFixes({ fixes: [null, { id: "f1", options: [null, 5, { text: 7 }, {}] }] }, [V])) === "{}" && JSON.stringify(L.vetFixes({ fixes: [] }, null)) === "{}");
+  ok("vetFixes: an answer with no fixes key gives none (the old report shape still works)", JSON.stringify(L.vetFixes({ areas: {}, items: [] }, [V, P])) === "{}");
+}
+
 // ---- projected
 {
   const v = L.vetReport(E.text, { areas: rep(3).areas, items: [good, { area: "close", original: sents[1].text, replacement: sents[1].text + " Hasta pronto.", why: "w", after: 4 }] }, O, R);
