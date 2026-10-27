@@ -20,11 +20,11 @@ async def main():
                 await pg.click("#runBtn"); await pg.wait_for_timeout(900)
                 print(n,k,"verdict:", await verdict(), "| cards:", await pg.evaluate("document.querySelectorAll('.fx-card, .topfix li').length"), "| status:", await pg.evaluate("G.status"))
                 if k=="bad": await pg.screenshot(path=f"ex_{n}_bad2.png")
-                await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(500)
+                await pg.evaluate("goStep(3); PB.i = 5; renderGuide()"); await pg.wait_for_timeout(500)  # 2026-10-26: approve lives on the walk's last card «Todo listo»
                 dis = await pg.evaluate("($('gApprove')||{}).disabled")
                 print(n,k,"approve disabled:", dis, "| gate:", (await pg.evaluate("(document.querySelector('.g-gate')||{}).textContent||''"))[:90])
                 if k=="mid":
-                    await pg.fill("#pkThumbIn","Cómo orar cada día"); await pg.wait_for_timeout(300)
+                    await pg.evaluate("PB.i = 1; renderGuide()"); await pg.fill("#pkThumbIn","Cómo orar cada día"); await pg.wait_for_timeout(300); await pg.evaluate("PB.i = 5; renderGuide()")
                     print(n,k,"after thumb, approve disabled:", await pg.evaluate("$('gApprove').disabled"))
                 if k=="good":
                     await pg.click("#gApprove"); await pg.wait_for_timeout(600)

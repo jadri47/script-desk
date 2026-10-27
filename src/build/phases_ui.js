@@ -293,10 +293,16 @@ function recordCardHTML() {
         <div class="rec-sub"><button type="button" id="gReh">${h(t("rehBtn"))}</button><button type="button" id="gSheet">${h(t("editSheetBtn"))}</button></div></div>
     </div>
     <p class="hint rec-tip">${rehTot ? h(t("recLast")(fmtTime(rehTot), fmtTime(totalRec()))) : h(t("recTip"))}</p>
-    ${clips.length ? `<div class="rec-clips"><p>${h(t("recClips"))}</p><ol>${clips.map((c) => `<li><span class="rec-k">${h(c.kind === "hook" ? t("coHooks") : t("coProms"))} · ${fmtTime(c.t0)}</span>«${h(c.text)}»</li>`).join("")}</ol></div>` : ""}
-    <details class="rec-keys"><summary>${h(t("recKeys"))}</summary><p class="hint">${h(t("s4Help"))}</p></details>
+    ${recClipsHTML()}
+    ${recKeysHTML()}
   </section>`;
 }
+// the cold-open lines and the prompter keys, shared by the record card and the guided step 3 «Grabar» screen (pub_ui.js)
+function recClipsHTML() {
+  const clips = coldClips();
+  return clips.length ? `<div class="rec-clips"><p>${h(t("recClips"))}</p><ol>${clips.map((c) => `<li><span class="rec-k">${h(c.kind === "hook" ? t("coHooks") : t("coProms"))} · ${fmtTime(c.t0)}</span>«${h(c.text)}»</li>`).join("")}</ol></div>` : "";
+}
+function recKeysHTML() { return `<details class="rec-keys"><summary>${h(t("recKeys"))}</summary><p class="hint">${h(t("s4Help"))}</p></details>`; }
 function wireRecordCard() {
   const pp = $("gPP"); if (pp) pp.addEventListener("click", () => openPrompter("prompter"));
   const rh = $("gReh"); if (rh) rh.addEventListener("click", () => openPrompter("ensayo"));

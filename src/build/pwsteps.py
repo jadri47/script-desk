@@ -29,17 +29,20 @@ async def main():
                 labs = await pg.evaluate("[...document.querySelectorAll('#stepBar .sb button .sb-l')].map(x=>x.textContent.trim())")
                 ok(f"{n}: step bar has exactly 3 buttons {LABELS[ui]}", labs == LABELS[ui], labs)
                 await pg.screenshot(path=OUT + f"steps_bar_{n.replace('/', '_')}.png")
-                # step 3 content and order
+                # step 3 content and order (2026-10-26: a walk, one card at a time: pack x3 -> topic -> cold -> «Todo listo» + approve -> «Grabar»)
                 await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(600)
-                order = await pg.evaluate("[...document.querySelectorAll('#guide > *')].map(x=>x.id||(x.classList.contains('g-recorded')?'g-recorded':x.className.split(' ')[0]))")
-                want = ["gPack", "gTopic", "gCold", "g-approve", "gRecCard", "g-recorded", "gAfter", "gMore3"]
-                idx = [order.index(w_) if w_ in order else -1 for w_ in want]
-                ok(f"{n}: step 3 shows pack, topic, cold, approve, record card, After recording, More details in that order", all(i >= 0 for i in idx) and idx == sorted(idx), order)
-                ok(f"{n}: «{AFTER[ui]}» exists and is closed", await pg.evaluate("(()=>{const d=$('gAfter');return !!d && !d.open && d.querySelector('summary').textContent.trim()==='%s'})()" % AFTER[ui]))
-                ok(f"{n}: «Más detalles» closed, holds the structure", await pg.evaluate("(()=>{const d=$('gMore3');return !!d && !d.open && !!d.querySelector('#gStruct')})()"))
+                seq = []
+                for k in range(5):
+                    seq.append(await pg.evaluate("[...document.querySelectorAll('#guide #gPack,#guide #gTopic,#guide #gCold')].map(x=>x.id+(x.dataset.pubPart?':'+x.dataset.pubPart:'')).join()"))
+                    await pg.click("[data-pub=skip]"); await pg.wait_for_timeout(350)
+                ok(f"{n}: step 3 walks pack (title, thumbnail, description), topic, cold open, in that order, one card at a time", seq == ["gPack:title", "gPack:thumb", "gPack:desc", "gTopic", "gCold"], seq)
+                ok(f"{n}: the walk ends on the approve card (no record card yet)", await pg.evaluate("!!$('gApprove') && !$('gRecCard') && !$('gAfter')"))
                 ok(f"{n}: no step 4 / 5 anywhere", await pg.evaluate("!document.querySelector('[data-step=\"4\"],[data-step=\"5\"]')"))
                 ok(f"{n}: approve disabled until the packaging is filled", await pg.is_disabled("#gApprove"))
-                await pg.fill("#pkTitleIn", "¿Qué dice la Biblia sobre la ansiedad?"); await pg.fill("#pkThumbIn", "No cargues mañana"); await pg.wait_for_timeout(800)
+                await pg.click("[data-pub-go='0']"); await pg.wait_for_timeout(350)
+                await pg.fill("#pkTitleIn", "¿Qué dice la Biblia sobre la ansiedad?"); await pg.click("[data-pub=next]"); await pg.wait_for_timeout(350)
+                await pg.fill("#pkThumbIn", "No cargues mañana"); await pg.wait_for_timeout(800)
+                await pg.evaluate("PB.i = 5; renderGuide()"); await pg.wait_for_timeout(400)
                 if await pg.is_disabled("#gApprove"):
                     print("   gate still says:", await pg.evaluate("(document.querySelector('.g-gate')||{}).textContent"))
                 await pg.screenshot(path=OUT + f"steps_s3_{n.replace('/', '_')}.png", full_page=True)
@@ -47,10 +50,14 @@ async def main():
                 ok(f"{n}: no horizontal overflow on step 3", not hov)
                 if nm == "m":
                     ok(f"{n}: phone bottom bar fixed with 3 buttons", await pg.evaluate("(()=>{const s=$('stepBar');return getComputedStyle(s).position==='fixed' && s.querySelectorAll('button').length===3})()"))
-                # approve: stays on 3, status aprobado
+                # approve: stays on 3, status aprobado, lands on «Grabar»
                 await pg.click("#gApprove"); await pg.wait_for_timeout(900)
                 st = await pg.evaluate("V.step+' '+G.status")
                 ok(f"{n}: approve keeps step 3 and sets aprobado", st == "3 aprobado", st)
+                order = await pg.evaluate("[...document.querySelectorAll('#guide .pub-recw > *')].map(x=>x.id)")
+                ok(f"{n}: after approving: record card, After recording, More details in that order", order == ["gRecCard", "gAfter", "gMore3"], order)
+                ok(f"{n}: «{AFTER[ui]}» exists and is closed", await pg.evaluate("(()=>{const d=$('gAfter');return !!d && !d.open && d.querySelector('summary').textContent.trim().startsWith('%s')})()" % AFTER[ui]))
+                ok(f"{n}: «Más detalles» closed, holds the structure", await pg.evaluate("(()=>{const d=$('gMore3');return !!d && !d.open && !!d.querySelector('#gStruct')})()"))
                 ok(f"{n}: «Ya lo grabamos» is enabled after approve", await pg.evaluate("!!$('gRecorded') && !$('gRecorded').disabled"))
                 # reopen the saved episode: aprobado lands on step 3
                 pid = await pg.evaluate("G.prodId")

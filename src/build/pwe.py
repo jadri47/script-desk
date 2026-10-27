@@ -37,7 +37,7 @@ async def main():
             print(n, "sheet closed:", not await pg.evaluate("$('epSheet').open"), "| strip:", (await pg.inner_text("#epStrip")).replace("\n"," / "))
             # write, review, go to step 3 «Después de grabar» (was step 5)
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", LONG); await pg.click("#runBtn"); await pg.wait_for_timeout(1200)
-            await pg.evaluate("G.nextEp='el Salmo 91'; setStatus('grabado')"); await pg.wait_for_timeout(300)
+            await pg.evaluate("G.nextEp='el Salmo 91'; G.status='aprobado'; setStatus('grabado')"); await pg.wait_for_timeout(300)
             await pg.evaluate("goStep(3)"); await pg.evaluate("document.getElementById('gAfter').open=true"); await pg.wait_for_timeout(500)  # old step 5 = «Después de grabar» in step 3
             print(n, "step5 plan:", (await pg.inner_text("#gNextPlan"))[:160].replace("\n"," / "))
             el = await pg.query_selector("#gNextPlan"); await el.screenshot(path=OUT+f"np_{n}.png")

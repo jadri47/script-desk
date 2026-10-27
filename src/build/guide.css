@@ -726,3 +726,56 @@ main[data-view="guide"] .rp-act .rp-go{min-height:48px;font-size:17px;padding:0 
   .rp-dec .rp-act{position:sticky;bottom:calc(var(--sb-h,64px) + 6px);z-index:15;background:var(--paper);padding:8px 0 4px;margin-bottom:0}
   .rp-toast{right:8px}
 }
+
+/* ===== Step 3 as a walk (2026-10-26, plan "Walk Juan through it", step 4): one card at a time, progress, big actions, «Grabar» ===== */
+.pub-card{outline:none;max-width:560px}
+.pub-card:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.pub-prog{margin:0 0 6px;font:700 15px/1.3 var(--sans);color:var(--ink-2)}
+.pub-track{display:flex;gap:6px;margin:0 0 14px}
+.pub-track span{flex:1;height:6px;border-radius:3px;background:var(--rule)}
+.pub-track .d{background:var(--accent)}
+.pub-card h3,.pub-rec h3{margin:0 0 10px;font:600 24px/1.25 var(--serif)}
+.pub-ok{margin:0 0 10px;color:var(--verde);font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.pub-ok[hidden]{display:none}
+.pub-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:14px}
+.pub-act .pub-go{min-height:48px;font-size:17px;padding:0 24px}
+.pub-nav{display:flex;gap:8px;margin-top:6px}
+.pub button.small,.pub .pub-nav button,.pub .pub-act .linkish{min-height:44px;font-size:16px}
+.pub-nav button:disabled{opacity:.45}
+.pub .g-gate{flex:1 1 100%;font-size:15px}
+/* the walk shows one slice of the packaging card; the card itself is unchanged (guion_ui2.js tags the parts) */
+#gPack[data-pub-part="title"] [data-pk-part]:not([data-pk-part~="title"]),
+#gPack[data-pub-part="thumb"] [data-pk-part]:not([data-pk-part~="thumb"]),
+#gPack[data-pub-part="desc"] [data-pk-part]:not([data-pk-part~="desc"]),
+#gPack[data-pub-part="desc"] #pkAi,#gPack[data-pub-part="desc"]>.lead{display:none}
+.pub .g-card>.g-h>h2,.pub #gTopic>.g-h{display:none}
+.pub .g-card>.g-h{justify-content:flex-end}
+.pub details.pk-more{margin-top:0;border-top:0;padding-top:0}
+.pub details.pk-more>summary{display:none}
+.pub-all .g-card{padding:18px}
+.pub-final{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin:0 0 6px}
+.pub-lbl{color:var(--ink-2);font-size:16px}
+.pub-n{font:700 40px/1.1 var(--serif);color:var(--verde)}
+.pub-n small{font:600 16px var(--sans);color:var(--ink-2)}
+.pub-chk{list-style:none;margin:8px 0 6px;padding:0}
+.pub-chk li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--rule)}
+.pub-mk{font-weight:700;text-align:center}.pub-chk .ok .pub-mk{color:var(--verde)}.pub-chk .pend .pub-mk{color:var(--ink-2)}
+.pub-iv{display:flex;flex-direction:column;min-width:0}.pub-iv b{font-size:16px}
+.pub-v{color:var(--ink-2);font-size:15px;overflow-wrap:anywhere}
+.pub-chk .pend .pub-v{font-style:italic}
+.pub-ads{margin:8px 0 0}
+.pub-rec{padding:22px;max-width:560px;display:flex;flex-direction:column;gap:12px}
+.pub-rec .lamp{align-self:flex-start}
+.pub-big{display:flex;align-items:center;gap:14px;min-height:64px;width:100%;box-sizing:border-box;padding:12px 18px;border-radius:14px;text-align:left;font:600 18px/1.25 var(--sans)}
+.pub-big small{display:block;margin-top:2px;font:400 14px/1.35 var(--sans);opacity:.9}
+.pub-big .ic{width:28px;height:28px;flex:none}
+#gRecCard.pub-rec .pub-big{align-self:stretch}
+.pub-rec .rec-tip,.pub-rec .rec-clips{margin:0}
+.pub .g-card :is(.hint,.yt-ch,.yt-dur,.pk-count,.pk-h,.pk-tally,.mark,.co-k,.chip,h4,.verdict-tag,.co-meta,.co-note,.co-foot){font-size:14px}
+.pub-rd{align-self:flex-start;min-height:44px;font-size:16px}
+@media (max-width:899px){
+  .pub-act{position:sticky;bottom:calc(var(--sb-h,64px) + 6px);z-index:15;background:var(--paper);padding:8px 0 4px;margin-bottom:0}
+  .pub-act .pub-go{flex:1 1 100%;min-height:52px}
+  .pub button.small,.pub .pub-nav button,.pub .pub-act .linkish{min-height:48px}
+  .pub-big{min-height:72px}
+}

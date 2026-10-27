@@ -25,7 +25,7 @@ async def main():
                         print(n, "  mid with audience=both -> regional fails:", await pg.evaluate("state.result.sections.spoken.find(r=>r.id==='regional').passed===false"))
                         await pg.select_option("#audience","es"); await pg.wait_for_timeout(300)
                     if k=="good":
-                        await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(400)
+                        await pg.evaluate("goStep(3); PB.i = 5; renderGuide()"); await pg.wait_for_timeout(400)  # 2026-10-26: approve is on the walk's last card
                         await pg.click("#gApprove"); await pg.wait_for_timeout(500)
                         await pg.click("#gRecorded"); await pg.wait_for_timeout(500)
                         await pg.click("#exRetBtn"); await pg.wait_for_timeout(500)

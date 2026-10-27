@@ -87,16 +87,16 @@ function renderPack() {
   if (!el) return;
   el.innerHTML = `<header class="g-h"><h2>${h(t("pkTitle"))}</h2><button class="small" id="pkAi">${h(t("pkAi"))}</button></header>
     <p class="lead">${h(t("pkLead"))}</p>
-    <div class="pk-top">
+    <div class="pk-top" data-pk-part="title thumb">
       <figure class="yt-mock" id="pkPreview" aria-label="${h(t("pkPrevLbl"))}"></figure>
       <div class="pk-fields">
-        <div class="field"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="1" data-one="1" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
-        <div class="field"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><textarea id="pkThumbIn" rows="1" data-one="1" maxlength="24" placeholder="${h(t("thumbPh"))}">${h($("thumb").value)}</textarea><span class="pk-count" id="pkThumbN"></span></div>
+        <div class="field" data-pk-part="title"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="1" data-one="1" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
+        <div class="field" data-pk-part="thumb"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><textarea id="pkThumbIn" rows="1" data-one="1" maxlength="24" placeholder="${h(t("thumbPh"))}">${h($("thumb").value)}</textarea><span class="pk-count" id="pkThumbN"></span></div>
       </div>
     </div>
     <div id="pkSug"></div><p class="status" id="pkStatus"></p>
     <div id="pkChecks"></div>
-    <details class="pk-more"><summary>${h(t("pkMore"))}</summary>
+    <details class="pk-more" data-pk-part="desc"><summary>${h(t("pkMore"))}</summary>
     <div class="field pk-wide"><label for="pkDescIn">${h(t("descLabel"))}</label><textarea id="pkDescIn" rows="4">${h($("description").value)}</textarea></div>
     <div class="ch-box" id="pkChapters"></div><div class="ch-box" id="pkAds"></div></details>`;
   const sync = (from, to) => $(from).addEventListener("input", () => {
@@ -168,8 +168,8 @@ function renderPackSug() {
   const S = G.pkSug;
   if (!S) { box.innerHTML = ""; return; }
   const kw = (G.R && G.R.keyword) || "";
-  box.innerHTML = `<div class="pk-sug"><h4 class="pk-h">${h(t("pkSugTitles"))}</h4>${S.titles.map((x, i) => { const ok = x.length <= 60 && (!kw || norm(x).slice(0, 60).includes(norm(kw))); return `<div class="pk-opt"><span>${h(x)}</span><span class="hint">${x.length}</span><span class="verdict-tag ${ok ? "v-ok" : "v-mid"}">${h(ok ? t("ok") : t("review"))}</span><button class="small" data-pt="${i}">${h(t("pkUse"))}</button></div>`; }).join("")}
-    <h4 class="pk-h">${h(t("pkSugThumbs"))}</h4><div class="chips">${S.thumbs.map((x, i) => `<button class="small" data-pth="${i}">${h(x)}</button>`).join("")}</div></div>`;
+  box.innerHTML = `<div class="pk-sug"><div data-pk-part="title"><h4 class="pk-h">${h(t("pkSugTitles"))}</h4>${S.titles.map((x, i) => { const ok = x.length <= 60 && (!kw || norm(x).slice(0, 60).includes(norm(kw))); return `<div class="pk-opt"><span>${h(x)}</span><span class="hint">${x.length}</span><span class="verdict-tag ${ok ? "v-ok" : "v-mid"}">${h(ok ? t("ok") : t("review"))}</span><button class="small" data-pt="${i}">${h(t("pkUse"))}</button></div>`; }).join("")}
+</div><div data-pk-part="thumb"><h4 class="pk-h">${h(t("pkSugThumbs"))}</h4><div class="chips">${S.thumbs.map((x, i) => `<button class="small" data-pth="${i}">${h(x)}</button>`).join("")}</div></div></div>`;
   const apply = (main, mirror, v) => { $(main).value = v; $(mirror).value = v; renderPkPreview(); gCompute(); renderPackChecks(); renderProdBar(); markDirty(); };
   box.querySelectorAll("[data-pt]").forEach((b) => b.addEventListener("click", () => apply("title", "pkTitleIn", S.titles[+b.dataset.pt])));
   box.querySelectorAll("[data-pth]").forEach((b) => b.addEventListener("click", () => apply("thumb", "pkThumbIn", S.thumbs[+b.dataset.pth])));

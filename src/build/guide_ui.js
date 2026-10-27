@@ -147,28 +147,12 @@ function renderGuide() {
       $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
     }
   } else {
-    // Step 3 «Publicar»: packaging → next episode → opening → approve, then the record card, then «Después de grabar».
-    // Approve and «Ya lo grabamos» only change the status and stay here (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3").
+    // Step 3 «Publicar» is a walk (pub_ui.js): title → thumbnail → description → next episode → opening → «Todo listo» + approve,
+    // then «Grabar». Each card is the existing one; approve and «Ya lo grabamos» only change the status and stay in step 3
+    // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3"; 2026-10-26: plan "Walk Juan through it", step 4).
     top.innerHTML = head(3);
-    const missing = packGateMissing();
-    const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gPack"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gCold"></section>
-      <div class="g-approve">${done ? `<span class="lamp verde">${h(t("approved"))}</span>` : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : ""}`}</div>
-      ${recordCardHTML()}
-      <div class="g-approve g-recorded">${recorded ? `<span class="lamp verde">${h(t("status").grabado)}</span>` : `<button type="button" class="primary" id="gRecorded"${approved ? "" : " disabled"}>${h(t("s4Done"))}</button>`}</div>
-      <details class="rp-more g-after" id="gAfter"${V.s3After ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpAfterRec"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section></div></details>
-      <details class="rp-more g-more3" id="gMore3"${V.s3More ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpMore"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gStruct"></section></div></details>
-      ${navHTML(2)}`;
-    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack(); wireRecordCard(); renderShorts(); renderResultsCard();
-    const keep = (id, k) => { const d = $(id); if (d) d.addEventListener("toggle", () => { V[k] = d.open; }); };
-    keep("gAfter", "s3After"); keep("gMore3", "s3More");
-    const ap = $("gApprove");
-    if (ap) ap.addEventListener("click", async () => {
-      ap.disabled = true; await setStatus("aprobado");
-      const rc = $("gRecCard"); if (rc) rc.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    });
-    const rec = $("gRecorded");
-    if (rec) rec.addEventListener("click", async () => { rec.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
+    body.innerHTML = `${pubStep3HTML(R)}${navHTML(2)}`;
+    pubAfterHTML(body);
   }
   wireGuideNav(body);
   body.querySelectorAll("[data-see]").forEach((b) => b.remove());
@@ -199,6 +183,7 @@ $("runBtn").addEventListener("click", async () => {
   if ($("exPick") && $("exPick").dataset.open === "1") { $("exPick").dataset.open = "0"; if (typeof renderExPick === "function") renderExPick(); }
   const db = await caps.db;
   if (db && !G.prodId) await createProd();
+  pubReset();
   goStep(2);
   if (db && G.status === "borrador") setStatus("revision");
 });
@@ -210,7 +195,7 @@ const _renderPackChecksG = renderPackChecks;
 renderPackChecks = function () {
   _renderPackChecksG();
   if (!V.guided || V.step !== 3) return;
-  const box = document.querySelector(".g-approve"), ap = $("gApprove");
+  const box = document.querySelector("[data-pub-gate]"), ap = $("gApprove");
   if (!box || !ap) return;
   const missing = packGateMissing(), P = t("pk");
   ap.disabled = missing.length > 0;
