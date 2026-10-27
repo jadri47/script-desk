@@ -1,5 +1,12 @@
 # Decisions (newest first)
 
+## 2026-10-26: walk Juan through it — the report inside the score bubble, every accepted change raises the score, one thing at a time (Adrian: "Information in informe del editor should be inside the rating bubble… when making an improvement the ranking should increase. Each change would take to the next. The app must walk the user through… a more straightforward and easy way to use the app"; plan + 9-screen mockup shown first; "Go with the plan")
+- Score: the editor part counts applied changes (`effectiveReport`: an applied item's area rises to its `after`, cap 5, never lowered, labelled «según el editor»); `itemGain` is the one recipe for a change's «+n a la nota»; `report.baseline` keeps the first measurement for the «Original» column. «Medir de nuevo» replaces the estimate with a measurement (one paid call). The rise is the editor's estimate, said so in the bubble.
+- Bubble: the pill popover is the report (Original / Ahora / why, ads, as-of, measure again; a bottom sheet on a phone); the pill reads «a → b posible». No verdict card or report header in step 2.
+- Step 2 is a walk (`report_ui.js`): «Cambio i de n · Área», «+n», «Aplicar y seguir», Saltar / Anterior, end card «Terminaste los cambios», «Revisión detallada» as one link. Step 3 is a walk (`pub_ui.js`): Título, Miniatura, Descripción, Próximo episodio, Apertura, Todo listo + Aprobar, then Grabar. Phone: card first, then only the paragraph being changed («Ver guion completo»); primary button fixed above the step bar.
+- Chrome: «Modo completo» lives in a ⋯ menu; step 1 shows the script and «Más opciones»; three one-time tips (`sd-tip-bubble`, `sd-tip-card`, `sd-tip-button`; `sd-tips-off=1` disables them, `mock_sb.js` sets it for tests, `pwchrome` turns them on).
+- Open: step 1 button still says «Revisar guion» (mockup: «Revisar mi guion →»); phone step-bar labels are 11 px (old); not checked on a real phone.
+
 ## 2026-10-25: alternatives for problematic words, and an AI status bubble on the score (Adrian: "Provide synonyms or alternatives to problematic words when suggesting changes ... clearly specify when Claude is thinking ... some bubble attached to the script ranking"; mockup shown first)
 
 Picks (2026-10-25, "Do the three AS"): **A alternatives from the same report call** (no extra call; a few hundred more output tokens per report, a guess) · **A the bubble covers every AI wait** · **A «Listo» closes after ~5 s and leaves a check on the score**.
