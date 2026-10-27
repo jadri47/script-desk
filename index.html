@@ -437,7 +437,7 @@ mark.fx-strike{background:var(--rojo-bg);color:inherit;text-decoration:line-thro
 .xswitch input:checked::after{transform:translateX(16px)}
 .xswitch input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .masthead .langswitch{margin-left:0}
-main[data-view="guide"] .modes, main[data-view="guide"] #results, main[data-view="guide"] #guion, main[data-view="guide"] #historyBlock, main[data-view="guide"] .steps, main[data-view="guide"] #extraFields{display:none !important}
+main[data-view="guide"] .modes, main[data-view="guide"] #results, main[data-view="guide"] #guion, main[data-view="guide"] #historyBlock, main[data-view="guide"] .steps, main[data-view="guide"]:not(.s1-more) #extraFields{display:none !important}
 main[data-view="guide"]:not([data-step="1"]) #editor{display:none !important}
 main[data-view="guide"] #editor{display:block !important}
 html:not(.guided) #stepBar, main[data-view="expert"] #guideTop, main[data-view="expert"] #guide{display:none}
@@ -672,7 +672,45 @@ html .score-pill[hidden],html.pp-open .score-pill{display:none}
 .sc-scrim{position:fixed;inset:0;z-index:69;background:rgba(10,12,30,.28)} .sc-scrim[hidden],.sc-pop[hidden]{display:none}
 @media (min-width:900px){.sc-scrim{background:transparent}}
 .sc-pop{position:fixed;z-index:70;background:var(--sheet);color:var(--ink);border:1px solid var(--rule);border-radius:18px;box-shadow:0 14px 44px rgba(10,12,30,.32);padding:16px 18px;font-size:15px;line-height:1.45;width:min(360px,calc(100vw - 24px))}
-@media (max-width:899px){.sc-pop{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:78vh;overflow:auto}}
+.sc-pop{max-height:calc(100dvh - 24px);overflow:auto}
+/* phone: a bottom sheet, full width, rounded top, over the dimmed page */
+@media (max-width:899px){.sc-pop{left:0;right:0;bottom:0;width:auto;max-height:88dvh;border-radius:20px 20px 0 0;border-width:2px 0 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+  .sc-scrim{background:rgba(10,12,30,.4)}}
+/* the report inside the bubble (report_ui.js rpPopHTML): number, areas before / now, what the editor said, ads, re-measure */
+.sc-pop.rep{border:2px solid var(--accent)}
+@media (max-width:899px){.sc-pop.rep{border-width:2px 0 0 0}}
+.score-pill .sc-pos{font:600 13px/1 var(--sans);color:var(--accent);white-space:nowrap} .score-pill .sc-pos:empty{display:none}
+.sc-name{display:flex;flex-direction:column;gap:2px;min-width:0} .sc-name b{font-size:17px;line-height:1.25} .sc-sub{color:var(--ink-2);font-size:14px}
+.sc-pop.rep .sc-big{font-size:40px}
+.sc-tw{margin:10px 0 4px;overflow-x:auto}
+.sc-t{width:100%;border-collapse:collapse;font-size:14px;line-height:1.4}
+.sc-t th{font-weight:600;text-align:left;padding:8px 6px;vertical-align:top}
+.sc-t thead th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);padding:4px 6px}
+.sc-t td{padding:8px 6px;vertical-align:top;border-top:1px solid var(--rule)} .sc-t tbody th{border-top:1px solid var(--rule)}
+.sc-t .rp-dots{font-size:14px;letter-spacing:.08em}
+.sc-t .sc-w{color:var(--ink-2);overflow-wrap:anywhere}
+.sc-ch{font-weight:700;white-space:nowrap;color:var(--ink-2)} .sc-ch.up{color:var(--verde)} .sc-ch.down{color:var(--rojo)}
+.sc-r.est .sc-n2{font-weight:700} .sc-r.est .sc-n2 .rp-dots{text-decoration:underline dotted;text-underline-offset:4px}
+.sc-by{display:block;font-size:12px;font-weight:600;color:var(--accent)}
+.sc-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0 4px}
+.sc-asof{color:var(--ink-2);font-size:14px;flex:1 1 auto}
+.sc-re{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--accent);background:var(--sheet);color:var(--accent);font:600 15px/1.2 var(--sans);cursor:pointer}
+.sc-re.primary{background:var(--accent);color:var(--accent-ink)} .sc-re:disabled{opacity:.55;cursor:default}
+.sc-re:focus-visible,.sc-x:focus-visible,.score-pill:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sc-bnote{margin:4px 0 8px} .sc-wait{margin:8px 0}
+@media (max-width:899px){
+  .sc-pop.rep{overflow-x:hidden}
+  .sc-tw{overflow:visible}
+  .sc-t,.sc-t tbody,.sc-t tr,.sc-t td,.sc-t th{display:block}
+  .sc-t thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .sc-t tr{display:grid;grid-template-columns:minmax(96px,max-content) auto auto 1fr;gap:2px 8px;align-items:baseline;padding:8px 0;border-top:1px solid var(--rule)}
+  .sc-t td,.sc-t tbody th{border:0;padding:0}
+  .sc-t td.sc-w{grid-column:1/-1;font-size:14px}
+  .sc-t .sc-n2.arrow::before{content:"→ ";color:var(--ink-2)}
+  .sc-t tr.sc-ads td:not(.sc-w){grid-column:2/-1}
+  .sc-t tr.sc-ads td.sc-w{display:none}
+  .sc-t tr:not(.sc-ads) td.sc-c{justify-self:start}
+}
 .sc-head{display:flex;align-items:center;gap:10px}
 .sc-big{display:inline-flex;align-items:center;gap:8px;font:800 30px/1 var(--sans)} .sc-big small{font:600 14px/1 var(--sans);color:var(--ink-2);margin-left:-4px}
 .sc-band{font-weight:600;color:var(--ink-2)} .sc-x{margin-left:auto;min-height:44px;min-width:44px;border:0;background:none;font-size:26px;color:var(--ink-2);cursor:pointer}
@@ -1014,21 +1052,11 @@ main[data-view="guide"] .cc-act button,main[data-view="guide"] .cc-nav button{mi
 
 /* ===== Editor's report (report_ui.js): step 2 ===== */
 .rp{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;margin:12px 0}
-.rp-head{display:grid;gap:4px;margin-bottom:10px}
-.rp-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}.rp-title h3{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
-.rp-title .qh-txt{flex:1 1 100%}
-.rp-score{font:700 16px/1.35 var(--sans);color:var(--ink);overflow-wrap:anywhere}
-.rp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--ink-2)}
-.rp-rows{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
-.rp-row{display:grid;grid-template-columns:minmax(104px,max-content) max-content 1fr;gap:2px 12px;align-items:baseline;font-size:15px}
-.rp-a{font-weight:600}
 .rp-dots{letter-spacing:.14em;color:var(--accent);font-size:15px;white-space:nowrap}
-.rp-w{color:var(--ink-2);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
 .rp-st{font-weight:600}.rp-st-verde{color:var(--verde)}.rp-st-amarillo{color:var(--amarillo)}.rp-st-rojo{color:var(--rojo)}
 .rp-wait{margin:8px 0;padding:14px 16px;border-radius:14px;background:var(--weak-bg);color:var(--ink)}
 .rp-wait-h{display:flex;align-items:center;gap:10px}
 .rp-wait p{margin:6px 0 0;font-size:14px;line-height:1.5}
-.rp-row-wait .rp-w{color:var(--ink-2)}
 /* alternatives: other ways to write a change, other words for a flagged term (report_ui.js) */
 .rp-pick,.rp-words{border:0;margin:0;padding:0;display:flex;gap:8px}
 .rp-pick{flex-direction:column}
@@ -1094,13 +1122,160 @@ main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{mi
 .rp-more .fix-pts,.rp-more .fx-why,.rp-more .cc-score{display:none}
 @media (max-width:620px){
   .rp{padding:12px}
-  .rp-row{grid-template-columns:minmax(96px,max-content) 1fr}.rp-row .rp-w{grid-column:1/-1}
   .rp-c{grid-template-columns:1fr;gap:2px}
 }
 @media (max-width:899px),(max-height:559px){.rp-dec{scroll-margin-top:calc(var(--dock-h,40dvh) + 6px)}.rp-dec button{scroll-margin-top:calc(var(--dock-h,40dvh) + 90px);scroll-margin-bottom:90px}}
 .score-pill .sc-of{font:600 12px/1 var(--sans);opacity:.8} .score-pill .sc-of:empty{display:none}
 .lamp.espera{color:var(--accent);background:var(--weak-bg)}
 .gv-espera{box-shadow:inset 5px 0 0 var(--accent),var(--lift)}
+/* ===== Step 2 as a walk (2026-10-26, plan "Walk Juan through it", step 3): progress, gain, big actions, end card, chip ===== */
+.rp-dec{font-size:16px}
+.rp-prog{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;margin-bottom:10px}
+.rp-prog b,.rp-prog-t{font:700 16px/1.3 var(--sans);color:var(--ink)}
+.rp-gain{font:700 15px/1.2 var(--sans);color:var(--verde);background:var(--verde-bg);border:1px solid var(--verde);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.rp .hint,.rp-dec .rp-c dt{font-size:14px}
+.rp-dec .rp-tag,.rp-dec .rp-safe{font-size:14px}
+main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{min-height:44px}
+main[data-view="guide"] .rp-act .rp-go{min-height:48px;font-size:17px;padding:0 24px}
+.rp-act{align-items:center}
+.rp-end h3{margin:4px 0 8px;font:700 21px/1.3 var(--serif)}
+.rp-end-row{display:flex;align-items:baseline;gap:10px;margin:0 0 4px}.rp-end-n{font:700 32px/1.1 var(--sans);color:var(--ink)}
+.rp-end-c{margin:0 0 8px;font-weight:600}
+.rp-end-l{list-style:none;margin:0 0 4px;padding:0;display:grid;gap:4px}.rp-end-l li{color:var(--verde);font-weight:600}.rp-end-l li span{margin-right:4px}
+.rp-toast{position:fixed;right:12px;z-index:60;max-width:calc(100vw - 24px);box-sizing:border-box;padding:10px 16px;border-radius:999px;background:var(--sheet);color:var(--ink);border:2px solid var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.18);font:600 15px/1.3 var(--sans);opacity:0;pointer-events:none}
+.rp-toast.on{opacity:1}
+.rp-toast .rp-dots{font-size:15px}
+@media (prefers-reduced-motion:no-preference){.rp-toast{transition:opacity .2s}}
+.rp-detail{margin:18px 0 6px}
+.rp-detail>summary{font-weight:500;font-size:15px;min-height:44px;color:var(--accent)}
+.rp-detail>summary .rp-more-t{text-decoration:underline;text-underline-offset:3px}
+.rp-detail>summary .hint{color:var(--ink-2);font-size:14px}
+@media (max-width:620px){
+  main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{min-height:48px}
+  main[data-view="guide"] .rp-act .rp-go{flex:1 1 100%;min-height:52px}
+  .rp-dec .rp-act{position:sticky;bottom:calc(var(--sb-h,64px) + 6px);z-index:15;background:var(--paper);padding:8px 0 4px;margin-bottom:0}
+  .rp-toast{right:8px}
+}
+
+/* ===== Step 3 as a walk (2026-10-26, plan "Walk Juan through it", step 4): one card at a time, progress, big actions, «Grabar» ===== */
+.pub-card{outline:none;max-width:560px}
+.pub-card:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.pub-prog{margin:0 0 6px;font:700 15px/1.3 var(--sans);color:var(--ink-2)}
+.pub-track{display:flex;gap:6px;margin:0 0 14px}
+.pub-track span{flex:1;height:6px;border-radius:3px;background:var(--rule)}
+.pub-track .d{background:var(--accent)}
+.pub-card h3,.pub-rec h3{margin:0 0 10px;font:600 24px/1.25 var(--serif)}
+.pub-ok{margin:0 0 10px;color:var(--verde);font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.pub-ok[hidden]{display:none}
+.pub-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:14px}
+.pub-act .pub-go{min-height:48px;font-size:17px;padding:0 24px}
+.pub-nav{display:flex;gap:8px;margin-top:6px}
+.pub button.small,.pub .pub-nav button,.pub .pub-act .linkish{min-height:44px;font-size:16px}
+.pub-nav button:disabled{opacity:.45}
+.pub .g-gate{flex:1 1 100%;font-size:15px}
+/* the walk shows one slice of the packaging card; the card itself is unchanged (guion_ui2.js tags the parts) */
+#gPack[data-pub-part="title"] [data-pk-part]:not([data-pk-part~="title"]),
+#gPack[data-pub-part="thumb"] [data-pk-part]:not([data-pk-part~="thumb"]),
+#gPack[data-pub-part="desc"] [data-pk-part]:not([data-pk-part~="desc"]),
+#gPack[data-pub-part="desc"] #pkAi,#gPack[data-pub-part="desc"]>.lead{display:none}
+.pub .g-card>.g-h>h2,.pub #gTopic>.g-h{display:none}
+.pub .g-card>.g-h{justify-content:flex-end}
+.pub details.pk-more{margin-top:0;border-top:0;padding-top:0}
+.pub details.pk-more>summary{display:none}
+.pub-all .g-card{padding:18px}
+.pub-final{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin:0 0 6px}
+.pub-lbl{color:var(--ink-2);font-size:16px}
+.pub-n{font:700 40px/1.1 var(--serif);color:var(--verde)}
+.pub-n small{font:600 16px var(--sans);color:var(--ink-2)}
+.pub-chk{list-style:none;margin:8px 0 6px;padding:0}
+.pub-chk li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--rule)}
+.pub-mk{font-weight:700;text-align:center}.pub-chk .ok .pub-mk{color:var(--verde)}.pub-chk .pend .pub-mk{color:var(--ink-2)}
+.pub-iv{display:flex;flex-direction:column;min-width:0}.pub-iv b{font-size:16px}
+.pub-v{color:var(--ink-2);font-size:15px;overflow-wrap:anywhere}
+.pub-chk .pend .pub-v{font-style:italic}
+.pub-ads{margin:8px 0 0}
+.pub-rec{padding:22px;max-width:560px;display:flex;flex-direction:column;gap:12px}
+.pub-rec .lamp{align-self:flex-start}
+.pub-big{display:flex;align-items:center;gap:14px;min-height:64px;width:100%;box-sizing:border-box;padding:12px 18px;border-radius:14px;text-align:left;font:600 18px/1.25 var(--sans)}
+.pub-big small{display:block;margin-top:2px;font:400 14px/1.35 var(--sans);opacity:.9}
+.pub-big .ic{width:28px;height:28px;flex:none}
+#gRecCard.pub-rec .pub-big{align-self:stretch}
+.pub-rec .rec-tip,.pub-rec .rec-clips{margin:0}
+.pub .g-card :is(.hint,.yt-ch,.yt-dur,.pk-count,.pk-h,.pk-tally,.mark,.co-k,.chip,h4,.verdict-tag,.co-meta,.co-note,.co-foot){font-size:14px}
+.pub-rd{align-self:flex-start;min-height:44px;font-size:16px}
+@media (max-width:899px){
+  .pub-act{position:sticky;bottom:calc(var(--sb-h,64px) + 6px);z-index:15;background:var(--paper);padding:8px 0 4px;margin-bottom:0}
+  .pub-act .pub-go{flex:1 1 100%;min-height:52px}
+  .pub button.small,.pub .pub-nav button,.pub .pub-act .linkish{min-height:48px}
+  .pub-big{min-height:72px}
+}
+
+/* ===== Plan "Walk Juan through it", step 5 (2026-10-26): chrome and first use ===== */
+/* ⋯ menu in the header: «Modo completo» lives here */
+.more-wrap{position:relative;flex:none;align-self:center}
+.morebtn{display:inline-grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);color:var(--ink);font:700 22px/1 var(--sans);cursor:pointer}
+.morebtn:hover{border-color:var(--accent);color:var(--accent)}
+.morebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.morebtn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:60;width:max-content;min-width:250px;max-width:min(330px,calc(100vw - 28px));box-sizing:border-box;background:var(--sheet);border:1px solid var(--rule);border-radius:14px;box-shadow:0 16px 36px -14px rgba(20,24,60,.4);padding:6px}
+.more-menu[hidden]{display:none}
+html .masthead .more-menu .xswitch.more-item{display:flex;width:100%;box-sizing:border-box;min-height:48px;margin:0;padding:6px 10px;gap:12px;justify-content:space-between;flex-direction:row-reverse;font:600 16px/1.25 var(--sans);color:var(--ink);border-radius:10px;grid-column:auto;grid-row:auto}
+html .masthead .more-menu .xswitch.more-item>span{display:inline !important}
+.more-menu .xswitch.more-item:hover{background:var(--rule-2)}
+.more-menu .xswitch input{width:44px;height:26px}
+.more-menu .xswitch input::after{width:20px;height:20px}
+.more-menu .xswitch input:checked::after{transform:translateX(18px)}
+.more-hint{margin:2px 10px 8px;font-size:14px;line-height:1.4;color:var(--ink-2)}
+html.sd-split .masthead .more-wrap{order:4}
+@media (max-width:620px){ .masthead{grid-template-columns:1fr auto auto auto} .masthead .more-wrap{grid-column:4;grid-row:1} .masthead .more-menu{position:fixed;left:14px;right:14px;top:60px;width:auto;max-width:none} }
+
+/* step 1 asks only for the script: the rest sits behind «Más opciones» */
+.s1-more-btn{display:none}
+main[data-view="guide"][data-step="1"] .s1-more-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 4px;margin:4px 0 0;font-size:15px}
+main[data-view="guide"][data-step="1"] .s1-more-btn::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px)}
+main[data-view="guide"][data-step="1"] .s1-more-btn[aria-expanded="true"]::after{transform:rotate(-135deg) translateY(-2px)}
+main[data-view="guide"][data-step="1"]:not(.s1-more) :is(.idea-field,#setDet){display:none !important}
+
+/* phone, step 2: the card first, under it only the paragraph being changed (report_ui.js rpFocusSync) */
+.rp-wh,.rp-wf{display:none}
+.rp-wh{margin:14px 0 6px;font-size:14px;font-weight:600;color:var(--ink-2)}
+.rp-wf{margin:4px 0 0}
+.rp-wf .linkish{min-height:44px;padding:0 4px;font-size:16px}
+html:not(.sd-split) main.rp-focus .rp-wh,html:not(.sd-split) main.rp-focus .rp-wf,html:not(.sd-split) main.rp-full .rp-wf{display:block}
+html:not(.sd-split) main.rp-focus.rp-nospot .rp-wh,html:not(.sd-split) main.rp-focus.rp-nospot .rp-wf{display:none}
+html:not(.sd-split) main[data-view="guide"][data-step="2"].rp-focus{display:flex;flex-direction:column}
+html:not(.sd-split) main.rp-focus>*{order:90}
+html:not(.sd-split) main.rp-focus>.masthead{order:0}
+html:not(.sd-split) main.rp-focus>#guideTop{order:10}
+html:not(.sd-split) main.rp-focus>#guide{display:contents}
+html:not(.sd-split) main.rp-focus>#guide>.rp{order:20}
+html:not(.sd-split) main.rp-focus>#guide>.rp-wh{order:30}
+html:not(.sd-split) main.rp-focus>#editor{order:40}
+html:not(.sd-split) main.rp-focus>#guide>.rp-wf{order:50}
+html:not(.sd-split) main.rp-focus>#guide>.rp-more{order:60}
+html:not(.sd-split) main.rp-focus>#guide>.g-nav-steps{order:70}
+html:not(.sd-split) main[data-view="guide"][data-step="2"].rp-focus #editor{position:static;box-shadow:none;background:transparent;padding:0;margin:0;z-index:auto}
+html:not(.sd-split) main[data-view="guide"][data-step="2"].rp-focus.rp-nospot #editor{display:none !important}
+html:not(.sd-split) main[data-view="guide"][data-step="2"].rp-focus #editor .ed-wrap:not(.ed-full) .ed{height:var(--rp-ph,96px);min-height:0}
+
+/* phone, step 2, one-paragraph view: the card is followed by the paragraph and the nav, so its action row is a bar fixed above the step bar
+   (it stays on screen at every scroll position, like the sticky row of the other walk screens) and the page gets room under the content */
+html:not(.sd-split) main.rp-focus .rp-dec .rp-act{position:fixed;left:0;right:0;bottom:var(--sb-h,64px);z-index:15;box-sizing:border-box;margin:0;padding:8px 14px 8px;background:var(--paper);border-top:1px solid var(--rule);box-shadow:0 -6px 14px -10px rgba(20,24,60,.35)}
+html:not(.sd-split) main.rp-focus{padding-bottom:calc(var(--sb-h,64px) + 190px)}
+
+/* first-use tips (tips_ui.js): a small note pointing at its element, never a dialog */
+.sd-tip{position:relative;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0;padding:12px 14px;border-radius:14px;background:var(--sheet);color:var(--ink);border:2px solid var(--accent);box-shadow:var(--lift);font:400 16px/1.4 var(--sans)}
+.sd-tip-t{flex:1 1 180px;min-width:0}
+.sd-tip-ok{flex:none;min-height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font:600 16px/1 var(--sans);cursor:pointer}
+.sd-tip-ok:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sd-tip-float{position:fixed;z-index:36;margin:0}
+.sd-tip::before{content:"";position:absolute;left:28px;width:14px;height:14px;background:var(--sheet);border:2px solid var(--accent);border-width:0;transform:rotate(45deg)}
+.sd-tip[data-tail="up"]::before{top:-9px;border-top-width:2px;border-left-width:2px}
+.sd-tip[data-tail="down"]::before{bottom:-9px;border-bottom-width:2px;border-right-width:2px}
+.sd-tip-float::before{left:auto;right:var(--tip-tail,40px)}
+.rp-act>.sd-tip{flex:1 0 100%;order:-1;margin:0 0 6px}
+@media (max-width:620px){ .sd-tip-ok{min-height:48px} }
+@media print{ .sd-tip{display:none !important} }
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -1724,10 +1899,16 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
   <header class="masthead">
     <h1>Script Desk</h1>
     <p data-i18n="tagline">Revisa el guion antes de grabar.</p>
-    <label class="xswitch" title="Modo completo / Full mode"><input type="checkbox" id="expertToggle" role="switch"><span data-i18n="expert">Modo completo</span></label>
     <button type="button" class="themebtn" id="themeBtn" aria-label="Cambiar a modo oscuro"></button>
     <div class="langswitch" role="group" aria-label="Idioma / Language">
       <button type="button" data-ui="es" aria-pressed="true">Español</button><button type="button" data-ui="en" aria-pressed="false">English</button>
+    </div>
+    <div class="more-wrap" id="moreWrap">
+      <button type="button" class="morebtn" id="moreBtn" aria-label="Más opciones" title="Más opciones" aria-haspopup="menu" aria-expanded="false" aria-controls="moreMenu"><span aria-hidden="true">⋯</span></button>
+      <div class="more-menu" id="moreMenu" role="menu" aria-label="Más opciones" hidden>
+        <label class="xswitch more-item" title="Modo completo / Full mode"><input type="checkbox" id="expertToggle" role="menuitemcheckbox"><span data-i18n="expert">Modo completo</span></label>
+        <p class="more-hint" data-i18n="expertHint">Apagado: la app te lleva paso a paso. Encendido: todas las revisiones en una pantalla.</p>
+      </div>
     </div>
     <div id="stepBar" aria-label="Pasos"></div>
     <div class="mast-tools">
@@ -1748,6 +1929,7 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
       <textarea id="script" data-i18n-ph="scriptPh" placeholder="Pega tu guion aquí…" spellcheck="true"></textarea>
     </div>
     <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span><button type="button" class="linkish tr-toggle" id="trToggle" aria-expanded="false" aria-controls="trBox" data-i18n="trTitle">Traducir o adaptar el guion</button><button type="button" class="linkish clear-link" id="clearBtn" data-i18n="clear">Borrar guion</button><div id="trBox" class="tr-box" hidden></div></div>
+    <button type="button" class="linkish s1-more-btn" id="s1MoreBtn" aria-expanded="false" data-i18n="s1More">Más opciones</button>
     <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><textarea id="bigIdea" rows="1" data-one="1" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."></textarea><div id="ideaSug" class="idea-sug-box"></div></div>
 
     <details class="extra" id="extraFields">
@@ -3702,7 +3884,9 @@ const READY_W = { runtime: 4 };
 const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
 // report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
 // (no invented number). dismissed: rows the person ignored count as passed here.
-function readinessOf(R, report, dismissed) {
+// text (optional): the script as it is now. With it the editor part counts the report's changes already applied (effectiveReport,
+// report_logic.js): editorEst = areas raised by them, editorBase = the editor points without the raise. Without it nothing changes.
+function readinessOf(R, report, dismissed, text) {
   dismissed = dismissed || new Set();
   const rows = Object.values(R.sections).flat();
   const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
@@ -3717,10 +3901,15 @@ function readinessOf(R, report, dismissed) {
   const openIds = open.filter((r) => /^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)).map((r) => r.id);
   if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts, openIds };
   // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
-  const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  const editorOf = (rp) => REPORT_AREAS.reduce((a, k) => { const v = rp.areas[k] && rp.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  const editorBase = editorOf(report);
+  const eff = typeof text === "string" ? effectiveReport(text, report) : report;
+  const editor = eff === report ? editorBase : editorOf(eff);
   let score = rules + editor;
   if (red) score = Math.min(score, 69);
-  return { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  const out = { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  if (typeof text === "string") { out.editorBase = editorBase; out.editorEst = REPORT_AREAS.filter((k) => eff.areas[k] && eff.areas[k].est).length; }
+  return out;
 }
 // ---------- Color families for the text (pure) ----------
 // One table decides how a finding looks everywhere: the paragraph review, the fix cards and the marked script.
@@ -4112,23 +4301,76 @@ function reportWordRows(text, R, cat, words, pick) {
 // «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
 function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }
 
-// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
-// item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
+// ---- the score counts accepted changes (jadri47, 2026-10-26: plan step 1) ----
+// Text-derived state of one report item: "pending" (its original is found exactly once), "applied" (the original is gone or
+// repeated and the replacement, or one of its alternatives, is in the text) or "lost". rpStates (report_ui.js) adds the log and skips.
+function itemState(text, it) {
+  const a = text.indexOf(it.original);
+  if (a >= 0 && text.indexOf(it.original, a + 1) < 0) return "pending";
+  if (text.includes(it.replacement) || (it.alts || []).some((x) => x && text.includes(x))) return "applied";
+  return "lost";
+}
+// Applied for the score: the original is NOT in the text and the replacement or an alternative is.
+function itemApplied(text, it) {
+  if (!it || typeof it.original !== "string" || !it.original || text.includes(it.original)) return false;
+  return (typeof it.replacement === "string" && it.replacement !== "" && text.includes(it.replacement)) || (it.alts || []).some((x) => typeof x === "string" && x !== "" && text.includes(x));
+}
+// A copy of the report whose areas are raised, for each applied item, to min(5, item.after); never lowered. A raised area has est: true.
+// A new measurement replaces report.areas, and the applied items' originals are no longer in the text it was made on, so nothing is raised twice.
+function effectiveReport(text, report) {
+  if (!report) return null;
+  const areas = {};
+  for (const k of REPORT_AREAS) areas[k] = report.areas && report.areas[k] ? { ...report.areas[k] } : { rating: null };
+  for (const it of report.items || []) {
+    if (!areas[it.area] || it.after == null || !itemApplied(text, it)) continue;
+    const up = Math.min(5, it.after), cur = areas[it.area].rating;
+    if (up > (cur || 0)) { areas[it.area].rating = up; areas[it.area].est = true; }
+  }
+  return { ...report, areas };
+}
+// Points that change i adds: the readiness of the text with it applied (rep: which wording, default the replacement) minus the
+// readiness now. Same recipe as the total (readinessOf with the text), so it equals the real move. 0 when the item is not pending.
+function itemGain(text, R, opts, report, i, rep, dismissed) {
+  const it = report && report.items && report.items[i];
+  if (!it || itemState(text, it) !== "pending") return 0;
+  const a = text.indexOf(it.original), t2 = applyPatches(text, [{ start: a, end: a + it.original.length, rep: rep == null ? it.replacement : rep }]);
+  const pts = (rd) => (rd.score == null ? rd.rules : rd.score);
+  return pts(readinessOf(analyze(t2, opts), report, dismissed, t2)) - pts(readinessOf(R, report, dismissed, text));
+}
+// Ratings captured once, the first time the script was measured: this report's baseline if it has one, else the previous report's
+// baseline, else the previous report's ratings when it is for the same script key, else its own ratings. Returns a copy.
+function withBaseline(report, prev) {
+  if (!report) return report;
+  const ratings = (r) => { const o = {}; for (const k of REPORT_AREAS) { const v = r && r.areas && r.areas[k] && r.areas[k].rating; if (v != null) o[k] = v; } return o; };
+  const own = cleanBaseline(report.baseline);
+  const base = own || cleanBaseline(prev && prev.baseline) || (prev && prev.areas && prev.key === report.key && Object.keys(ratings(prev)).length ? ratings(prev) : ratings(report));
+  return { ...report, baseline: base };
+}
+// Only valid 1-5 whole numbers per known area survive; null when none do.
+function cleanBaseline(b) {
+  if (!b || typeof b !== "object") return null;
+  const o = {};
+  for (const k of REPORT_AREAS) if (Number.isInteger(b[k]) && b[k] >= 1 && b[k] <= 5) o[k] = b[k];
+  return Object.keys(o).length ? o : null;
+}
+
+// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part starts from report.areas (pass
+// effectiveReport(text, report).areas to include changes already applied, as the panel does) with each item's area raised to the rating the AI says the change earns (never above 5,
+// never lowered). Shown as "si aceptas lo propuesto". The points come from readinessOf, the one table.
 function projectedReadiness(text, R, opts, report) {
   const items = (report && report.items) || [];
   const t2 = applyPatches(text, items.map((x) => ({ start: x.start, end: x.end, rep: x.replacement })));
-  const r2 = readinessOf(analyze(t2, opts), null);
   const areas = {};
   for (const k of REPORT_AREAS) areas[k] = { rating: report && report.areas && report.areas[k] ? report.areas[k].rating : null };
   for (const it of items) {
     const cur = areas[it.area].rating, up = it.after == null ? null : Math.min(5, it.after);
     if (up != null && up > (cur || 0)) areas[it.area].rating = up;
   }
-  const editor = REPORT_AREAS.reduce((a, k) => a + (RATING_PTS[areas[k].rating] || 0), 0);
-  return Math.min(r2.rules + editor, r2.red ? 69 : 100);
+  const r2 = readinessOf(analyze(t2, opts), { areas });
+  return r2.score;
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -6134,7 +6376,9 @@ const READY_W = { runtime: 4 };
 const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
 // report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
 // (no invented number). dismissed: rows the person ignored count as passed here.
-function readinessOf(R, report, dismissed) {
+// text (optional): the script as it is now. With it the editor part counts the report's changes already applied (effectiveReport,
+// report_logic.js): editorEst = areas raised by them, editorBase = the editor points without the raise. Without it nothing changes.
+function readinessOf(R, report, dismissed, text) {
   dismissed = dismissed || new Set();
   const rows = Object.values(R.sections).flat();
   const open = rows.filter((r) => (!r.passed || r.warn) && !dismissed.has(r.id));
@@ -6149,10 +6393,15 @@ function readinessOf(R, report, dismissed) {
   const openIds = open.filter((r) => /^(pf-|pack-)/.test(r.id) || READY_PACK_IDS.has(r.id) || READY_LEN_IDS.has(r.id)).map((r) => r.id);
   if (!report || !report.areas) return { score: null, rules, rulesMax: 40, editor: null, red, parts, openIds };
   // A missing or invalid rating counts 0: the report exists, so a blank area is not a pass.
-  const editor = REPORT_AREAS.reduce((a, k) => { const v = report.areas[k] && report.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  const editorOf = (rp) => REPORT_AREAS.reduce((a, k) => { const v = rp.areas[k] && rp.areas[k].rating; return a + (RATING_PTS[v] || 0); }, 0);
+  const editorBase = editorOf(report);
+  const eff = typeof text === "string" ? effectiveReport(text, report) : report;
+  const editor = eff === report ? editorBase : editorOf(eff);
   let score = rules + editor;
   if (red) score = Math.min(score, 69);
-  return { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  const out = { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  if (typeof text === "string") { out.editorBase = editorBase; out.editorEst = REPORT_AREAS.filter((k) => eff.areas[k] && eff.areas[k].est).length; }
+  return out;
 }
 // ---------- Color families for the text (pure) ----------
 // One table decides how a finding looks everywhere: the paragraph review, the fix cards and the marked script.
@@ -6544,23 +6793,76 @@ function reportWordRows(text, R, cat, words, pick) {
 // «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
 function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }
 
-// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part raises each
-// item's area to the rating the AI says the change earns (never above 5, never lowered). Shown as "si aceptas lo propuesto".
+// ---- the score counts accepted changes (jadri47, 2026-10-26: plan step 1) ----
+// Text-derived state of one report item: "pending" (its original is found exactly once), "applied" (the original is gone or
+// repeated and the replacement, or one of its alternatives, is in the text) or "lost". rpStates (report_ui.js) adds the log and skips.
+function itemState(text, it) {
+  const a = text.indexOf(it.original);
+  if (a >= 0 && text.indexOf(it.original, a + 1) < 0) return "pending";
+  if (text.includes(it.replacement) || (it.alts || []).some((x) => x && text.includes(x))) return "applied";
+  return "lost";
+}
+// Applied for the score: the original is NOT in the text and the replacement or an alternative is.
+function itemApplied(text, it) {
+  if (!it || typeof it.original !== "string" || !it.original || text.includes(it.original)) return false;
+  return (typeof it.replacement === "string" && it.replacement !== "" && text.includes(it.replacement)) || (it.alts || []).some((x) => typeof x === "string" && x !== "" && text.includes(x));
+}
+// A copy of the report whose areas are raised, for each applied item, to min(5, item.after); never lowered. A raised area has est: true.
+// A new measurement replaces report.areas, and the applied items' originals are no longer in the text it was made on, so nothing is raised twice.
+function effectiveReport(text, report) {
+  if (!report) return null;
+  const areas = {};
+  for (const k of REPORT_AREAS) areas[k] = report.areas && report.areas[k] ? { ...report.areas[k] } : { rating: null };
+  for (const it of report.items || []) {
+    if (!areas[it.area] || it.after == null || !itemApplied(text, it)) continue;
+    const up = Math.min(5, it.after), cur = areas[it.area].rating;
+    if (up > (cur || 0)) { areas[it.area].rating = up; areas[it.area].est = true; }
+  }
+  return { ...report, areas };
+}
+// Points that change i adds: the readiness of the text with it applied (rep: which wording, default the replacement) minus the
+// readiness now. Same recipe as the total (readinessOf with the text), so it equals the real move. 0 when the item is not pending.
+function itemGain(text, R, opts, report, i, rep, dismissed) {
+  const it = report && report.items && report.items[i];
+  if (!it || itemState(text, it) !== "pending") return 0;
+  const a = text.indexOf(it.original), t2 = applyPatches(text, [{ start: a, end: a + it.original.length, rep: rep == null ? it.replacement : rep }]);
+  const pts = (rd) => (rd.score == null ? rd.rules : rd.score);
+  return pts(readinessOf(analyze(t2, opts), report, dismissed, t2)) - pts(readinessOf(R, report, dismissed, text));
+}
+// Ratings captured once, the first time the script was measured: this report's baseline if it has one, else the previous report's
+// baseline, else the previous report's ratings when it is for the same script key, else its own ratings. Returns a copy.
+function withBaseline(report, prev) {
+  if (!report) return report;
+  const ratings = (r) => { const o = {}; for (const k of REPORT_AREAS) { const v = r && r.areas && r.areas[k] && r.areas[k].rating; if (v != null) o[k] = v; } return o; };
+  const own = cleanBaseline(report.baseline);
+  const base = own || cleanBaseline(prev && prev.baseline) || (prev && prev.areas && prev.key === report.key && Object.keys(ratings(prev)).length ? ratings(prev) : ratings(report));
+  return { ...report, baseline: base };
+}
+// Only valid 1-5 whole numbers per known area survive; null when none do.
+function cleanBaseline(b) {
+  if (!b || typeof b !== "object") return null;
+  const o = {};
+  for (const k of REPORT_AREAS) if (Number.isInteger(b[k]) && b[k] >= 1 && b[k] <= 5) o[k] = b[k];
+  return Object.keys(o).length ? o : null;
+}
+
+// The readiness if every kept change were applied: the rules part is re-run on the changed text; the editor part starts from report.areas (pass
+// effectiveReport(text, report).areas to include changes already applied, as the panel does) with each item's area raised to the rating the AI says the change earns (never above 5,
+// never lowered). Shown as "si aceptas lo propuesto". The points come from readinessOf, the one table.
 function projectedReadiness(text, R, opts, report) {
   const items = (report && report.items) || [];
   const t2 = applyPatches(text, items.map((x) => ({ start: x.start, end: x.end, rep: x.replacement })));
-  const r2 = readinessOf(analyze(t2, opts), null);
   const areas = {};
   for (const k of REPORT_AREAS) areas[k] = { rating: report && report.areas && report.areas[k] ? report.areas[k].rating : null };
   for (const it of items) {
     const cur = areas[it.area].rating, up = it.after == null ? null : Math.min(5, it.after);
     if (up != null && up > (cur || 0)) areas[it.area].rating = up;
   }
-  const editor = REPORT_AREAS.reduce((a, k) => a + (RATING_PTS[areas[k].rating] || 0), 0);
-  return Math.min(r2.rules + editor, r2.red ? 69 : 100);
+  const r2 = readinessOf(analyze(t2, opts), { areas });
+  return r2.score;
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -8347,16 +8649,16 @@ function renderPack() {
   if (!el) return;
   el.innerHTML = `<header class="g-h"><h2>${h(t("pkTitle"))}</h2><button class="small" id="pkAi">${h(t("pkAi"))}</button></header>
     <p class="lead">${h(t("pkLead"))}</p>
-    <div class="pk-top">
+    <div class="pk-top" data-pk-part="title thumb">
       <figure class="yt-mock" id="pkPreview" aria-label="${h(t("pkPrevLbl"))}"></figure>
       <div class="pk-fields">
-        <div class="field"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="1" data-one="1" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
-        <div class="field"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><textarea id="pkThumbIn" rows="1" data-one="1" maxlength="24" placeholder="${h(t("thumbPh"))}">${h($("thumb").value)}</textarea><span class="pk-count" id="pkThumbN"></span></div>
+        <div class="field" data-pk-part="title"><label for="pkTitleIn">${h(t("titleLabel"))}</label><textarea id="pkTitleIn" rows="1" data-one="1" maxlength="100" placeholder="${h(t("titlePh"))}">${h($("title").value)}</textarea><span class="pk-count" id="pkTitleN"></span></div>
+        <div class="field" data-pk-part="thumb"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><textarea id="pkThumbIn" rows="1" data-one="1" maxlength="24" placeholder="${h(t("thumbPh"))}">${h($("thumb").value)}</textarea><span class="pk-count" id="pkThumbN"></span></div>
       </div>
     </div>
     <div id="pkSug"></div><p class="status" id="pkStatus"></p>
     <div id="pkChecks"></div>
-    <details class="pk-more"><summary>${h(t("pkMore"))}</summary>
+    <details class="pk-more" data-pk-part="desc"><summary>${h(t("pkMore"))}</summary>
     <div class="field pk-wide"><label for="pkDescIn">${h(t("descLabel"))}</label><textarea id="pkDescIn" rows="4">${h($("description").value)}</textarea></div>
     <div class="ch-box" id="pkChapters"></div><div class="ch-box" id="pkAds"></div></details>`;
   const sync = (from, to) => $(from).addEventListener("input", () => {
@@ -8428,8 +8730,8 @@ function renderPackSug() {
   const S = G.pkSug;
   if (!S) { box.innerHTML = ""; return; }
   const kw = (G.R && G.R.keyword) || "";
-  box.innerHTML = `<div class="pk-sug"><h4 class="pk-h">${h(t("pkSugTitles"))}</h4>${S.titles.map((x, i) => { const ok = x.length <= 60 && (!kw || norm(x).slice(0, 60).includes(norm(kw))); return `<div class="pk-opt"><span>${h(x)}</span><span class="hint">${x.length}</span><span class="verdict-tag ${ok ? "v-ok" : "v-mid"}">${h(ok ? t("ok") : t("review"))}</span><button class="small" data-pt="${i}">${h(t("pkUse"))}</button></div>`; }).join("")}
-    <h4 class="pk-h">${h(t("pkSugThumbs"))}</h4><div class="chips">${S.thumbs.map((x, i) => `<button class="small" data-pth="${i}">${h(x)}</button>`).join("")}</div></div>`;
+  box.innerHTML = `<div class="pk-sug"><div data-pk-part="title"><h4 class="pk-h">${h(t("pkSugTitles"))}</h4>${S.titles.map((x, i) => { const ok = x.length <= 60 && (!kw || norm(x).slice(0, 60).includes(norm(kw))); return `<div class="pk-opt"><span>${h(x)}</span><span class="hint">${x.length}</span><span class="verdict-tag ${ok ? "v-ok" : "v-mid"}">${h(ok ? t("ok") : t("review"))}</span><button class="small" data-pt="${i}">${h(t("pkUse"))}</button></div>`; }).join("")}
+</div><div data-pk-part="thumb"><h4 class="pk-h">${h(t("pkSugThumbs"))}</h4><div class="chips">${S.thumbs.map((x, i) => `<button class="small" data-pth="${i}">${h(x)}</button>`).join("")}</div></div></div>`;
   const apply = (main, mirror, v) => { $(main).value = v; $(mirror).value = v; renderPkPreview(); gCompute(); renderPackChecks(); renderProdBar(); markDirty(); };
   box.querySelectorAll("[data-pt]").forEach((b) => b.addEventListener("click", () => apply("title", "pkTitleIn", S.titles[+b.dataset.pt])));
   box.querySelectorAll("[data-pth]").forEach((b) => b.addEventListener("click", () => apply("thumb", "pkThumbIn", S.thumbs[+b.dataset.pth])));
@@ -8901,6 +9203,8 @@ $("runBtn").addEventListener("click", () => { state.fixUndo = []; state.fixSel =
 /* ===== Modo guiado: 3 pasos, lenguaje sencillo, modo completo detrás de un interruptor ===== */
 Object.assign(T.es, {
   expert: "Modo completo",
+  // (jadri47, 2026-10-26: plan "Walk Juan through it", step 5) «Modo completo» lives in a ⋯ menu; step 1 asks only for the script
+  moreBtn: "Más opciones", expertHint: "Apagado: la app te lleva paso a paso. Encendido: todas las revisiones y herramientas en una pantalla.", s1More: "Más opciones",
   // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
   steps: ["Escribir", "Mejorar", "Publicar"],
   stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene mejorar antes de grabar", "Publicar: empaque, apertura y grabación"],
@@ -8927,6 +9231,7 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   expert: "Full mode",
+  moreBtn: "More options", expertHint: "Off: the app walks you step by step. On: every check and tool on one screen.", s1More: "More options",
   steps: ["Write", "Improve", "Publish"],
   stepQ: ["Write or paste the episode script", "What's worth improving before you record", "Publish: packaging, opening and recording"],
   s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Sample: "Try a sample script", s1Continue: "Continue a saved episode", s1Open: "Open",
@@ -8951,7 +9256,7 @@ Object.assign(T.en, {
   plainMoney: (x) => `Could limit ads: ${x.toLowerCase()}`, plainPack: "The title or thumbnail has words that limit ads",
 });
 const SAMPLE_ES = "Hola a todos, bienvenidos de nuevo al canal. Qué alegría tenerlos aquí otra semana.\n\nHoy veremos qué dice la Biblia sobre la ansiedad y por qué Jesús dijo que no nos afanemos por el día de mañana.\n\nAntes de empezar, si todavía no lo has hecho, suscríbete y activa la campanita para no perderte ningún episodio.\n\n[TEXTO: Mateo 6:34]\nVamos a leer Mateo 6:34: «Así que, no os afanéis por el día de mañana, porque el día de mañana traerá su afán. Basta a cada día su propio mal.» Este versículo aparece al final de un sermón muy largo, y el contexto cambia por completo cómo lo leemos.\n\nPrimero, tenemos que entender a quién le hablaba Jesús. No le hablaba a gente rica que se preocupaba por sus inversiones. Le hablaba a campesinos y pescadores que no sabían si mañana iban a comer. Para ellos la ansiedad no era un sentimiento abstracto, era hambre real. Por eso Jesús no les dice que sus problemas no existen. Les dice algo mucho más profundo. Les dice que el Padre que alimenta a las aves del cielo conoce lo que necesitan. Piensa en eso por un momento. La promesa no es que nunca vas a tener necesidad. La promesa es que nunca vas a estar solo en tu necesidad. [PAUSA] Muchas personas leen este pasaje como si Jesús estuviera regañando a los ansiosos. Pero cuando miramos el griego, la palabra que se traduce como afán es merimnao, que describe una mente dividida, jalada en dos direcciones. Jesús no condena el sentimiento; describe lo que nos hace. Una mente dividida no puede descansar en nada.\n\n[B-ROLL: mercado de Galilea, pescadores en la orilla]\nEn segundo lugar, fíjate en el orden del pasaje. Antes de decir no se afanen, Jesús dice busquen primeramente el reino de Dios y su justicia. No es una técnica para dejar de sentir ansiedad. Es un cambio de prioridades. Cuando el reino ocupa el primer lugar, las demás preocupaciones encuentran su tamaño real. ¿Alguna vez has notado que el miedo crece cuando tu vida gira alrededor de una sola cosa que no puedes controlar? Eso es exactamente lo que Jesús está diagnosticando. El problema no es que mañana tenga problemas. El problema es que intentamos cargar mañana con las fuerzas de hoy. Dios te da gracia para hoy, no para un día que todavía no existe. Y aquí está lo que casi nadie nota en este pasaje: Jesús no promete que mañana será fácil. Dice que mañana traerá su propio afán. Es honesto. La fe bíblica no es negar la realidad, es enfrentarla de la mano de alguien más fuerte.\n\nAhora bien, ¿qué pasa si ya estás tomando medicamentos para la ansiedad? ¿Eso significa que te falta fe? No. Buscar ayuda médica no es falta de fe. Lucas era médico y escribió dos libros del Nuevo Testamento. Pablo le recomendó a Timoteo que cuidara su estómago. Dios obra por medio de la oración, de la comunidad y también de la medicina. Si estás luchando con ansiedad fuerte, habla con tu médico y con alguien de confianza en tu iglesia. Las dos cosas pueden ir juntas.\n\n[TEXTO: Filipenses 4:6-7]\nPor último, quiero llevarte a Filipenses 4:6-7, donde Pablo escribe: «Por nada estéis afanosos, sino sean conocidas vuestras peticiones delante de Dios en toda oración y ruego, con acción de gracias. Y la paz de Dios, que sobrepasa todo entendimiento, guardará vuestros corazones y vuestros pensamientos en Cristo Jesús.» Pablo escribió esto desde una cárcel. No escribía desde la comodidad. Escribía encadenado, sin saber si iba a vivir o morir. Y aun así habla de una paz que sobrepasa todo entendimiento. Fíjate que la paz no llega cuando el problema se resuelve. Llega cuando presentamos el problema delante de Dios. La paz guarda el corazón como un soldado guarda una ciudad. No quita la amenaza de afuera, pero protege lo de adentro. Esa es la diferencia entre la paz del mundo y la paz de Dios. La paz del mundo depende de las circunstancias. La paz de Dios depende de quién está contigo. ¿Qué cambiaría en tu semana si creyeras que no tienes que cargar el día de mañana hoy? Te propongo algo práctico. Esta semana, cada noche, escribe tres cosas por las que estás agradecido y una preocupación que vas a entregarle a Dios en oración. No para fingir que no existe, sino para dejar de cargarla solo.\n\nSi este episodio te ayudó, compártelo con alguien que esté pasando por un tiempo de ansiedad. Y escríbenos en los comentarios cuál de estos dos pasajes te habló más.\n\nLa próxima semana vamos a estudiar el Salmo 23 y por qué David dice que no tendrá miedo aun en el valle de sombra de muerte. Nos vemos en el próximo episodio.";
-const V = { guided: lsGet("sd-expert") !== "1", step: 1 };
+const V = { guided: lsGet("sd-expert") !== "1", step: 1, s1More: false };
 
 function plainLabel(id, fallback) {
   if (!V.guided) return fallback;
@@ -8964,7 +9269,7 @@ function plainLabel(id, fallback) {
 // Same recipe as the number beside it (readinessOf): n = open rules rows that cost readiness + report changes not yet decided.
 // "Almost ready" only from 70 up (jadri47, 2026-10-22: "A: by score"); without a report the rules part counts /40 → 28.
 function verdictOf(R) {
-  const rd = readinessOf(R, G.report, state.fixDismissed);
+  const rd = readinessOf(R, G.report, state.fixDismissed, state.text);
   const items = typeof rpStates === "function" && R === state.result ? rpStates().filter((x) => x.st === "pending").length : 0;
   const n = rd.openIds.length + items, high = rd.score != null ? rd.score >= 70 : rd.rules >= 28;
   // the report is on its way: no «Listo para grabar» from the rules alone while the AI is still reading (jadri47, 2026-10-25)
@@ -8985,6 +9290,7 @@ function applyView() {
   main.dataset.step = String(V.step);
   document.documentElement.classList.toggle("guided", V.guided);
   $("expertToggle").checked = !V.guided;
+  moreLabels();
   if (V.guided) { main.dataset.mode = "review"; renderGuide(); }
   else {
     $("guide").innerHTML = ""; $("guideTop").innerHTML = ""; $("stepBar").innerHTML = "";
@@ -9013,7 +9319,7 @@ function navHTML(prev, nextLabel, nextAttr) {
 }
 function verdictHTML(R) {
   // The number is readiness (score_logic.js readinessOf): with the editor's report /100, without it only the rules part /40.
-  const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed) : null;
+  const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed, state.text) : null;
   const n = rd ? (rd.score != null ? rd.score : rd.rules) : 0, full = !!(rd && rd.score != null);
   return `<div class="gv gv-${v.k}">${rd ? `<div class="gv-top"><span class="gv-n">${n}<small>/${full ? 100 : rd.rulesMax}</small></span><span class="gv-l">${h(t(full ? "rpName" : "rpRulesName"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
 }
@@ -9025,6 +9331,7 @@ function renderGuide() {
   $("stepBar").querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => goStep(+b.dataset.step)));
   const head = (n) => `<header class="g-step-h"><span class="g-step-n">${n}</span><h2>${h(t("stepQ")[n - 1])}</h2></header>`;
   top.innerHTML = ""; body.innerHTML = "";
+  s1MoreSync();
   if (V.step === 1) {
     top.innerHTML = `${head(1)}<p class="lead">${h(t("s1Lead"))}</p>`;
     body.innerHTML = `<div class="g-s1-extra"><button type="button" class="linkish" id="gSample">${h(t("s1Sample"))}</button></div>`;
@@ -9040,34 +9347,18 @@ function renderGuide() {
     const rep = typeof reportHTML === "function", more = rep ? rpMoreOpen() : true;
     const inner = more ? `${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
       <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>` : "";
-    body.innerHTML = `${verdictHTML(R)}${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
+    body.innerHTML = `${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
     if (more) {
       wireFixes();
       $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
     }
   } else {
-    // Step 3 «Publicar»: packaging → next episode → opening → approve, then the record card, then «Después de grabar».
-    // Approve and «Ya lo grabamos» only change the status and stay here (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3").
+    // Step 3 «Publicar» is a walk (pub_ui.js): title → thumbnail → description → next episode → opening → «Todo listo» + approve,
+    // then «Grabar». Each card is the existing one; approve and «Ya lo grabamos» only change the status and stay in step 3
+    // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3"; 2026-10-26: plan "Walk Juan through it", step 4).
     top.innerHTML = head(3);
-    const missing = packGateMissing();
-    const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
-    body.innerHTML = `${verdictHTML(R)}<p class="lead">${h(t("s3Lead"))}</p><section class="g-card" id="gPack"></section><section class="g-card" id="gTopic"></section><section class="g-card" id="gCold"></section>
-      <div class="g-approve">${done ? `<span class="lamp verde">${h(t("approved"))}</span>` : `<button type="button" class="primary" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : ""}`}</div>
-      ${recordCardHTML()}
-      <div class="g-approve g-recorded">${recorded ? `<span class="lamp verde">${h(t("status").grabado)}</span>` : `<button type="button" class="primary" id="gRecorded"${approved ? "" : " disabled"}>${h(t("s4Done"))}</button>`}</div>
-      <details class="rp-more g-after" id="gAfter"${V.s3After ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpAfterRec"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section></div></details>
-      <details class="rp-more g-more3" id="gMore3"${V.s3More ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpMore"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gStruct"></section></div></details>
-      ${navHTML(2)}`;
-    renderStructure(); foldStruct(); renderCold(); renderTopic(); renderPack(); wireRecordCard(); renderShorts(); renderResultsCard();
-    const keep = (id, k) => { const d = $(id); if (d) d.addEventListener("toggle", () => { V[k] = d.open; }); };
-    keep("gAfter", "s3After"); keep("gMore3", "s3More");
-    const ap = $("gApprove");
-    if (ap) ap.addEventListener("click", async () => {
-      ap.disabled = true; await setStatus("aprobado");
-      const rc = $("gRecCard"); if (rc) rc.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    });
-    const rec = $("gRecorded");
-    if (rec) rec.addEventListener("click", async () => { rec.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
+    body.innerHTML = `${pubStep3HTML(R)}${navHTML(2)}`;
+    pubAfterHTML(body);
   }
   wireGuideNav(body);
   body.querySelectorAll("[data-see]").forEach((b) => b.remove());
@@ -9098,18 +9389,51 @@ $("runBtn").addEventListener("click", async () => {
   if ($("exPick") && $("exPick").dataset.open === "1") { $("exPick").dataset.open = "0"; if (typeof renderExPick === "function") renderExPick(); }
   const db = await caps.db;
   if (db && !G.prodId) await createProd();
+  pubReset();
   goStep(2);
   if (db && G.status === "borrador") setStatus("revision");
 });
-$("expertToggle").addEventListener("change", () => { V.guided = !$("expertToggle").checked; lsSet("sd-expert", V.guided ? "0" : "1"); applyView(); });
+$("expertToggle").addEventListener("change", () => { V.guided = !$("expertToggle").checked; lsSet("sd-expert", V.guided ? "0" : "1"); moreClose(false); applyView(); });
+
+// ⋯ menu in the header: «Modo completo» (and later any rarely used control) lives here. Esc closes it and gives the focus back to ⋯;
+// arrows move between items; a tap or Tab outside closes it. Items are >= 44 px (guide.css).
+function moreLabels() { const b = $("moreBtn"); if (b) { b.setAttribute("aria-label", t("moreBtn")); b.title = t("moreBtn"); $("moreMenu").setAttribute("aria-label", t("moreBtn")); } }
+const moreOpen = () => !$("moreMenu").hidden;
+function moreClose(back) { const m = $("moreMenu"), b = $("moreBtn"); m.hidden = true; b.setAttribute("aria-expanded", "false"); if (back) b.focus(); }
+function moreShow() { const m = $("moreMenu"); m.hidden = false; $("moreBtn").setAttribute("aria-expanded", "true"); const f = m.querySelector('[role^="menuitem"]'); if (f) f.focus(); }
+$("moreBtn").addEventListener("click", () => { if (moreOpen()) moreClose(true); else moreShow(); });
+document.addEventListener("keydown", (e) => {
+  if (!moreOpen()) return;
+  if (e.key === "Escape") { e.preventDefault(); moreClose(true); return; }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const items = [...$("moreMenu").querySelectorAll('[role^="menuitem"]')]; if (!items.length) return;
+    e.preventDefault(); const at = items.indexOf(document.activeElement);
+    items[(Math.max(at, 0) + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length].focus();
+  }
+});
+document.addEventListener("pointerdown", (e) => { if (moreOpen() && !e.target.closest("#moreWrap")) moreClose(false); });
+$("moreWrap").addEventListener("focusout", (e) => { if (moreOpen() && e.relatedTarget && !e.relatedTarget.closest("#moreWrap")) moreClose(false); });
+
+// Step 1 in guided mode asks only for the script. The central idea, variant/Bible version and the optional title, keyword, thumbnail,
+// description, series and language fields stay in the page (nothing is deleted) behind one small «Más opciones» (the same fields are also
+// in Modo completo).
+function s1MoreSync() {
+  const main = document.querySelector("main"), b = $("s1MoreBtn");
+  main.classList.toggle("s1-more", !!V.s1More);
+  if (b) b.setAttribute("aria-expanded", V.s1More ? "true" : "false");
+}
+$("s1MoreBtn").addEventListener("click", () => { V.s1More = !V.s1More; s1MoreSync(); });
 const _gOnLangG = gOnLang;
 gOnLang = function () { if (V.guided) renderGuide(); else _gOnLangG(); };
+const _gOnLangMore = gOnLang;
+gOnLang = function () { _gOnLangMore.apply(this, arguments); moreLabels(); s1MoreSync(); };
+
 // Keep the Approve button in step with the packaging fields as Juan types.
 const _renderPackChecksG = renderPackChecks;
 renderPackChecks = function () {
   _renderPackChecksG();
   if (!V.guided || V.step !== 3) return;
-  const box = document.querySelector(".g-approve"), ap = $("gApprove");
+  const box = document.querySelector("[data-pub-gate]"), ap = $("gApprove");
   if (!box || !ap) return;
   const missing = packGateMissing(), P = t("pk");
   ap.disabled = missing.length > 0;
@@ -11554,10 +11878,16 @@ function recordCardHTML() {
         <div class="rec-sub"><button type="button" id="gReh">${h(t("rehBtn"))}</button><button type="button" id="gSheet">${h(t("editSheetBtn"))}</button></div></div>
     </div>
     <p class="hint rec-tip">${rehTot ? h(t("recLast")(fmtTime(rehTot), fmtTime(totalRec()))) : h(t("recTip"))}</p>
-    ${clips.length ? `<div class="rec-clips"><p>${h(t("recClips"))}</p><ol>${clips.map((c) => `<li><span class="rec-k">${h(c.kind === "hook" ? t("coHooks") : t("coProms"))} · ${fmtTime(c.t0)}</span>«${h(c.text)}»</li>`).join("")}</ol></div>` : ""}
-    <details class="rec-keys"><summary>${h(t("recKeys"))}</summary><p class="hint">${h(t("s4Help"))}</p></details>
+    ${recClipsHTML()}
+    ${recKeysHTML()}
   </section>`;
 }
+// the cold-open lines and the prompter keys, shared by the record card and the guided step 3 «Grabar» screen (pub_ui.js)
+function recClipsHTML() {
+  const clips = coldClips();
+  return clips.length ? `<div class="rec-clips"><p>${h(t("recClips"))}</p><ol>${clips.map((c) => `<li><span class="rec-k">${h(c.kind === "hook" ? t("coHooks") : t("coProms"))} · ${fmtTime(c.t0)}</span>«${h(c.text)}»</li>`).join("")}</ol></div>` : "";
+}
+function recKeysHTML() { return `<details class="rec-keys"><summary>${h(t("recKeys"))}</summary><p class="hint">${h(t("s4Help"))}</p></details>`; }
 function wireRecordCard() {
   const pp = $("gPP"); if (pp) pp.addEventListener("click", () => openPrompter("prompter"));
   const rh = $("gReh"); if (rh) rh.addEventListener("click", () => openPrompter("ensayo"));
@@ -11978,7 +12308,7 @@ const HELP = {
 // [key, selector of the element that gets the «?», where the explanation goes]
 // where: "row" = after the heading's row (header / label / the given closest() selector), "sum" = inside the <summary>, "end:<sel>" = appended to that container
 const HELP_ANCHORS = [
-  ["expert", "label.xswitch", "end:.masthead"],
+  // «Modo completo» moved into the ⋯ menu (guide_ui.js), which carries its own one-line explanation instead of a «?»
   ["step", "#guideTop .g-step-h h2", "row"],
   ["script", 'label[for="script"]', "row"],
   ["ask", "#askClaude .g-h h2", "row"],
@@ -12284,7 +12614,7 @@ function scRun() {
 function scApply() {
   if (!SC.R) { scPaint(); return; }
   // The number is readiness: with the editor's report /100, without it only the rules part /40 (never a made-up editor part).
-  const RD = readinessOf(SC.R, G.report, state.fixDismissed), kind = RD.score != null ? "100" : "40", cur = RD.score != null ? RD.score : RD.rules;
+  const RD = readinessOf(SC.R, G.report, state.fixDismissed, state.text), kind = RD.score != null ? "100" : "40", cur = RD.score != null ? RD.score : RD.rules;
   // The band and the popover rows use the same recipe as the number: only rows that cost readiness, at what they cost there.
   const rows = Object.values(SC.R.sections).flat(), inReady = new Set(RD.openIds);
   const open = rows.filter((r) => inReady.has(r.id)), pts = new Map(open.map((r) => [r.id, readyWeight(r)]));
@@ -12315,7 +12645,7 @@ function scEnsure() {
   if (p) return p;
   p = document.createElement("button"); p.type = "button"; p.id = "scorePill"; p.className = "score-pill float"; p.hidden = true;
   p.setAttribute("aria-haspopup", "dialog"); p.setAttribute("aria-expanded", "false");
-  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-of" id="scOf" aria-hidden="true"></span><span class="sc-d" id="scD"></span>`;
+  p.innerHTML = `<span class="sc-dot" aria-hidden="true"></span><span class="sc-n" id="scN"></span><span class="sc-of" id="scOf" aria-hidden="true"></span><span class="sc-pos" id="scPos"></span><span class="sc-d" id="scD"></span>`;
   p.addEventListener("click", (e) => { e.stopPropagation(); SC.pop ? scClosePop() : scOpenPop(); });
   document.body.appendChild(p);
   const live = document.createElement("div"); live.id = "scLive"; live.className = "vh"; live.setAttribute("role", "status"); live.setAttribute("aria-live", "polite"); document.body.appendChild(live);
@@ -12348,7 +12678,10 @@ function scPaint() {
   scTween($("scN"), from, SC.cur);
   $("scOf").textContent = SC.kind === "40" ? "/40" : "";
   const dEl = $("scD"); dEl.textContent = d ? (d > 0 ? "▲" : "▼") + Math.abs(d) : ""; dEl.className = "sc-d" + (d > 0 ? " up" : d < 0 ? " down" : "");
-  const lbl = `${SC.kind === "40" ? t("rpRulesLbl")(SC.cur) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
+  // «a → b posible»: the same figure the report used to show in the panel (rpProjected, report_ui.js); only with a report
+  const proj = SC.kind === "100" && typeof rpProjected === "function" ? rpProjected(SC.RD) : null;
+  $("scPos").textContent = proj != null ? t("rpPossible")(proj) : "";
+  const lbl = `${SC.kind === "40" ? t("rpRulesLbl")(SC.cur) : proj != null ? t("rpReadyTo")(SC.cur, proj) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
   pill.setAttribute("aria-label", lbl); pill.title = t("scNote");
   const now = Date.now();
   if (now - SC.liveAt > 5000) { SC.liveAt = now; $("scLive").textContent = lbl; }
@@ -12365,7 +12698,14 @@ function scRenderPop() {
   const pop = $("scPop"); if (!pop || !SC.S) return;
   const S = SC.S, d = SC.cur - SC.base;
   const top = scTopRows(S);
-  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${SC.cur}<small>/${SC.kind}</small></span><span class="sc-band">${h(t("scBand")[S.band])}</span><button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
+  // With the editor's report the bubble IS the report (report_ui.js rpPopHTML): number, areas before / now, why, ads, when, re-measure.
+  const rp = typeof rpPopHTML === "function" ? rpPopHTML(SC.R, SC.RD) : null;
+  const keep = pop.contains(document.activeElement) ? document.activeElement.id : "";
+  pop.classList.toggle("rep", !!rp); pop.setAttribute("aria-label", t(rp ? "rpTitle" : "scTitle"));
+  const money = rp && typeof failedRows === "function" && state.result && failedRows(state.result).some((r) => r.sec === "money");
+  const busyNote = !rp && typeof RP !== "undefined" && RP.busy && !G.report ? `<p class="hint sc-wait" role="status"><b>${h(t("vWait"))}</b> ${h(t("vWaitD"))}</p>` : "";
+  pop.innerHTML = `<div class="sc-head"><span class="sc-big band-${S.band}"><i class="sc-dot"></i>${SC.cur}<small>/${SC.kind}</small></span>${rp ? `<span class="sc-name"><b>${h(t("rpName"))}</b><span class="sc-sub">${h(rp.sub || t("scBand")[S.band])}</span></span>` : `<span class="sc-band">${h(t("scBand")[S.band])}</span>`}<button type="button" class="sc-x" id="scX" aria-label="${h(t("scClose"))}">×</button></div>
+    ${rp ? rp.table + rp.foot + (money ? `<p class="hint gv-note">${h(t("moneyNote"))}</p>` : "") : ""}${busyNote}
     <p class="sc-lamp">${h(t("scLamp")[S.band])}</p>
     <p class="hint sc-checks">${S.open.length ? h(t("scLeft")(S.open.length, S.openPts)) + " " : ""}${h(t("scParts")(SC.RD.parts, SC.RD.editor))}</p>
     ${d ? `<p class="sc-since">${h(t("scSince")(SC.base, SC.cur))}</p>` : ""}
@@ -12375,8 +12715,11 @@ function scRenderPop() {
     <details class="sc-how"><summary>${h(t("scHowT"))}</summary><ul>${t("scHow").map((x) => `<li>${h(x)}</li>`).join("")}</ul></details>
     <p class="hint sc-note">${h(t("scNote"))}</p>
     <button type="button" class="linkish sc-hide" id="scHide">${h(t("scHide"))}</button>`;
-  $("scX").addEventListener("click", scClosePop);
+  $("scX").addEventListener("click", () => scClosePop(true));
   $("scHide").addEventListener("click", () => scSetOff(true));
+  const re = $("scRe");
+  if (re) re.addEventListener("click", () => { scClosePop(true); if (ensureReview()) rpAct("re"); }); // same action as the old panel button; the status bubble then shows the wait
+  if (keep) { const f = $(keep); if (f && !f.disabled) f.focus(); }
   pop.querySelectorAll("[data-scrow]").forEach((b) => b.addEventListener("click", () => scGoRow(b.dataset.scrow)));
   pop.querySelectorAll("[data-scshow]").forEach((b) => b.addEventListener("click", () => { state.fixDismissed.delete(b.dataset.scshow); scApply(); scRefreshView(); }));
 }
@@ -12386,22 +12729,35 @@ function scOpenPop() {
   let scrim = $("scScrim");
   if (!scrim) { scrim = document.createElement("div"); scrim.id = "scScrim"; scrim.className = "sc-scrim"; scrim.addEventListener("click", scClosePop); document.body.appendChild(scrim); }
   let pop = $("scPop");
-  if (!pop) { pop = document.createElement("div"); pop.id = "scPop"; pop.className = "sc-pop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", t("scTitle")); document.body.appendChild(pop); }
+  if (!pop) { pop = document.createElement("div"); pop.id = "scPop"; pop.className = "sc-pop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", t("scTitle")); pop.addEventListener("keydown", scTrap); document.body.appendChild(pop); }
   SC.pop = true; scrim.hidden = false; pop.hidden = false; $("scorePill").setAttribute("aria-expanded", "true");
   scRenderPop();
   if (window.innerWidth >= 900) {
-    const r = $("scorePill").getBoundingClientRect(), w = Math.min(360, window.innerWidth - 24);
+    const r = $("scorePill").getBoundingClientRect(), w = Math.min(pop.classList.contains("rep") ? 560 : 360, window.innerWidth - 24);
     pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + "px";
-    const below = r.bottom + 8, room = window.innerHeight - below - 12;
-    pop.style.top = (room > 300 ? below : Math.max(12, r.top - 8 - Math.min(pop.offsetHeight, window.innerHeight - 24))) + "px"; pop.style.bottom = "auto"; pop.style.right = "auto"; pop.style.width = w + "px";
-  } else { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = pop.style.width = ""; }
+    // under the pill when there is room (or more room than above), else above it; the dialog scrolls inside what is left
+    const below = r.bottom + 8, room = window.innerHeight - below - 12, above = r.top - 8 - 12, useBelow = room > 300 || room >= above;
+    const maxH = Math.max(160, useBelow ? room : above);
+    pop.style.maxHeight = maxH + "px"; pop.style.width = w + "px";
+    pop.style.top = (useBelow ? below : Math.max(12, r.top - 8 - Math.min(pop.offsetHeight, maxH))) + "px"; pop.style.bottom = "auto"; pop.style.right = "auto";
+  } else { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = pop.style.width = pop.style.maxHeight = ""; }
+  const x = $("scX"); if (x) x.focus(); // keyboard users land inside the dialog
 }
-function scClosePop() {
+// Tab stays inside the open dialog (the sheet dims everything else)
+function scTrap(e) {
+  if (e.key !== "Tab") return;
+  const f = [...$("scPop").querySelectorAll("button:not([disabled]),summary,[href],input,[tabindex]:not([tabindex='-1'])")].filter((x) => x.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+function scClosePop(refocus) {
   SC.pop = false;
   const pop = $("scPop"), scrim = $("scScrim"), pill = $("scorePill");
-  if (pop) pop.hidden = true; if (scrim) scrim.hidden = true; if (pill) pill.setAttribute("aria-expanded", "false");
+  if (pop) pop.hidden = true; if (scrim) scrim.hidden = true; if (pill) { pill.setAttribute("aria-expanded", "false"); if (refocus === true && !pill.hidden) pill.focus(); }
 }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SC.pop) { scClosePop(); const p = $("scorePill"); if (p) p.focus(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SC.pop) { scClosePop(true); } });
 function scGoRow(id) {
   scClosePop();
   if (!ensureReview()) return;
@@ -13662,6 +14018,7 @@ $("runBtn").addEventListener("click", () => { COAI.cache = {}; COAI.calls = 0; C
 // the person through the rule-based ad risks first and then the report's changes. Today's coach / walker / rail / legend / «Más
 // revisiones» / Ask Claude live behind «Más detalles» and are only built (so only painted) while that is open.
 Object.assign(T.es, {
+  rpWhere: "Dónde está", rpFull: "Ver guion completo", rpFocusBack: "Ver solo este párrafo",
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
   rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "La IA está leyendo tu guion como lo haría un editor",
@@ -13675,8 +14032,18 @@ Object.assign(T.es, {
   rpPickLbl: "Elige cómo decirlo", rpPickMain: "Propuesta del editor", rpPickAlt: "Otra opción", rpApplyPick: "Aplicar la elegida",
   rpWordsLbl: "Elige otra palabra", rpWordSafe: "✓ sin riesgo de anuncios", rpWordLbl: "Palabras del informe", rpTimes: (n) => `${n} veces`,
   rpWordsRest: "Las demás palabras de este aviso no tienen alternativa: cámbialas con «Lo escribo yo».",
+  // the report lives in the score bubble (2026-10-26, plan "Walk Juan through it", step 2)
+  rpBy: "según el editor", rpBefore: (a) => `antes ${a}`, rpPossible: (b) => `→ ${b} posible`,
+  rpColArea: "Área", rpColOrig: "Original", rpColNow: "Ahora", rpColChange: "Cambio", rpColSaid: "Qué dijo el editor", rpSame: "sin cambio",
+  rpRe2: "Medir de nuevo con la IA", rpBubNote: "«Ahora» suma lo que el editor dijo que vale cada cambio aceptado. «Medir de nuevo» lee otra vez el guion.",
+  // the walk: one card at a time (2026-10-26, plan "Walk Juan through it", step 3)
+  rpGainTo: (n) => `+${n} a la nota`, rpApplyGo: "Aplicar y seguir →", rpDetail: "Revisión detallada",
+  rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} puntos · ${a}: de ${x == null ? "sin valorar" : x + " de 5"} a ${y == null ? "sin valorar" : y + " de 5"}`,
+  rpEndStep: "Paso 2 de 3 · Mejorar", rpEndH: "Terminaste los cambios", rpEndNoneH: "Revisaste los cambios, sin aplicar ninguno", rpEndNow: (a) => `Nota ahora: ${a}`,
+  rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
 Object.assign(T.en, {
+  rpWhere: "Where it is", rpFull: "Show the full script", rpFocusBack: "Show only this paragraph",
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
   rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "The AI is reading your script the way an editor would",
@@ -13690,15 +14057,21 @@ Object.assign(T.en, {
   rpPickLbl: "Choose how to say it", rpPickMain: "Editor's suggestion", rpPickAlt: "Another option", rpApplyPick: "Apply the one chosen",
   rpWordsLbl: "Choose another word", rpWordSafe: "✓ no ad risk", rpWordLbl: "Words from the report", rpTimes: (n) => `${n} times`,
   rpWordsRest: "The other words in this warning have no alternative: change them with \"I'll write it\".",
+  rpBy: "per the editor", rpBefore: (a) => `before ${a}`, rpPossible: (b) => `→ ${b} possible`,
+  rpColArea: "Area", rpColOrig: "Original", rpColNow: "Now", rpColChange: "Change", rpColSaid: "What the editor said", rpSame: "no change",
+  rpRe2: "Measure again with the AI", rpBubNote: "\"Now\" adds what the editor said each accepted change is worth. \"Measure again\" reads the script once more.",
+  rpGainTo: (n) => `+${n} to your score`, rpApplyGo: "Apply and continue →", rpDetail: "Detailed review",
+  rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} points · ${a}: from ${x == null ? "not rated" : x + " of 5"} to ${y == null ? "not rated" : y + " of 5"}`,
+  rpEndStep: "Step 2 of 3 · Improve", rpEndH: "You finished the changes", rpEndNoneH: "You reviewed the changes and applied none", rpEndNow: (a) => `Score now: ${a}`,
+  rpEndCount: (a, s) => `${a} applied · ${s} skipped`, rpEndList: "Changes applied", rpEndPub: "Go to Publish →",
 });
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
-if (typeof HELP_ANCHORS !== "undefined") HELP_ANCHORS.push(["rpReport", ".rp-title h3", "row"]);
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "" };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0, full: false };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
-function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; }
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); }
 
 // A stored report is untrusted (old versions, other devices): keep only what has the right shape.
 function rpClean(r) {
@@ -13713,7 +14086,8 @@ function rpClean(r) {
     .map((f) => ({ id: f.id, orig: f.orig, lead: typeof f.lead === "string" ? f.lead : "", trail: typeof f.trail === "string" ? f.trail : "", field: typeof f.field === "string" && f.field ? f.field : null,
       options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
     .filter((f) => f.options.length);
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0 };
+  const baseline = cleanBaseline(r.baseline); // ratings of the first measurement; old reports have none
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}) };
 }
 // The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
 // already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
@@ -13771,7 +14145,7 @@ async function rpRun(force) {
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = out; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
+      if (out) { G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
@@ -13807,10 +14181,9 @@ function rpStates() {
   return rep.items.map((it, i) => {
     if (done.has("rp-" + i)) return { i, st: "applied" };
     if (RP.skip.has(i)) return { i, st: "skipped" };
-    const a = text.indexOf(it.original);
-    if (a >= 0 && text.indexOf(it.original, a + 1) < 0) return { i, st: "pending", start: a, end: a + it.original.length };
-    if (text.includes(it.replacement)) return { i, st: "applied" }; // applied earlier, the log was reset since
-    return { i, st: "lost" };
+    const st = itemState(text, it); // text-derived part lives in report_logic.js (replacement or an alternative counts as applied)
+    if (st === "pending") { const a = text.indexOf(it.original); return { i, st, start: a, end: a + it.original.length }; }
+    return { i, st }; // "applied" here also covers an earlier apply whose log was reset since
   });
 }
 function rpCurrent() {
@@ -13836,22 +14209,106 @@ function rpWords(cur) {
 }
 const rpCardOf = (cur) => cur.type === "risk" ? cur.d.card : { id: "rp-" + cur.i, ids: ["rp-" + cur.i], label: t("rpArea")[cur.it.area], fix: cur.it.why };
 
+// ---- the walk: position, points, chip ----
+// Position among ALL cards of this walk. Risk cards leave the list once applied or skipped, so the ones seen are remembered (RP.seen);
+// the items are always all there (applied / skipped / pending / lost). After a reload the seen ones are gone, so the count restarts
+// from what is still open (RP.skip is not stored either: skipped items come back as pending).
+function rpWalk(cur) {
+  const risk = rpRiskList();
+  for (const d of risk) if (!RP.seen.has(d.id)) RP.seen.set(d.id, { ids: [d.id, ...(d.ids || []), d.card && d.card.id].filter(Boolean), label: d.card ? plainLabel(d.card.id, d.card.label) : d.id });
+  const open = new Set(risk.map((d) => d.id)), gone = [...RP.seen.keys()].filter((k) => !open.has(k)).length;
+  const items = G.report ? G.report.items.length : 0, done = rpStates().filter((s) => s.st === "applied" || s.st === "skipped").length;
+  return { i: gone + (cur.type === "risk" ? 1 : cur.i + 1), n: gone + risk.length + items }; // an item's place is its place in the report, so Undo / Previous never renumber it
+}
+const rpPts = (rd) => (rd.score == null ? rd.rules : rd.score);
+// The points one card's patch moves the pill by (same recipe as the pill: readinessOf with the text), plus the area's rating before/after.
+// Items go through itemGain (report_logic.js); a risk card compares the readiness of the changed text with now. 0 = show nothing.
+const RPG = { text: null, rep: null, m: new Map() };
+function rpInfo(cur, p) {
+  const out = { gain: 0 };
+  if (!cur || !p || p.kind !== "patch" || !p.patches || !p.patches.length || !state.result) return out;
+  const text = state.text, rep = G.report;
+  if (RPG.text !== text || RPG.rep !== rep) { RPG.text = text; RPG.rep = rep; RPG.m = new Map(); }
+  const key = cur.id + "|" + JSON.stringify(p.patches);
+  if (RPG.m.has(key)) return RPG.m.get(key);
+  let t2;
+  try { t2 = applyPatches(text, p.patches); } catch (e) { return out; } // a patch that no longer fits: no figure, apply itself refuses
+  if (cur.type === "item") {
+    if (cur.st !== "lost" && rep) {
+      out.gain = itemGain(text, state.result, state.opts, rep, cur.i, p.patches[0].rep, state.fixDismissed);
+      out.area = cur.it.area; out.from = effectiveReport(text, rep).areas[cur.it.area].rating; out.to = effectiveReport(t2, rep).areas[cur.it.area].rating;
+    }
+  } else {
+    out.gain = rpPts(readinessOf(analyze(t2, state.opts), rep, state.fixDismissed, t2)) - rpPts(readinessOf(state.result, rep, state.fixDismissed, text));
+    out.label = plainLabel(cur.d.card.id, cur.d.card.label);
+  }
+  RPG.m.set(key, out);
+  return out;
+}
+// The little chip under the pill after Apply: «+3 · Gancho ●●●○○ → ●●●●●» for ~3 s; the pill itself tweens through scApply / scTween.
+function rpChip(info, cur) {
+  let el = $("rpChip");
+  const fresh = !el;
+  if (!el) { el = document.createElement("div"); el.id = "rpChip"; el.className = "rp-toast"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+  const A = t("rpArea"), name = cur.type === "item" ? A[cur.it.area] : info.label, up = info.gain > 0;
+  const dots = cur.type === "item" && up ? ` <span aria-hidden="true" class="rp-dots">${rpDots(info.from)} → ${rpDots(info.to)}</span>` : "";
+  const html = up ? `<b>${h(t("rpChipUp")(info.gain, name))}</b>${dots}<span class="vh">${h(cur.type === "item" ? t("rpChipAria")(info.gain, name, info.from, info.to) : "")}</span>` : h(t("rpChipDone")(name));
+  const pill = $("scorePill"), pr = pill && !pill.hidden ? pill.getBoundingClientRect() : null;
+  el.style.top = Math.max(8, pr ? pr.bottom + 8 : 12) + "px";
+  const put = () => { el.innerHTML = html; el.classList.add("on"); };
+  if (fresh) setTimeout(put, 30); else put(); // a live region must exist before its text changes
+  clearTimeout(RP.chipTm); RP.chipTm = setTimeout(() => el.classList.remove("on"), 3200);
+}
+// «antes» = what the same report was worth without the applied changes (the bubble's «antes» and the end card both use it)
+const rpBeforeOf = (rd) => Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase);
+
 // ---- html ----
 const rpDots = (n) => (n == null ? "○○○○○" : "●".repeat(n) + "○".repeat(5 - n));
 function rpTime(at) {
   const d = new Date(at);
   return isNaN(d) ? "" : d.toLocaleTimeString(UI, { hour: "numeric", minute: "2-digit" });
 }
-function rpRowsHTML(R, rd) {
-  const rep = G.report, A = t("rpArea");
-  const rows = rep ? REPORT_AREAS.map((k) => {
-    const a = rep.areas[k], n = a.rating;
-    return `<li class="rp-row" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}</span></span><span class="rp-w">${h(a.why)}</span></li>`;
-  }) : RP.busy ? REPORT_AREAS.map((k) => `<li class="rp-row rp-row-wait" data-area="${k}"><span class="rp-a">${h(A[k])}</span><span class="rp-w">${h(t("rpWaiting"))}</span></li>`) : [];
-  const band = rd.red ? "rojo" : Object.values(R.sections).flat().some((r) => /^pf-/.test(r.id) && (!r.passed || r.warn) && !state.fixDismissed.has(r.id)) ? "amarillo" : "verde";
-  const word = band === "verde" ? t("rpAdsOk") : t("scBand")[band];
-  rows.push(`<li class="rp-row rp-ads" data-area="ads"><span class="rp-a">${h(A.ads)}</span><span class="rp-st rp-st-${band}">${h(word)}</span></li>`);
-  return `<ul class="rp-rows" aria-label="${h(t("rpListLbl"))}">${rows.join("")}</ul>`;
+// ad band from the rules: the same reading the pill uses (red from readinessOf, yellow while a non-dismissed pf- row is open)
+function rpAdsBand(R, rd) {
+  return rd.red ? "rojo" : Object.values(R.sections).flat().some((r) => /^pf-/.test(r.id) && (!r.passed || r.warn) && !state.fixDismissed.has(r.id)) ? "amarillo" : "verde";
+}
+// The one helper for «a → b posible»: the readiness if every pending change were accepted, or null when there is none to show.
+// (the pill and the screen-reader label both use it; projectedReadiness stays the only recipe). Cached per text/report/pending set.
+const RPP = { text: null, rep: null, live: "", v: null };
+function rpProjected(rd) {
+  if (!rd || rd.score == null || !G.report || !state.result || typeof state.text !== "string") return null;
+  const rep = G.report, text = state.text, live = rpStates().filter((s) => s.st === "pending");
+  if (!live.length) return null;
+  const lk = live.map((s) => s.i).join(",");
+  if (RPP.text !== text || RPP.rep !== rep || RPP.live !== lk) {
+    RPP.text = text; RPP.rep = rep; RPP.live = lk;
+    RPP.v = projectedReadiness(text, state.result, state.opts, { areas: effectiveReport(text, rep).areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) });
+  }
+  return RPP.v !== rd.score ? RPP.v : null;
+}
+// The report inside the score bubble: { sub, table, foot } for scRenderPop (score_ui.js), or null without a report.
+function rpPopHTML(R, rd) {
+  const rep = G.report;
+  if (!rep || rd.score == null) return null;
+  const A = t("rpArea"), eff = effectiveReport(state.text, rep).areas, base = rep.baseline || null;
+  // «before» = what the same report was worth without the applied changes
+  const before = rpBeforeOf(rd), showBefore = rd.editorEst > 0 && before !== rd.score;
+  const dots = (n, k) => `<span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}${n == null ? "" : " " + n}</span></span>`;
+  const rows = REPORT_AREAS.map((k) => {
+    const a = eff[k], now = a.rating, est = !!a.est, o = base ? (base[k] != null ? base[k] : null) : undefined;
+    const from = o !== undefined ? o : est ? (rep.areas[k] || {}).rating : null;
+    const d = from != null && now != null ? now - from : 0;
+    const ch = d ? `<b class="sc-ch ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${Math.abs(d)}</b>` : `<span class="sc-ch"><span class="vh">${h(t("rpSame"))}</span><span aria-hidden="true">=</span></span>`;
+    return `<tr class="sc-r${est ? " est" : ""}" data-area="${k}"><th scope="row">${h(A[k])}</th>${base ? `<td class="sc-o">${o != null ? dots(o, k) : "–"}</td>` : ""}<td class="sc-n2${base ? " arrow" : ""}">${dots(now, k)}${est ? `<span class="sc-by">${h(t("rpBy"))}</span>` : ""}</td><td class="sc-c">${ch}</td><td class="sc-w">${h(rep.areas[k].why || "")}</td></tr>`;
+  });
+  const band = rpAdsBand(R, rd), word = band === "verde" ? t("rpAdsOk") : t("scBand")[band];
+  rows.push(`<tr class="sc-r sc-ads" data-area="ads"><th scope="row">${h(A.ads)}</th><td colspan="${base ? 3 : 2}"><span class="rp-st rp-st-${band}">${h(word)}</span></td><td class="sc-w"></td></tr>`);
+  const stale = rep.key !== rpKey();
+  return {
+    sub: showBefore ? `${t("rpBy")} · ${t("rpBefore")(before)}` : "",
+    table: `<div class="sc-tw"><table class="sc-t"><caption class="vh">${h(t("rpTitle"))}</caption><thead><tr><th scope="col">${h(t("rpColArea"))}</th>${base ? `<th scope="col">${h(t("rpColOrig"))}</th>` : ""}<th scope="col">${h(t("rpColNow"))}</th><th scope="col"><span class="vh">${h(t("rpColChange"))}</span></th><th scope="col">${h(t("rpColSaid"))}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`,
+    foot: `<div class="sc-foot"><span class="sc-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" id="scRe" class="sc-re${stale ? " primary" : ""}"${RP.busy ? " disabled" : ""}>${h(t("rpRe2"))}</button></div><p class="hint sc-bnote">${h(t("rpBubNote"))}</p>`,
+  };
 }
 function rpWriteHTML(cur) {
   const w = RP.write && RP.write.id === cur.id ? RP.write : null;
@@ -13864,62 +14321,82 @@ function rpDecisionHTML(R, cur, states) {
   const prevOk = RP.hist.some((e) => (e.t === "item" ? RP.skip.has(e.i) : e.ids.some((id) => state.fixDismissed.has(id))));
   const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
   if (cur.type === "item") {
-    const it = cur.it, n = G.report.items.length, A = t("rpArea")[it.area], title = `${t("rpChange")(cur.i + 1, n)} · ${A}`;
+    const it = cur.it, A = t("rpArea")[it.area], wk = rpWalk(cur), title = `${t("rpChange")(wk.i, wk.n)} · ${A}`;
     const lost = cur.st === "lost", chosen = rpChosen(cur), many = (it.alts || []).length > 0;
+    const gain = lost ? 0 : rpInfo(cur, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: chosen }] }).gain;
     let broke = "";
     if (!lost) {
       const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: chosen }] });
       if (ck.broke.length) broke = `<p class="status err">${h(t("fxBreaks")(ck.broke.map((id) => rowLabel(ck.R2 || R, id)).join(", ")))}</p>`;
     }
-    return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(title)}</b></div>
+    return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h rp-prog"><b id="rpD">${h(title)}</b>${gain > 0 ? `<span class="rp-gain">${h(t("rpGainTo")(gain))}</span>` : ""}</div>
       <dl class="rp-cmp"><div class="rp-c"><dt>${h(t("fxBefore"))}</dt><dd class="rp-orig"${lost ? "" : ` data-es="${cur.start}" data-ee="${cur.end}"`}><del>${h(it.original)}</del></dd></div>
       ${many ? `<div class="rp-c"><dt>${h(t("rpPickLbl"))}</dt><dd><fieldset class="rp-pick"><legend class="vh">${h(t("rpPickLbl"))}</legend>${[it.replacement, ...it.alts].map((x, k) => `<label class="rp-opt"><input type="radio" name="rpPick" value="${k}" data-rp-pick="${h(cur.id)}"${x === chosen ? " checked" : ""}><span class="rp-opt-b"><span class="rp-opt-t">${h(x)}</span><span class="hint">${h(k ? t("rpPickAlt") : t("rpPickMain"))}</span></span></label>`).join("")}</fieldset></dd></div>` : `<div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>`}
       <div class="rp-c"><dt>${h(t("rpWhy"))}</dt><dd>${h(it.why)}</dd></div></dl>
       ${lost ? `<p class="status err" role="status">${h(t("rpGone"))}</p>` : broke}${rpWriteHTML(cur)}
-      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t(many ? "rpApplyPick" : "fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
+      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary rp-go" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("rpApplyGo"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
   }
   const d = cur.d, c = d.card, wr = rpWords(cur);
   const opts = wr ? [rpWordProp(wr, R)] : d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
   const canWrite = !!(d.at || c.field);
+  const wk = rpWalk(cur), gain = p ? rpInfo(cur, p).gain : 0;
+  const prog = `<div class="rp-prog"><span class="rp-prog-t">${h(t("rpChange")(wk.i, wk.n))}</span>${gain > 0 ? `<span class="rp-gain">${h(t("rpGainTo")(gain))}</span>` : ""}</div>`;
   const words = wr ? `<div class="fx-lbl">${h(t("rpWordsLbl"))}</div>${wr.rows.map((r, ri) => `<fieldset class="rp-words"><legend>«${h(r.term)}» <span class="hint">· ${h(r.hits.length > 1 ? t("rpTimes")(r.hits.length) : fmtTime(state.result.timeAt(r.hits[0].start)))}</span></legend>${r.alts.map((a, k) => `<label class="rp-chip"><input type="radio" name="rpW${ri}" value="${k}" data-rp-wpick="${h(r.key)}"${k === Math.min(RP.wpick[r.key] || 0, r.alts.length - 1) ? " checked" : ""}><span class="rp-chip-b"><b>${h(matchCase(r.term, a))}</b><span class="rp-safe">${h(t("rpWordSafe"))}</span></span></label>`).join("")}</fieldset>`).join("")}${wr.rest ? `<p class="hint">${h(t("rpWordsRest"))}</p>` : ""}` : "";
-  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
+  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1">${prog}<div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
     ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}${words}
     ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${rpWriteHTML(cur)}
-    <div class="actions rp-act">${p ? `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
+    <div class="actions rp-act">${p ? `<button type="button" class="small primary rp-go" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("rpApplyGo"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
 }
 function rpWordProp(wr, R) {
   const p = { kind: "patch", label: t("rpWordLbl"), patches: wr.patches };
   p.check = verifyProposal(state.text, state.opts, R, p);
   return p;
 }
+// Step 2's panel: only what drives the flow (the wait, an error with its retry, the current change). The number, the areas and
+// «Medir de nuevo» live in the score bubble (rpPopHTML), the one place for them.
 function reportHTML(R) {
-  const rep = G.report, rd = readinessOf(R, rep, state.fixDismissed);
-  const stale = !!rep && rep.key !== rpKey();
-  const states = rpStates(), live = states.filter((s) => s.st === "pending");
-  let score;
-  if (rd.score == null) score = t("rpRulesLbl")(rd.rules);
-  else {
-    const b = live.length ? projectedReadiness(state.text, R, state.opts, { areas: rep.areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) }) : rd.score;
-    score = b !== rd.score ? t("rpReadyTo")(rd.score, b) : t("rpReady")(rd.score);
-  }
+  const rep = G.report;
+  const states = rpStates();
   const msg = typeof fixMsg === "string" ? fixMsg : "";
   if (!RP.more && msg) fixMsg = ""; // with «Más detalles» open the panel there shows it
-  const meta = rep ? `<span class="rp-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" class="small${stale ? " primary" : ""}" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : RP.err ? `<button type="button" class="small primary" data-rp="re"${RP.busy ? " disabled" : ""}>${h(t("rpRe"))}</button>` : "";
   const cur = rpCurrent();
   let body = "";
   // the wait says plainly that no answer has come yet; the seconds tick from aistatus_ui.js ([data-ai-el])
   if (RP.busy) body = `<div class="rp-wait" role="status"><div class="rp-wait-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(t("rpReading"))}</b></div><p>${h(t("rpNoAnswer"))} <span aria-hidden="true">${h(t("rpSoFar"))} <b class="ai-el" data-ai-el>${typeof AIS !== "undefined" && AIS.n ? aiClock(Date.now() - AIS.t0) : "0:00"}</b></span></p></div>`;
   else {
-    if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p>`;
+    if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p><div class="rp-nav"><button type="button" class="small primary" data-rp="re">${h(t("rpRe"))}</button></div>`;
     if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
-    body += cur ? rpDecisionHTML(R, cur, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
+    const ended = !cur && rep && states.some((s) => s.st === "applied" || s.st === "skipped");
+    body += cur ? rpDecisionHTML(R, cur, states) : ended ? rpEndHTML(R, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
   }
-  return `<section class="rp" data-rp-root aria-labelledby="rpH"><div class="rp-head"><div class="rp-title"><h3 id="rpH">${h(t("rpTitle"))}</h3></div><div class="rp-score" id="rpScore">${h(score)}</div>${meta ? `<div class="rp-meta">${meta}</div>` : ""}<span class="status" id="rpMsg" role="status">${h(msg)}</span></div>
-    ${rpRowsHTML(R, rd)}${body}</section>`;
+  // phone: under the card only the paragraph being changed shows; this label and link belong to it (CSS shows them only then)
+  const where = cur ? `<p class="rp-wh">${h(t("rpWhere"))}</p><p class="rp-wf"><button type="button" class="linkish" data-rp-full aria-pressed="${RP.full ? "true" : "false"}">${h(t(RP.full ? "rpFocusBack" : "rpFull"))}</button></p>` : "";
+  return `<section class="rp" data-rp-root aria-label="${h(t("rpDecLbl"))}"><span class="status" id="rpMsg" role="status">${h(msg)}</span>${body}</section>${where}`;
+}
+// End of the walk: no pending or lost card left. Counts: items from rpStates, risk cards from the ones seen in this walk and their log entries.
+function rpEndHTML(R, states) {
+  const rd = readinessOf(R, G.report, state.fixDismissed, state.text), A = t("rpArea");
+  const log = (state.fixLog || []);
+  const riskDone = [], riskSkip = [];
+  for (const [, m] of RP.seen) {
+    if (log.some((x) => x.kind === "done" && m.ids.includes(x.id))) riskDone.push(m.label);
+    else if (log.some((x) => x.kind === "skip" && m.ids.includes(x.id))) riskSkip.push(m.label);
+  }
+  const ap = states.filter((s) => s.st === "applied"), a = ap.length + riskDone.length, sk = states.filter((s) => s.st === "skipped").length + riskSkip.length;
+  const now = rd.score != null ? rd.score : rd.rules, before = rd.score != null ? rpBeforeOf(rd) : now;
+  const nums = rd.score != null && a > 0 && rd.editorEst > 0 && before !== now ? `<span class="rp-end-n"><span class="vh">${h(t("rpBefore")(before))} </span><span aria-hidden="true">${before} → </span><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>` : `<span class="rp-end-n"><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>`;
+  const list = [...ap.map((s) => A[G.report.items[s.i].area]), ...riskDone].map((x) => `<li><span aria-hidden="true">✓</span> ${h(x)}</li>`).join("");
+  return `<section class="rp-dec rp-end" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-prog"><span class="rp-prog-t">${h(t("rpEndStep"))}</span></div>
+    <h3 id="rpD">${h(t(a ? "rpEndH" : "rpEndNoneH"))}</h3>
+    <p class="rp-end-row">${nums}<span class="hint">${h(t("rpBy"))}</span></p>
+    <p class="rp-end-c">${h(t("rpEndCount")(a, sk))}</p>
+    ${list ? `<ul class="rp-end-l" aria-label="${h(t("rpEndList"))}">${list}</ul>` : ""}
+    <div class="actions rp-act"><button type="button" class="small primary rp-go" data-rp="publish" data-rp-primary>${h(t("rpEndPub"))}</button><button type="button" class="small linkish" data-rp="re">${h(t("rpRe2"))}</button></div>
+    ${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}</section>`;
 }
 function rpWrapMore(inner, open) {
-  return `<details class="rp-more" id="rpMore"${open ? " open" : ""}><summary id="rpMoreSum"><span class="rp-more-t">${h(t("rpMore"))}</span> <span class="hint">${h(t("rpMoreHint"))}</span></summary><div class="rp-more-body">${inner}</div></details>`;
+  return `<details class="rp-more rp-detail" id="rpMore"${open ? " open" : ""}><summary id="rpMoreSum"><span class="rp-more-t">${h(t("rpDetail"))}</span> <span class="hint">${h(t("rpMoreHint"))}</span></summary><div class="rp-more-body">${inner}</div></details>`;
 }
 
 // ---- actions ----
@@ -13948,12 +14425,15 @@ function rpPrev() {
 }
 function rpApplyP(cur, p) {
   if (cur.type === "item" && cur.st === "lost") { rerunReview(t("fxStale")); return; }
+  const info = rpInfo(cur, p), v0 = $("script").value, n0 = state.fixLog.length; // figures read before the text moves
   RP.applying = rpKey(); RP.delay = 1100; RP.write = null;
   try { applyProposal(p, rpCardOf(cur)); } finally { RP.applying = null; }
+  if ($("script").value !== v0 || state.fixLog.length > n0) rpChip(info, cur); // only when it really applied (the stale guard refuses)
 }
 function rpAct(act) {
   const cur = rpCurrent();
   if (act === "re") { RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
+  if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
   if (!cur) return;
   if (act === "skip") return rpSkip(cur);
@@ -13982,10 +14462,42 @@ function rpAct(act) {
 }
 function rpShow() {
   const cur = rpCurrent();
+  if (cur && cur.start == null) document.querySelector("main").classList.toggle("rp-nospot", document.querySelector("main").classList.contains("rp-focus")); // no place in the script to show
   if (!cur || cur.start == null || !wkBuild()) return;
   const r = wkRange(cur.start, Math.max(cur.end, cur.start + 1));
-  if (r) { wkScrollTo(r); wkFlash([r]); }
+  if (r) { if (!rpFocusFit(r)) wkScrollTo(r); wkFlash([r]); }
 }
+// Phone, step 2 (plan "Walk Juan through it", step 5, 2026-10-26): the card comes first and under it only the paragraph being changed, so the
+// card is on screen at scroll 0. Pure layout: CSS (guide.css, main.rp-focus) reorders the page and the script box is given the height of that
+// paragraph through --rp-ph; the editor's own DOM is never touched. «Ver guion completo» (RP.full) gives back the docked full script, and
+// «Más detalles» open does too (the old walker needs it). Desktop (split view) is unchanged.
+function rpFocusSync() {
+  const main = document.querySelector("main");
+  const on = V.guided && V.step === 2 && !(typeof SPLIT !== "undefined" && SPLIT.on) && !RP.more && !!document.querySelector(".rp-dec");
+  main.classList.toggle("rp-focus", on && !RP.full);
+  main.classList.toggle("rp-full", on && RP.full);
+  if (!on) main.classList.remove("rp-nospot");
+}
+function rpFocusFit(r) {
+  const main = document.querySelector("main"), ed = ED.el;
+  if (!ed || !main.classList.contains("rp-focus")) return false;
+  let n = r.startContainer;
+  while (n && n.parentNode !== ed) n = n.parentNode;
+  if (!n || n.nodeType !== 1) { main.classList.remove("rp-nospot"); return false; }
+  main.classList.remove("rp-nospot");
+  // the box is exactly as tall as the paragraph plus the gap to its neighbours, so no line of the paragraph before or after peeks in
+  const cs = getComputedStyle(ed), pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0;
+  const cap = Math.round(window.innerHeight * 0.4), nb = n.getBoundingClientRect(), pv = n.previousElementSibling, nx = n.nextElementSibling;
+  const offT = pv ? Math.min(pt, Math.max(0, nb.top - pv.getBoundingClientRect().bottom)) : pt;
+  const offB = nx ? Math.max(0, Math.min(pb, nx.getBoundingClientRect().top - nb.bottom) - 2) : pb; // 2 px of rounding room: scrollTop is a whole number
+  document.documentElement.style.setProperty("--rp-ph", Math.min(Math.max(Math.ceil(nb.height) + offT + offB, 72), cap) + "px");
+  void ed.offsetHeight; // apply the new height before measuring where the paragraph is inside the box
+  const eb = ed.getBoundingClientRect(), nb2 = n.getBoundingClientRect(), rb = r.getBoundingClientRect();
+  const top = nb2.height + offT + offB > cap ? rb.top : nb2.top; // a paragraph taller than the box: start at the changed sentence
+  ed.scrollTop = Math.max(0, ed.scrollTop + (top - eb.top) - offT);
+  return true;
+}
+window.addEventListener("resize", () => { if (V.guided && V.step === 2) rpFocusSync(); });
 function rpWire() {
   const root = document.querySelector("[data-rp-root]");
   if (!root) return;
@@ -14000,17 +14512,22 @@ function rpWire() {
   root.querySelectorAll("input[data-rp-pick]").forEach((x) => x.addEventListener("change", () => { RP.pick[x.dataset.rpPick] = +x.value; pickRedraw(`input[name="rpPick"][value="${x.value}"]`); }));
   root.querySelectorAll("input[data-rp-wpick]").forEach((x) => x.addEventListener("change", () => { RP.wpick[x.dataset.rpWpick] = +x.value; pickRedraw(`input[name="${x.name}"][value="${x.value}"]`); }));
   if (RP.refocus) { const f = root.querySelector(RP.refocus); RP.refocus = ""; if (f) f.focus(); }
+  const fb = document.querySelector("[data-rp-full]");
+  if (fb) fb.addEventListener("click", () => { RP.full = !RP.full; RP.shown = ""; const y = window.scrollY; renderGuide(); window.scrollTo(0, y); const nb = document.querySelector("[data-rp-full]"); if (nb) nb.focus(); });
   const w = $("rpW");
   if (w) w.addEventListener("input", () => { if (RP.write) RP.write.value = w.value; });
   // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button keeps its own meaning
   root.addEventListener("keydown", (e) => {
     const tg = e.target;
-    if (e.altKey || e.ctrlKey || e.metaKey || /^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const click = (sel) => { const b = root.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (e.key === "Enter" && tg.tagName === "INPUT" && /^(radio|checkbox)$/.test(tg.type)) return click("[data-rp-primary]"); // a choice is not a text field
+    if (/^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
     if (e.key === "ArrowRight") click('[data-rp="skip"]');
     else if (e.key === "ArrowLeft") click('[data-rp="prev"]');
     else if (e.key === "Enter" && !/^(BUTTON|A|SUMMARY)$/.test(tg.tagName) && !tg.closest("[role=button]")) click("[data-rp-primary]");
   });
+  const sb = $("stepBar"); if (sb) document.documentElement.style.setProperty("--sb-h", Math.ceil(sb.getBoundingClientRect().height) + "px"); // the sticky action row sits above the phone's step bar
   const md = $("rpMore");
   if (md) md.addEventListener("toggle", () => {
     if (md.open === RP.more) return; // the toggle event of a render is not a choice
@@ -14021,6 +14538,7 @@ function rpWire() {
   });
 }
 function rpAfterRender() {
+  rpFocusSync();
   if (!V.guided || V.step !== 2) { RP.shown = ""; return; }
   rpWire();
   if (!hasScript()) return;
@@ -14043,10 +14561,152 @@ renderGuide = function () {
   if (V.guided && V.step === 2) rpPrepare();
   _renderGuideR();
   rpAfterRender();
+  if (typeof scPaint === "function" && typeof SC !== "undefined" && SC.S) scPaint(); // «a → b posible» follows the pending changes (skip, previous, apply)
 };
 // Score rows and map markers belong to «Más detalles»: opening it is what makes them land somewhere.
 const _scGoRowR = scGoRow;
 scGoRow = function (id) { if (V.guided) RP.more = true; return _scGoRowR(id); };
+
+/* ===== Step 3 «Publicar» as a walk (2026-10-26, plan "Walk Juan through it", step 4) =====
+   One card at a time: 1 Título · 2 Miniatura · 3 Descripción · 4 Próximo episodio · 5 Apertura · 6 Todo listo (checklist + Aprobar),
+   then, once approved, the «Grabar» screen. Every card is the card that already existed (renderPack / renderTopic / renderCold /
+   recordCardHTML pieces / setStatus); the walk only decides which one is visible and adds the navigation.
+   The index lives in memory (PB); the default is derived from the data: first card whose item is empty, else «Todo listo»;
+   approved or recorded episodes open on «Grabar». No browser-history handling: the step bar and «‹ Anterior» are the way back. */
+Object.assign(T.es, {
+  pubProg: (i, n) => `Paso 3 de 3 · Publicar · ${i} de ${n}`, pubRecStep: "Paso 3 de 3 · Grabar",
+  pubH: ["Elige el título", "Texto de la miniatura", "Descripción y capítulos", "Próximo episodio", "Cómo empieza el video", "Todo listo para grabar"],
+  pubItems: ["Título", "Miniatura", "Descripción", "Próximo episodio", "Apertura"], pubNone: "Sin hacer",
+  pubSave: "Guardar y seguir", pubChange: "Cambiar", pubChangeL: (x) => `Cambiar: ${x}`, pubDone: "Listo", pubPend: "Pendiente",
+  pubFinal: "Nota final", pubFrom: (a) => `empezaste en ${a}`, pubChaps: (n) => `con ${n} ${n === 1 ? "capítulo" : "capítulos"}`,
+  pubAds: { rojo: "Anuncios: hay algo que puede quitarlos", amarillo: "Anuncios: algo puede limitarlos", verde: "Anuncios: sin riesgos" },
+  pubReady: "Tu guion está listo para YouTube", pubNote: (n) => `nota ${n}`,
+  pubPP: "Abrir el prompter", pubPPs: "Lee mientras grabas, a tu ritmo", pubReh: "Ensayar con cronómetro", pubEst: (d) => `${d} estimado`,
+  pubDl: "Descargar guion para grabar", pubDls: "Con capítulos y pausas para anuncios · hoja para el editor", pubAfterHint: "(Shorts, resultados)",
+});
+Object.assign(T.en, {
+  pubProg: (i, n) => `Step 3 of 3 · Publish · ${i} of ${n}`, pubRecStep: "Step 3 of 3 · Record",
+  pubH: ["Choose the title", "Thumbnail text", "Description and chapters", "Next episode", "How the video opens", "All set to record"],
+  pubItems: ["Title", "Thumbnail", "Description", "Next episode", "Opening"], pubNone: "Not done yet",
+  pubSave: "Save and continue", pubChange: "Change", pubChangeL: (x) => `Change: ${x}`, pubDone: "Done", pubPend: "Pending",
+  pubFinal: "Final score", pubFrom: (a) => `you started at ${a}`, pubChaps: (n) => `with ${n} ${n === 1 ? "chapter" : "chapters"}`,
+  pubAds: { rojo: "Ads: something could remove them", amarillo: "Ads: something could limit them", verde: "Ads: no risks" },
+  pubReady: "Your script is ready for YouTube", pubNote: (n) => `score ${n}`,
+  pubPP: "Open the prompter", pubPPs: "Read while you record, at your pace", pubReh: "Rehearse with a stopwatch", pubEst: (d) => `${d} estimated`,
+  pubDl: "Download the script to record", pubDls: "With chapters and ad breaks · editor sheet", pubAfterHint: "(Shorts, results)",
+});
+
+const PB = { key: null, i: null, view: null, focus: false };
+const PUB_N = 6;
+function pubSync() { const k = G.prodId || "-"; if (PB.key !== k) { PB.key = k; PB.i = null; PB.view = null; } }
+function pubReset() { PB.key = G.prodId || "-"; PB.i = null; PB.view = null; }
+// What each of the five items holds right now (read from the same fields the cards edit).
+function pubItems() {
+  const title = $("title").value.trim(), thumb = $("thumb").value.trim(), desc = $("description").value.trim(), next = (G.nextEp || "").trim();
+  const clips = typeof coldClips === "function" ? coldClips() : [];
+  const chaps = (desc.match(/^\s*\d{1,2}:\d{2}/gm) || []).length;
+  const dv = desc ? (chaps ? t("pubChaps")(chaps) : desc.length > 60 ? desc.slice(0, 60) + "…" : desc) : "";
+  const cv = clips.length ? "«" + clips[0].text.slice(0, 60) + (clips[0].text.length > 60 ? "…" : "") + "»" : "";
+  return [{ done: !!title, val: title }, { done: !!thumb, val: thumb }, { done: !!desc, val: dv }, { done: !!next, val: next }, { done: clips.length > 0, val: cv }];
+}
+function pubIndex() {
+  pubSync();
+  if (PB.i == null) { const f = pubItems().findIndex((x) => !x.done); PB.i = f < 0 ? PUB_N - 1 : f; }
+  return PB.i;
+}
+function pubView() { pubSync(); const done = G.status === "aprobado" || G.status === "grabado"; return done && PB.view !== "card" ? "rec" : "card"; }
+const pubTrack = (cur) => `<div class="pub-track" aria-hidden="true">${Array.from({ length: PUB_N }, (_, k) => `<span${k <= cur ? ' class="d"' : ""}></span>`).join("")}</div>`;
+
+// The number «Nota final»: the same readiness the bubble and the step-2 end card show (readinessOf / rpBeforeOf), never a new recipe.
+function pubScore(R) {
+  const rd = readinessOf(R, G.report, state.fixDismissed, state.text), full = rd.score != null, now = full ? rd.score : rd.rules;
+  const before = full ? rpBeforeOf(rd) : now;
+  return { rd, full, now, from: full && rd.editorEst > 0 && before !== now ? before : null };
+}
+function pubCardHTML(R) {
+  const i = pubIndex(), its = pubItems(), prog = `<p class="pub-prog">${h(t("pubProg")(i + 1, PUB_N))}</p>${pubTrack(i)}`;
+  const prev = `<button type="button" class="small linkish" data-pub="prev"${i === 0 ? " disabled" : ""}>${h(t("coPrev"))}</button>`;
+  if (i < PUB_N - 1) {
+    const slot = i < 3 ? `<section class="g-card" id="gPack" data-pub-part="${["title", "thumb", "desc"][i]}"></section>` : i === 3 ? `<section class="g-card" id="gTopic"></section>` : `<section class="g-card" id="gCold"></section>`;
+    return `<div class="pub pub-walk" data-pub-i="${i}"><section class="pub-card" role="region" aria-labelledby="pubH" tabindex="-1" id="pubCard">${prog}<h3 id="pubH">${h(t("pubH")[i])}</h3>
+      <p class="pub-ok" id="pubOk"${its[i].done ? "" : " hidden"}><span aria-hidden="true">✓</span> <span class="vh">${h(t("pubDone"))}: </span><span id="pubOkV">${h(its[i].val)}</span></p>${slot}
+      <div class="actions pub-act"><button type="button" class="primary pub-go" data-pub="next">${h(t("pubSave"))} →</button><button type="button" class="small linkish" data-pub="skip">${h(t("coSkip"))}</button></div>
+      <div class="pub-nav">${prev}</div></section></div>`;
+  }
+  // card 6: the five items with their state, the final number, the ads reading and the approve button (gate unchanged: packGateMissing)
+  const sc = pubScore(R), band = rpAdsBand(R, sc.rd), missing = packGateMissing();
+  const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
+  const names = t("pubItems");
+  const num = sc.full ? `<span class="pub-lbl">${h(t("pubFinal"))}</span><b class="pub-n">${sc.now}</b>${sc.from != null ? `<span class="hint">${h(t("pubFrom")(sc.from))}</span>` : ""}` : `<span class="pub-lbl">${h(t("rpRulesName"))}</span><b class="pub-n">${sc.now}<small>/${sc.rd.rulesMax}</small></b>`;
+  const rows = its.map((x, k) => `<li class="${x.done ? "ok" : "pend"}"><span class="pub-mk" aria-hidden="true">${x.done ? "✓" : "○"}</span><span class="pub-iv"><b>${h(names[k])}</b><span class="pub-v">${h(x.done ? x.val : t("pubNone"))}</span></span><button type="button" class="small linkish" data-pub-go="${k}" aria-label="${h(t("pubChangeL")(names[k]))}">${h(t("pubChange"))}</button></li>`).join("");
+  const gate = missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : "";
+  return `<div class="pub pub-walk pub-all" data-pub-i="${i}"><section class="pub-card" role="region" aria-labelledby="pubH" tabindex="-1" id="pubCard">${prog}<h3 id="pubH">${h(t("pubH")[i])}</h3>
+    <div class="g-card"><p class="pub-final">${num}</p><ul class="pub-chk" aria-label="${h(t("pubH")[i])}">${rows}</ul>
+    <p class="pub-ads ${band}"><span class="lamp ${band}">${h(t("pubAds")[band])}</span></p></div>
+    <div class="actions pub-act" data-pub-gate>${done ? `<span class="lamp verde">${h(t("approved"))}</span><button type="button" class="primary pub-go" data-pub="rec">${h(t("next"))} →</button>` : `<button type="button" class="primary pub-go" id="gApprove"${missing.length ? " disabled" : ""}>${h(t("approve"))}</button>${gate}`}</div>
+    <div class="pub-nav">${prev}</div></section></div>`;
+}
+function pubRecHTML(R) {
+  const sc = pubScore(R), recorded = G.status === "grabado", reh = G.rehearsals[G.rehearsals.length - 1];
+  const rehTot = reh && reh.laps ? reh.laps.reduce((a, l) => a + (l.sec || 0), 0) : 0;
+  const ic = (d) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${d}</svg>`;
+  const big = (id, cls, icon, label, sub) => `<button type="button" class="pub-big ${cls}" id="${id}">${ic(icon)}<span><span class="pub-bt">${h(label)}</span><small>${h(sub)}</small></span></button>`;
+  return `<div class="pub pub-recw"><section class="g-card rec-card pub-rec" id="gRecCard" role="region" aria-labelledby="pubH" tabindex="-1"><p class="pub-prog">${h(t("pubRecStep"))}</p>
+    <span class="lamp verde">✓ ${h(t("approved"))} · ${h(t("pubNote")(sc.now))}</span>${recorded ? ` <span class="lamp verde">${h(t("status").grabado)}</span>` : ""}
+    <h3 id="pubH">${h(t("pubReady"))}</h3>
+    ${big("gPP", "primary", '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h6"/>', t("pubPP"), t("pubPPs"))}
+    ${big("gReh", "", '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>', t("pubReh"), t("pubEst")(fmtTime(totalVideo())))}
+    ${big("gSheet", "", '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', t("pubDl"), t("pubDls"))}
+    <p class="hint rec-tip">${rehTot ? h(t("recLast")(fmtTime(rehTot), fmtTime(totalRec()))) : h(t("recTip"))}</p>
+    ${recClipsHTML()}${recKeysHTML()}
+    ${recorded ? "" : `<button type="button" class="linkish pub-rd" id="gRecorded">${h(t("s4Done"))}</button>`}
+    <div class="pub-nav"><button type="button" class="small linkish" data-pub="prev">${h(t("coPrev"))}</button></div></section>
+    <details class="rp-more g-after" id="gAfter"${V.s3After ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpAfterRec"))}</span> <span class="hint">${h(t("pubAfterHint"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section></div></details>
+    <details class="rp-more g-more3" id="gMore3"${V.s3More ? " open" : ""}><summary><span class="rp-more-t">${h(t("rpMore"))}</span></summary><div class="rp-more-body"><section class="g-card" id="gStruct"></section></div></details></div>`;
+}
+function pubStep3HTML(R) { return pubView() === "rec" ? pubRecHTML(R) : pubCardHTML(R); }
+
+// After the HTML is in the page: fill the one visible card with its existing renderer, then wire the walk.
+function pubAfterHTML(body) {
+  const rec = pubView() === "rec";
+  if (rec) { renderStructure(); foldStruct(); wireRecordCard(); renderShorts(); renderResultsCard(); }
+  else { renderCold(); renderTopic(); renderPack(); const d = body.querySelector("details.pk-more"); if (d) d.open = true; }
+  const keep = (id, k) => { const d = $(id); if (d) d.addEventListener("toggle", () => { V[k] = d.open; }); };
+  keep("gAfter", "s3After"); keep("gMore3", "s3More");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const go = (fn) => () => { fn(); PB.focus = true; renderGuide(); window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }); };
+  body.querySelectorAll("[data-pub=next],[data-pub=skip]").forEach((b) => b.addEventListener("click", go(() => { PB.i = Math.min(PUB_N - 1, pubIndex() + 1); })));
+  body.querySelectorAll("[data-pub=prev]").forEach((b) => b.addEventListener("click", go(() => { if (pubView() === "rec") { PB.view = "card"; PB.i = PUB_N - 1; } else PB.i = Math.max(0, pubIndex() - 1); })));
+  body.querySelectorAll("[data-pub=rec]").forEach((b) => b.addEventListener("click", go(() => { PB.view = "rec"; })));
+  body.querySelectorAll("[data-pub-go]").forEach((b) => b.addEventListener("click", go(() => { PB.i = +b.dataset.pubGo; })));
+  const ap = $("gApprove");
+  if (ap) ap.addEventListener("click", async () => {
+    ap.disabled = true; await setStatus("aprobado");
+    if (G.status === "aprobado" || G.status === "grabado") { PB.view = "rec"; PB.focus = true; renderGuide(); window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }); }
+    else ap.disabled = false;
+  });
+  const rd = $("gRecorded");
+  if (rd) rd.addEventListener("click", async () => { rd.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
+  // the ✓ line under the heading follows what is typed (the fields keep saving exactly as before)
+  const upd = () => { const i = pubIndex(), it = pubItems()[i], ok = $("pubOk"); if (!ok || !it) return; ok.hidden = !it.done; $("pubOkV").textContent = it.val; };
+  body.addEventListener("input", () => { if (pubView() === "card" && PB.i < PUB_N - 1) upd(); });
+  const sb = $("stepBar"); if (sb) document.documentElement.style.setProperty("--sb-h", Math.ceil(sb.getBoundingClientRect().height) + "px"); // sticky action row sits above the phone's step bar
+  if (typeof autoFitAll === "function") autoFitAll(body);
+  if (PB.focus) { PB.focus = false; const c = $("pubCard") || $("gRecCard"); if (c) c.focus({ preventScroll: true }); }
+}
+// A field that is still focused saves/re-renders on blur («change», e.g. the keyword redraws the card). Do that on pointer-down, and if
+// it replaced the button being pressed (or moved it), repeat the press on the new button after release: otherwise the click is lost.
+let pubPress = null;
+document.addEventListener("pointerdown", (e) => {
+  const b = e.target.closest && e.target.closest("[data-pub],[data-pub-go],#gApprove");
+  const a = document.activeElement;
+  if (!b || !a || !/^(TEXTAREA|INPUT)$/.test(a.tagName) || !a.closest("#guide")) return;
+  const key = b.id === "gApprove" ? "#gApprove" : b.dataset.pub ? `[data-pub="${b.dataset.pub}"]` : `[data-pub-go="${b.dataset.pubGo}"]`;
+  pubPress = key;
+  a.blur();
+  document.addEventListener("pointerup", () => setTimeout(() => { const k = pubPress; pubPress = null; const nb = k && document.querySelector("#guide " + k); if (nb && !nb.disabled) nb.click(); }, 0), { once: true, capture: true });
+}, true);
+document.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("#guide [data-pub],#guide [data-pub-go],#gApprove")) pubPress = null; }, true);
 /* ===== AI status: a bubble on the score while any AI call runs, then «Listo» ===== */
 // (jadri47, 2026-10-25: "clearly specify when Claude is thinking and hasn't provided an answer yet ... some bubble attached to the
 // script ranking so the user can see when the AI is thinking and when it's done"; picked A: every AI wait, the «Listo» bubble closes
@@ -14188,6 +14848,78 @@ function aiPlace() {
 }
 window.addEventListener("resize", aiPlace);
 window.addEventListener("scroll", aiPlace, { passive: true, capture: true });
+/* ===== First-use tips (plan "Walk Juan through it", step 5, 2026-10-26) ===== */
+// Three small notes, each shown once per device in step 2 and in this order: the score («Esta es tu nota…»), the first change card,
+// the primary button. A tip is a non-modal callout (role="note": no overlay, never takes the focus), points at its element and has one
+// «Entendido» button; that stores `sd-tip-<name>` in localStorage and the next tip may appear. `localStorage['sd-tips-off']==='1'`
+// turns all of them off (tests set it in mock_sb.js). Every storage access is in try/catch; without storage a dismissed tip stays
+// dismissed for the session. None shows over the prompter, in step 3 or when printing.
+Object.assign(T.es, {
+  tipOk: "Entendido",
+  tipBubble: "Esta es tu nota. Cada cambio que aceptes la sube.",
+  tipCard: "Lee el cambio y elige cómo decirlo. Puedes saltarlo.",
+  tipButton: "Toca aquí para aplicar y pasar al siguiente.",
+});
+Object.assign(T.en, {
+  tipOk: "Got it",
+  tipBubble: "This is your score. Every change you accept raises it.",
+  tipCard: "Read the change and choose how to say it. You can skip it.",
+  tipButton: "Tap here to apply and move to the next one.",
+});
+
+const TIP_DONE = new Set(); // dismissed in this session (also when storage is unavailable)
+function tipGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; /* storage blocked: tips just follow the session */ } }
+function tipSet(k) { TIP_DONE.add(k); try { localStorage.setItem(k, "1"); } catch (e) { /* best effort: storage blocked: dismissed for this session only */ } }
+const tipsOff = () => tipGet("sd-tips-off") === "1";
+const tipSeen = (k) => TIP_DONE.has(k) || tipGet(k) === "1";
+const TIPS = [
+  { key: "sd-tip-bubble", txt: "tipBubble", float: true,
+    at: () => { const p = $("scorePill"), b = $("aiBub"); return p && !p.hidden && p.getClientRects().length && !(b && !b.hidden) ? p : null; } },
+  { key: "sd-tip-card", txt: "tipCard", tail: "up",
+    at: () => { const d = document.querySelector(".rp-dec:not(.rp-end)"); return d && d.querySelector(".rp-prog, .rp-dec-h") ? d : null; } },
+  { key: "sd-tip-button", txt: "tipButton", tail: "down",
+    at: () => { const d = document.querySelector(".rp-dec:not(.rp-end)"); return d ? d.querySelector("[data-rp=apply]") : null; } },
+];
+function tipsScreen() { return V.guided && V.step === 2 && !document.querySelector(".pp") && !tipsOff(); }
+function tipPlace(el) {
+  const p = $("scorePill");
+  if (!el || !el.classList.contains("sd-tip-float") || !p) return;
+  const r = p.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight, phone = vw < 600;
+  const W = phone ? vw - 32 : Math.min(320, vw - 32), right = phone ? 16 : Math.max(16, vw - r.right), below = r.top < vh / 2;
+  el.style.width = W + "px"; el.style.right = right + "px"; el.style.left = "auto";
+  if (below) { el.style.top = Math.round(r.bottom + 12) + "px"; el.style.bottom = "auto"; } else { el.style.bottom = Math.round(vh - r.top + 12) + "px"; el.style.top = "auto"; }
+  el.dataset.tail = below ? "up" : "down";
+  el.style.setProperty("--tip-tail", Math.round(Math.min(W - 28, Math.max(14, vw - right - (r.left + r.width / 2) - 7))) + "px");
+}
+function tipsClear() { document.querySelectorAll(".sd-tip").forEach((e) => e.remove()); }
+function tipsUpdate() {
+  const cur = document.querySelector(".sd-tip");
+  if (!tipsScreen()) { if (cur) tipsClear(); return; }
+  let want = null, anchor = null;
+  for (const tp of TIPS) { if (tipSeen(tp.key)) continue; const a = tp.at(); if (a) { want = tp; anchor = a; break; } }
+  if (!want) { if (cur) tipsClear(); return; }
+  if (cur && cur.dataset.tip === want.key && document.body.contains(cur) && (want.float || anchor.contains(cur) || anchor.parentNode.contains(cur))) { tipPlace(cur); return; }
+  tipsClear();
+  const el = document.createElement("div");
+  el.className = "sd-tip" + (want.float ? " sd-tip-float" : ""); el.dataset.tip = want.key; el.setAttribute("role", "note");
+  if (want.tail) el.dataset.tail = want.tail;
+  el.innerHTML = `<span class="sd-tip-t">${h(t(want.txt))}</span><button type="button" class="sd-tip-ok">${h(t("tipOk"))}</button>`;
+  el.querySelector("button").addEventListener("click", (e) => {
+    const had = e.currentTarget === document.activeElement;
+    tipSet(want.key); el.remove(); tipsUpdate();
+    if (had) { const f = want.key === "sd-tip-bubble" ? $("scorePill") : document.querySelector("[data-rp-primary]"); if (f) f.focus(); } // the focus must not fall to the page
+  });
+  if (want.float) document.body.appendChild(el);
+  else if (want.key === "sd-tip-card") anchor.querySelector(".rp-prog, .rp-dec-h").after(el);
+  else anchor.closest(".rp-act").prepend(el);
+  tipPlace(el);
+}
+const _renderGuideT = renderGuide;
+renderGuide = function () { _renderGuideT(); tipsUpdate(); };
+window.addEventListener("resize", () => tipPlace(document.querySelector(".sd-tip")));
+window.addEventListener("scroll", () => tipPlace(document.querySelector(".sd-tip")), { passive: true, capture: true });
+// the score pill and the AI bubble change without a new render: look again now and then, until every tip has been seen
+setInterval(() => { if (!tipsOff() && TIPS.some((x) => !tipSeen(x.key))) tipsUpdate(); }, 700);
 /* ===== Anuncios por categoría: muestra las palabras que causan cada aviso, cuándo salen y por qué cuentan ===== */
 Object.assign(T.es, {
   atHint: "Toca una categoría para ver por qué cuenta y qué hacer. Las palabras aparecen debajo de cada nombre.",
