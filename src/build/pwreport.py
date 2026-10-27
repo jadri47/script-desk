@@ -108,8 +108,8 @@ async def main():
                 labels = [x.strip().lower() for x in await pg.locator(".rp-c dt").all_inner_texts()]
                 ok(f"{n}: before / after / why", labels == ({"es": ["antes", "después", "por qué"], "en": ["before", "after", "why"]}[ui]), labels)
                 btns = [x.strip() for x in await pg.locator(".rp-act button").all_inner_texts()]
-                ok(f"{n}: apply / write myself / skip", btns == ({"es": ["Aplicar", "Lo escribo yo", "Saltar"], "en": ["Apply", "I'll write it", "Skip"]}[ui]), btns)
-                ok(f"{n}: «Más detalles» is closed and builds nothing", await pg.evaluate("!document.getElementById('rpMore').open") and await pg.locator(".topfix").count() == 0)
+                ok(f"{n}: apply / write myself / skip", btns == ({"es": ["Aplicar y seguir →", "Lo escribo yo", "Saltar"], "en": ["Apply and continue →", "I'll write it", "Skip"]}[ui]), btns)
+                ok(f"{n}: «Revisión detallada» is closed and builds nothing", await pg.evaluate("!document.getElementById('rpMore').open") and await pg.locator(".topfix").count() == 0)
                 ok(f"{n}: no rail, minimap or highlight overlay while it is closed", await pg.evaluate("!document.querySelector('.rl-layer,.rl-mini') && ![...(CSS.highlights||[]).keys()].some(k=>/^sd-[wu]-/.test(k))"))
                 ok(f"{n}: the call count did not move on re-render", (await pg.evaluate("renderGuide(), RP.calls")) == 1)
                 await pg.screenshot(path=OUT + f"rp_{ui}_{nm}.png", full_page=False)
@@ -139,8 +139,8 @@ async def main():
                 for _ in range(8):
                     if not await pg.locator("[data-rp=skip]").count(): break
                     await pg.click("[data-rp=skip]"); await pg.wait_for_timeout(250)
-                done = {"es": "Listo: no quedan decisiones", "en": "Done: no decisions left"}[ui]
-                ok(f"{n}: at the end it says there is nothing left", (await pg.inner_text(".rp-none")).strip() == done)
+                done = {"es": "Revisaste los cambios, sin aplicar ninguno", "en": "You reviewed the changes and applied none"}[ui]  # the end of the walk is the end card now (was «Listo: no quedan decisiones»); here the first change was undone, so none is applied
+                ok(f"{n}: at the end it says there is nothing left", (await pg.inner_text(".rp-end h3")).strip() == done)
                 ok(f"{n}: the Next button to step 3 is there", await pg.locator(".g-nav-steps .primary[data-step='3']").count() == 1)
                 # ---- navigation never calls again; re-evaluate calls once more ----
                 await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(500)

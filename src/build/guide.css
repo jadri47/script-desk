@@ -698,3 +698,31 @@ main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{mi
 .score-pill .sc-of{font:600 12px/1 var(--sans);opacity:.8} .score-pill .sc-of:empty{display:none}
 .lamp.espera{color:var(--accent);background:var(--weak-bg)}
 .gv-espera{box-shadow:inset 5px 0 0 var(--accent),var(--lift)}
+/* ===== Step 2 as a walk (2026-10-26, plan "Walk Juan through it", step 3): progress, gain, big actions, end card, chip ===== */
+.rp-dec{font-size:16px}
+.rp-prog{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;margin-bottom:10px}
+.rp-prog b,.rp-prog-t{font:700 16px/1.3 var(--sans);color:var(--ink)}
+.rp-gain{font:700 15px/1.2 var(--sans);color:var(--verde);background:var(--verde-bg);border:1px solid var(--verde);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.rp .hint,.rp-dec .rp-c dt{font-size:14px}
+.rp-dec .rp-tag,.rp-dec .rp-safe{font-size:14px}
+main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{min-height:44px}
+main[data-view="guide"] .rp-act .rp-go{min-height:48px;font-size:17px;padding:0 24px}
+.rp-act{align-items:center}
+.rp-end h3{margin:4px 0 8px;font:700 21px/1.3 var(--serif)}
+.rp-end-row{display:flex;align-items:baseline;gap:10px;margin:0 0 4px}.rp-end-n{font:700 32px/1.1 var(--sans);color:var(--ink)}
+.rp-end-c{margin:0 0 8px;font-weight:600}
+.rp-end-l{list-style:none;margin:0 0 4px;padding:0;display:grid;gap:4px}.rp-end-l li{color:var(--verde);font-weight:600}.rp-end-l li span{margin-right:4px}
+.rp-toast{position:fixed;right:12px;z-index:60;max-width:calc(100vw - 24px);box-sizing:border-box;padding:10px 16px;border-radius:999px;background:var(--sheet);color:var(--ink);border:2px solid var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.18);font:600 15px/1.3 var(--sans);opacity:0;pointer-events:none}
+.rp-toast.on{opacity:1}
+.rp-toast .rp-dots{font-size:15px}
+@media (prefers-reduced-motion:no-preference){.rp-toast{transition:opacity .2s}}
+.rp-detail{margin:18px 0 6px}
+.rp-detail>summary{font-weight:500;font-size:15px;min-height:44px;color:var(--accent)}
+.rp-detail>summary .rp-more-t{text-decoration:underline;text-underline-offset:3px}
+.rp-detail>summary .hint{color:var(--ink-2);font-size:14px}
+@media (max-width:620px){
+  main[data-view="guide"] .rp-act button,main[data-view="guide"] .rp-nav button{min-height:48px}
+  main[data-view="guide"] .rp-act .rp-go{flex:1 1 100%;min-height:52px}
+  .rp-dec .rp-act{position:sticky;bottom:calc(var(--sb-h,64px) + 6px);z-index:15;background:var(--paper);padding:8px 0 4px;margin-bottom:0}
+  .rp-toast{right:8px}
+}

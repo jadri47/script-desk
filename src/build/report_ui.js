@@ -21,6 +21,11 @@ Object.assign(T.es, {
   rpBy: "según el editor", rpBefore: (a) => `antes ${a}`, rpPossible: (b) => `→ ${b} posible`,
   rpColArea: "Área", rpColOrig: "Original", rpColNow: "Ahora", rpColChange: "Cambio", rpColSaid: "Qué dijo el editor", rpSame: "sin cambio",
   rpRe2: "Medir de nuevo con la IA", rpBubNote: "«Ahora» suma lo que el editor dijo que vale cada cambio aceptado. «Medir de nuevo» lee otra vez el guion.",
+  // the walk: one card at a time (2026-10-26, plan "Walk Juan through it", step 3)
+  rpGainTo: (n) => `+${n} a la nota`, rpApplyGo: "Aplicar y seguir →", rpDetail: "Revisión detallada",
+  rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} puntos · ${a}: de ${x == null ? "sin valorar" : x + " de 5"} a ${y == null ? "sin valorar" : y + " de 5"}`,
+  rpEndStep: "Paso 2 de 3 · Mejorar", rpEndH: "Terminaste los cambios", rpEndNoneH: "Revisaste los cambios, sin aplicar ninguno", rpEndNow: (a) => `Nota ahora: ${a}`,
+  rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
 Object.assign(T.en, {
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
@@ -39,14 +44,18 @@ Object.assign(T.en, {
   rpBy: "per the editor", rpBefore: (a) => `before ${a}`, rpPossible: (b) => `→ ${b} possible`,
   rpColArea: "Area", rpColOrig: "Original", rpColNow: "Now", rpColChange: "Change", rpColSaid: "What the editor said", rpSame: "no change",
   rpRe2: "Measure again with the AI", rpBubNote: "\"Now\" adds what the editor said each accepted change is worth. \"Measure again\" reads the script once more.",
+  rpGainTo: (n) => `+${n} to your score`, rpApplyGo: "Apply and continue →", rpDetail: "Detailed review",
+  rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} points · ${a}: from ${x == null ? "not rated" : x + " of 5"} to ${y == null ? "not rated" : y + " of 5"}`,
+  rpEndStep: "Step 2 of 3 · Improve", rpEndH: "You finished the changes", rpEndNoneH: "You reviewed the changes and applied none", rpEndNow: (a) => `Score now: ${a}`,
+  rpEndCount: (a, s) => `${a} applied · ${s} skipped`, rpEndList: "Changes applied", rpEndPub: "Go to Publish →",
 });
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "" };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0 };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
-function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; }
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); }
 
 // A stored report is untrusted (old versions, other devices): keep only what has the right shape.
 function rpClean(r) {
@@ -120,7 +129,7 @@ async function rpRun(force) {
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
+      if (out) { G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
@@ -184,6 +193,59 @@ function rpWords(cur) {
 }
 const rpCardOf = (cur) => cur.type === "risk" ? cur.d.card : { id: "rp-" + cur.i, ids: ["rp-" + cur.i], label: t("rpArea")[cur.it.area], fix: cur.it.why };
 
+// ---- the walk: position, points, chip ----
+// Position among ALL cards of this walk. Risk cards leave the list once applied or skipped, so the ones seen are remembered (RP.seen);
+// the items are always all there (applied / skipped / pending / lost). After a reload the seen ones are gone, so the count restarts
+// from what is still open (RP.skip is not stored either: skipped items come back as pending).
+function rpWalk(cur) {
+  const risk = rpRiskList();
+  for (const d of risk) if (!RP.seen.has(d.id)) RP.seen.set(d.id, { ids: [d.id, ...(d.ids || []), d.card && d.card.id].filter(Boolean), label: d.card ? plainLabel(d.card.id, d.card.label) : d.id });
+  const open = new Set(risk.map((d) => d.id)), gone = [...RP.seen.keys()].filter((k) => !open.has(k)).length;
+  const items = G.report ? G.report.items.length : 0, done = rpStates().filter((s) => s.st === "applied" || s.st === "skipped").length;
+  return { i: gone + (cur.type === "risk" ? 1 : cur.i + 1), n: gone + risk.length + items }; // an item's place is its place in the report, so Undo / Previous never renumber it
+}
+const rpPts = (rd) => (rd.score == null ? rd.rules : rd.score);
+// The points one card's patch moves the pill by (same recipe as the pill: readinessOf with the text), plus the area's rating before/after.
+// Items go through itemGain (report_logic.js); a risk card compares the readiness of the changed text with now. 0 = show nothing.
+const RPG = { text: null, rep: null, m: new Map() };
+function rpInfo(cur, p) {
+  const out = { gain: 0 };
+  if (!cur || !p || p.kind !== "patch" || !p.patches || !p.patches.length || !state.result) return out;
+  const text = state.text, rep = G.report;
+  if (RPG.text !== text || RPG.rep !== rep) { RPG.text = text; RPG.rep = rep; RPG.m = new Map(); }
+  const key = cur.id + "|" + JSON.stringify(p.patches);
+  if (RPG.m.has(key)) return RPG.m.get(key);
+  let t2;
+  try { t2 = applyPatches(text, p.patches); } catch (e) { return out; } // a patch that no longer fits: no figure, apply itself refuses
+  if (cur.type === "item") {
+    if (cur.st !== "lost" && rep) {
+      out.gain = itemGain(text, state.result, state.opts, rep, cur.i, p.patches[0].rep, state.fixDismissed);
+      out.area = cur.it.area; out.from = effectiveReport(text, rep).areas[cur.it.area].rating; out.to = effectiveReport(t2, rep).areas[cur.it.area].rating;
+    }
+  } else {
+    out.gain = rpPts(readinessOf(analyze(t2, state.opts), rep, state.fixDismissed, t2)) - rpPts(readinessOf(state.result, rep, state.fixDismissed, text));
+    out.label = plainLabel(cur.d.card.id, cur.d.card.label);
+  }
+  RPG.m.set(key, out);
+  return out;
+}
+// The little chip under the pill after Apply: «+3 · Gancho ●●●○○ → ●●●●●» for ~3 s; the pill itself tweens through scApply / scTween.
+function rpChip(info, cur) {
+  let el = $("rpChip");
+  const fresh = !el;
+  if (!el) { el = document.createElement("div"); el.id = "rpChip"; el.className = "rp-toast"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+  const A = t("rpArea"), name = cur.type === "item" ? A[cur.it.area] : info.label, up = info.gain > 0;
+  const dots = cur.type === "item" && up ? ` <span aria-hidden="true" class="rp-dots">${rpDots(info.from)} → ${rpDots(info.to)}</span>` : "";
+  const html = up ? `<b>${h(t("rpChipUp")(info.gain, name))}</b>${dots}<span class="vh">${h(cur.type === "item" ? t("rpChipAria")(info.gain, name, info.from, info.to) : "")}</span>` : h(t("rpChipDone")(name));
+  const pill = $("scorePill"), pr = pill && !pill.hidden ? pill.getBoundingClientRect() : null;
+  el.style.top = Math.max(8, pr ? pr.bottom + 8 : 12) + "px";
+  const put = () => { el.innerHTML = html; el.classList.add("on"); };
+  if (fresh) setTimeout(put, 30); else put(); // a live region must exist before its text changes
+  clearTimeout(RP.chipTm); RP.chipTm = setTimeout(() => el.classList.remove("on"), 3200);
+}
+// «antes» = what the same report was worth without the applied changes (the bubble's «antes» and the end card both use it)
+const rpBeforeOf = (rd) => Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase);
+
 // ---- html ----
 const rpDots = (n) => (n == null ? "○○○○○" : "●".repeat(n) + "○".repeat(5 - n));
 function rpTime(at) {
@@ -214,7 +276,7 @@ function rpPopHTML(R, rd) {
   if (!rep || rd.score == null) return null;
   const A = t("rpArea"), eff = effectiveReport(state.text, rep).areas, base = rep.baseline || null;
   // «before» = what the same report was worth without the applied changes
-  const before = Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase), showBefore = rd.editorEst > 0 && before !== rd.score;
+  const before = rpBeforeOf(rd), showBefore = rd.editorEst > 0 && before !== rd.score;
   const dots = (n, k) => `<span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}${n == null ? "" : " " + n}</span></span>`;
   const rows = REPORT_AREAS.map((k) => {
     const a = eff[k], now = a.rating, est = !!a.est, o = base ? (base[k] != null ? base[k] : null) : undefined;
@@ -243,29 +305,32 @@ function rpDecisionHTML(R, cur, states) {
   const prevOk = RP.hist.some((e) => (e.t === "item" ? RP.skip.has(e.i) : e.ids.some((id) => state.fixDismissed.has(id))));
   const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
   if (cur.type === "item") {
-    const it = cur.it, n = G.report.items.length, A = t("rpArea")[it.area], title = `${t("rpChange")(cur.i + 1, n)} · ${A}`;
+    const it = cur.it, A = t("rpArea")[it.area], wk = rpWalk(cur), title = `${t("rpChange")(wk.i, wk.n)} · ${A}`;
     const lost = cur.st === "lost", chosen = rpChosen(cur), many = (it.alts || []).length > 0;
+    const gain = lost ? 0 : rpInfo(cur, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: chosen }] }).gain;
     let broke = "";
     if (!lost) {
       const ck = verifyProposal(state.text, state.opts, R, { kind: "patch", patches: [{ start: cur.start, end: cur.end, rep: chosen }] });
       if (ck.broke.length) broke = `<p class="status err">${h(t("fxBreaks")(ck.broke.map((id) => rowLabel(ck.R2 || R, id)).join(", ")))}</p>`;
     }
-    return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(title)}</b></div>
+    return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h rp-prog"><b id="rpD">${h(title)}</b>${gain > 0 ? `<span class="rp-gain">${h(t("rpGainTo")(gain))}</span>` : ""}</div>
       <dl class="rp-cmp"><div class="rp-c"><dt>${h(t("fxBefore"))}</dt><dd class="rp-orig"${lost ? "" : ` data-es="${cur.start}" data-ee="${cur.end}"`}><del>${h(it.original)}</del></dd></div>
       ${many ? `<div class="rp-c"><dt>${h(t("rpPickLbl"))}</dt><dd><fieldset class="rp-pick"><legend class="vh">${h(t("rpPickLbl"))}</legend>${[it.replacement, ...it.alts].map((x, k) => `<label class="rp-opt"><input type="radio" name="rpPick" value="${k}" data-rp-pick="${h(cur.id)}"${x === chosen ? " checked" : ""}><span class="rp-opt-b"><span class="rp-opt-t">${h(x)}</span><span class="hint">${h(k ? t("rpPickAlt") : t("rpPickMain"))}</span></span></label>`).join("")}</fieldset></dd></div>` : `<div class="rp-c"><dt>${h(t("fxAfter"))}</dt><dd><ins>${h(it.replacement)}</ins></dd></div>`}
       <div class="rp-c"><dt>${h(t("rpWhy"))}</dt><dd>${h(it.why)}</dd></div></dl>
       ${lost ? `<p class="status err" role="status">${h(t("rpGone"))}</p>` : broke}${rpWriteHTML(cur)}
-      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t(many ? "rpApplyPick" : "fxApply"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
+      <div class="actions rp-act">${lost ? "" : `<button type="button" class="small primary rp-go" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("rpApplyGo"))}</button>`}${lost || w ? "" : `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>`}<button type="button" class="small linkish" data-rp="skip"${lost ? " data-rp-primary" : ""}>${h(t("coSkip"))}</button></div>${nav}</section>`;
   }
   const d = cur.d, c = d.card, wr = rpWords(cur);
   const opts = wr ? [rpWordProp(wr, R)] : d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []), p = opts[0];
   const canWrite = !!(d.at || c.field);
+  const wk = rpWalk(cur), gain = p ? rpInfo(cur, p).gain : 0;
+  const prog = `<div class="rp-prog"><span class="rp-prog-t">${h(t("rpChange")(wk.i, wk.n))}</span>${gain > 0 ? `<span class="rp-gain">${h(t("rpGainTo")(gain))}</span>` : ""}</div>`;
   const words = wr ? `<div class="fx-lbl">${h(t("rpWordsLbl"))}</div>${wr.rows.map((r, ri) => `<fieldset class="rp-words"><legend>«${h(r.term)}» <span class="hint">· ${h(r.hits.length > 1 ? t("rpTimes")(r.hits.length) : fmtTime(state.result.timeAt(r.hits[0].start)))}</span></legend>${r.alts.map((a, k) => `<label class="rp-chip"><input type="radio" name="rpW${ri}" value="${k}" data-rp-wpick="${h(r.key)}"${k === Math.min(RP.wpick[r.key] || 0, r.alts.length - 1) ? " checked" : ""}><span class="rp-chip-b"><b>${h(matchCase(r.term, a))}</b><span class="rp-safe">${h(t("rpWordSafe"))}</span></span></label>`).join("")}</fieldset>`).join("")}${wr.rest ? `<p class="hint">${h(t("rpWordsRest"))}</p>` : ""}` : "";
-  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
+  return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1">${prog}<div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
     ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}${words}
     ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${rpWriteHTML(cur)}
-    <div class="actions rp-act">${p ? `<button type="button" class="small primary" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("fxApply"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
+    <div class="actions rp-act">${p ? `<button type="button" class="small primary rp-go" data-rp="apply"${w ? "" : " data-rp-primary"}>${h(t("rpApplyGo"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-rp="write">${h(t("coWrite"))}</button>` : ""}<button type="button" class="small linkish" data-rp="skip">${h(t("coSkip"))}</button></div>${nav}</section>`;
 }
 function rpWordProp(wr, R) {
   const p = { kind: "patch", label: t("rpWordLbl"), patches: wr.patches };
@@ -286,12 +351,34 @@ function reportHTML(R) {
   else {
     if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p><div class="rp-nav"><button type="button" class="small primary" data-rp="re">${h(t("rpRe"))}</button></div>`;
     if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
-    body += cur ? rpDecisionHTML(R, cur, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
+    const ended = !cur && rep && states.some((s) => s.st === "applied" || s.st === "skipped");
+    body += cur ? rpDecisionHTML(R, cur, states) : ended ? rpEndHTML(R, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
   }
   return `<section class="rp" data-rp-root aria-label="${h(t("rpDecLbl"))}"><span class="status" id="rpMsg" role="status">${h(msg)}</span>${body}</section>`;
 }
+// End of the walk: no pending or lost card left. Counts: items from rpStates, risk cards from the ones seen in this walk and their log entries.
+function rpEndHTML(R, states) {
+  const rd = readinessOf(R, G.report, state.fixDismissed, state.text), A = t("rpArea");
+  const log = (state.fixLog || []);
+  const riskDone = [], riskSkip = [];
+  for (const [, m] of RP.seen) {
+    if (log.some((x) => x.kind === "done" && m.ids.includes(x.id))) riskDone.push(m.label);
+    else if (log.some((x) => x.kind === "skip" && m.ids.includes(x.id))) riskSkip.push(m.label);
+  }
+  const ap = states.filter((s) => s.st === "applied"), a = ap.length + riskDone.length, sk = states.filter((s) => s.st === "skipped").length + riskSkip.length;
+  const now = rd.score != null ? rd.score : rd.rules, before = rd.score != null ? rpBeforeOf(rd) : now;
+  const nums = rd.score != null && a > 0 && rd.editorEst > 0 && before !== now ? `<span class="rp-end-n"><span class="vh">${h(t("rpBefore")(before))} </span><span aria-hidden="true">${before} → </span><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>` : `<span class="rp-end-n"><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>`;
+  const list = [...ap.map((s) => A[G.report.items[s.i].area]), ...riskDone].map((x) => `<li><span aria-hidden="true">✓</span> ${h(x)}</li>`).join("");
+  return `<section class="rp-dec rp-end" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-prog"><span class="rp-prog-t">${h(t("rpEndStep"))}</span></div>
+    <h3 id="rpD">${h(t(a ? "rpEndH" : "rpEndNoneH"))}</h3>
+    <p class="rp-end-row">${nums}<span class="hint">${h(t("rpBy"))}</span></p>
+    <p class="rp-end-c">${h(t("rpEndCount")(a, sk))}</p>
+    ${list ? `<ul class="rp-end-l" aria-label="${h(t("rpEndList"))}">${list}</ul>` : ""}
+    <div class="actions rp-act"><button type="button" class="small primary rp-go" data-rp="publish" data-rp-primary>${h(t("rpEndPub"))}</button><button type="button" class="small linkish" data-rp="re">${h(t("rpRe2"))}</button></div>
+    ${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}</section>`;
+}
 function rpWrapMore(inner, open) {
-  return `<details class="rp-more" id="rpMore"${open ? " open" : ""}><summary id="rpMoreSum"><span class="rp-more-t">${h(t("rpMore"))}</span> <span class="hint">${h(t("rpMoreHint"))}</span></summary><div class="rp-more-body">${inner}</div></details>`;
+  return `<details class="rp-more rp-detail" id="rpMore"${open ? " open" : ""}><summary id="rpMoreSum"><span class="rp-more-t">${h(t("rpDetail"))}</span> <span class="hint">${h(t("rpMoreHint"))}</span></summary><div class="rp-more-body">${inner}</div></details>`;
 }
 
 // ---- actions ----
@@ -320,12 +407,15 @@ function rpPrev() {
 }
 function rpApplyP(cur, p) {
   if (cur.type === "item" && cur.st === "lost") { rerunReview(t("fxStale")); return; }
+  const info = rpInfo(cur, p), v0 = $("script").value, n0 = state.fixLog.length; // figures read before the text moves
   RP.applying = rpKey(); RP.delay = 1100; RP.write = null;
   try { applyProposal(p, rpCardOf(cur)); } finally { RP.applying = null; }
+  if ($("script").value !== v0 || state.fixLog.length > n0) rpChip(info, cur); // only when it really applied (the stale guard refuses)
 }
 function rpAct(act) {
   const cur = rpCurrent();
   if (act === "re") { RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
+  if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
   if (!cur) return;
   if (act === "skip") return rpSkip(cur);
@@ -377,12 +467,15 @@ function rpWire() {
   // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button keeps its own meaning
   root.addEventListener("keydown", (e) => {
     const tg = e.target;
-    if (e.altKey || e.ctrlKey || e.metaKey || /^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const click = (sel) => { const b = root.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (e.key === "Enter" && tg.tagName === "INPUT" && /^(radio|checkbox)$/.test(tg.type)) return click("[data-rp-primary]"); // a choice is not a text field
+    if (/^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
     if (e.key === "ArrowRight") click('[data-rp="skip"]');
     else if (e.key === "ArrowLeft") click('[data-rp="prev"]');
     else if (e.key === "Enter" && !/^(BUTTON|A|SUMMARY)$/.test(tg.tagName) && !tg.closest("[role=button]")) click("[data-rp-primary]");
   });
+  const sb = $("stepBar"); if (sb) document.documentElement.style.setProperty("--sb-h", Math.ceil(sb.getBoundingClientRect().height) + "px"); // the sticky action row sits above the phone's step bar
   const md = $("rpMore");
   if (md) md.addEventListener("toggle", () => {
     if (md.open === RP.more) return; // the toggle event of a render is not a choice

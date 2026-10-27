@@ -12,8 +12,8 @@ fails = []
 def ok(n, c, x=""):
     print(("ok   " if c else "FAIL ") + n, x if not c else "")
     if not c: fails.append(n)
-TX = {"es": {"pick": "Aplicar la elegida", "main": "Propuesta del editor", "alt": "Otra opción", "words": "Elige otra palabra", "safe": "✓ sin riesgo de anuncios", "soft": "Aviso amarillo: Puede limitar anuncios", "after": "Después"},
-      "en": {"pick": "Apply the one chosen", "main": "Editor's suggestion", "alt": "Another option", "words": "Choose another word", "safe": "✓ no ad risk", "soft": "Yellow warning: Can limit ads", "after": "After"}}
+TX = {"es": {"pick": "Aplicar y seguir →", "main": "Propuesta del editor", "alt": "Otra opción", "words": "Elige otra palabra", "safe": "✓ sin riesgo de anuncios", "soft": "Aviso amarillo: Puede limitar anuncios", "after": "Después"},
+      "en": {"pick": "Apply and continue →", "main": "Editor's suggestion", "alt": "Another option", "words": "Choose another word", "safe": "✓ no ad risk", "soft": "Yellow warning: Can limit ads", "after": "After"}}
 # two clean sentences of the demo (unique, away from verses), as in pwreport
 PICK = r"""() => { ensureReview();
   const text = $('script').value, R = state.result, spans = verseSpans(text, R).filter((s) => s.kind !== 'ref');
@@ -79,7 +79,7 @@ async def main():
                 txt = await pg.evaluate("$('script').value")
                 ok(f"{n}: applying puts in the chosen option, not the editor's suggestion", alt2 and alt2 in txt and picks[0] not in txt, alt2)
                 d = await pg.evaluate(DEC)
-                ok(f"{n}: a change without alternatives keeps the plain «{X['after']}» line and «Aplicar»", d and not d["radios"] and X["after"] in d["dt"] and d["apply"] != X["pick"], d)
+                ok(f"{n}: a change without alternatives keeps the plain «{X['after']}» line and the same «Aplicar y seguir» button", d and not d["radios"] and X["after"] in d["dt"] and d["apply"] == X["pick"], d)
                 ok(f"{n}: no page errors (excelente)", not errs, errs)
                 await pg.close()
                 # ---- «muy flojo» (bad): yellow violence warning; the report has words for its terms
