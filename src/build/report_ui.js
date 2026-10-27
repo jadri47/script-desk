@@ -4,6 +4,7 @@
 // the person through the rule-based ad risks first and then the report's changes. Today's coach / walker / rail / legend / «Más
 // revisiones» / Ask Claude live behind «Más detalles» and are only built (so only painted) while that is open.
 Object.assign(T.es, {
+  rpWhere: "Dónde está", rpFull: "Ver guion completo", rpFocusBack: "Ver solo este párrafo",
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
   rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "La IA está leyendo tu guion como lo haría un editor",
@@ -28,6 +29,7 @@ Object.assign(T.es, {
   rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
 Object.assign(T.en, {
+  rpWhere: "Where it is", rpFull: "Show the full script", rpFocusBack: "Show only this paragraph",
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
   rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "The AI is reading your script the way an editor would",
@@ -52,7 +54,7 @@ Object.assign(T.en, {
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0 };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0, full: false };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
 function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); }
@@ -354,7 +356,9 @@ function reportHTML(R) {
     const ended = !cur && rep && states.some((s) => s.st === "applied" || s.st === "skipped");
     body += cur ? rpDecisionHTML(R, cur, states) : ended ? rpEndHTML(R, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
   }
-  return `<section class="rp" data-rp-root aria-label="${h(t("rpDecLbl"))}"><span class="status" id="rpMsg" role="status">${h(msg)}</span>${body}</section>`;
+  // phone: under the card only the paragraph being changed shows; this label and link belong to it (CSS shows them only then)
+  const where = cur ? `<p class="rp-wh">${h(t("rpWhere"))}</p><p class="rp-wf"><button type="button" class="linkish" data-rp-full aria-pressed="${RP.full ? "true" : "false"}">${h(t(RP.full ? "rpFocusBack" : "rpFull"))}</button></p>` : "";
+  return `<section class="rp" data-rp-root aria-label="${h(t("rpDecLbl"))}"><span class="status" id="rpMsg" role="status">${h(msg)}</span>${body}</section>${where}`;
 }
 // End of the walk: no pending or lost card left. Counts: items from rpStates, risk cards from the ones seen in this walk and their log entries.
 function rpEndHTML(R, states) {
@@ -444,10 +448,42 @@ function rpAct(act) {
 }
 function rpShow() {
   const cur = rpCurrent();
+  if (cur && cur.start == null) document.querySelector("main").classList.toggle("rp-nospot", document.querySelector("main").classList.contains("rp-focus")); // no place in the script to show
   if (!cur || cur.start == null || !wkBuild()) return;
   const r = wkRange(cur.start, Math.max(cur.end, cur.start + 1));
-  if (r) { wkScrollTo(r); wkFlash([r]); }
+  if (r) { if (!rpFocusFit(r)) wkScrollTo(r); wkFlash([r]); }
 }
+// Phone, step 2 (plan "Walk Juan through it", step 5, 2026-10-26): the card comes first and under it only the paragraph being changed, so the
+// card is on screen at scroll 0. Pure layout: CSS (guide.css, main.rp-focus) reorders the page and the script box is given the height of that
+// paragraph through --rp-ph; the editor's own DOM is never touched. «Ver guion completo» (RP.full) gives back the docked full script, and
+// «Más detalles» open does too (the old walker needs it). Desktop (split view) is unchanged.
+function rpFocusSync() {
+  const main = document.querySelector("main");
+  const on = V.guided && V.step === 2 && !(typeof SPLIT !== "undefined" && SPLIT.on) && !RP.more && !!document.querySelector(".rp-dec");
+  main.classList.toggle("rp-focus", on && !RP.full);
+  main.classList.toggle("rp-full", on && RP.full);
+  if (!on) main.classList.remove("rp-nospot");
+}
+function rpFocusFit(r) {
+  const main = document.querySelector("main"), ed = ED.el;
+  if (!ed || !main.classList.contains("rp-focus")) return false;
+  let n = r.startContainer;
+  while (n && n.parentNode !== ed) n = n.parentNode;
+  if (!n || n.nodeType !== 1) { main.classList.remove("rp-nospot"); return false; }
+  main.classList.remove("rp-nospot");
+  // the box is exactly as tall as the paragraph plus the gap to its neighbours, so no line of the paragraph before or after peeks in
+  const cs = getComputedStyle(ed), pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0;
+  const cap = Math.round(window.innerHeight * 0.4), nb = n.getBoundingClientRect(), pv = n.previousElementSibling, nx = n.nextElementSibling;
+  const offT = pv ? Math.min(pt, Math.max(0, nb.top - pv.getBoundingClientRect().bottom)) : pt;
+  const offB = nx ? Math.max(0, Math.min(pb, nx.getBoundingClientRect().top - nb.bottom) - 2) : pb; // 2 px of rounding room: scrollTop is a whole number
+  document.documentElement.style.setProperty("--rp-ph", Math.min(Math.max(Math.ceil(nb.height) + offT + offB, 72), cap) + "px");
+  void ed.offsetHeight; // apply the new height before measuring where the paragraph is inside the box
+  const eb = ed.getBoundingClientRect(), nb2 = n.getBoundingClientRect(), rb = r.getBoundingClientRect();
+  const top = nb2.height + offT + offB > cap ? rb.top : nb2.top; // a paragraph taller than the box: start at the changed sentence
+  ed.scrollTop = Math.max(0, ed.scrollTop + (top - eb.top) - offT);
+  return true;
+}
+window.addEventListener("resize", () => { if (V.guided && V.step === 2) rpFocusSync(); });
 function rpWire() {
   const root = document.querySelector("[data-rp-root]");
   if (!root) return;
@@ -462,6 +498,8 @@ function rpWire() {
   root.querySelectorAll("input[data-rp-pick]").forEach((x) => x.addEventListener("change", () => { RP.pick[x.dataset.rpPick] = +x.value; pickRedraw(`input[name="rpPick"][value="${x.value}"]`); }));
   root.querySelectorAll("input[data-rp-wpick]").forEach((x) => x.addEventListener("change", () => { RP.wpick[x.dataset.rpWpick] = +x.value; pickRedraw(`input[name="${x.name}"][value="${x.value}"]`); }));
   if (RP.refocus) { const f = root.querySelector(RP.refocus); RP.refocus = ""; if (f) f.focus(); }
+  const fb = document.querySelector("[data-rp-full]");
+  if (fb) fb.addEventListener("click", () => { RP.full = !RP.full; RP.shown = ""; const y = window.scrollY; renderGuide(); window.scrollTo(0, y); const nb = document.querySelector("[data-rp-full]"); if (nb) nb.focus(); });
   const w = $("rpW");
   if (w) w.addEventListener("input", () => { if (RP.write) RP.write.value = w.value; });
   // Enter = the main button, → = skip, ← = previous; never while typing in a box, and Enter on a button keeps its own meaning
@@ -486,6 +524,7 @@ function rpWire() {
   });
 }
 function rpAfterRender() {
+  rpFocusSync();
   if (!V.guided || V.step !== 2) { RP.shown = ""; return; }
   rpWire();
   if (!hasScript()) return;

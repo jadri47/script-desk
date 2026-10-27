@@ -44,7 +44,7 @@ async def main():
             print(n, "advice:", (await pg.inner_text(".ask-ans"))[:140].replace("\n"," | "), "| tier:", seen["tier"])
             # full mode placement
             pg.once("dialog", lambda d: asyncio.ensure_future(d.accept()))
-            await pg.click("#expertToggle"); await pg.wait_for_timeout(600)
+            await pg.click("#moreBtn"); await pg.click("#expertToggle"); await pg.wait_for_timeout(600)
             print(n, "full mode card after topfix:", await pg.evaluate("(()=>{const a=$('askClaude'); return !!a && a.previousElementSibling && a.previousElementSibling.classList.contains('topfix')})()"))
             await pg.close()
         print("ERR", errs); await b.close()

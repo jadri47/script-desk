@@ -71,7 +71,7 @@ async def main():
         d = await dl.value; print("DOWNLOAD:", d.suggested_filename)
         # full-mode confirm
         ctx2pg.once("dialog", lambda dlg: asyncio.ensure_future(dlg.dismiss()))
-        await ctx2pg.click("#expertToggle"); await ctx2pg.wait_for_timeout(300)
+        await ctx2pg.click("#moreBtn"); await ctx2pg.click("#expertToggle"); await ctx2pg.wait_for_timeout(300)
         print("CONFIRM dismissed -> still guided:", await ctx2pg.evaluate("V.guided"), "checkbox:", await ctx2pg.evaluate("$('expertToggle').checked"))
         await ctx2pg.screenshot(path="sa_member.png")
         print("ERR", errs); await b.close()

@@ -2,6 +2,8 @@
 /* ===== Modo guiado: 3 pasos, lenguaje sencillo, modo completo detrás de un interruptor ===== */
 Object.assign(T.es, {
   expert: "Modo completo",
+  // (jadri47, 2026-10-26: plan "Walk Juan through it", step 5) «Modo completo» lives in a ⋯ menu; step 1 asks only for the script
+  moreBtn: "Más opciones", expertHint: "Apagado: la app te lleva paso a paso. Encendido: todas las revisiones y herramientas en una pantalla.", s1More: "Más opciones",
   // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
   steps: ["Escribir", "Mejorar", "Publicar"],
   stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene mejorar antes de grabar", "Publicar: empaque, apertura y grabación"],
@@ -28,6 +30,7 @@ Object.assign(T.es, {
 });
 Object.assign(T.en, {
   expert: "Full mode",
+  moreBtn: "More options", expertHint: "Off: the app walks you step by step. On: every check and tool on one screen.", s1More: "More options",
   steps: ["Write", "Improve", "Publish"],
   stepQ: ["Write or paste the episode script", "What's worth improving before you record", "Publish: packaging, opening and recording"],
   s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Sample: "Try a sample script", s1Continue: "Continue a saved episode", s1Open: "Open",
@@ -52,7 +55,7 @@ Object.assign(T.en, {
   plainMoney: (x) => `Could limit ads: ${x.toLowerCase()}`, plainPack: "The title or thumbnail has words that limit ads",
 });
 const SAMPLE_ES = __SAMPLE__;
-const V = { guided: lsGet("sd-expert") !== "1", step: 1 };
+const V = { guided: lsGet("sd-expert") !== "1", step: 1, s1More: false };
 
 function plainLabel(id, fallback) {
   if (!V.guided) return fallback;
@@ -86,6 +89,7 @@ function applyView() {
   main.dataset.step = String(V.step);
   document.documentElement.classList.toggle("guided", V.guided);
   $("expertToggle").checked = !V.guided;
+  moreLabels();
   if (V.guided) { main.dataset.mode = "review"; renderGuide(); }
   else {
     $("guide").innerHTML = ""; $("guideTop").innerHTML = ""; $("stepBar").innerHTML = "";
@@ -126,6 +130,7 @@ function renderGuide() {
   $("stepBar").querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => goStep(+b.dataset.step)));
   const head = (n) => `<header class="g-step-h"><span class="g-step-n">${n}</span><h2>${h(t("stepQ")[n - 1])}</h2></header>`;
   top.innerHTML = ""; body.innerHTML = "";
+  s1MoreSync();
   if (V.step === 1) {
     top.innerHTML = `${head(1)}<p class="lead">${h(t("s1Lead"))}</p>`;
     body.innerHTML = `<div class="g-s1-extra"><button type="button" class="linkish" id="gSample">${h(t("s1Sample"))}</button></div>`;
@@ -187,9 +192,41 @@ $("runBtn").addEventListener("click", async () => {
   goStep(2);
   if (db && G.status === "borrador") setStatus("revision");
 });
-$("expertToggle").addEventListener("change", () => { V.guided = !$("expertToggle").checked; lsSet("sd-expert", V.guided ? "0" : "1"); applyView(); });
+$("expertToggle").addEventListener("change", () => { V.guided = !$("expertToggle").checked; lsSet("sd-expert", V.guided ? "0" : "1"); moreClose(false); applyView(); });
+
+// ⋯ menu in the header: «Modo completo» (and later any rarely used control) lives here. Esc closes it and gives the focus back to ⋯;
+// arrows move between items; a tap or Tab outside closes it. Items are >= 44 px (guide.css).
+function moreLabels() { const b = $("moreBtn"); if (b) { b.setAttribute("aria-label", t("moreBtn")); b.title = t("moreBtn"); $("moreMenu").setAttribute("aria-label", t("moreBtn")); } }
+const moreOpen = () => !$("moreMenu").hidden;
+function moreClose(back) { const m = $("moreMenu"), b = $("moreBtn"); m.hidden = true; b.setAttribute("aria-expanded", "false"); if (back) b.focus(); }
+function moreShow() { const m = $("moreMenu"); m.hidden = false; $("moreBtn").setAttribute("aria-expanded", "true"); const f = m.querySelector('[role^="menuitem"]'); if (f) f.focus(); }
+$("moreBtn").addEventListener("click", () => { if (moreOpen()) moreClose(true); else moreShow(); });
+document.addEventListener("keydown", (e) => {
+  if (!moreOpen()) return;
+  if (e.key === "Escape") { e.preventDefault(); moreClose(true); return; }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const items = [...$("moreMenu").querySelectorAll('[role^="menuitem"]')]; if (!items.length) return;
+    e.preventDefault(); const at = items.indexOf(document.activeElement);
+    items[(Math.max(at, 0) + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length].focus();
+  }
+});
+document.addEventListener("pointerdown", (e) => { if (moreOpen() && !e.target.closest("#moreWrap")) moreClose(false); });
+$("moreWrap").addEventListener("focusout", (e) => { if (moreOpen() && e.relatedTarget && !e.relatedTarget.closest("#moreWrap")) moreClose(false); });
+
+// Step 1 in guided mode asks only for the script. The central idea, variant/Bible version and the optional title, keyword, thumbnail,
+// description, series and language fields stay in the page (nothing is deleted) behind one small «Más opciones» (the same fields are also
+// in Modo completo).
+function s1MoreSync() {
+  const main = document.querySelector("main"), b = $("s1MoreBtn");
+  main.classList.toggle("s1-more", !!V.s1More);
+  if (b) b.setAttribute("aria-expanded", V.s1More ? "true" : "false");
+}
+$("s1MoreBtn").addEventListener("click", () => { V.s1More = !V.s1More; s1MoreSync(); });
 const _gOnLangG = gOnLang;
 gOnLang = function () { if (V.guided) renderGuide(); else _gOnLangG(); };
+const _gOnLangMore = gOnLang;
+gOnLang = function () { _gOnLangMore.apply(this, arguments); moreLabels(); s1MoreSync(); };
+
 // Keep the Approve button in step with the packaging fields as Juan types.
 const _renderPackChecksG = renderPackChecks;
 renderPackChecks = function () {

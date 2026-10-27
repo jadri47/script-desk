@@ -5,7 +5,7 @@ def rep(old, new, count=1):
     global s
     n = s.count(old); assert n == count, (n, old[:90]); s = s.replace(old, new)
 css = open("guion.css", encoding="utf-8").read() + open("guide.css", encoding="utf-8").read() + open("theme2026.css", encoding="utf-8").read()
-ui = open("guion_ui.js", encoding="utf-8").read() + open("guion_ui2.js", encoding="utf-8").read() + open("fix_ui.js", encoding="utf-8").read() + open("guide_ui.js", encoding="utf-8").read().replace("__SAMPLE__", open("sample.json", encoding="utf-8").read()) + open("series_ui.js", encoding="utf-8").read() + open("more_ui.js", encoding="utf-8").read() + open("theme_ui.js", encoding="utf-8").read() + open("audience_ui.js", encoding="utf-8").read() + open("demo_ui.js", encoding="utf-8").read().replace("__EXAMPLES__", open("examples.json", encoding="utf-8").read()) + open("ask_ui.js", encoding="utf-8").read() + open("message_ui.js", encoding="utf-8").read() + open("bible_ui.js", encoding="utf-8").read() + open("lang_ui.js", encoding="utf-8").read() + open("episodes_ui.js", encoding="utf-8").read() + open("editor_ui.js", encoding="utf-8").read() + open("layout_ui.js", encoding="utf-8").read() + open("phases_ui.js", encoding="utf-8").read() + open("polish_ui.js", encoding="utf-8").read() + open("help_ui.js", encoding="utf-8").read() + open("edmarks_ui.js", encoding="utf-8").read() + open("score_ui.js", encoding="utf-8").read() + open("walk_ui.js", encoding="utf-8").read() + open("rail_ui.js", encoding="utf-8").read() + open("coach_ui.js", encoding="utf-8").read() + open("coach_ai.js", encoding="utf-8").read() + open("report_ui.js", encoding="utf-8").read() + open("pub_ui.js", encoding="utf-8").read() + open("aistatus_ui.js", encoding="utf-8").read() + open("adterms_ui.js", encoding="utf-8").read() + open("autosize_ui.js", encoding="utf-8").read() + (open("standalone_ui.js", encoding="utf-8").read() if __import__("os").environ.get("SD_STANDALONE") else "")
+ui = open("guion_ui.js", encoding="utf-8").read() + open("guion_ui2.js", encoding="utf-8").read() + open("fix_ui.js", encoding="utf-8").read() + open("guide_ui.js", encoding="utf-8").read().replace("__SAMPLE__", open("sample.json", encoding="utf-8").read()) + open("series_ui.js", encoding="utf-8").read() + open("more_ui.js", encoding="utf-8").read() + open("theme_ui.js", encoding="utf-8").read() + open("audience_ui.js", encoding="utf-8").read() + open("demo_ui.js", encoding="utf-8").read().replace("__EXAMPLES__", open("examples.json", encoding="utf-8").read()) + open("ask_ui.js", encoding="utf-8").read() + open("message_ui.js", encoding="utf-8").read() + open("bible_ui.js", encoding="utf-8").read() + open("lang_ui.js", encoding="utf-8").read() + open("episodes_ui.js", encoding="utf-8").read() + open("editor_ui.js", encoding="utf-8").read() + open("layout_ui.js", encoding="utf-8").read() + open("phases_ui.js", encoding="utf-8").read() + open("polish_ui.js", encoding="utf-8").read() + open("help_ui.js", encoding="utf-8").read() + open("edmarks_ui.js", encoding="utf-8").read() + open("score_ui.js", encoding="utf-8").read() + open("walk_ui.js", encoding="utf-8").read() + open("rail_ui.js", encoding="utf-8").read() + open("coach_ui.js", encoding="utf-8").read() + open("coach_ai.js", encoding="utf-8").read() + open("report_ui.js", encoding="utf-8").read() + open("pub_ui.js", encoding="utf-8").read() + open("aistatus_ui.js", encoding="utf-8").read() + open("tips_ui.js", encoding="utf-8").read() + open("adterms_ui.js", encoding="utf-8").read() + open("autosize_ui.js", encoding="utf-8").read() + (open("standalone_ui.js", encoding="utf-8").read() if __import__("os").environ.get("SD_STANDALONE") else "")
 rep("""@media (max-width:620px){ main{padding:20px 14px 56px} .manuscript{padding:16px} textarea#script{min-height:220px} }
 </style>""", """@media (max-width:620px){ main{padding:20px 14px 56px} .manuscript{padding:16px} textarea#script{min-height:220px} }""" + css + "</style>")
 rep("""      <span class="hint" id="runHint"></span>
@@ -15,6 +15,7 @@ rep("""      <span class="hint" id="runHint"></span>
   </section>""")
 rep("""    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span><button type="button" class="linkish clear-link" id="clearBtn" data-i18n="clear">Borrar guion</button></div>
 """, """    <div class="meta-line"><span id="liveCount">0 palabras</span><span id="liveTime"></span><button type="button" class="linkish tr-toggle" id="trToggle" aria-expanded="false" aria-controls="trBox" data-i18n="trTitle">Traducir o adaptar el guion</button><button type="button" class="linkish clear-link" id="clearBtn" data-i18n="clear">Borrar guion</button><div id="trBox" class="tr-box" hidden></div></div>
+    <button type="button" class="linkish s1-more-btn" id="s1MoreBtn" aria-expanded="false" data-i18n="s1More">Más opciones</button>
     <div class="field idea-field"><label for="bigIdea" data-i18n="ideaLabel">Idea central, en una frase</label><input id="bigIdea" maxlength="200" data-i18n-ph="ideaPh" placeholder="Por ejemplo: Perdonar no es olvidar; es soltar la deuda porque Dios ya nos perdonó."><div id="ideaSug" class="idea-sug-box"></div></div>
 """)
 rep("""        <div class="grid3">
@@ -44,7 +45,14 @@ rep("""</head>""", """<script id="sdTheme">try{var sdT=localStorage.getItem("sd-
 </head>""")
 rep("""  </header>
 
-  <section id="editor" aria-label="Guion">""", """    <div id="stepBar" aria-label="Pasos"></div>
+  <section id="editor" aria-label="Guion">""", """    <div class="more-wrap" id="moreWrap">
+      <button type="button" class="morebtn" id="moreBtn" aria-label="Más opciones" title="Más opciones" aria-haspopup="menu" aria-expanded="false" aria-controls="moreMenu"><span aria-hidden="true">⋯</span></button>
+      <div class="more-menu" id="moreMenu" role="menu" aria-label="Más opciones" hidden>
+        <label class="xswitch more-item" title="Modo completo / Full mode"><input type="checkbox" id="expertToggle" role="menuitemcheckbox"><span data-i18n="expert">Modo completo</span></label>
+        <p class="more-hint" data-i18n="expertHint">Apagado: la app te lleva paso a paso. Encendido: todas las revisiones en una pantalla.</p>
+      </div>
+    </div>
+    <div id="stepBar" aria-label="Pasos"></div>
     <div class="mast-tools">
       <div id="exPick" class="ex-pick"></div>
       <div id="demoBar" class="demo-bar" role="status" hidden></div>
@@ -91,8 +99,7 @@ rep("""  $("results").querySelectorAll(".topfix a[data-open]").forEach((a) => a.
   const msd = $("sec-manuscript");
   msd.addEventListener("toggle", () => { try { localStorage.setItem("sd-ms-open", msd.open ? "1" : "0"); } catch (e) {} });
   $("results").querySelectorAll('.quick a[href="#sec-manuscript"]').forEach((a) => a.addEventListener("click", () => { msd.open = true; }));""")
-rep("""    <div class="langswitch" role="group" aria-label="Idioma / Language">""", """    <label class="xswitch" title="Modo completo / Full mode"><input type="checkbox" id="expertToggle" role="switch"><span data-i18n="expert">Modo completo</span></label>
-    <button type="button" class="themebtn" id="themeBtn" aria-label="Cambiar a modo oscuro"></button>
+rep("""    <div class="langswitch" role="group" aria-label="Idioma / Language">""", """    <button type="button" class="themebtn" id="themeBtn" aria-label="Cambiar a modo oscuro"></button>
     <div class="langswitch" role="group" aria-label="Idioma / Language">""")
 rep("""    <div id="historyBody"></div>""", """    <section class="g-card" id="gSeriesFull"></section>
     <div id="historyBody"></div>

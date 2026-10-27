@@ -150,7 +150,7 @@ const HELP = {
 // [key, selector of the element that gets the «?», where the explanation goes]
 // where: "row" = after the heading's row (header / label / the given closest() selector), "sum" = inside the <summary>, "end:<sel>" = appended to that container
 const HELP_ANCHORS = [
-  ["expert", "label.xswitch", "end:.masthead"],
+  // «Modo completo» moved into the ⋯ menu (guide_ui.js), which carries its own one-line explanation instead of a «?»
   ["step", "#guideTop .g-step-h h2", "row"],
   ["script", 'label[for="script"]', "row"],
   ["ask", "#askClaude .g-h h2", "row"],

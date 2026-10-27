@@ -1,5 +1,7 @@
 // Fake supabase-js UMD for tests: window.__SB_MODE = "out" | "member" | "stranger"
 (function () {
+  // first-use tips (tips_ui.js) would sit over the controls the suites click: off unless a suite sets sd-tips-off itself (pwchrome sets "0")
+  try { if (localStorage.getItem("sd-tips-off") === null) localStorage.setItem("sd-tips-off", "1"); } catch (e) { /* best effort: no storage, no tips state to keep */ }
   const rows = (window.__rows = window.__rows || {});
   const key = (c, id) => c + "/" + id;
   function builder() {

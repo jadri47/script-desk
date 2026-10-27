@@ -34,7 +34,7 @@ async def main():
             print(n, "applied first card (", first, ") -> cards now:", await pg.evaluate("[...document.querySelectorAll('li.fx .tf-t')].map(x=>x.textContent).join(' || ')"))
             # full mode
             pg.once("dialog", lambda d: asyncio.ensure_future(d.accept()))
-            await pg.click("#expertToggle"); await pg.wait_for_timeout(700)
+            await pg.click("#moreBtn"); await pg.click("#expertToggle"); await pg.wait_for_timeout(700)
             print(n, "full: message card:", await pg.evaluate("!!$('sec-message')"), "| lamp:", await pg.evaluate("document.querySelector('#results .verdict .lamp').textContent"))
             await pg.close()
         print("ERR", errs); await b.close()
