@@ -235,5 +235,13 @@ const good = { area: "hook", original: sents[0].text, replacement: sents[0].text
   ok("cleanBaseline keeps only valid 1-5 integers per known area", JSON.stringify(L.cleanBaseline({ hook: 3, promise: 7, retention: 2.5, voice: "4", close: 1, zzz: 2 })) === '{"hook":3,"close":1}' && L.cleanBaseline({ hook: 0 }) === null && L.cleanBaseline(null) === null && L.cleanBaseline([3]) === null);
 }
 
+// ---- one «antes» everywhere: report.before and report.costUsd (jadri47, 2026-10-28) ----
+{
+  ok("cleanBefore keeps a whole number 0-100", L.cleanBefore(0) === 0 && L.cleanBefore(55) === 55 && L.cleanBefore(100) === 100);
+  ok("cleanBefore drops anything else (old report, garbage, out of range)", [undefined, null, -1, 101, 55.5, "55", NaN, {}].every((v) => L.cleanBefore(v) === null));
+  ok("cleanCost keeps a finite non-negative dollar figure", L.cleanCost(0) === 0 && L.cleanCost(0.0612) === 0.0612);
+  ok("cleanCost drops unknown or absurd values (never invented)", [undefined, null, -0.01, Infinity, NaN, "0.06", 1e6].every((v) => L.cleanCost(v) === null));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);

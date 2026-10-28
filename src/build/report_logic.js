@@ -203,6 +203,11 @@ function withBaseline(report, prev) {
   const base = own || cleanBaseline(prev && prev.baseline) || (prev && prev.areas && prev.key === report.key && Object.keys(ratings(prev)).length ? ratings(prev) : ratings(report));
   return { ...report, baseline: base };
 }
+// (jadri47, 2026-10-28: "one «antes» everywhere") The readiness the person saw when this report landed: a whole number 0-100, else null.
+// It is replaced by each new measurement (unlike baseline), so «antes → ahora» always starts from what the pill showed then.
+function cleanBefore(v) { return Number.isInteger(v) && v >= 0 && v <= 100 ? v : null; }
+// What the report's call cost in USD, from the server's bill; null when unknown (the artifact, an old report). Never invented.
+function cleanCost(v) { return typeof v === "number" && Number.isFinite(v) && v >= 0 && v < 100 ? v : null; }
 // Only valid 1-5 whole numbers per known area survive; null when none do.
 function cleanBaseline(b) {
   if (!b || typeof b !== "object") return null;

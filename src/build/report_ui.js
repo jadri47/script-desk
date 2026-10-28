@@ -73,7 +73,8 @@ function rpClean(r) {
       options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
     .filter((f) => f.options.length);
   const baseline = cleanBaseline(r.baseline); // ratings of the first measurement; old reports have none
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}) };
+  const before = cleanBefore(r.before), costUsd = cleanCost(r.costUsd); // old reports have neither
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}) };
 }
 // The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
 // already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
@@ -101,7 +102,7 @@ updateLive = function () { _updateLiveR(); if (RP.applying && G.report && G.repo
 async function rpRun(force) {
   if (RP.busy) return;
   const epoch = RP.epoch;
-  RP.busy = true; RP.err = ""; if (force) RP.failed = false;
+  RP.busy = true; RP.err = ""; RP.cost = null; if (force) RP.failed = false;
   let out = null;
   try {
     const sample = await caps.sample;
@@ -131,12 +132,20 @@ async function rpRun(force) {
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
-      if (out) { G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
+      if (out) {
+        // what the pill shows the moment the report lands is the «antes» of every «antes → ahora» (bubble, end card, Todo listo)
+        const b = cleanBefore(readinessOf(state.result, out, state.fixDismissed, state.text).score), c = cleanCost(RP.cost);
+        if (b != null) out.before = b;
+        if (c != null) out.costUsd = c;
+        G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
   }
 }
+// The server's bill for the call in flight (standalone site only; standalone_boot.js sends it before the answer returns).
+// The coach waits while the report runs (coachAiPump), so a bill that arrives while RP.busy is the report's.
+window.addEventListener("sd-ai-cost", (e) => { const u = e && e.detail; if (RP.busy && u && u.cost_usd != null) RP.cost = Number(u.cost_usd); });
 // Called before step 2 is drawn: starts the single call for this script version when there is no report yet.
 function rpPrepare() {
   if (!hasScript() || !ensureReview()) return;
@@ -245,8 +254,9 @@ function rpChip(info, cur) {
   if (fresh) setTimeout(put, 30); else put(); // a live region must exist before its text changes
   clearTimeout(RP.chipTm); RP.chipTm = setTimeout(() => el.classList.remove("on"), 3200);
 }
-// «antes» = what the same report was worth without the applied changes (the bubble's «antes» and the end card both use it)
-const rpBeforeOf = (rd) => Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase);
+// «antes» (the bubble, the end card and Todo listo all use this one): the readiness shown when the report landed (report.before). An old report without it falls back to the rules now plus
+// the measured editor part, which counts fixes made since in «antes» (that was the «75 → 83» after a start at 55).
+const rpBeforeOf = (rd) => (G.report && cleanBefore(G.report.before) != null ? G.report.before : Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase));
 
 // ---- html ----
 const rpDots = (n) => (n == null ? "○○○○○" : "●".repeat(n) + "○".repeat(5 - n));

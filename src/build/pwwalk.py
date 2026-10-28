@@ -214,6 +214,14 @@ async def main():
                 ok(f"{n}: (i) the pill moved by exactly what the card showed ({p0} → {p1}, shown +{shown}; nothing is shown when it would not rise)", p1 - p0 == shown, (p0, p1, c["gain"]))
                 c = await pg.evaluate(CARD)
                 ok(f"{n}: (i) the walk goes on and the count is stable (card 2 of the same total)", c and c["head"].startswith(f"{X['chg']} 2 {X['of']} {info['n']}"), (c and c["head"], info["n"]))
+                # one «antes» everywhere (2026-10-28): after fixing ad warnings AND editor changes, the end card starts from the pill the
+                # person saw when the report landed (it said «75 → 83» after a start at 55: the ad fixes were counted in «antes»)
+                for _ in range(12):
+                    if not await pg.query_selector("[data-rp=apply]"): break
+                    await pg.click("[data-rp=apply]"); await pg.wait_for_timeout(1300)
+                e = await pg.evaluate("(() => { const d = document.querySelector('.rp-end'); return d ? [...d.querySelectorAll('.rp-end-n [aria-hidden]')].map((x) => x.textContent.trim()) : null; })()")
+                stored = await pg.evaluate("G.report && G.report.before")
+                ok(f"{n}: the end card's «antes» is the pill seen when the report landed ({p0}), stored as report.before", e and num(e[0]) == p0 and stored == p0 and e[-1] == str(await pg.evaluate(PILL)), (e, stored, p0))
                 ok(f"{n}: no page errors", not errs, errs)
                 await pg.close()
         print("FAILS:", fails if fails else "none"); await b.close()
