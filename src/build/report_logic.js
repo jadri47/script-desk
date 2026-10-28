@@ -23,8 +23,8 @@ function reportPrompt(text, R, opts) {
     ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. The script is in English: write every "why" and "replacement" in English.`
     : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
   const facts = en
-    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (YouTube can limit ads for them; do not add new ones): ${risk}. Do not change them inside "items". In "words" give, for each of them, up to ${REPORT_MAX_WORD_ALTS} alternatives: plain words that state the same fact without the term YouTube flags, in the same grammatical form (gender, number, tense) so they drop into the same sentence, without softening what the text says happened. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
-    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (YouTube puede limitar los anuncios por ellos; no añadas otros): ${risk}. No los cambies dentro de "items". En "words" da, para cada uno, hasta ${REPORT_MAX_WORD_ALTS} alternativas: palabras sencillas que dicen el mismo hecho sin el término que YouTube marca, en la misma forma gramatical (género, número, tiempo) para que encajen en la misma frase, sin suavizar lo que el texto dice que pasó. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
+    ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (YouTube can limit ads for them; do not add new ones): ${risk}. Do not change them inside "items". In "words" give, for each of them, up to ${REPORT_MAX_WORD_ALTS} alternatives: plain words that state the same fact without the term YouTube flags, in the same grammatical form (gender, number, tense) so they drop into the same sentence, without softening what the text says happened: the same who, to whom and what happened. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
+    : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (YouTube puede limitar los anuncios por ellos; no añadas otros): ${risk}. No los cambies dentro de "items". En "words" da, para cada uno, hasta ${REPORT_MAX_WORD_ALTS} alternativas: palabras sencillas que dicen el mismo hecho sin el término que YouTube marca, en la misma forma gramatical (género, número, tiempo) para que encajen en la misma frase, sin suavizar lo que el texto dice que pasó: el mismo quién, a quién y qué pasó. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
@@ -107,12 +107,21 @@ function vetFixes(json, items) {
   return out;
 }
 
+// (jadri47, 2026-10-28: "yes to 6", option B) A word swap must never soften what Scripture says. A flagged term keeps its word
+// wherever its sentence quotes or cites Scripture (a verse, an announced verse or a reference) or says it is reporting it
+// («dice la Biblia», «como dice», «está escrito»…). Deterministic: no extra AI call, no self-grading. The ad warning stays there.
+const SCRIPTURE_SAYS = /(?<![\p{L}])(dice la (biblia|palabra|escritura)|la (biblia|palabra|escritura) dice|dice el texto|el texto dice|dice ahí|como dice|está escrito|escrito está|según (la biblia|la palabra|la escritura|el texto)|the bible says|scripture says|the text says|it is written|as it says)(?![\p{L}])/iu;
+function scriptureSentences(text, R) {
+  const verse = verseSpans(text, R);
+  return sentences(text).filter((s) => SCRIPTURE_SAYS.test(s.text) || verse.some((v) => v.start < s.end && v.end > s.start)).map((s) => ({ start: s.start, end: s.end }));
+}
 // The flagged words' alternatives, keyed by the lower-case term. An alternative is kept only if it is short plain text (no verse
 // mark, reference or quote) and, put in place of the term's first occurrence outside Scripture, leaves fewer sensitive terms and
 // none inside the replaced span. A term found only inside a verse gets none: Scripture is never changed.
 function vetWords(text, json, opts, R, verse) {
   const out = {}, list = json && Array.isArray(json.words) ? json.words : [];
-  const hits = (R.riskHits || []).filter((x) => !verse.some((s) => x.start < s.end && x.end > s.start));
+  const keep = [...verse, ...scriptureSentences(text, R)]; // never swapped: Scripture and sentences that report it
+  const hits = (R.riskHits || []).filter((x) => !keep.some((s) => x.start < s.end && x.end > s.start));
   const before = (R.riskHits || []).length;
   for (const w of list) {
     const term = w && typeof w.term === "string" ? w.term.trim().toLowerCase() : "";
@@ -137,10 +146,13 @@ function vetWords(text, json, opts, R, verse) {
 
 // The rows of an ad-risk card that can take a word from the report: one row per term of that category that has alternatives, with
 // every place it occurs outside Scripture (one choice per word, not per occurrence: «pandemia» eight times is one decision).
-// pick: { [term in lower case]: index } (default 0). Returns the rows and the one patch that applies them all.
+// pick: { [term in lower case]: index } (default 0). Returns the rows, the one patch that applies them all, and kept = occurrences left as written because their sentence reports Scripture.
 function reportWordRows(text, R, cat, words, pick) {
-  const verse = verseSpans(text, R).filter((s) => s.kind !== "ref");
-  const hits = (R.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start))
+  const verse = verseSpans(text, R).filter((s) => s.kind !== "ref"), says = scriptureSentences(text, R);
+  const inV = (x, sp) => sp.some((s) => x.start < s.end && x.end > s.start);
+  const mine = (R.riskHits || []).filter((x) => x.cat === cat && !inV(x, verse));
+  const kept = mine.filter((x) => inV(x, says)).length; // occurrences left as written: their sentence reports Scripture
+  const hits = mine.filter((x) => !inV(x, says))
     .sort((a, b) => a.start - b.start)
     .filter((x, i, a) => !a.some((y, j) => j < i && x.start < y.end)); // overlapping hits: keep the first
   const rows = [];
@@ -153,7 +165,7 @@ function reportWordRows(text, R, cat, words, pick) {
   }
   const patches = rows.flatMap((r) => { const v = r.alts[Math.min((pick || {})[r.key] || 0, r.alts.length - 1)]; return r.hits.map((x) => ({ start: x.start, end: x.end, rep: matchCase(x.text, v) })); })
     .sort((a, b) => a.start - b.start);
-  return { rows, patches };
+  return { rows, patches, kept };
 }
 // «Torturados» at the start of a sentence becomes «Azotados con varas», not «azotados con varas»
 function matchCase(term, v) { return /^\p{Lu}/u.test(term) && /^\p{Ll}/u.test(v) ? v[0].toUpperCase() + v.slice(1) : v; }

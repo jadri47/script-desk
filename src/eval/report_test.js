@@ -99,6 +99,18 @@ const good = { area: "hook", original: sents[0].text, replacement: sents[0].text
   const T2b = T2 + "\n\nLa tortura no fue el final.", R2b = L.analyze(T2b, O), rb = L.reportWordRows(T2b, R2b, "violence", w, { tortura: 1 });
   ok("rows: a term found twice is one row and one choice that changes both places", rb.rows.length === 1 && rb.rows[0].hits.length === 2 && rb.patches.map((x) => x.rep).join("|") === "Azotes|azotes", JSON.stringify(rb));
   ok("rows: another category gets none", L.reportWordRows(T2, R2, "drugs", w, {}).rows.length === 0);
+  // a swap never softens what Scripture says (jadri47, 2026-10-28, option B): a sentence that reports Scripture keeps its word
+  {
+    const says = " Como dice la Biblia, habrá una tortura con sangre hasta los frenos de los caballos.";
+    const T4 = T2.slice(0, at) + says + T2.slice(at), R4 = L.analyze(T4, O), sAt = T4.indexOf(says) + 1;
+    ok("scripture: a sentence that says «como dice la Biblia» is a Scripture sentence; the plain one next to it is not", L.scriptureSentences(T4, R4).some((s) => s.start <= sAt && s.end > sAt + 20) && !L.scriptureSentences(T4, R4).some((s) => s.start <= T4.indexOf("Tortura fue") && s.end > T4.indexOf("Tortura fue")));
+    const r4 = L.reportWordRows(T4, R4, "violence", w, {});
+    ok("scripture: the row changes only the plain sentence; the Scripture sentence keeps «tortura» and is counted as kept", r4.rows.length === 1 && r4.rows[0].hits.length === 1 && r4.rows[0].hits[0].text === "Tortura" && r4.kept === 1 && L.applyPatches(T4, r4.patches).includes("habrá una tortura con sangre"), JSON.stringify({ hits: r4.rows.map((x) => x.hits), kept: r4.kept }));
+    const T5 = T4.replace(" Tortura fue lo que sufrieron en la cárcel.", ""), R5 = L.analyze(T5, O);
+    const w5 = L.vetReport(T5, j([], [{ term: "tortura", alts: ["golpes", "azotes"] }]), O, R5).words;
+    ok("scripture: a term found only in a sentence that reports Scripture gets no alternative at all", JSON.stringify(w5) === "{}" && L.reportWordRows(T5, R5, "violence", { tortura: ["golpes"] }, {}).rows.length === 0, JSON.stringify(w5));
+    ok("scripture: English markers count too", L.scriptureSentences("Intro here. As it says, the river turned to blood. The end.", { refs: [], quotes: [] }).length === 1);
+  }
   const T3 = T2.slice(0, at) + " La tortura fue lo que sufrieron en la cárcel." + T2.slice(at + " Tortura fue lo que sufrieron en la cárcel.".length);
   const R3 = L.analyze(T3, O), w3 = L.vetReport(T3, j([], [{ term: "tortura", alts: ["golpes"] }]), O, R3).words;
   ok("matchCase: a lower-case term keeps the alternative lower-case", L.reportWordRows(T3, R3, "violence", w3, {}).patches[0].rep === "golpes", JSON.stringify(w3));

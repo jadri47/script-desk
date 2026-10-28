@@ -99,8 +99,18 @@ async def main():
                 want = first["alts"][1]
                 txt = await pg.evaluate("$('script').value")
                 left = await pg.evaluate("(k) => state.result.riskHits.filter((x) => x.text.toLowerCase() === k).length", first["key"])
-                ok(f"{n}: the chosen word replaces the term everywhere outside Scripture", left == 0 and txt.lower().count(want.lower()) >= len(first["hits"]), (first["key"], left, len(first["hits"])))
+                # (2026-10-28, option B) a sentence that reports Scripture keeps its word, so «everywhere» = outside Scripture and outside those
+                keptK = await pg.evaluate("(k) => { const ss = scriptureSentences(state.text, state.result); return state.result.riskHits.filter((x) => x.text.toLowerCase() === k && ss.some((s) => x.start < s.end && x.end > s.start)).length; }", first["key"])
+                ok(f"{n}: the chosen word replaces the term everywhere outside Scripture and the sentences that report it", left == keptK and txt.lower().count(want.lower()) >= len(first["hits"]), (first["key"], left, keptK, len(first["hits"])))
                 ok(f"{n}: fewer flagged words after applying", await pg.evaluate("state.result.riskHits.length") < hits0)
+                # the violence card: «masacre», «tortura», «ejecución» sit in a sentence that says «como dice la Biblia»: kept, and the card says so
+                for _ in range(3):
+                    cur = await pg.evaluate("(() => { const c = rpCurrent(); if (!c || c.type !== 'risk') return null; const w = rpWords(c); return { id: c.d.card.id, kept: w ? w.kept : 0 }; })()")
+                    if cur and cur["kept"]: break
+                    if not await pg.query_selector("[data-rp=skip]"): break
+                    await pg.click("[data-rp=skip]"); await pg.wait_for_timeout(500)
+                kt = await pg.evaluate("(document.querySelector('.rp-dec .rp-kept') || {}).textContent || ''")
+                ok(f"{n}: a card with words kept for Scripture says so in one line", cur and cur["kept"] > 0 and (("la Biblia" in kt) if ui == "es" else ("Bible" in kt)), (cur, kt))
                 ok(f"{n}: no page errors (muy flojo)", not errs, errs)
                 # ---- a report saved before alternatives existed (shape written by 5eb53f5's rpRun): loads, old layout
                 old = {"at": "2026-10-22T10:42:00.000Z", "key": "", "areas": {k: {"rating": 4, "why": "x"} for k in ["hook", "promise", "retention", "voice", "close", "return"]},

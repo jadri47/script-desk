@@ -18,6 +18,7 @@ Object.assign(T.es, {
   rpPickLbl: "Elige cómo decirlo", rpPickMain: "Propuesta del editor", rpPickAlt: "Otra opción", rpApplyPick: "Aplicar la elegida",
   rpWordsLbl: "Elige otra palabra", rpWordSafe: "✓ sin riesgo de anuncios", rpWordLbl: "Palabras del informe", rpTimes: (n) => `${n} veces`,
   rpWordsRest: "Las demás palabras de este aviso no tienen alternativa: cámbialas con «Lo escribo yo».",
+  rpWordsKept: (n) => `No se cambia${n > 1 ? ` en ${n} lugares` : " en 1 lugar"}: la frase dice lo que dice la Biblia.`,
   // the report lives in the score bubble (2026-10-26, plan "Walk Juan through it", step 2)
   rpBy: "según el editor", rpBefore: (a) => `antes ${a}`, rpPossible: (b) => `→ ${b} posible`,
   rpColArea: "Área", rpColOrig: "Original", rpColNow: "Ahora", rpColChange: "Cambio", rpColSaid: "Qué dijo el editor", rpSame: "sin cambio",
@@ -43,6 +44,7 @@ Object.assign(T.en, {
   rpPickLbl: "Choose how to say it", rpPickMain: "Editor's suggestion", rpPickAlt: "Another option", rpApplyPick: "Apply the one chosen",
   rpWordsLbl: "Choose another word", rpWordSafe: "✓ no ad risk", rpWordLbl: "Words from the report", rpTimes: (n) => `${n} times`,
   rpWordsRest: "The other words in this warning have no alternative: change them with \"I'll write it\".",
+  rpWordsKept: (n) => `Left as written in ${n} ${n > 1 ? "places" : "place"}: the sentence reports what the Bible says.`,
   rpBy: "per the editor", rpBefore: (a) => `before ${a}`, rpPossible: (b) => `→ ${b} possible`,
   rpColArea: "Area", rpColOrig: "Original", rpColNow: "Now", rpColChange: "Change", rpColSaid: "What the editor said", rpSame: "no change",
   rpRe2: "Measure again with the AI", rpBubNote: "\"Now\" adds what the editor said each accepted change is worth. \"Measure again\" reads the script once more.",
@@ -200,7 +202,7 @@ function rpWords(cur) {
   if (!w.rows.length) return null;
   const verse = verseSpans(state.text, state.result).filter((s) => s.kind !== "ref");
   const all = (state.result.riskHits || []).filter((x) => x.cat === cat && !verse.some((s) => x.start < s.end && x.end > s.start)).length;
-  return { ...w, rest: Math.max(0, all - w.patches.length) };
+  return { ...w, rest: Math.max(0, all - w.patches.length - (w.kept || 0)) };
 }
 const rpCardOf = (cur) => cur.type === "risk" ? cur.d.card : { id: "rp-" + cur.i, ids: ["rp-" + cur.i], label: t("rpArea")[cur.it.area], fix: cur.it.why };
 
@@ -337,7 +339,7 @@ function rpDecisionHTML(R, cur, states) {
   const canWrite = !!(d.at || c.field);
   const wk = rpWalk(cur), gain = p ? rpInfo(cur, p).gain : 0;
   const prog = `<div class="rp-prog"><span class="rp-prog-t">${h(t("rpChange")(wk.i, wk.n))}</span>${gain > 0 ? `<span class="rp-gain">${h(t("rpGainTo")(gain))}</span>` : ""}</div>`;
-  const words = wr ? `<div class="fx-lbl">${h(t("rpWordsLbl"))}</div>${wr.rows.map((r, ri) => `<fieldset class="rp-words"><legend>«${h(r.term)}» <span class="hint">· ${h(r.hits.length > 1 ? t("rpTimes")(r.hits.length) : fmtTime(state.result.timeAt(r.hits[0].start)))}</span></legend>${r.alts.map((a, k) => `<label class="rp-chip"><input type="radio" name="rpW${ri}" value="${k}" data-rp-wpick="${h(r.key)}"${k === Math.min(RP.wpick[r.key] || 0, r.alts.length - 1) ? " checked" : ""}><span class="rp-chip-b"><b>${h(matchCase(r.term, a))}</b><span class="rp-safe">${h(t("rpWordSafe"))}</span></span></label>`).join("")}</fieldset>`).join("")}${wr.rest ? `<p class="hint">${h(t("rpWordsRest"))}</p>` : ""}` : "";
+  const words = wr ? `<div class="fx-lbl">${h(t("rpWordsLbl"))}</div>${wr.rows.map((r, ri) => `<fieldset class="rp-words"><legend>«${h(r.term)}» <span class="hint">· ${h(r.hits.length > 1 ? t("rpTimes")(r.hits.length) : fmtTime(state.result.timeAt(r.hits[0].start)))}</span></legend>${r.alts.map((a, k) => `<label class="rp-chip"><input type="radio" name="rpW${ri}" value="${k}" data-rp-wpick="${h(r.key)}"${k === Math.min(RP.wpick[r.key] || 0, r.alts.length - 1) ? " checked" : ""}><span class="rp-chip-b"><b>${h(matchCase(r.term, a))}</b><span class="rp-safe">${h(t("rpWordSafe"))}</span></span></label>`).join("")}</fieldset>`).join("")}${wr.rest ? `<p class="hint">${h(t("rpWordsRest"))}</p>` : ""}${wr.kept ? `<p class="hint rp-kept">${h(t("rpWordsKept")(wr.kept))}</p>` : ""}` : "";
   return `<section class="rp-dec" role="region" aria-labelledby="rpD" tabindex="-1">${prog}<div class="rp-dec-h"><b id="rpD">${h(plainLabel(c.id, c.label))}</b><span class="rp-tag${d.soft ? " soft" : ""}">${h(d.soft ? t("rpHeadSoft") : t("rpHeadRisk"))}: ${h(t(d.soft ? "cat_mid" : "cat_hi"))}</span></div>
     ${c.fix ? `<div class="rp-fix">${h(c.fix)}</div>` : ""}<div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}${words}
     ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span></div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
