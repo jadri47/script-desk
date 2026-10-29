@@ -56,8 +56,8 @@ const VARIANT_GUIDE = {
 };
 const AUD_OF = { es: "es", latam: "latam", neutral: "both" };
 const TR = { target: "", ver: "", busy: false, res: null, msg: "", err: "", undo: null, open: false };
-Object.assign(T.es, { trStale: "El guion o el episodio cambió mientras tanto: la traducción ya no encaja. Vuelve a pedirla." });
-Object.assign(T.en, { trStale: "The script or the episode changed meanwhile: the translation no longer fits. Ask for it again." });
+Object.assign(T.es, { trStale: "El guion o el episodio cambió mientras tanto: la traducción ya no encaja. Vuelve a pedirla.", trVerse: "La adaptación cambió una cita bíblica y se descartó: el texto bíblico no se adapta. Vuelve a pedirla." });
+Object.assign(T.en, { trStale: "The script or the episode changed meanwhile: the translation no longer fits. Ask for it again.", trVerse: "The adaptation changed a Bible quote and was discarded: Bible text is never adapted. Ask for it again." });
 function trSource() {
   const lang = state.result ? state.result.lang : (typeof detectLanguage === "function" ? detectLanguage($("script").value) : "es");
   if (lang === "en") return "en";
@@ -109,6 +109,11 @@ async function trRun() {
   try {
     const res = await sample.json(trPrompt(src, dst, ver), { modelTier: "complex", bibleRule: false });
     if (!res || typeof res.script !== "string" || res.script.trim().length < text.length * 0.4) throw { code: "invalid_json" };
+    // (B-015, 2026-10-29) Same language and same Bible version: the prompt says to copy every quoted verse word for word, and the
+    // code checks it (the model's own «verify» list is not a check). A swap of version or language changes the quotes by design:
+    // those go to «verify» for the person to read.
+    const swap = (dst === "en") !== (src === "en") || ver !== $("translation").value;
+    if (!swap && findQuotes(text).some((q) => !res.script.includes(q.inner))) { TR.err = t("trVerse"); TR.busy = false; renderTr(); return; }
     TR.res = { ...res, src, dst, ver, verify: Array.isArray(res.verify) ? res.verify.slice(0, 20) : [], base: text, prod: G.prodId || null }; // the script and episode it was made for (B-013, 2026-10-29)
   } catch (e) { TR.err = errText(e); }
   TR.busy = false; renderTr();

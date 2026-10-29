@@ -10,7 +10,11 @@ def ok(n, c, x=""):
     if not c: fails.append(n)
 MOCK = r"""() => { caps.sample = Promise.resolve({ serverRules: true, json: async (prompt) => {
   await new Promise((r) => setTimeout(r, 150));
-  if (/Traduce este guion|Adapta este guion/.test(prompt)) return { script: 'TRADUCIDO ' + $('script').value, verify: [] };
+  if (/Traduce este guion|Adapta este guion/.test(prompt)) {
+    let v = $('script').value;
+    if (window.__trAlter) { const q = findQuotes(v)[0]; if (q) v = v.slice(0, q.start + 1) + 'palabras que no son las del versículo citado aquí' + v.slice(q.end - 1); return { script: v, verify: [] }; } // a quoted verse comes back changed (B-015)
+    return { script: 'TRADUCIDO ' + v, verify: [] };
+  }
   if (/Eres editor de un canal|You are an editor|FRAGMENTOS A ARREGLAR|FRAGMENTS TO FIX|^=== i\d+/m.test(prompt)) return { areas: {}, items: [], words: [], fixes: [], items2: [] };
   return { reply: 'ok', replacement: 'RESPUESTA ENTERA.' }; // Ask Claude
 } }); }"""
@@ -72,6 +76,15 @@ async def main():
         v = await pg.evaluate("$('script').value")
         ok("translate: after typing, «Volver al original» keeps the typed text", "TEXTO NUEVO" in v and v.startswith("TRADUCIDO"), v[:60])
         ok("no page errors (translate)", not errs, errs)
+        await pg.close()
+        # ---- same language, same Bible version: a quoted verse must come back word for word, else the answer is refused (B-015, 2026-10-29) ----
+        pg, errs = await open_page(b)
+        nq = await pg.evaluate("findQuotes($('script').value).length")
+        ok("adapt: the demo has a quoted verse to protect", nq > 0, nq)
+        await pg.evaluate("window.__trAlter = true; TR.target = trSource() === 'latam' ? 'neutral' : 'latam'; TR.ver = $('translation').value")
+        await pg.evaluate("trRun()"); await pg.wait_for_timeout(700)
+        ok("adapt: an answer that changed a quoted verse is refused, with a message", await pg.evaluate("!TR.res && !!TR.err"), await pg.evaluate("[!!TR.res, TR.err]"))
+        ok("no page errors (adapt)", not errs, errs)
         await pg.close()
         print("FAILS:", fails); await b.close()
 asyncio.run(main())
