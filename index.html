@@ -4152,7 +4152,9 @@ const REPORT_MAX_ITEMS = 7;
 const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
 // (jadri47, 2026-10-25: "read the text once, instead of every time the user taps sugerir con IA"; picked A.) The same call also
 // answers the problems the rules flagged but could not fix by themselves (what «Proponer con IA» and the coach ask one at a time).
-const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2;
+// (Adrian, 2026-10-29: "B: fixes leave the report call") The fragments no longer ride in the report call (the answer overran the output
+// cap): they go in their own small calls after the report lands, REPORT_FIX_BATCH at a time, REPORT_MAX_FIXES in all.
+const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2, REPORT_FIX_BATCH = 6;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
@@ -4171,14 +4173,22 @@ function reportPrompt(text, R, opts) {
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
-  const fixes = (opts.fixes || []).slice(0, REPORT_MAX_FIXES);
-  const fixBlock = fixes.length ? "\n\n" + (en
-    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order. These are separate from "items".`
-    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden. Esto va aparte de "items".`)
-    + "\n\n" + fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n") : "";
-  const shape2 = fixes.length ? shape.replace(/\}$/, `, "fixes": [{"id": "${fixes[0].id}", "options": [{"text": "...", "why": "..."}]}]}`) : shape;
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape2;
-  return `${brief}\n\n${facts}\n\n${rules}${fixBlock}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+}
+
+// The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
+// item carries its own context. opts.en = English. At most REPORT_FIX_BATCH items; the caller sends the rest in the next call.
+// (Adrian, 2026-10-29: "B: fixes leave the report call")
+function fixesPrompt(items, opts) {
+  const en = !!(opts && opts.en);
+  const fixes = (items || []).slice(0, REPORT_FIX_BATCH);
+  const head = en
+    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order.`
+    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden.`;
+  const list = fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n");
+  const shape = `{"fixes": [{"id": "f1", "options": [{"text": "...", "why": "..."}]}]}`;
+  return `${head}\n\n${list}\n\n${(en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape}`;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
@@ -4387,7 +4397,32 @@ function projectedReadiness(text, R, opts, report) {
   return r2.score;
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
+// A cut answer (the model hit the output cap) is still paid work: keep every COMPLETE element that arrived, never invent text.
+// (Adrian, 2026-10-29: "A: salvage a cut answer; never lose the work") Walks the JSON once and remembers the last "safe" cut: the end of
+// a value whose parent sits at depth <= `depth` (2: an area, an item, a word's alternatives, a top-level field), with the closers that were open
+// there (the fix batches ask for depth 4 so a half-finished list of options keeps the complete ones). A cut inside a string or inside an element (even between its fields) therefore drops that WHOLE element. Returns an object or null.
+function repairJson(text, depth = 2) {
+  const s = String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try { return JSON.parse(s); } catch (e) { /* cut or malformed: repair below */ }
+  const st = [], ek = []; // st: closer of each open container; ek: an object that now expects a key
+  let str = false, esc = false, key = false, tok = -1, safe = null;
+  const mark = (p) => { if (st.length <= depth) safe = [p, st.slice().reverse().join("")]; };
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (str) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') { str = false; if (!key) mark(i + 1); } continue; }
+    if (tok >= 0 && /[,}\]\s]/.test(c)) { mark(i); tok = -1; }
+    if (c === '"') { str = true; key = !!st.length && st[st.length - 1] === "}" && ek[ek.length - 1]; }
+    else if (c === "{" || c === "[") { st.push(c === "{" ? "}" : "]"); ek.push(c === "{"); mark(i + 1); }
+    else if (c === "}" || c === "]") { st.pop(); ek.pop(); mark(i + 1); }
+    else if (c === ",") { if (st.length && st[st.length - 1] === "}") ek[ek.length - 1] = true; }
+    else if (c === ":") { if (ek.length) ek[ek.length - 1] = false; }
+    else if (tok < 0 && !/\s/.test(c)) tok = i;
+  }
+  if (!safe) return null;
+  try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -4464,6 +4499,8 @@ if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
       const j = await r.json().catch(() => null);
       if (j && j.usage) { try { window.dispatchEvent(new CustomEvent("sd-ai-cost", { detail: j.usage })); } catch (e) {} }
+      // A cut-off answer carries its partial text: the report keeps the complete items (Adrian, 2026-10-29).
+      if (j && j.code === "truncated" && typeof j.raw === "string") throw { code: "truncated", raw: j.raw };
       if (!r.ok || !j || !j.data) throw { code: (j && j.code) || "upstream" };
       return j.data;
     },
@@ -6661,7 +6698,9 @@ const REPORT_MAX_ITEMS = 7;
 const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
 // (jadri47, 2026-10-25: "read the text once, instead of every time the user taps sugerir con IA"; picked A.) The same call also
 // answers the problems the rules flagged but could not fix by themselves (what «Proponer con IA» and the coach ask one at a time).
-const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2;
+// (Adrian, 2026-10-29: "B: fixes leave the report call") The fragments no longer ride in the report call (the answer overran the output
+// cap): they go in their own small calls after the report lands, REPORT_FIX_BATCH at a time, REPORT_MAX_FIXES in all.
+const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2, REPORT_FIX_BATCH = 6;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
@@ -6680,14 +6719,22 @@ function reportPrompt(text, R, opts) {
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
-  const fixes = (opts.fixes || []).slice(0, REPORT_MAX_FIXES);
-  const fixBlock = fixes.length ? "\n\n" + (en
-    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order. These are separate from "items".`
-    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden. Esto va aparte de "items".`)
-    + "\n\n" + fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n") : "";
-  const shape2 = fixes.length ? shape.replace(/\}$/, `, "fixes": [{"id": "${fixes[0].id}", "options": [{"text": "...", "why": "..."}]}]}`) : shape;
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape2;
-  return `${brief}\n\n${facts}\n\n${rules}${fixBlock}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+}
+
+// The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
+// item carries its own context. opts.en = English. At most REPORT_FIX_BATCH items; the caller sends the rest in the next call.
+// (Adrian, 2026-10-29: "B: fixes leave the report call")
+function fixesPrompt(items, opts) {
+  const en = !!(opts && opts.en);
+  const fixes = (items || []).slice(0, REPORT_FIX_BATCH);
+  const head = en
+    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order.`
+    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden.`;
+  const list = fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n");
+  const shape = `{"fixes": [{"id": "f1", "options": [{"text": "...", "why": "..."}]}]}`;
+  return `${head}\n\n${list}\n\n${(en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape}`;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
@@ -6896,7 +6943,32 @@ function projectedReadiness(text, R, opts, report) {
   return r2.score;
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem };
+// A cut answer (the model hit the output cap) is still paid work: keep every COMPLETE element that arrived, never invent text.
+// (Adrian, 2026-10-29: "A: salvage a cut answer; never lose the work") Walks the JSON once and remembers the last "safe" cut: the end of
+// a value whose parent sits at depth <= `depth` (2: an area, an item, a word's alternatives, a top-level field), with the closers that were open
+// there (the fix batches ask for depth 4 so a half-finished list of options keeps the complete ones). A cut inside a string or inside an element (even between its fields) therefore drops that WHOLE element. Returns an object or null.
+function repairJson(text, depth = 2) {
+  const s = String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try { return JSON.parse(s); } catch (e) { /* cut or malformed: repair below */ }
+  const st = [], ek = []; // st: closer of each open container; ek: an object that now expects a key
+  let str = false, esc = false, key = false, tok = -1, safe = null;
+  const mark = (p) => { if (st.length <= depth) safe = [p, st.slice().reverse().join("")]; };
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (str) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') { str = false; if (!key) mark(i + 1); } continue; }
+    if (tok >= 0 && /[,}\]\s]/.test(c)) { mark(i); tok = -1; }
+    if (c === '"') { str = true; key = !!st.length && st[st.length - 1] === "}" && ek[ek.length - 1]; }
+    else if (c === "{" || c === "[") { st.push(c === "{" ? "}" : "]"); ek.push(c === "{"); mark(i + 1); }
+    else if (c === "}" || c === "]") { st.pop(); ek.pop(); mark(i + 1); }
+    else if (c === ",") { if (st.length && st[st.length - 1] === "}") ek[ek.length - 1] = true; }
+    else if (c === ":") { if (ek.length) ek[ek.length - 1] = false; }
+    else if (tok < 0 && !/\s/.test(c)) tok = i;
+  }
+  if (!safe) return null;
+  try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
+}
+
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -14003,7 +14075,7 @@ async function coachAiRun(items, epoch) {
 // decisions ahead still have one.
 function coachAiPump() {
   if (COAI.busy || !state.result || !COACH.list.length || !document.querySelector(".topfix.coach")) return;
-  if (typeof RP !== "undefined" && RP.busy) return; // the editor's report is reading the script and answers these problems too; renderGuide pumps again when it lands
+  if (typeof RP !== "undefined" && (RP.busy || (RP.fix && RP.fix.run))) return; // the editor's report is reading the script and answers these problems too; renderGuide pumps again when it lands
   if (!coachAiBudget().ok) return;
   const L = COACH.list, ahead = L.filter((d) => d.needsAi && d.card && d.card.ai);
   const todo = coachAiPick(L, (id) => !!COAI.cache[id], COACH_AI_BATCH);
@@ -14051,10 +14123,11 @@ $("runBtn").addEventListener("click", () => { COAI.cache = {}; COAI.calls = 0; C
 // the person through the rule-based ad risks first and then the report's changes. Today's coach / walker / rail / legend / «Más
 // revisiones» / Ask Claude live behind «Más detalles» and are only built (so only painted) while that is open.
 Object.assign(T.es, {
+  rpPartial: "La respuesta se cortó: el informe puede estar incompleto",
   rpWhere: "Dónde está", rpFull: "Ver guion completo", rpFocusBack: "Ver solo este párrafo",
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
-  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "La IA está leyendo tu guion como lo haría un editor",
+  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpFixLost: (n) => `No llegaron ${n} arreglos`, rpReading: "La IA está leyendo tu guion como lo haría un editor",
   rpNoAnswer: "Aún no ha respondido.", rpSoFar: "Lleva", rpWaiting: "esperando…",
   rpNoAI: "El informe del editor necesita la IA. Mientras tanto ves los avisos de anuncios y de empaque.",
   rpArea: { hook: "Gancho", promise: "Promesa", retention: "Retención", voice: "Voz hablada", close: "Cierre", return: "Que vuelvan", ads: "Anuncios" },
@@ -14077,10 +14150,11 @@ Object.assign(T.es, {
   rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
 Object.assign(T.en, {
+  rpPartial: "The answer was cut: the report may be incomplete",
   rpWhere: "Where it is", rpFull: "Show the full script", rpFocusBack: "Show only this paragraph",
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
-  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "The AI is reading your script the way an editor would",
+  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpFixLost: (n) => `${n} fixes did not arrive`, rpReading: "The AI is reading your script the way an editor would",
   rpNoAnswer: "No answer yet.", rpSoFar: "So far", rpWaiting: "waiting…",
   rpNoAI: "The editor's report needs the AI. Meanwhile you see the ad and packaging warnings.",
   rpArea: { hook: "Hook", promise: "Promise", retention: "Retention", voice: "Spoken voice", close: "Close", return: "Return viewers", ads: "Ads" },
@@ -14103,10 +14177,10 @@ Object.assign(T.en, {
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0, full: false };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0, full: false, fix: null };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
-function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); }
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); RP.fix = null; }
 
 // A stored report is untrusted (old versions, other devices): keep only what has the right shape.
 function rpClean(r) {
@@ -14123,7 +14197,7 @@ function rpClean(r) {
     .filter((f) => f.options.length);
   const baseline = cleanBaseline(r.baseline); // ratings of the first measurement; old reports have none
   const before = cleanBefore(r.before), costUsd = cleanCost(r.costUsd); // old reports have neither
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}) };
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}), ...(r.partial === true ? { partial: true } : {}) };
 }
 // The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
 // already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
@@ -14152,15 +14226,23 @@ async function rpRun(force) {
   if (RP.busy) return;
   const epoch = RP.epoch;
   RP.busy = true; RP.err = ""; RP.cost = null; if (force) RP.failed = false;
-  let out = null;
+  let out = null, sent = [], text, R, opts, key;
+  // one recipe for a whole answer and for the repaired part of a cut one; null when there is not a single rating (not a report)
+  const build = (res, partial) => {
+    if (!res || typeof res !== "object") { if (partial) return null; throw { code: "invalid_json" }; }
+    const v = vetReport(text, res, opts, R);
+    if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) { if (partial) return null; throw { code: "invalid_json" }; } // an answer without a single rating is not a report
+    return { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped, fixes: [], ...(partial ? { partial: true } : {}) }; // fixes: filled batch by batch by rpFixPump
+  };
   try {
     const sample = await caps.sample;
     if (!sample) { RP.noAI = true; return; }
-    const text = state.text, R = state.result, opts = state.opts, key = rpKey();
+    text = state.text; R = state.result; opts = state.opts; key = rpKey();
     RP.calls++;
-    // The problems «Proponer con IA» and the coach would ask one at a time ride in this call: every decision whose card has the button,
-    // those with no rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. Questions and notes have their own prompts.
-    const spans = verseSpans(text, R), sent = [];
+    // The problems «Proponer con IA» and the coach would ask one at a time: every decision whose card has the button, those with no
+    // rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. They are NOT in this call: rpFixPump asks for them in small
+    // batches once the report has landed. (Adrian, 2026-10-29: "B: fixes leave the report call"; the one answer overran the output cap.)
+    const spans = verseSpans(text, R);
     const cand = buildDecisions(text, R, opts, state.fixDismissed).filter((d) => d.card && d.card.ai && d.kind !== "question" && d.kind !== "note");
     cand.sort((a, b) => (b.needsAi ? 1 : 0) - (a.needsAi ? 1 : 0));
     for (const d of cand) {
@@ -14168,15 +14250,11 @@ async function rpRun(force) {
       const it = fixItem(d, "f" + (sent.length + 1), text, opts, spans);
       if (it) sent.push(it);
     }
-    const fixes = sent.map((it) => { const c = it.d.card; return { id: it.id, problem: `«${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(c.ai)}`.replace(/\s+/g, " ").trim(), frag: it.frag, ctx: it.ctx }; });
-    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value, fixes }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
-    const v = vetReport(text, res, opts, R);
-    if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
-    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped };
-    const fx = vetFixes(res, sent);
-    out.fixes = sent.filter((it) => fx[it.id]).map((it) => ({ id: it.d.card.id, orig: it.orig, lead: it.lead || "", trail: it.trail || "", field: it.field || null, options: fx[it.id] }));
+    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
+    out = build(res);
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
+    else if (e && e.code === "truncated" && typeof e.raw === "string" && (out = build(repairJson(e.raw), true))) { /* cut answer: kept what arrived (Adrian, 2026-10-29: "never lose the work") */ }
     else { RP.err = errText(e); RP.failed = true; }
   } finally {
     if (epoch === RP.epoch) {
@@ -14186,12 +14264,63 @@ async function rpRun(force) {
         const b = cleanBefore(readinessOf(state.result, out, state.fixDismissed, state.text).score), c = cleanCost(RP.cost);
         if (b != null) out.before = b;
         if (c != null) out.costUsd = c;
-        G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
+        G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); rpPrimeFixes(); if (G.prodId) markDirty(); if (sent.length) rpFixPump(sent, epoch); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
   }
 }
+// ---- the problems «Proponer con IA» and the coach would ask one at a time, in small calls after the report ----
+// (Adrian, 2026-10-29: "B: fixes leave the report call") REPORT_FIX_BATCH fragments per call, one call in flight, each batch kept (and
+// saved with the episode) as it arrives. A batch that fails is recorded in RP.fix.err and the next one still goes; rpFixRetry re-asks it.
+// RP.busy stays false the whole time: the verdict waits only for the report itself. A result for an older report (epoch) is dropped.
+const rpFixReq = (it) => { const c = it.d.card; return { id: it.id, problem: `«${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(c.ai)}`.replace(/\s+/g, " ").trim(), frag: it.frag, ctx: it.ctx }; };
+async function rpFixPump(sent, epoch) {
+  const F = RP.fix = { total: sent.length, done: 0, err: {}, items: sent, run: true };
+  for (let n = 0; n * REPORT_FIX_BATCH < sent.length; n++) {
+    if (epoch !== RP.epoch) return;
+    await rpFixBatch(n, epoch);
+  }
+  if (epoch === RP.epoch) { F.run = false; rpFixShow(); }
+}
+async function rpFixBatch(n, epoch) {
+  const F = RP.fix, items = F.items.slice(n * REPORT_FIX_BATCH, (n + 1) * REPORT_FIX_BATCH);
+  try {
+    const sample = await caps.sample;
+    if (!sample) throw { code: "no_sample" };
+    let res;
+    try { res = await sample.json(fixesPrompt(items.map(rpFixReq), { en: state.result && state.result.lang === "en" }), { modelTier: "complex", aiLabel: t("aiLblFixes")(F.done, F.total) }); } // not auto: the $5 automatic pause must not block it
+    catch (e) {
+      // A half batch is still paid work (Adrian, 2026-10-29: "never lose the work"): keep the options that arrived complete; only a batch with nothing is an error.
+      if (!(e && e.code === "truncated" && typeof e.raw === "string")) throw e;
+      res = repairJson(e.raw, 4);
+      if (!res || !Object.keys(vetFixes(res, items)).length) throw e;
+    }
+    if (epoch !== RP.epoch || !G.report) return;
+    const fx = vetFixes(res, items);
+    for (const it of items) {
+      if (!fx[it.id]) continue;
+      const id = it.d.card.id;
+      if (typeof COAI !== "undefined" && COAI.cache[id] && COAI.cache[id].status !== "loading") delete COAI.cache[id];
+      G.report.fixes.push({ id, orig: it.orig, lead: it.lead || "", trail: it.trail || "", field: it.field || null, options: fx[it.id] });
+    }
+    F.done += items.length; delete F.err[n + 1];
+    rpPrimeFixes(); if (G.prodId) markDirty();
+  } catch (e) {
+    if (epoch !== RP.epoch) return;
+    F.err[n + 1] = errText(e);
+  }
+  rpFixShow();
+}
+async function rpFixRetry(no) {
+  const F = RP.fix, epoch = RP.epoch;
+  if (!F || F.run || !F.err[no]) return;
+  F.run = true; rpFixShow();
+  await rpFixBatch(no - 1, epoch);
+  if (epoch === RP.epoch) { F.run = false; rpFixShow(); }
+}
+// the cards and the coach read the new answers; nothing else is redrawn while a card is open
+function rpFixShow() { if (V.guided && V.step === 2 && !RP.write) renderGuide(); }
 // The server's bill for the call in flight (standalone site only; standalone_boot.js sends it before the answer returns).
 // The coach waits while the report runs (coachAiPump), so a bill that arrives while RP.busy is the report's.
 window.addEventListener("sd-ai-cost", (e) => { const u = e && e.detail; if (RP.busy && u && u.cost_usd != null) RP.cost = Number(u.cost_usd); });
@@ -14352,7 +14481,7 @@ function rpPopHTML(R, rd) {
   return {
     sub: showBefore ? `${t("rpBy")} · ${t("rpBefore")(before)}` : "",
     table: `<div class="sc-tw"><table class="sc-t"><caption class="vh">${h(t("rpTitle"))}</caption><thead><tr><th scope="col">${h(t("rpColArea"))}</th>${base ? `<th scope="col">${h(t("rpColOrig"))}</th>` : ""}<th scope="col">${h(t("rpColNow"))}</th><th scope="col"><span class="vh">${h(t("rpColChange"))}</span></th><th scope="col">${h(t("rpColSaid"))}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`,
-    foot: `<div class="sc-foot"><span class="sc-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" id="scRe" class="sc-re${stale ? " primary" : ""}"${RP.busy ? " disabled" : ""}>${h(t("rpRe2"))}</button></div><p class="hint sc-bnote">${h(t("rpBubNote"))}</p>`,
+    foot: `${rep.partial === true ? `<p class="hint rp-partial" role="status">${h(t("rpPartial"))}</p>` : ""}<div class="sc-foot"><span class="sc-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" id="scRe" class="sc-re${stale ? " primary" : ""}"${RP.busy ? " disabled" : ""}>${h(t("rpRe2"))}</button></div><p class="hint sc-bnote">${h(t("rpBubNote"))}</p>`,
   };
 }
 function rpWriteHTML(cur) {
@@ -14410,6 +14539,8 @@ function reportHTML(R) {
   // the wait says plainly that no answer has come yet; the seconds tick from aistatus_ui.js ([data-ai-el])
   if (RP.busy) body = `<div class="rp-wait" role="status"><div class="rp-wait-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(t("rpReading"))}</b></div><p>${h(t("rpNoAnswer"))} <span aria-hidden="true">${h(t("rpSoFar"))} <b class="ai-el" data-ai-el>${typeof AIS !== "undefined" && AIS.n ? aiClock(Date.now() - AIS.t0) : "0:00"}</b></span></p></div>`;
   else {
+    const fe = RP.fix ? Object.keys(RP.fix.err) : [];
+    if (fe.length) body += `<p class="status err rp-fixlost" role="alert">${h(t("rpFixLost")(fe.reduce((a, k) => a + Math.min(REPORT_FIX_BATCH, RP.fix.items.length - (k - 1) * REPORT_FIX_BATCH), 0)))} ${fe.map((k) => `<button type="button" class="small" data-rp-fixre="${k}">${h(t("aiRetry"))}</button>`).join(" ")}</p>`;
     if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p><div class="rp-nav"><button type="button" class="small primary" data-rp="re">${h(t("rpRe"))}</button></div>`;
     if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
     const ended = !cur && rep && states.some((s) => s.st === "applied" || s.st === "skipped");
@@ -14436,6 +14567,7 @@ function rpEndHTML(R, states) {
     <h3 id="rpD">${h(t(a ? "rpEndH" : "rpEndNoneH"))}</h3>
     <p class="rp-end-row">${nums}<span class="hint">${h(t("rpBy"))}</span></p>
     <p class="rp-end-c">${h(t("rpEndCount")(a, sk))}</p>
+    ${G.report.partial === true ? `<p class="hint rp-partial" role="status">${h(t("rpPartial"))}</p>` : ""}
     ${list ? `<ul class="rp-end-l" aria-label="${h(t("rpEndList"))}">${list}</ul>` : ""}
     <div class="actions rp-act"><button type="button" class="small primary rp-go" data-rp="publish" data-rp-primary>${h(t("rpEndPub"))}</button><button type="button" class="small linkish" data-rp="re">${h(t("rpRe2"))}</button></div>
     ${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}</section>`;
@@ -14546,6 +14678,7 @@ window.addEventListener("resize", () => { if (V.guided && V.step === 2) rpFocusS
 function rpWire() {
   const root = document.querySelector("[data-rp-root]");
   if (!root) return;
+  root.querySelectorAll("[data-rp-fixre]").forEach((b) => b.addEventListener("click", () => rpFixRetry(+b.dataset.rpFixre)));
   root.querySelectorAll("[data-rp]").forEach((b) => b.addEventListener("click", () => rpAct(b.dataset.rp)));
   root.querySelectorAll(".rp-orig[data-es], .fx-ev[data-es]").forEach((el) => {
     el.setAttribute("role", "button"); el.tabIndex = 0; el.title = t("wkLoc");
@@ -14770,20 +14903,26 @@ Object.assign(T.es, {
   aiWait: "Todavía no hay respuesta. Puede tardar hasta un minuto.",
   aiDone: "Listo: la IA ha respondido", aiFail: "La IA no respondió", aiFailSub: "El aviso en pantalla dice por qué.",
   aiRetry: "Reintentar", aiClose: "Cerrar", aiPillBusy: "La IA está pensando", aiPillDone: "La IA ha respondido",
-  aiLblReport: "Informe del editor",
+  aiLblReport: "Informe del editor", aiLblFixes: (d, n) => `Arreglos ${d}/${n}`,
 });
 Object.assign(T.en, {
   aiThinking: "The AI is thinking…", aiThinkingN: (n) => `The AI is thinking… (${n} tasks)`,
   aiWait: "No answer yet. It can take up to a minute.",
   aiDone: "Done: the AI has answered", aiFail: "The AI did not answer", aiFailSub: "The message on screen says why.",
   aiRetry: "Retry", aiClose: "Close", aiPillBusy: "The AI is thinking", aiPillDone: "The AI has answered",
-  aiLblReport: "Editor's report",
+  aiLblReport: "Editor's report", aiLblFixes: (d, n) => `Fixes ${d}/${n}`,
 });
 
 const AIS = { n: 0, t0: 0, label: "", retry: null, ok: false, fail: false, st: "", tick: 0, hideTm: 0, checkTm: 0, check: false, end: 0 };
 const AI_DONE_MS = 5000, AI_FAIL_MS = 12000, AI_CHECK_MS = 60000;
 const AI_MARK = Symbol.for("sd-ai-tracked");
 const aiCancelled = (e) => !!e && (e.code === "cancelled" || e.name === "AbortError");
+// A cut answer whose complete part could be repaired is paid work that the caller keeps: it counts as an answer, not a failure.
+// (Adrian, 2026-10-29: "A: salvage a cut answer; never lose the work")
+const aiSalvaged = (e) => {
+  const j = !!e && e.code === "truncated" && typeof e.raw === "string" ? repairJson(e.raw) : null;
+  return !!j && typeof j === "object" && Object.values(j).some((v) => (v && typeof v === "object" ? Object.keys(v).length > 0 : v != null)); // `{}` or empty containers saved nothing
+};
 const aiClock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
 
 function aiTrack(s) {
@@ -14814,7 +14953,7 @@ function aiStart(label, retry) {
 }
 function aiEnd(ok, e, retry) {
   AIS.n = Math.max(0, AIS.n - 1);
-  if (ok) AIS.ok = true;
+  if (ok || aiSalvaged(e)) AIS.ok = true;
   else if (!aiCancelled(e)) { AIS.fail = true; if (retry) AIS.retry = retry; }
   if (AIS.n > 0) { aiShow("busy"); return; }
   AIS.end = Date.now();
