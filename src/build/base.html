@@ -1635,6 +1635,13 @@ async function loadHistory() {
   renderHistory();
 }
 
+// hookPassed of a logged episode. Before 2026-10-29 the writer saved the hook ROW of the review (an object) by mistake (B-008): those
+// records are read as the boolean they meant; new ones carry the boolean. null = unknown (the script could not be analysed).
+const epHookPassed = (e) => (typeof e.hookPassed === "boolean" ? e.hookPassed : e.hookPassed && typeof e.hookPassed === "object" ? !!(e.hookPassed.passed && !e.hookPassed.warn) : null);
+function hookPassedOf(text, lang) {
+  try { const r = analyze(text, { lang }).sections.structure.find((x) => x.id === "hook"); return !!(r && r.passed && !r.warn); }
+  catch (e) { return null; } // best effort: a script the review cannot analyse logs "unknown" instead of failing the save
+}
 // The channel's own numbers: information only, the checks never change. Needs 8 logged episodes.
 function channelNote() {
   if (!state.historyReady) return "";
@@ -1643,7 +1650,7 @@ function channelNote() {
   const med = (xs) => Math.round(median(xs) * 10) / 10;
   const avgs = eps.filter((e) => typeof e.avgViewed === "number" && isFinite(e.avgViewed)).map((e) => e.avgViewed);
   let line = t("chanStats")(eps.length, med(eps.map((e) => e.intro)), avgs.length >= 3 ? med(avgs) : null);
-  const yes = eps.filter((e) => e.hookPassed === true).map((e) => e.intro), no = eps.filter((e) => e.hookPassed === false).map((e) => e.intro);
+  const yes = eps.filter((e) => epHookPassed(e) === true).map((e) => e.intro), no = eps.filter((e) => epHookPassed(e) === false).map((e) => e.intro);
   if (yes.length >= 3 && no.length >= 3) line += t("chanHook")(med(yes), med(no), yes.length, no.length);
   return `<p class="lead">${h(line)}</p>`;
 }
@@ -1676,7 +1683,7 @@ function renderHistory() {
   const learn = eps.length ? (() => {
     const flagged = eps.filter((e) => (e.flags || []).length), clean = eps.filter((e) => !(e.flags || []).length);
     const yel = (arr) => arr.filter((e) => e.icon === "amarillo" || e.icon === "rojo").length;
-    const intro = (pass) => { const v = eps.filter((e) => e.hookPassed === pass && e.intro != null).map((e) => e.intro); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(0) + "% (" + v.length + ")" : "—"; };
+    const intro = (pass) => { const v = eps.filter((e) => epHookPassed(e) === pass && e.intro != null).map((e) => e.intro); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(0) + "% (" + v.length + ")" : "—"; };
     return `<div class="helper"><h3>${h(t("learnTitle"))}</h3>
       <div class="tablewrap"><table class="pf"><thead><tr><th></th><th>${h(t("episodes"))}</th><th>${h(t("yellowRed"))}</th></tr></thead><tbody>
       <tr><td>${h(t("withFlags"))}</td><td>${flagged.length}</td><td>${yel(flagged)}</td></tr>
@@ -1704,7 +1711,7 @@ async function saveEpisode() {
   if (!s) { st.textContent = t("pickVersion"); return; }
   if (!m) { st.textContent = t("durFormat"); return; }
   const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
-  const hookPassed = (() => { try { return analyze(s.text, { lang: s.lang }).sections.structure.find((r) => r.id === "hook"); return !!(r && r.passed && !r.warn); } catch (e) { return null; } })();
+  const hookPassed = hookPassedOf(s.text, s.lang); // a boolean (the old inline version returned the row itself: B-008)
   try {
     await db.collection("episodios").add({ scriptId: s.id, title: s.title, lang: s.lang, syllables: s.syllables, estimatedSec: s.runtimeSec, realSec: +m[1] * 60 + +m[2], intro: num($("epIntro").value), avgViewed: num($("epAvg").value), icon: $("epIcon").value, flags: s.flags || [], hookPassed, createdAt: Date.now() });
     st.textContent = t("savedShort");
