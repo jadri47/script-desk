@@ -117,6 +117,13 @@ async def main():
                 ok(f"{n}: (d) card 4 «Próximo episodio» shows only the topic card", c["i"] == 3 and c["sections"] == ["gTopic"] and c["prog"] == X["prog"].format(i=4), c)
                 # a real click on the button right after typing in a field that re-renders the page on change (the keyword)
                 await pg.fill("#tpNext", NEXT); await pg.fill("#tpTopic", "ansiedad")
+                # B-028 (jadri47, 2026-10-29): a press that turns into pointercancel (finger drags, the scroll takes over) must not leave the action armed
+                await pg.focus("#tpTopic")
+                await pg.evaluate("""() => { const b = document.querySelector('.pub-go'), o = { bubbles: true, pointerId: 7, pointerType: 'touch' };
+                  b.dispatchEvent(new PointerEvent('pointerdown', o)); b.dispatchEvent(new PointerEvent('pointercancel', o));
+                  document.body.dispatchEvent(new PointerEvent('pointerdown', o)); document.body.dispatchEvent(new PointerEvent('pointerup', o)); }""")
+                await pg.wait_for_timeout(500); c = await pg.evaluate(CARD)
+                ok(f"{n}: (d) B-028 pointercancel then a tap elsewhere does not fire «{X['save'][:-2]}»", c["i"] == 3, c)
                 await pg.click(".pub-go"); await pg.wait_for_timeout(700); c = await pg.evaluate(CARD)
                 ok(f"{n}: (d) one click on «{X['save'][:-2]}» right after typing the keyword advances (the re-render does not swallow it)", c["i"] == 4, c)
                 ok(f"{n}: (d) the next episode and the keyword were saved", (await pg.evaluate(FIELDS))["next"] == NEXT and (await pg.evaluate(FIELDS))["kw"] == "ansiedad")

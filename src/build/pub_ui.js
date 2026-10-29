@@ -137,14 +137,21 @@ function pubAfterHTML(body) {
 }
 // A field that is still focused saves/re-renders on blur («change», e.g. the keyword redraws the card). Do that on pointer-down, and if
 // it replaced the button being pressed (or moved it), repeat the press on the new button after release: otherwise the click is lost.
-let pubPress = null;
+let pubPress = null, pubDisarm = null;
 document.addEventListener("pointerdown", (e) => {
+  if (pubDisarm) pubDisarm(); // a new touch means the earlier press ended without a pointerup (its target may be gone, so no pointercancel reaches us)
   const b = e.target.closest && e.target.closest("[data-pub],[data-pub-go],#gApprove");
   const a = document.activeElement;
   if (!b || !a || !/^(TEXTAREA|INPUT)$/.test(a.tagName) || !a.closest("#guide")) return;
   const key = b.id === "gApprove" ? "#gApprove" : b.dataset.pub ? `[data-pub="${b.dataset.pub}"]` : `[data-pub-go="${b.dataset.pubGo}"]`;
   pubPress = key;
   a.blur();
-  document.addEventListener("pointerup", () => setTimeout(() => { const k = pubPress; pubPress = null; const nb = k && document.querySelector("#guide " + k); if (nb && !nb.disabled) nb.click(); }, 0), { once: true, capture: true });
+  // (jadri47, 2026-10-29: B-028) a finger that drags turns into pointercancel (the scroll takes over) and no pointerup follows: drop the armed
+  // press then, or the NEXT tap anywhere would fire «Guardar y seguir» / «Aprobar».
+  const up = () => { pubDisarm = null; document.removeEventListener("pointercancel", cancel, true); setTimeout(() => { const k = pubPress; pubPress = null; const nb = k && document.querySelector("#guide " + k); if (nb && !nb.disabled) nb.click(); }, 0); };
+  const cancel = () => { pubDisarm = null; document.removeEventListener("pointerup", up, true); document.removeEventListener("pointercancel", cancel, true); pubPress = null; };
+  pubDisarm = cancel;
+  document.addEventListener("pointerup", up, { once: true, capture: true });
+  document.addEventListener("pointercancel", cancel, { once: true, capture: true });
 }, true);
 document.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("#guide [data-pub],#guide [data-pub-go],#gApprove")) pubPress = null; }, true);
