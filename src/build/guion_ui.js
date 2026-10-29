@@ -36,7 +36,7 @@ Object.assign(T.es, {
   ppSpeed: "ppm", ppElapsed: "Tiempo", ppSecLeft: "Queda en la sección", ppEnd: "Fin estimado", ppOn: "a tiempo", ppOver: (x) => `+${x} sobre el plan`, ppUnder: (x) => `−${x} bajo el plan`,
   ppMirror: "Espejo", ppCues: "Señales", ppFull: "Pantalla completa", ppExit: "Salir", ppWidth: "Ancho", ppFont: "Letra", ppStart: "Toca o pulsa Espacio para empezar", ppClip: "CLIP", ppPaused: "En pausa", ppDone: "Fin del guion",
   ppLap: "Sección terminada", ppRehHint: "Ensayo: → o Intro marca la sección como terminada. Espacio pausa.", ppLapLbl: "Esta sección",
-  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
+  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNoEpisode: "No se guardó: no hay un episodio abierto donde guardarlo.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
   rehTot: (a, b) => `Estimado ${a} · real ${b}`, rehEst: "Estimado", rehReal: "Real",
   sheetTitle: "Hoja de edición", sheetNote: "Tiempos estimados: busca cada frase en la grabación.", cuesTitle: "Señales para edición", clipsTitle: "Clips para la apertura en frío", openNotesTitle: "Notas abiertas", modeLbl: "Modo",
   aiPickNeed: "La IA solo funciona dentro de Claude.",
@@ -77,7 +77,7 @@ Object.assign(T.en, {
   ppSpeed: "wpm", ppElapsed: "Time", ppSecLeft: "Left in section", ppEnd: "Estimated end", ppOn: "on time", ppOver: (x) => `+${x} over plan`, ppUnder: (x) => `−${x} under plan`,
   ppMirror: "Mirror", ppCues: "Cues", ppFull: "Full screen", ppExit: "Exit", ppWidth: "Width", ppFont: "Text", ppStart: "Tap or press Space to start", ppClip: "CLIP", ppPaused: "Paused", ppDone: "End of script",
   ppLap: "Section done", ppRehHint: "Rehearsal: → or Enter marks the section done. Space pauses.", ppLapLbl: "This section",
-  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
+  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNoEpisode: "Not saved: there is no open episode to save it in.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
   rehTot: (a, b) => `Estimated ${a} · real ${b}`, rehEst: "Estimated", rehReal: "Real",
   sheetTitle: "Edit sheet", sheetNote: "Estimated times: find each line in the recording.", cuesTitle: "Cues for the edit", clipsTitle: "Clips for the cold open", openNotesTitle: "Open notes", modeLbl: "Mode",
   aiPickNeed: "AI only works inside Claude.",
@@ -910,7 +910,9 @@ function ppFinishRehearsal() {
     ${laps.map((l) => { const s = G.secs[l.k], d = l.sec - s.dur; return `<tr><td>${h(secLabel(s))}</td><td>${fmtTime(s.dur)}</td><td>${fmtTime(l.sec)}</td><td>${d >= 0 ? "+" : "−"}${fmtTime(Math.abs(d))}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="actions"><button class="primary small" id="rehSave">${h(t("rehSave"))}</button>${est >= 120 ? `<button class="small" id="rehApply">${h(t("rehApply")(kNew.toFixed(2)))}</button>` : ""}<button class="small" id="rehClose">${h(t("rehDiscard"))}</button><span class="status" id="rehMsg"></span></div></div>`;
   box.hidden = false;
-  $("rehSave").addEventListener("click", () => {
+  $("rehSave").addEventListener("click", (e) => {
+    e.currentTarget.disabled = true; // one rehearsal per click (B-020, 2026-10-29: a second click pushed a duplicate)
+    if (!G.prodId) { $("rehMsg").textContent = t("rehNoEpisode"); return; } // markDirty saves nothing without an episode: never say «guardado» then
     G.rehearsals.push({ at: Date.now(), kEst: state.k, kNew, laps: laps.map((l) => ({ first: G.secs[l.k].first, anchor: G.secs[l.k].anchor, est: Math.round(G.secs[l.k].dur * 10) / 10, sec: Math.round(l.sec * 10) / 10 })) });
     markDirty();
     $("rehMsg").textContent = t("rehSaved");

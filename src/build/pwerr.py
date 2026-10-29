@@ -53,6 +53,11 @@ async def run(b, ui):
         await pg.locator("#rehApply").click(); await pg.wait_for_timeout(500)
         msg = await pg.inner_text("#rehMsg")
         ok(f"{ui}: failed pace save says so", msg == await pg.evaluate("t('rehNotSaved')"), msg)
+        # B-020 (c): «Guardar ensayo» with no episode to save into must not say it was saved, and a second click must not add a second rehearsal
+        await pg.evaluate("G.prodId = null; G.rehearsals = []")
+        await pg.click("#rehSave"); await pg.wait_for_timeout(200)
+        r1 = await pg.evaluate("({ msg: $('rehMsg').textContent, n: G.rehearsals.length, dis: $('rehSave').disabled })")
+        ok(f"{ui}: «Guardar ensayo» without an episode says it was not saved and disables itself", r1["msg"] == await pg.evaluate("t('rehNoEpisode')") and r1["dis"] is True, r1)
     else:
         ok(f"{ui}: rehearsal Apply button reachable", False)
     await pg.evaluate("caps.db = window.__realDb; if (typeof ppClose === 'function') ppClose();")  # teardown of the rehearsal: an open prompter outlives an episode switch and crashes (B-038, its own test when fixed)
