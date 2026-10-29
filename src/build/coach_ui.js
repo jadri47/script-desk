@@ -193,7 +193,7 @@ function coachApplyBatch(d) {
   if (after === before) { rerunReview(t("fxNoChange")); return; }
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
-  const sc0 = scoreOf(state.result, state.fixDismissed).score, grp = ++fxUid, words = (x) => (x.match(/\S+/g) || []).length;
+  const sc0 = rpNowScore(), grp = ++fxUid, words = (x) => (x.match(/\S+/g) || []).length; // the pill's readiness (B-003), null without a whole report
   const prev = { cold: JSON.parse(JSON.stringify(G.cold)), field: null };
   let delta = 0;
   const entries = items.map((it) => {
@@ -208,7 +208,7 @@ function coachApplyBatch(d) {
   state.fixSel = {}; state.fixAi = {};
   COACH.delay = 1100;
   rerunReview(t("coBatchDone")(entries.length));
-  const sc1 = scoreOf(state.result, state.fixDismissed).score;
+  const sc1 = rpNowScore();
   entries.forEach((e) => { e.sc[1] = sc1; });
   if (WK.ok) { const r = wkRange(items[0].start, items[0].start + Math.max(1, items[0].rep.length)); if (r) { wkScrollTo(r); wkFlash([r]); } }
 }

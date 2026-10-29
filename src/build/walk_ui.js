@@ -168,7 +168,7 @@ function wkInfoHTML(x) {
   const row = (l, v) => (v ? `<div class="fx-i"><span class="fx-chg-l">${h(l)}</span> ${v}</div>` : "");
   const sc = x.sc && x.sc[0] != null && x.sc[1] != null ? `${x.sc[0]} → ${x.sc[1]}${x.sc[1] !== x.sc[0] ? ` (${x.sc[1] > x.sc[0] ? "+" : ""}${x.sc[1] - x.sc[0]})` : ""}` : "";
   const words = x.dw ? `${x.dw > 0 ? "+" : "−"}${Math.abs(x.dw)}` : "";
-  return row(t("fxWhy"), h(x.why || x.label)) + row(t("fxOpt"), h(x.what || "")) + row(t("fxWhere"), x.para ? h(t("fxParaN")(x.para, x.tm)) : h((t("fxField") || {})[x.where] || "")) + row(t("fxWords"), h(words)) + row(t("fxScore"), h(sc));
+  return row(t("fxWhy"), h(x.why || x.label)) + row(t("fxOpt"), h(x.what || "")) + row(t("fxWhere"), x.para ? h(t("fxParaN")(x.para, x.tm)) : h((t("fxField") || {})[x.where] || "")) + row(t("fxWords"), h(words)) + row(t("rpName"), h(sc));
 }
 const wkLogHTML = (i) => wkLogItemsHTML(wkLogFor(i));
 function wkLogItemsHTML(list) {

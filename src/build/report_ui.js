@@ -279,6 +279,9 @@ function rpWalk(cur) {
   return { i: gone + (cur.type === "risk" ? 1 : cur.i + 1), n: gone + risk.length + items }; // an item's place is its place in the report, so Undo / Previous never renumber it
 }
 const rpPts = (rd) => (rd.score == null ? rd.rules : rd.score);
+// The number the pill shows right now (readinessOf with the text), or null without a whole report: the decision log stores this one
+// before and after each applied change, so the log and the pill never disagree (jadri47, 2026-10-29, B-003 pick A).
+function rpNowScore() { return state.result && typeof state.text === "string" ? readinessOf(state.result, G.report, state.fixDismissed, state.text).score : null; }
 // The points one card's patch moves the pill by (same recipe as the pill: readinessOf with the text), plus the area's rating before/after.
 // Items go through itemGain (report_logic.js); a risk card compares the readiness of the changed text with now. 0 = show nothing.
 const RPG = { text: null, rep: null, sig: "", m: new Map() };

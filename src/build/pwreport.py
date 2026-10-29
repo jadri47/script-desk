@@ -116,9 +116,13 @@ async def main():
                 # ---- apply / skip / undo ----
                 t0 = await pg.evaluate("$('script').value")
                 rep1 = await pg.evaluate("G.report.items[0].replacement"); orig1 = await pg.evaluate("G.report.items[0].original")
+                sc_before = await pg.evaluate("readinessOf(state.result, G.report, state.fixDismissed, state.text).score")
                 await pg.click("[data-rp=apply]"); await pg.wait_for_timeout(1700)
                 t1 = await pg.evaluate("$('script').value")
                 ok(f"{n}: Apply puts the replacement in the script", rep1 in t1 and orig1 not in t1 and t1 != t0)
+                # B-003 (2026-10-29, pick A): the decision log's «a → b» row is the pill's readiness, not the old internal score
+                lg = await pg.evaluate("(() => { const x = state.fixLog[state.fixLog.length - 1]; return x ? { sc: x.sc, now: readinessOf(state.result, G.report, state.fixDismissed, state.text).score } : null; })()")
+                ok(f"{n}: the decision log stores the readiness the pill showed before → after", lg and lg["sc"][0] == sc_before and lg["sc"][1] == lg["now"], (sc_before, lg))
                 dec = (await pg.inner_text("#rpD")).strip()
                 ok(f"{n}: the next change is change 2 of 3", dec.startswith({"es": "Cambio 2 de 3", "en": "Change 2 of 3"}[ui]), dec)
                 await pop_open(pg)
