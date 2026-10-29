@@ -28,6 +28,7 @@ MOCK = r"""() => {
       const ids = [...prompt.matchAll(/^=== ([bf]\d+)$/gm)].map((m) => m[1]);
       if (ids.length && ids[0][0] === 'b') { // «Proponer con IA» with no stored answer asks like a batch (B-002, 2026-10-29): one clean option, one with an invented verse mark
         window.__calls.button++;
+        if (window.__failButton) throw { code: 'server_error' }; // B-017 (a): the button's own call fails
         const frag = (prompt.match(/(?:FRAGMENTO A REESCRIBIR|FRAGMENT TO REWRITE):\n"{3}\n([\s\S]*?)\n"{3}/) || [])[1] || 'x';
         return { fixes: [{ id: ids[0], options: [{ text: frag.trim() + ' Del botón.', why: 'botón' }, { text: frag.trim() + ' ⟦V99⟧', why: 'inventa un versículo' }] }] };
       }
