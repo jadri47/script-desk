@@ -122,6 +122,9 @@ async def main():
                 # garbage in a stored report is cleaned
                 cl = await pg.evaluate("rpClean({ at: 'x', key: 'k', areas: {}, items: [], fixes: [null, { id: 'p', orig: 'o', options: [{ text: ' a ' }, { text: 5 }, null, { text: 'b' }, { text: 'c' }] }, { id: '', orig: 'o', options: [{ text: 'z' }] }, { id: 'q', orig: 'o', options: [] }, 'x'] })")
                 ok(f"{n}: stored fixes are cleaned (strings only, at most 2 options, empty ones dropped)", cl and len(cl["fixes"]) == 1 and [o["text"] for o in cl["fixes"][0]["options"]] == ["a", "b"], cl and cl["fixes"])
+                # a fix for an EMPTY field (a title not written yet) has orig "" and must survive the reload: it is paid work for the very case the field is empty (B-006, 2026-10-29)
+                cl2 = await pg.evaluate("rpClean({ at: 'x', key: 'k', areas: {}, items: [], fixes: [{ id: 'search', orig: '', field: 'title', options: [{ text: '¿Qué dice la Biblia sobre la ansiedad?' }] }, { id: 'hook', orig: '', options: [{ text: 'z' }] }] })")
+                ok(f"{n}: a stored fix for an empty field is kept, one for empty script text is not", cl2 and [f["id"] for f in cl2["fixes"]] == ["search"] and cl2["fixes"][0]["field"] == "title" and cl2["fixes"][0]["orig"] == "", cl2 and cl2["fixes"])
                 await pg.close()
         # ---- a batch that fails: the others stay, the line says how many did not arrive, Reintentar asks that batch again (one call)
         for ui in ["es", "en"]:

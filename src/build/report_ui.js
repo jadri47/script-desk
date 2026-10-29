@@ -72,7 +72,8 @@ function rpClean(r) {
     .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: rpStrs(x.alts, REPORT_MAX_ALTS), why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
   const words = {};
   if (r.words && typeof r.words === "object" && !Array.isArray(r.words)) for (const [k, v] of Object.entries(r.words)) { const a = rpStrs(v, REPORT_MAX_WORD_ALTS); if (k && a.length) words[k.toLowerCase()] = a; }
-  const fixes = (Array.isArray(r.fixes) ? r.fixes : []).filter((f) => f && typeof f.id === "string" && f.id && typeof f.orig === "string" && f.orig && Array.isArray(f.options)).slice(0, REPORT_MAX_FIXES)
+  // a field fix keeps an EMPTY orig: a title not written yet is the very case it answers (B-006, 2026-10-29); script-text fixes need their text
+  const fixes = (Array.isArray(r.fixes) ? r.fixes : []).filter((f) => f && typeof f.id === "string" && f.id && typeof f.orig === "string" && (f.orig || (typeof f.field === "string" && f.field)) && Array.isArray(f.options)).slice(0, REPORT_MAX_FIXES)
     .map((f) => ({ id: f.id, orig: f.orig, lead: typeof f.lead === "string" ? f.lead : "", trail: typeof f.trail === "string" ? f.trail : "", field: typeof f.field === "string" && f.field ? f.field : null,
       options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
     .filter((f) => f.options.length);
