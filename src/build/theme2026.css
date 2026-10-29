@@ -595,3 +595,10 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
   --c-pol:#7FB2FF;--c-pol-bg:rgba(127,178,255,.14);--c-cut:#E7A3B5;--c-cut-bg:rgba(231,163,181,.14);
   --m-risk:#FF6B8A;--m-promise:#7FB2FF;--m-cta:#C7A2FF;--m-ref:#FFC566;--tl-bar:#2A3068;
 }
+
+/* (jadri47, 2026-10-29: B-031) the first-time notice «cost-toast» was styled only in build_standalone.py, so in the claude.ai artifact it was a bare div. It lives here so both builds get it. */
+.cost-toast{position:fixed;left:50%;width:max-content;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);z-index:60;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 24px));padding:10px 10px 10px 14px;border-radius:12px;background:var(--ink);color:var(--paper);font:500 13.5px/1.4 var(--sans);box-shadow:0 6px 24px rgba(0,0,0,.25);transition:transform .25s ease;pointer-events:none}
+.cost-toast.on{transform:translate(-50%,0);pointer-events:auto}
+.cost-toast button{flex:none;width:28px;height:28px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;font-size:18px;line-height:1;cursor:pointer}
+@media (max-width:620px){ .cost-toast{left:12px;right:12px;width:auto;max-width:none;transform:translateY(160%)} .cost-toast.on{transform:translateY(0)} html.guided .cost-toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))} }
+@media (prefers-reduced-motion:reduce){ .cost-toast{transition:none} }

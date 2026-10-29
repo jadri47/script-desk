@@ -22,11 +22,6 @@ head_extra = """<meta name="theme-color" content="#255F7E">
 .auth-bar.ok{padding:6px 12px;background:transparent;border-color:transparent}
 .auth-bar.ok p{color:var(--ink-2);font-size:13px}
 .auth-bar.warn{border-color:var(--gold);background:var(--gold-bg)}
-.cost-toast{position:fixed;left:50%;width:max-content;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);z-index:60;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 24px));padding:10px 10px 10px 14px;border-radius:12px;background:var(--ink);color:var(--paper);font:500 13.5px/1.4 var(--sans);box-shadow:0 6px 24px rgba(0,0,0,.25);transition:transform .25s ease;pointer-events:none}
-.cost-toast.on{transform:translate(-50%,0);pointer-events:auto}
-.cost-toast button{flex:none;width:28px;height:28px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;font-size:18px;line-height:1;cursor:pointer}
-@media (max-width:620px){ .cost-toast{left:12px;right:12px;width:auto;max-width:none;transform:translateY(160%)} .cost-toast.on{transform:translateY(0)} html.guided .cost-toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))} }
-@media (prefers-reduced-motion:reduce){ .cost-toast{transition:none} }
 </style>
 </head>"""
 rep("</head>", head_extra)
