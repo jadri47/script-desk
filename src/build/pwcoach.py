@@ -157,6 +157,10 @@ async def main():
                             ok(n + ": bigIdea shows the promise sentence as a choice", got[:len(want)] == want and len(got) == len(want) + 1, (want, got))
                         else: ok(n + ": no candidate: only the box", len(got) == 0 and await pg.locator("#coAns").is_visible(), got)
                         if want: ok(n + ": bigIdea has the AI suggestion button", await pg.locator("[data-co=ai-idea]").count() == 1)
+                        if want:
+                            # the button must reach the manual request (coachAiAsk), not the automatic batch runner that once shared its name (B-009, 2026-10-29)
+                            await pg.click("[data-co=ai-idea]"); await pg.wait_for_timeout(800)
+                            ok(n + ": the AI suggestion button runs without a crash", not any("items.map" in e for e in errs) and await pg.evaluate("COACH.q.busy === false"), [e for e in errs if "items.map" in e])
                         await pg.click("[data-co=skip]"); await pg.wait_for_timeout(450)
                     if await to_ask("keyword"):
                         rg = await pg.evaluate("(()=>{const g=document.querySelector('[role=radiogroup]');return g?[g.getAttribute('aria-labelledby'),!!document.getElementById(g.getAttribute('aria-labelledby')).textContent.trim()]:null})()")

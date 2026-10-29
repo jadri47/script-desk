@@ -239,7 +239,9 @@ function coachManual(d) {
   coachRefresh();
 }
 // Manual clicks only (step 4 adds the automatic ones). Each result becomes one more choice; titles keep the 60-character limit.
-async function coachAiRun(fn) {
+// Was coachAiRun: coach_ai.js declares coachAiRun(items, epoch) for the automatic batch and, coming later in the bundle, won the
+// name, so the title/idea buttons called the batch with a function and threw «items.map is not a function» (B-009, 2026-10-29).
+async function coachAiAsk(fn) {
   const id = COACH.q.id;
   COACH.q.busy = true; COACH.q.err = ""; coachRefresh();
   try { const r = await fn(); if (COACH.q.id === id) { const before = coChoices(COACH.list[0]).length; COACH.q.ai.push(...r); if (r.length) COACH.q.sel = before; } }
@@ -247,7 +249,7 @@ async function coachAiRun(fn) {
   if (COACH.q.id === id) { COACH.q.busy = false; coachRefresh(); }
 }
 function coachAiTitles() {
-  coachAiRun(async () => {
+  coachAiAsk(async () => {
     const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
     const R = state.result, kw = (state.opts.keyword || R.keyword || ""), prom = R.promiseSent ? R.promiseSent.text : state.text.slice(0, 600);
     const prompt = `Para un episodio de un pódcast cristiano de enseñanza bíblica en YouTube, en ${R.lang === "en" ? "inglés" : "español"}, escribe cinco títulos de 60 caracteres o menos${kw ? `, con "${kw}" dentro de los primeros 60 caracteres` : ""}. Al menos dos como la pregunta que alguien escribiría en YouTube. Cada título debe prometer exactamente lo que promete la apertura del guion. Sin mayúsculas sostenidas, sin groserías, sin términos gráficos, sin prometer sanidad o dinero.
@@ -266,7 +268,7 @@ ${state.text.slice(0, 6000)}
   });
 }
 function coachAiIdea() {
-  coachAiRun(async () => {
+  coachAiAsk(async () => {
     const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
     IDEA.busy = false;
     await ideaSuggest(true);
