@@ -1028,7 +1028,7 @@ const T = {
     saved: "Versión guardada.", quotaFull: "Espacio lleno: borra versiones antiguas.", saveFail: "No se pudo guardar (puede que solo tengas permiso de lectura).",
     histNeedsClaude: "Guardar versiones y anotar resultados funciona al abrir esta página en Claude.", histReadFail: "No se pudo leer el historial.",
     calibrated: (n) => `ritmo calibrado con ${n} episodios`, calibProgress: (n) => `${n} de 3 episodios para calibrar el ritmo`,
-    open: "Abrir", compare: "Comparar", noSaved: "Aún no hay versiones guardadas.",
+    open: "Abrir", compare: "Comparar", histOpenTitle: "¿Abrir esta versión?", histOpenBody: "El texto del editor se sustituye por la versión guardada y la revisión actual se cierra. Un episodio guardado se conserva.", histOpenNo: "Cancelar", noSaved: "Aún no hay versiones guardadas.",
     epTitle: "Anotar un episodio publicado", epDesc: "Datos de YouTube Studio → Analytics → Participación. La métrica «Intro» es el porcentaje que sigue viendo a los 30 segundos.",
     epScript: "Versión grabada", epDur: "Duración real (mm:ss)", epIntro: "Intro (%)", epAvg: "Porcentaje visto (%)", epIcon: "Ícono de monetización",
     iconOpts: { verde: "Verde", amarillo: "Amarillo", rojo: "Rojo", ninguno: "Aún sin monetizar" }, epSave: "Guardar resultado",
@@ -1099,7 +1099,7 @@ const T = {
     saved: "Version saved.", quotaFull: "Storage full: delete old versions.", saveFail: "Couldn't save (you may only have read access).",
     histNeedsClaude: "Saving versions and recording results works when this page is opened in Claude.", histReadFail: "Couldn't read the history.",
     calibrated: (n) => `pace calibrated from ${n} episodes`, calibProgress: (n) => `${n} of 3 episodes needed to calibrate pace`,
-    open: "Open", compare: "Compare", noSaved: "No saved versions yet.",
+    open: "Open", compare: "Compare", histOpenTitle: "Open this version?", histOpenBody: "The text in the editor is replaced by the saved version and the current review closes. A saved episode is kept.", histOpenNo: "Cancel", noSaved: "No saved versions yet.",
     epTitle: "Record a published episode", epDesc: "From YouTube Studio → Analytics → Engagement. The Intro metric is the share still watching at 30 seconds.",
     epScript: "Recorded version", epDur: "Real length (mm:ss)", epIntro: "Intro (%)", epAvg: "Percentage viewed (%)", epIcon: "Monetization icon",
     iconOpts: { verde: "Green", amarillo: "Yellow", rojo: "Red", ninguno: "Not monetized yet" }, epSave: "Save result",
@@ -1707,8 +1707,15 @@ function renderHistory() {
   body.innerHTML = list + form + learn;
   body.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => {
     const s = state.saved.find((x) => x.id === b.dataset.open); if (!s) return;
-    $("script").value = s.text; $("title").value = s.title || ""; $("keyword").value = s.keyword || ""; $("series").value = s.series || ""; if (s.translation) $("translation").value = s.translation;
-    updateLive(); window.scrollTo({ top: 0, behavior: "smooth" });
+    // (B-037, jadri47 2026-10-29, pick A) other text in the editor: ask first; opening clears the fields and the old result and starts a new episode
+    const go = async () => {
+      if (typeof flushProdSave === "function" && !(await flushProdSave())) return;
+      doClearScript();
+      $("script").value = s.text; $("title").value = s.title || ""; $("keyword").value = s.keyword || ""; $("series").value = s.series || ""; if (s.translation) $("translation").value = s.translation;
+      updateLive(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    };
+    const cur = $("script").value.trim();
+    if (cur && cur !== String(s.text || "").trim() && typeof confirmSheet === "function") confirmSheet({ title: t("histOpenTitle"), body: t("histOpenBody"), no: t("histOpenNo"), yes: t("open"), onYes: go }); else go();
   }));
   body.querySelectorAll("[data-cmp]").forEach((b) => b.addEventListener("click", () => {
     const s = state.saved.find((x) => x.id === b.dataset.cmp); if (!s) return;

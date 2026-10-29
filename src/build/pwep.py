@@ -37,6 +37,26 @@ async def main():
             ok(f"{ui}: an intro of 150 % is refused", await pg.evaluate("$('epStatus').textContent === t('epRange') && !Object.keys(window.__rows || {}).some((k) => k.startsWith('episodios/'))"), await pg.evaluate("[$('epStatus').textContent, Object.keys(window.__rows || {})]"))
             await pg.fill("#epIntro", "68"); await pg.fill("#epAvg", "35"); await pg.evaluate("saveEpisode()"); await pg.wait_for_timeout(600)
             ok(f"{ui}: a valid episode is saved with a boolean hookPassed", await pg.evaluate("(() => { const k = Object.keys(window.__rows || {}).find((x) => x.startsWith('episodios/')); return !!k && typeof window.__rows[k].data.hookPassed === 'boolean' && window.__rows[k].data.realSec === 1470; })()"), await pg.evaluate("Object.values(window.__rows || {}).map((r) => r.data)"))
+            # B-037 (2026-10-29, pick A): «Abrir» with other text in the editor asks first; opening clears the old result and starts a new episode
+            await pg.evaluate("$('script').value = 'Texto mío que no quiero perder'; G.prodId = 'p1'; state.result = { sections: {} }")
+            await pg.evaluate("document.querySelector('#historyBody [data-open]').click()"); await pg.wait_for_timeout(300)
+            ok(f"{ui}: history «Abrir» asks first and leaves the typed text", await pg.evaluate("!!($('clrDlg') && $('clrDlg').open) && $('script').value === 'Texto mío que no quiero perder'"), await pg.evaluate("$('script').value.slice(0, 40)"))
+            await pg.evaluate("$('clrNo').click()"); await pg.wait_for_timeout(200)
+            ok(f"{ui}: Cancelar keeps everything", await pg.evaluate("$('script').value === 'Texto mío que no quiero perder' && G.prodId === 'p1'"))
+            await pg.evaluate("document.querySelector('#historyBody [data-open]').click()"); await pg.wait_for_timeout(300)
+            await pg.evaluate("$('clrYes').click()"); await pg.wait_for_timeout(700)
+            op = await pg.evaluate("({ same: $('script').value === EXAMPLES.es.mid.text, id: G.prodId, res: state.result })")
+            ok(f"{ui}: after Abrir the saved version is in the editor, as a new episode, with the old result gone", op["same"] and op["id"] is None and op["res"] is None, op)
+            # B-019 leftover: a target length that cannot be read is said, not stored and ignored
+            await pg.evaluate("document.querySelector('[data-mode=guion]').click()"); await pg.wait_for_timeout(400)
+            await pg.evaluate("G.target = '10:00'; goPhase('prep')"); await pg.wait_for_timeout(400)
+            has = await pg.evaluate("!!$('gTarget')")
+            if has:
+                await pg.fill("#gTarget", "12 min"); await pg.evaluate("$('gTarget').dispatchEvent(new Event('change'))"); await pg.wait_for_timeout(200)
+                tg = await pg.evaluate("({ msg: ($('gTargetErr') || {}).textContent, target: G.target, inv: $('gTarget').getAttribute('aria-invalid') })")
+                ok(f"{ui}: «12 min» as a target is refused with a message and not stored", tg["msg"] == await pg.evaluate("t('targetBad')") and tg["target"] == "10:00" and tg["inv"] == "true", tg)
+            else:
+                ok(f"{ui}: the target field is on screen", False)
             ok(f"{ui}: no page errors", not errs, errs)
             await pg.close()
         print("FAILS:", fails); await b.close()
