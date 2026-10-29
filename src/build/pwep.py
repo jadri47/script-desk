@@ -26,6 +26,17 @@ async def main():
             # the writer: the value saved with an episode is a boolean (or null when the script cannot be analysed), never the row
             w = await pg.evaluate("(() => { try { const v = hookPassedOf(EXAMPLES.es.mid.text, 'es'); return [typeof v, v]; } catch (e) { return ['error', String(e)]; } })()")
             ok(f"{ui}: the writer's hookPassed is a boolean", w[0] == "boolean", w)
+            # the form validates at the boundary (B-019, 2026-10-29): seconds 00-59, Intro and percentage viewed 0-100, and a keypad that can type the colon
+            # one saved version in the mock db (loadHistory re-reads it on every save, so seeding state.saved alone would vanish)
+            await pg.evaluate("(() => { window.__rows['guiones/s1'] = { collection: 'guiones', id: 's1', data: { title: 'Guion', text: EXAMPLES.es.mid.text, lang: 'es', syllables: 100, runtimeSec: 600, flags: [], passed: 1, total: 1, createdAt: Date.now() } }; return loadHistory(); })()"); await pg.wait_for_timeout(400)
+            ok(f"{ui}: the episode form is on screen", await pg.locator("#epDur").count() == 1)
+            ok(f"{ui}: the mm:ss fields do not force a numeric keypad (no colon on iOS)", await pg.evaluate("$('epDur').getAttribute('inputmode') !== 'numeric'"), await pg.evaluate("$('epDur').getAttribute('inputmode')"))
+            await pg.fill("#epDur", "24:75"); await pg.fill("#epIntro", "60"); await pg.evaluate("saveEpisode()"); await pg.wait_for_timeout(400)
+            ok(f"{ui}: 24:75 is refused as a length", await pg.evaluate("$('epStatus').textContent === t('durFormat') && !Object.keys(window.__rows || {}).some((k) => k.startsWith('episodios/'))"), await pg.evaluate("[$('epStatus').textContent, Object.keys(window.__rows || {})]"))
+            await pg.fill("#epDur", "24:30"); await pg.fill("#epIntro", "150"); await pg.evaluate("saveEpisode()"); await pg.wait_for_timeout(400)
+            ok(f"{ui}: an intro of 150 % is refused", await pg.evaluate("$('epStatus').textContent === t('epRange') && !Object.keys(window.__rows || {}).some((k) => k.startsWith('episodios/'))"), await pg.evaluate("[$('epStatus').textContent, Object.keys(window.__rows || {})]"))
+            await pg.fill("#epIntro", "68"); await pg.fill("#epAvg", "35"); await pg.evaluate("saveEpisode()"); await pg.wait_for_timeout(600)
+            ok(f"{ui}: a valid episode is saved with a boolean hookPassed", await pg.evaluate("(() => { const k = Object.keys(window.__rows || {}).find((x) => x.startsWith('episodios/')); return !!k && typeof window.__rows[k].data.hookPassed === 'boolean' && window.__rows[k].data.realSec === 1470; })()"), await pg.evaluate("Object.values(window.__rows || {}).map((r) => r.data)"))
             ok(f"{ui}: no page errors", not errs, errs)
             await pg.close()
         print("FAILS:", fails); await b.close()

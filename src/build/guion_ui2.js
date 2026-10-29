@@ -246,7 +246,7 @@ function renderResultsCard() {
       <div class="actions"><button class="small" id="rsClear">${h(t("rsClear"))}</button></div>`;
   }
   el.innerHTML = `<header class="g-h"><h2>${h(t("rsTitle"))}</h2></header><p class="lead">${h(t("rsLead"))}</p>
-    <div class="rs-in"><div class="field"><label for="rsDur">${h(t("rsDur"))}</label><input id="rsDur" inputmode="numeric" placeholder="${h(t("targetPh"))}" value="${h(G.realDur)}"></div>
+    <div class="rs-in"><div class="field"><label for="rsDur">${h(t("rsDur"))}</label><input id="rsDur" placeholder="${h(t("targetPh"))}" value="${h(G.realDur)}"></div>
     <div class="field rs-wide"><label for="rsData">${h(t("rsPaste"))}</label><textarea id="rsData" rows="3" placeholder="${h(t("rsPh"))}" spellcheck="false"></textarea></div></div>
     <div class="actions"><button class="small primary" id="rsImport">${h(t("rsImport"))}</button><label class="small filebtn"><input type="file" id="rsFile" accept=".csv,.tsv,.txt,text/csv,text/plain"> ${h(t("rsFile"))}</label><span class="status" id="rsMsg"></span></div>${body}`;
   $("rsDur").addEventListener("change", () => { G.realDur = $("rsDur").value.trim(); markDirty(); renderChapters(); renderResultsCard(); });

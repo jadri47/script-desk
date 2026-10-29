@@ -432,7 +432,7 @@ function renderEsc() {
   const diff = tgt ? vid - tgt : null;
   el.innerHTML = `<header class="g-h"><h2>${h(t("escTitle"))}</h2><span class="count">${h(t("totalRec")(fmtTime(rec)))}${showVideo ? " · " + h(t("totalVideo")(fmtTime(vid))) : ""}</span></header>
     <p class="lead">${h(t("escLead"))}</p>
-    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" inputmode="numeric" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}</div>
+    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}</div>
     <div class="tablewrap"><table class="pf esc"><thead>${head}</thead><tbody>${coldRow}${rows}</tbody></table></div>`;
   const ti = $("gTarget");
   ti.addEventListener("change", () => { G.target = ti.value.trim(); markDirty(); renderEsc(); });
