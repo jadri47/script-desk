@@ -1797,20 +1797,22 @@ button.icon:hover{color:var(--ink)}
 .pol-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 6px}
 .pol-head .hint{margin-right:auto}
 .pol-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.pol-item{border:1px solid var(--line,#d9dcea);border-radius:14px;padding:12px 14px;background:var(--card,#fff)}
+.pol-item{/* (jadri47, 2026-10-29: B-029) --line/--card/--ins were never defined, so the light fallbacks always won in dark mode */border:1px solid var(--rule);border-radius:14px;padding:12px 14px;background:var(--sheet)}
 .pol-item .chip{margin-bottom:6px;display:inline-block}
 .pol-diff{margin:4px 0;font-family:var(--serif,Georgia,serif);font-size:1.02rem;line-height:1.55;overflow-wrap:anywhere}
 .pol-diff s{opacity:.62;text-decoration-thickness:1.5px}
-.pol-diff ins{background:var(--ins,rgba(34,150,100,.16));text-decoration:none;border-radius:4px;padding:0 2px}
+.pol-diff ins{background:var(--verde-bg);text-decoration:none;border-radius:4px;padding:0 2px}
 .pol-drop{margin-top:10px}
-.st-ai{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line,#c9cde2);border-radius:14px}
+.st-ai{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--rule);border-radius:14px}
 .st-ai-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .st-ai-bar .hint{flex:1 1 220px;margin:0}
-.secai-opt{margin-top:12px;padding:12px 14px;border:1px solid var(--line,#d9dcea);border-radius:14px;background:var(--card,#fff)}
+.secai-opt{margin-top:12px;padding:12px 14px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
 .secai-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:4px}
 .secai-opt .diff{max-height:340px;overflow:auto;margin:8px 0}
 .chip.ok{background:rgba(34,150,100,.14);color:#167a52}
 .chip.warn{background:rgba(214,148,40,.18);color:#8a5a00}
+/* (jadri47, 2026-10-29: B-029) dark colours also when the OS is dark and nobody pressed the theme button (data-theme is only set by the button) */
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .chip.ok{color:#6fd3a6} :root:not([data-theme="light"]) .chip.warn{color:#f0c36a} }
 html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.warn{color:#f0c36a}
 
 /* Translate/adapt: collapsed until tapped */
@@ -4210,7 +4212,8 @@ function vetReport(text, json, opts, R) {
   const vetRep = (o, start, end, c) => {
     if (typeof c !== "string" || !c.trim() || c === o || c.length > 1000) return null;
     if (/⟦|⟧/.test(c)) return null; // a verse mark never goes into a replacement
-    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) return null;
+    // the same references, none added, none changed («Romanos 8:28» → «8:29» is a different verse): the key vetSection uses (B-001, 2026-10-29)
+    if (refsKey(c) !== refsKey(o) || findQuotes(c).length > findQuotes(o).length) return null;
     const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
     if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) return null; // no new ad or packaging problem
     if (analyze(check.text, check.opts).riskHits.length > riskBefore) return null; // no new sensitive term, even if that check was already open
@@ -6756,7 +6759,8 @@ function vetReport(text, json, opts, R) {
   const vetRep = (o, start, end, c) => {
     if (typeof c !== "string" || !c.trim() || c === o || c.length > 1000) return null;
     if (/⟦|⟧/.test(c)) return null; // a verse mark never goes into a replacement
-    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) return null;
+    // the same references, none added, none changed («Romanos 8:28» → «8:29» is a different verse): the key vetSection uses (B-001, 2026-10-29)
+    if (refsKey(c) !== refsKey(o) || findQuotes(c).length > findQuotes(o).length) return null;
     const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
     if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) return null; // no new ad or packaging problem
     if (analyze(check.text, check.opts).riskHits.length > riskBefore) return null; // no new sensitive term, even if that check was already open
@@ -7119,6 +7123,9 @@ const T = {
 
 let UI = (() => { try { return localStorage.getItem("sd-ui") === "en" ? "en" : "es"; } catch (e) { return "es"; } })();
 const t = (k) => T[UI][k];
+// (B-019, 2026-10-29) the logged episode's percentages are checked at the boundary
+Object.assign(T.es, { epRange: "Intro y porcentaje visto van de 0 a 100.", copyFail: "No se pudo copiar: selecciónalo y cópialo a mano." });
+Object.assign(T.en, { epRange: "Intro and percentage viewed go from 0 to 100.", copyFail: "Couldn't copy: select it and copy by hand." });
 
 function applyLang() {
   document.documentElement.lang = UI;
@@ -7595,11 +7602,19 @@ ${pairs.map(({ i, p }) => `id ${i}: ${p.ref.canonical} — «${p.quote.inner}»`
 }
 
 function copyText(x, btn) {
-  const done = () => { const o = btn.textContent; btn.textContent = t("copied"); setTimeout(() => (btn.textContent = o), 1400); };
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(x).then(done, () => fallbackCopy(x, done));
-  else fallbackCopy(x, done);
+  const flash = (k) => { const o = btn.textContent; btn.textContent = t(k); setTimeout(() => (btn.textContent = o), 1400); };
+  const done = () => flash("copied"), fail = () => flash("copyFail");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(x).then(done, () => fallbackCopy(x, done, fail));
+  else fallbackCopy(x, done, fail);
 }
-function fallbackCopy(x, done) { const ta = document.createElement("textarea"); ta.value = x; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) {} ta.remove(); }
+// execCommand("copy") returns false instead of throwing when it cannot copy: «Copiado» only on true (B-020, 2026-10-29)
+function fallbackCopy(x, done, fail) {
+  const ta = document.createElement("textarea"); ta.value = x; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+  let copied = false;
+  try { copied = document.execCommand("copy") === true; } catch (e) { copied = false; } // an old browser without the command: reported as not copied
+  ta.remove();
+  if (copied) done(); else if (fail) fail();
+}
 
 // ---------- exports ----------
 async function offerFile(filename, data) {
@@ -7649,6 +7664,13 @@ async function loadHistory() {
   renderHistory();
 }
 
+// hookPassed of a logged episode. Before 2026-10-29 the writer saved the hook ROW of the review (an object) by mistake (B-008): those
+// records are read as the boolean they meant; new ones carry the boolean. null = unknown (the script could not be analysed).
+const epHookPassed = (e) => (typeof e.hookPassed === "boolean" ? e.hookPassed : e.hookPassed && typeof e.hookPassed === "object" ? !!(e.hookPassed.passed && !e.hookPassed.warn) : null);
+function hookPassedOf(text, lang) {
+  try { const r = analyze(text, { lang }).sections.structure.find((x) => x.id === "hook"); return !!(r && r.passed && !r.warn); }
+  catch (e) { return null; } // best effort: a script the review cannot analyse logs "unknown" instead of failing the save
+}
 // The channel's own numbers: information only, the checks never change. Needs 8 logged episodes.
 function channelNote() {
   if (!state.historyReady) return "";
@@ -7657,7 +7679,7 @@ function channelNote() {
   const med = (xs) => Math.round(median(xs) * 10) / 10;
   const avgs = eps.filter((e) => typeof e.avgViewed === "number" && isFinite(e.avgViewed)).map((e) => e.avgViewed);
   let line = t("chanStats")(eps.length, med(eps.map((e) => e.intro)), avgs.length >= 3 ? med(avgs) : null);
-  const yes = eps.filter((e) => e.hookPassed === true).map((e) => e.intro), no = eps.filter((e) => e.hookPassed === false).map((e) => e.intro);
+  const yes = eps.filter((e) => epHookPassed(e) === true).map((e) => e.intro), no = eps.filter((e) => epHookPassed(e) === false).map((e) => e.intro);
   if (yes.length >= 3 && no.length >= 3) line += t("chanHook")(med(yes), med(no), yes.length, no.length);
   return `<p class="lead">${h(line)}</p>`;
 }
@@ -7681,7 +7703,7 @@ function renderHistory() {
   const io = t("iconOpts");
   const form = state.saved.length ? `<div class="helper"><h3>${h(t("epTitle"))}</h3><p class="desc">${h(t("epDesc"))}</p>
     <div class="grid2"><div class="field"><label for="epScript">${h(t("epScript"))}</label><select id="epScript">${opts}</select></div>
-    <div class="field"><label for="epDur">${h(t("epDur"))}</label><input id="epDur" placeholder="24:30" inputmode="numeric"></div></div>
+    <div class="field"><label for="epDur">${h(t("epDur"))}</label><input id="epDur" placeholder="24:30"></div></div>
     <div class="grid3" style="margin-top:12px"><div class="field"><label for="epIntro">${h(t("epIntro"))}</label><input id="epIntro" inputmode="decimal" placeholder="68"></div>
     <div class="field"><label for="epAvg">${h(t("epAvg"))}</label><input id="epAvg" inputmode="decimal" placeholder="35"></div>
     <div class="field"><label for="epIcon">${h(t("epIcon"))}</label><select id="epIcon">${Object.entries(io).map(([v, l]) => `<option value="${v}">${h(l)}</option>`).join("")}</select></div></div>
@@ -7690,7 +7712,7 @@ function renderHistory() {
   const learn = eps.length ? (() => {
     const flagged = eps.filter((e) => (e.flags || []).length), clean = eps.filter((e) => !(e.flags || []).length);
     const yel = (arr) => arr.filter((e) => e.icon === "amarillo" || e.icon === "rojo").length;
-    const intro = (pass) => { const v = eps.filter((e) => e.hookPassed === pass && e.intro != null).map((e) => e.intro); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(0) + "% (" + v.length + ")" : "—"; };
+    const intro = (pass) => { const v = eps.filter((e) => epHookPassed(e) === pass && e.intro != null).map((e) => e.intro); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(0) + "% (" + v.length + ")" : "—"; };
     return `<div class="helper"><h3>${h(t("learnTitle"))}</h3>
       <div class="tablewrap"><table class="pf"><thead><tr><th></th><th>${h(t("episodes"))}</th><th>${h(t("yellowRed"))}</th></tr></thead><tbody>
       <tr><td>${h(t("withFlags"))}</td><td>${flagged.length}</td><td>${yel(flagged)}</td></tr>
@@ -7714,11 +7736,13 @@ function renderHistory() {
 async function saveEpisode() {
   const db = await caps.db, st = $("epStatus");
   const s = state.saved.find((x) => x.id === $("epScript").value);
-  const m = $("epDur").value.trim().match(/^(\d{1,3}):(\d{2})$/);
+  const m = $("epDur").value.trim().match(/^(\d{1,3}):([0-5]\d)$/); // seconds 00-59: «24:75» is not a length (B-019, 2026-10-29)
   if (!s) { st.textContent = t("pickVersion"); return; }
   if (!m) { st.textContent = t("durFormat"); return; }
   const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
-  const hookPassed = (() => { try { return analyze(s.text, { lang: s.lang }).sections.structure.find((r) => r.id === "hook"); return !!(r && r.passed && !r.warn); } catch (e) { return null; } })();
+  const pct = (v) => v == null || (v >= 0 && v <= 100); // empty is "not asked"; a figure must be a percentage (B-019)
+  if (!pct(num($("epIntro").value)) || !pct(num($("epAvg").value))) { st.textContent = t("epRange"); return; }
+  const hookPassed = hookPassedOf(s.text, s.lang); // a boolean (the old inline version returned the row itself: B-008)
   try {
     await db.collection("episodios").add({ scriptId: s.id, title: s.title, lang: s.lang, syllables: s.syllables, estimatedSec: s.runtimeSec, realSec: +m[1] * 60 + +m[2], intro: num($("epIntro").value), avgViewed: num($("epAvg").value), icon: $("epIcon").value, flags: s.flags || [], hookPassed, createdAt: Date.now() });
     st.textContent = t("savedShort");
@@ -7757,14 +7781,14 @@ Object.assign(T.es, {
   conf: { alta: "detección segura", media: "detección probable", baja: "corte sugerido", manual: "ajustado a mano" },
   secTitle: "Guion por secciones", secLead: "Toca una frase para empezar una sección ahí, editarla o usarla en la apertura. Escribe «## Título» o [B-ROLL: …], [TEXTO: …], [PAUSA] en el guion para marcar secciones y señales.",
   redetect: "Volver a detectar", upOne: "Subir el inicio una frase", downOne: "Bajar el inicio una frase", mergePrev: "Unir con la anterior", startHere: "Empezar sección aquí", editSel: "Editar frase", closeBar: "Cerrar",
-  notes: "Notas", addNote: "Añadir nota", notePh: "Nota para esta sección…", roles: { productor: "Productor", presentador: "Presentador" }, resolved: "Resuelta", openNotes: (n) => `${n} abierta(s)`,
+  notes: "Notas", addNote: "Añadir nota", notePh: "Nota para esta sección…", roleLbl: "Rol", roles: { productor: "Productor", presentador: "Presentador" }, resolved: "Resuelta", openNotes: (n) => `${n} abierta(s)`,
   revTitle: "Revisiones", revLead: "Cada cambio de estado guarda una instantánea. Compara dos para ver qué cambió.", snapPh: "Nombre, p. ej. «Después de las notas»", snapSave: "Guardar instantánea",
   snapCompare: "Comparar las dos marcadas", snapVsCurrent: "Comparar con el texto actual", snapPick2: "Marca dos instantáneas.", snapNone: "Aún no hay instantáneas.", snapAuto: (s) => `Estado: ${s}`, snapNeedsDb: "Las instantáneas se guardan al abrir la página en Claude.",
   diffLegend: "Verde: añadido · tachado: quitado.", diffSame: "No hay diferencias.", diffTitle: (a, b) => `${a} → ${b}`, current: "texto actual", restore: "Usar este texto",
   ppSpeed: "ppm", ppElapsed: "Tiempo", ppSecLeft: "Queda en la sección", ppEnd: "Fin estimado", ppOn: "a tiempo", ppOver: (x) => `+${x} sobre el plan`, ppUnder: (x) => `−${x} bajo el plan`,
   ppMirror: "Espejo", ppCues: "Señales", ppFull: "Pantalla completa", ppExit: "Salir", ppWidth: "Ancho", ppFont: "Letra", ppStart: "Toca o pulsa Espacio para empezar", ppClip: "CLIP", ppPaused: "En pausa", ppDone: "Fin del guion",
   ppLap: "Sección terminada", ppRehHint: "Ensayo: → o Intro marca la sección como terminada. Espacio pausa.", ppLapLbl: "Esta sección",
-  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
+  rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNoEpisode: "No se guardó: no hay un episodio abierto donde guardarlo.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
   rehTot: (a, b) => `Estimado ${a} · real ${b}`, rehEst: "Estimado", rehReal: "Real",
   sheetTitle: "Hoja de edición", sheetNote: "Tiempos estimados: busca cada frase en la grabación.", cuesTitle: "Señales para edición", clipsTitle: "Clips para la apertura en frío", openNotesTitle: "Notas abiertas", modeLbl: "Modo",
   aiPickNeed: "La IA solo funciona dentro de Claude.",
@@ -7798,14 +7822,14 @@ Object.assign(T.en, {
   conf: { alta: "confident", media: "likely", baja: "suggested split", manual: "set by hand" },
   secTitle: "Script by section", secLead: "Tap a line to start a section there, edit it or use it in the cold open. Write \"## Title\" or [B-ROLL: …], [TEXT: …], [PAUSE] in the script to mark sections and cues.",
   redetect: "Detect again", upOne: "Move start up one line", downOne: "Move start down one line", mergePrev: "Merge with previous", startHere: "Start section here", editSel: "Edit line", closeBar: "Close",
-  notes: "Notes", addNote: "Add note", notePh: "Note for this section…", roles: { productor: "Producer", presentador: "Host" }, resolved: "Resolved", openNotes: (n) => `${n} open`,
+  notes: "Notes", addNote: "Add note", notePh: "Note for this section…", roleLbl: "Role", roles: { productor: "Producer", presentador: "Host" }, resolved: "Resolved", openNotes: (n) => `${n} open`,
   revTitle: "Revisions", revLead: "Every status change saves a snapshot. Compare two to see what changed.", snapPh: "Name, e.g. \"After notes\"", snapSave: "Save snapshot",
   snapCompare: "Compare the two checked", snapVsCurrent: "Compare with current text", snapPick2: "Check two snapshots.", snapNone: "No snapshots yet.", snapAuto: (s) => `Status: ${s}`, snapNeedsDb: "Snapshots are saved when this page is opened in Claude.",
   diffLegend: "Green: added · struck through: removed.", diffSame: "No differences.", diffTitle: (a, b) => `${a} → ${b}`, current: "current text", restore: "Use this text",
   ppSpeed: "wpm", ppElapsed: "Time", ppSecLeft: "Left in section", ppEnd: "Estimated end", ppOn: "on time", ppOver: (x) => `+${x} over plan`, ppUnder: (x) => `−${x} under plan`,
   ppMirror: "Mirror", ppCues: "Cues", ppFull: "Full screen", ppExit: "Exit", ppWidth: "Width", ppFont: "Text", ppStart: "Tap or press Space to start", ppClip: "CLIP", ppPaused: "Paused", ppDone: "End of script",
   ppLap: "Section done", ppRehHint: "Rehearsal: → or Enter marks the section done. Space pauses.", ppLapLbl: "This section",
-  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
+  rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNoEpisode: "Not saved: there is no open episode to save it in.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
   rehTot: (a, b) => `Estimated ${a} · real ${b}`, rehEst: "Estimated", rehReal: "Real",
   sheetTitle: "Edit sheet", sheetNote: "Estimated times: find each line in the recording.", cuesTitle: "Cues for the edit", clipsTitle: "Clips for the cold open", openNotesTitle: "Open notes", modeLbl: "Mode",
   aiPickNeed: "AI only works inside Claude.",
@@ -7814,7 +7838,7 @@ Object.assign(T.en, {
 const STATUSES = ["borrador", "revision", "aprobado", "grabado"];
 const SEC_COLOR = { hook: "var(--accent)", promise: "var(--verde)", intro: "var(--ink-2)", point: "var(--gold)", body: "var(--rule)", cta: "var(--amarillo)", close: "var(--reg)" };
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* best effort: storage blocked or full: the setting just isn't remembered */ } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }; // false = storage blocked or full: a setting just isn't remembered; the draft label says so (B-020, 2026-10-29)
 
 const G = {
   mode: lsGet("sd-mode") === "guion" ? "guion" : "review",
@@ -7941,6 +7965,7 @@ async function loadProds() {
   } catch (e) { G.loadErr.prods = true; if ($("gSeriesFull") || $("epList")) renderSeriesAll(); }
 }
 function applyProd(id, d) {
+  if (typeof PP !== "undefined" && PP.on && typeof ppClose === "function") ppClose(); // (B-038, 2026-10-29) the prompter reads the G.secs of the episode it was opened for; a new episode replaces them under its frame loop
   G.prodId = id;
   $("script").value = d.text || "";
   [["title", "title"], ["series", "series"], ["keyword", "keyword"], ["thumb", "thumb"], ["description", "description"]].forEach(([el, k]) => ($(el).value = d[k] || ""));
@@ -7956,6 +7981,8 @@ function applyProd(id, d) {
 async function openProd(id) {
   const db = await caps.db;
   if (!db || !id) return;
+  // (B-016, 2026-10-29) an edit made in the 2 s before switching sat in the save debounce and was lost: save the episode being left first
+  if (G.prodId && G.prodId !== id && G.saveState === "unsaved" && !(typeof DEMO !== "undefined" && DEMO)) { clearTimeout(saveTimer); await saveProd(false); }
   try {
     const snap = await db.collection("producciones").doc(id).get();
     if (!snap.exists) return;
@@ -8160,7 +8187,7 @@ function renderEsc() {
   const diff = tgt ? vid - tgt : null;
   el.innerHTML = `<header class="g-h"><h2>${h(t("escTitle"))}</h2><span class="count">${h(t("totalRec")(fmtTime(rec)))}${showVideo ? " · " + h(t("totalVideo")(fmtTime(vid))) : ""}</span></header>
     <p class="lead">${h(t("escLead"))}</p>
-    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" inputmode="numeric" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}</div>
+    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}</div>
     <div class="tablewrap"><table class="pf esc"><thead>${head}</thead><tbody>${coldRow}${rows}</tbody></table></div>`;
   const ti = $("gTarget");
   ti.addEventListener("change", () => { G.target = ti.value.trim(); markDirty(); renderEsc(); });
@@ -8503,6 +8530,7 @@ function ppRender(force, now) {
   if (!force && now - PP.hudAt < 200) return;
   PP.hudAt = now;
   const k = PP.mode === "ensayo" ? PP.lapK : ppSecIdx(PP.tau), s = G.secs[k];
+  if (!s) { ppClose(); return; } // (B-038) the sections changed under the prompter (another episode, a cleared script): stop instead of crashing every frame
   const ratio = PP.wpm / PP.base;
   const remain = (PP.total - PP.tau) / ratio, endAt = PP.elapsed + remain, plan = parseMMSS(G.target) ? parseMMSS(G.target) - (totalVideo() - totalRec()) : PP.total;
   const dlt = endAt - plan;
@@ -8535,13 +8563,13 @@ function ppCountdown() {
   c.hidden = false; c.textContent = n;
   PP.counting = true;
   const tick = () => {
-    if (!PP.on) return;
+    if (!PP.on) { PP.counting = false; return; }
     n--;
-    if (n > 0) { c.textContent = n; setTimeout(tick, 1000); return; }
+    if (n > 0) { c.textContent = n; PP.countTimer = setTimeout(tick, 1000); return; }
     c.hidden = true; PP.counting = false; PP.started = true; PP.playing = true; PP.last = performance.now(); PP.lapStart = PP.elapsed;
     ppWake(true);
   };
-  setTimeout(tick, 1000);
+  PP.countTimer = setTimeout(tick, 1000);
 }
 function ppJump(dir) {
   const k = Math.max(0, Math.min(G.secs.length - 1, ppSecIdx(PP.tau) + dir));
@@ -8576,6 +8604,8 @@ function ppKey(e) {
   if (!PP.on) return;
   if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   const k = e.key;
+  // (jadri47, 2026-10-29: B-017) Space/Enter on a focused button or link is that control's own click (Enter on «Salir» exited nowhere)
+  if ((k === " " || k === "Spacebar" || k === "Enter") && e.target && /^(BUTTON|A)$/.test(e.target.tagName)) return;
   const map = { " ": "play", Spacebar: "play", ArrowUp: "faster", ArrowDown: "slower", ArrowLeft: "prev", PageUp: "prev", ArrowRight: "next", PageDown: "next", Enter: "next", r: "restart", R: "restart", m: "mirror", M: "mirror", v: "mirrorV", V: "mirrorV", c: "cues", C: "cues", f: "full", F: "full", "+": "fontup", "=": "fontup", "-": "fontdn", Escape: "exit" };
   const cmd = map[k];
   if (!cmd) return;
@@ -8608,6 +8638,8 @@ async function ppWake(on) {
 document.addEventListener("visibilitychange", () => { if (PP.on && PP.playing && document.visibilityState === "visible") ppWake(true); });
 function ppClose() {
   PP.on = false; PP.playing = false;
+  // (jadri47, 2026-10-29: B-017) closing during the 3-2-1 left counting=true, so a reopened prompter ignored Play/space/tap
+  PP.counting = false; clearTimeout(PP.countTimer);
   cancelAnimationFrame(PP.raf);
   ppWake(false);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -8630,7 +8662,9 @@ function ppFinishRehearsal() {
     ${laps.map((l) => { const s = G.secs[l.k], d = l.sec - s.dur; return `<tr><td>${h(secLabel(s))}</td><td>${fmtTime(s.dur)}</td><td>${fmtTime(l.sec)}</td><td>${d >= 0 ? "+" : "−"}${fmtTime(Math.abs(d))}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="actions"><button class="primary small" id="rehSave">${h(t("rehSave"))}</button>${est >= 120 ? `<button class="small" id="rehApply">${h(t("rehApply")(kNew.toFixed(2)))}</button>` : ""}<button class="small" id="rehClose">${h(t("rehDiscard"))}</button><span class="status" id="rehMsg"></span></div></div>`;
   box.hidden = false;
-  $("rehSave").addEventListener("click", () => {
+  $("rehSave").addEventListener("click", (e) => {
+    e.currentTarget.disabled = true; // one rehearsal per click (B-020, 2026-10-29: a second click pushed a duplicate)
+    if (!G.prodId) { $("rehMsg").textContent = t("rehNoEpisode"); return; } // markDirty saves nothing without an episode: never say «guardado» then
     G.rehearsals.push({ at: Date.now(), kEst: state.k, kNew, laps: laps.map((l) => ({ first: G.secs[l.k].first, anchor: G.secs[l.k].anchor, est: Math.round(G.secs[l.k].dur * 10) / 10, sec: Math.round(l.sec * 10) / 10 })) });
     markDirty();
     $("rehMsg").textContent = t("rehSaved");
@@ -8815,8 +8849,10 @@ function renderChapters() {
   $("chCopy").addEventListener("click", (e) => copyText($("chOut").value, e.target));
   renderAds();
   $("chDesc").addEventListener("click", () => {
-    const d = $("description").value.replace(/\n*(?:^|\n)0:00[\s\S]*$/, "").trimEnd();
-    $("description").value = (d ? d + "\n\n" : "") + $("chOut").value.trim();
+    // (jadri47, 2026-10-29: B-014) replace only the old chapter block (the «0:00» line and the timestamp lines right after it);
+    // what the person typed after it (hashtags, links) used to be deleted with it. No old block: append as before.
+    const cur = $("description").value, block = $("chOut").value.trim(), m = /^0:00[ \t].*(?:\n\d{1,2}(?::\d{2}){1,2}[ \t].*)*/m.exec(cur);
+    $("description").value = m ? cur.slice(0, m.index) + block + cur.slice(m.index + m[0].length) : (cur.trimEnd() ? cur.trimEnd() + "\n\n" : "") + block;
     const pd = $("pkDescIn"); if (pd) pd.value = $("description").value;
     markDirty(); gCompute(); renderPackChecks(); $("chMsg").textContent = t("chAdded");
   });
@@ -8914,7 +8950,7 @@ function renderResultsCard() {
       <div class="actions"><button class="small" id="rsClear">${h(t("rsClear"))}</button></div>`;
   }
   el.innerHTML = `<header class="g-h"><h2>${h(t("rsTitle"))}</h2></header><p class="lead">${h(t("rsLead"))}</p>
-    <div class="rs-in"><div class="field"><label for="rsDur">${h(t("rsDur"))}</label><input id="rsDur" inputmode="numeric" placeholder="${h(t("targetPh"))}" value="${h(G.realDur)}"></div>
+    <div class="rs-in"><div class="field"><label for="rsDur">${h(t("rsDur"))}</label><input id="rsDur" placeholder="${h(t("targetPh"))}" value="${h(G.realDur)}"></div>
     <div class="field rs-wide"><label for="rsData">${h(t("rsPaste"))}</label><textarea id="rsData" rows="3" placeholder="${h(t("rsPh"))}" spellcheck="false"></textarea></div></div>
     <div class="actions"><button class="small primary" id="rsImport">${h(t("rsImport"))}</button><label class="small filebtn"><input type="file" id="rsFile" accept=".csv,.tsv,.txt,text/csv,text/plain"> ${h(t("rsFile"))}</label><span class="status" id="rsMsg"></span></div>${body}`;
   $("rsDur").addEventListener("change", () => { G.realDur = $("rsDur").value.trim(); markDirty(); renderChapters(); renderResultsCard(); });
@@ -8974,7 +9010,7 @@ function wireRetChart() {
 
 /* ===== Lo primero que arreglaría: evidence, proposal, proof ===== */
 Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
-  fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras 3 con IA",
+  fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras opciones con IA", fxAiVerse: "Este fragmento corta un versículo por la mitad: la IA no lo reescribe. Cámbialo a mano.", fxUndoStale: "El guion cambió después de ese arreglo: Deshacer ya no es seguro. Usa «Revertir este cambio» en la lista de cambios o corrígelo a mano.",
   fxMulti: (n) => `resuelve ${n} revisiones`, fxPartial: (n, m) => `Arregla ${n} de ${m}; el resto, con IA o a mano.`, fxApplied: "Aplicado.", fxUndo: "Deshacer", fxUndone: "Deshecho.",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxUpTo: "Hasta", fxNoteTag: "Nota", fxNoteHow: "Sin cambio automático: es una decisión tuya (no inventamos la referencia ni acortamos el pasaje).", fxZeroMore: (n) => `La nota sube cuando quedan menos: faltan ${n} en otros párrafos.`, fxZeroFloor: "La nota ya está en 0: empieza a subir cuando arregles varias cosas más.", fxZeroRed: "Un aviso rojo limita la nota a 69 hasta que lo arregles.", fxZeroCap: "Ya cuentas el máximo de puntos por esto; la nota sube al arreglar varios.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
@@ -8982,7 +9018,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxSkip: "Ahora no", fxDone: "Aplicado", fxWhy: "Qué corrige", fxOpt: "Opción elegida", fxWhere: "Dónde", fxWords: "Palabras", fxScore: "Puntuación", fxRevert: "Revertir este cambio", fxReverted: "Cambio revertido.", fxCantRevert: "No se puede revertir solo este cambio: el texto ya cambió en ese lugar. Usa Deshacer o corrígelo a mano.", fxParaN: (n, tm) => `Párrafo ${n}${tm ? " · " + tm : ""}`, fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
-  fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
+  fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "More options with AI", fxAiVerse: "This fragment cuts a verse in half: the AI won't rewrite it. Change it by hand.", fxUndoStale: "The script changed after that fix: Undo is no longer safe. Use “Revert this change” in the change list or fix it by hand.",
   fxMulti: (n) => `fixes ${n} checks`, fxPartial: (n, m) => `Fixes ${n} of ${m}; the rest with AI or by hand.`, fxApplied: "Applied.", fxUndo: "Undo", fxUndone: "Undone.",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxUpTo: "Up to", fxNoteTag: "Note", fxNoteHow: "No automatic change: this one is your call (we don't invent the reference or shorten the passage).", fxZeroMore: (n) => `The score moves once fewer remain: ${n} left in other paragraphs.`, fxZeroFloor: "The score is already at 0: it starts rising once you fix several more.", fxZeroRed: "A red warning holds the score at 69 until it's fixed.", fxZeroCap: "This already counts the most points it can; the score rises as you fix several.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
@@ -9147,6 +9183,7 @@ function fxRevert(uid) {
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
   if (next != null) $("script").value = next;
+  state.fixUndo[state.fixUndo.length - 1].after = $("script").value; // (B-013)
   if (e.pk === "cold" && e.prev) G.cold = e.prev.cold;
   if (e.field && e.prev && e.prev.field != null) $(e.field).value = e.prev.field;
   state.fixLog = state.fixLog.filter((x) => x.uid !== uid);
@@ -9194,6 +9231,7 @@ function applyProposal(p, c) {
     chg = fxChgOf(before, after, pre, aEnd, pre, post);
     $("script").value = after;
   }
+  state.fixUndo[state.fixUndo.length - 1].after = $("script").value; // what Deshacer expects to find; typing since makes undo refuse (B-013, 2026-10-29)
   if (p.kind === "cold") {
     for (const k of ["hook", "promise"]) { const x = p[k]; G.cold[k] = x ? { i: x.i, anchor: x.text.slice(0, 80), text: x.text, mode: x.mode } : G.cold[k]; }
   }
@@ -9221,8 +9259,12 @@ function fxRestore(id) {
   const keep = window.scrollY; renderResults(); window.scrollTo(0, keep);
 }
 function undoFix() {
-  const s = state.fixUndo.pop();
+  const s = state.fixUndo[state.fixUndo.length - 1];
   if (!s) return;
+  // (B-013, 2026-10-29) Undo puts back the text from before the last change; anything typed since would go with it, so it refuses
+  // and points to «Revertir este cambio». Snapshots without `after` (older paths) behave as before.
+  if (typeof s.after === "string" && s.after.trimEnd() !== $("script").value.trimEnd()) { rerunReview(t("fxUndoStale")); return; }
+  state.fixUndo.pop();
   { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) { const g = state.fixLog[k].grp; if (g) state.fixLog = state.fixLog.filter((x) => x.grp !== g); else state.fixLog.splice(k, 1); } } // grp: the entries of one coach batch go together
   $("script").value = s.text; $("title").value = s.title; $("keyword").value = s.keyword; $("thumb").value = s.thumb; $("description").value = s.description; G.cold = s.cold;
   state.fixSel = {}; state.fixAi = {};
@@ -9250,38 +9292,28 @@ async function aiFix(ci) {
   if (!sample) { state.fixAi[c.id] = { error: t("aiOnlyClaude") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; }
   state.fixAi[c.id] = { loading: true };
   $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]);
-  const R = state.result, text = state.text, a = c.ai;
-  const fieldMode = !!a.field;
-  const frag = fieldMode ? (state.opts[a.field] || "") : text.slice(a.start, a.end);
-  const ctx = fieldMode ? text.slice(0, 2500) : text.slice(Math.max(0, a.start - 400), Math.min(text.length, a.end + 400));
-  const extra = fxAiExtra(a);
-  const prompt = `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. ${voice()}
-Problema detectado: «${c.label}». ${c.info || ""} ${c.fix || ""}
-Reescribe SOLO el fragmento de abajo para resolver ese problema. Escribe 3 opciones distintas. Mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; copia exacto cualquier versículo entre comillas; sin frases de plantilla. ${extra}
-El fragmento reescrito va en ${scriptLangName()}. ${t("outLang")}
-Responde solo con JSON: {"options": [{"text": "...", "why": "una frase"}]}
-
-CONTEXTO (no lo reescribas):
-"""
-${ctx}
-"""
-
-FRAGMENTO A REESCRIBIR:
-"""
-${frag}
-"""`;
+  // (B-002, bug review 2026-10-29) The button asks exactly like the report's batches: the fragment travels with its verses masked
+  // (fixItem) and every option goes through vetFixes → vetSection, so a verse lost, altered or invented never shows. The old
+  // direct prompt sent the verses in clear and checked the answer against the rules only.
+  const R = state.result, text = state.text, a = c.ai, ev = c.evidence[0];
+  const from = a.start != null ? a.start : ev ? ev.start : null, to = a.end != null ? a.end : ev ? ev.end : null;
+  const it = fixItem({ card: c, at: from != null ? { start: from, end: to } : null }, "b1", text, state.opts, verseSpans(text, R));
+  if (!it) { state.fixAi[c.id] = { error: t("fxAiVerse") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; } // a verse crosses the fragment's edge: it cannot be protected, so it is not sent
   try {
-    const res = await sample.json(prompt, { modelTier: "default" });
-    const opts = (res && Array.isArray(res.options) ? res.options : []).filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, 3);
-    if (!opts.length) throw { code: "invalid_json" };
+    const res = await sample.json(fixesPrompt([rpFixReq(it)], { en: R.lang === "en" }), { modelTier: "default" });
+    const got = vetFixes(res, [it])[it.id] || [];
+    if (!got.length) throw { code: "invalid_json" };
     state.fixAi[c.id] = {
-      options: opts.map((o) => {
-        const val = o.text.trim();
-        const p = fieldMode ? { kind: "field", field: a.field, value: val, label: "IA" } : { kind: "patch", patches: [{ start: a.start, end: a.end, rep: val }], label: "IA" };
-        return { ...p, why: String(o.why || ""), check: verifyProposal(text, state.opts, R, p) };
+      options: got.map((o) => {
+        const p = it.field ? { kind: "field", field: it.field, value: o.text, label: t("aiShort"), ai: true } : { kind: "patch", patches: [{ start: from, end: to, rep: it.lead + o.text + it.trail }], label: t("aiShort"), ai: true };
+        return { ...p, why: o.why, check: verifyProposal(text, state.opts, R, p) };
       }),
     };
-  } catch (e) { state.fixAi[c.id] = { error: errText(e) }; }
+  } catch (e) {
+    state.fixAi[c.id] = { error: errText(e) };
+    // (jadri47, 2026-10-29: B-017) the click disabled the button; after a failure it must be usable again to retry
+    const rb = document.querySelector(`[data-fxai="${ci}"]`); if (rb) rb.disabled = false;
+  }
   const box = $("fxai-" + ci);
   if (box) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
 }
@@ -10191,6 +10223,9 @@ async function startDemo(k) {
   const ref = await mem.collection("producciones").add({ title: e.title, series: e.series || "", keyword: e.keyword || "", thumb: e.thumb || "", description: e.description || "", translation: e.translation || "RVR1960", lang: e.lang || lg, audience: e.audience || "both", bigIdea: e.bigIdea || "", text: e.text, status: "borrador", manual: false, layout: null, cold: { hook: null, promise: null }, notes: [], rehearsals: [], target: "", retention: null, realDur: "", shorts: [], pubDate: addDays(isoToday(), 7), nextEp: e.nextEp || "", updatedAt: now, updatedBy: G.sid });
   G.prods = [];
   await loadProds();
+  // (B-039, 2026-10-29) step 1 BEFORE the episode opens: openProd re-renders the current step, and step 2 asks the editor's report for
+  // whatever text is there (a paid call on the example the person has not reviewed yet, whose answer then landed on a reset state)
+  if (V.guided && V.step !== 1) goStep(1);
   await openProd(ref.id);
   resetWorkState();
   renderDemoBar(); renderExPick();
@@ -10407,13 +10442,14 @@ async function askRun() {
   if (!state.result || state.text !== $("script").value) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); }
   const frag = askFragment();
   ASK.busy = true; ASK.ans = null; renderAsk();
+  const base = $("script").value; // the text the answer is for: «Aplicar» on the whole script must find it unchanged (B-013, 2026-10-29)
   try {
     const res = await sample.json(askPrompt(frag, q), { modelTier: frag.all ? "complex" : "default" });
     const reply = String((res && res.reply) || "").trim();
     let rep = res && typeof res.replacement === "string" ? res.replacement : null;
     if (rep && rep.trim() === frag.text.trim()) rep = null;
     if (!reply && !rep) throw { code: "invalid_json" };
-    const ans = { target: ASK.target, original: frag.text, replacement: rep, reply, applied: false };
+    const ans = { target: ASK.target, original: frag.text, replacement: rep, reply, applied: false, base };
     if (rep) {
       const full = $("script").value;
       const next = frag.all ? rep : full.replace(frag.text, () => rep);
@@ -10431,10 +10467,12 @@ function askApply() {
   const a = ASK.ans;
   if (!a || !a.replacement) return;
   const full = $("script").value;
-  if (a.target !== "all" && !full.includes(a.original)) { ASK.err = t("askChanged"); ASK.ans = null; renderAsk(); return; }
+  // a whole-script answer fits only the text it was asked about (B-013, 2026-10-29: it used to replace whatever was typed since); a paragraph answer needs its paragraph
+  if (a.target === "all" ? String(a.base || "").trimEnd() !== full.trimEnd() : !full.includes(a.original)) { ASK.err = t("askChanged"); ASK.ans = null; renderAsk(); return; }
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
   $("script").value = a.target === "all" ? a.replacement : full.replace(a.original, () => a.replacement);
+  state.fixUndo[state.fixUndo.length - 1].after = $("script").value; // what Deshacer expects to find (B-013)
   a.applied = true;
   state.fixSel = {}; state.fixAi = {};
   rerunReview(t("fxApplied"));
@@ -10739,6 +10777,8 @@ const VARIANT_GUIDE = {
 };
 const AUD_OF = { es: "es", latam: "latam", neutral: "both" };
 const TR = { target: "", ver: "", busy: false, res: null, msg: "", err: "", undo: null, open: false };
+Object.assign(T.es, { trStale: "El guion o el episodio cambió mientras tanto: la traducción ya no encaja. Vuelve a pedirla.", trVerse: "La adaptación cambió una cita bíblica y se descartó: el texto bíblico no se adapta. Vuelve a pedirla." });
+Object.assign(T.en, { trStale: "The script or the episode changed meanwhile: the translation no longer fits. Ask for it again.", trVerse: "The adaptation changed a Bible quote and was discarded: Bible text is never adapted. Ask for it again." });
 function trSource() {
   const lang = state.result ? state.result.lang : (typeof detectLanguage === "function" ? detectLanguage($("script").value) : "es");
   if (lang === "en") return "en";
@@ -10790,15 +10830,23 @@ async function trRun() {
   try {
     const res = await sample.json(trPrompt(src, dst, ver), { modelTier: "complex", bibleRule: false });
     if (!res || typeof res.script !== "string" || res.script.trim().length < text.length * 0.4) throw { code: "invalid_json" };
-    TR.res = { ...res, src, dst, ver, verify: Array.isArray(res.verify) ? res.verify.slice(0, 20) : [] };
+    // (B-015, 2026-10-29) Same language and same Bible version: the prompt says to copy every quoted verse word for word, and the
+    // code checks it (the model's own «verify» list is not a check). A swap of version or language changes the quotes by design:
+    // those go to «verify» for the person to read.
+    const swap = (dst === "en") !== (src === "en") || ver !== $("translation").value;
+    if (!swap && findQuotes(text).some((q) => !res.script.includes(q.inner))) { TR.err = t("trVerse"); TR.busy = false; renderTr(); return; }
+    TR.res = { ...res, src, dst, ver, verify: Array.isArray(res.verify) ? res.verify.slice(0, 20) : [], base: text, prod: G.prodId || null }; // the script and episode it was made for (B-013, 2026-10-29)
   } catch (e) { TR.err = errText(e); }
   TR.busy = false; renderTr();
 }
 function trApply() {
   const r = TR.res;
   if (!r) return;
+  // (B-013, 2026-10-29) The call takes up to a minute: if the script or the open episode changed meanwhile, the translation is for another text
+  if (String(r.base || "") !== $("script").value.trim() || (r.prod || null) !== (G.prodId || null)) { TR.res = null; TR.err = t("trStale"); renderTr(); return; }
   TR.undo = { text: $("script").value, title: $("title").value, thumb: $("thumb").value, description: $("description").value, keyword: $("keyword").value,
-    bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)) };
+    bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)),
+    after: r.script, prod: G.prodId || null }; // what «Volver al original» expects to find, and where (B-013)
   $("script").value = r.script;
   for (const f of ["title", "thumb", "description", "keyword"]) if (typeof r[f] === "string" && (r[f] || !$(f).value)) $(f).value = r[f];
   if ($("bigIdea") && typeof r.bigIdea === "string" && r.bigIdea) $("bigIdea").value = r.bigIdea;
@@ -10815,6 +10863,8 @@ function trApply() {
 function trUndo() {
   const u = TR.undo;
   if (!u) return;
+  // (B-013, 2026-10-29) only straight after the translation, on the same episode: typing since, or another episode, would be overwritten
+  if ((u.prod || null) !== (G.prodId || null) || String(u.after || "").trimEnd() !== $("script").value.trimEnd()) { TR.undo = null; TR.err = t("trStale"); renderTr(); return; }
   $("script").value = u.text; for (const f of ["title", "thumb", "description", "keyword", "lang", "audience", "translation"]) $(f).value = u[f];
   if ($("bigIdea")) $("bigIdea").value = u.bigIdea;
   G.nextEp = u.nextEp; G.cold = u.cold; lsSet("sd-aud", u.audience);
@@ -11138,7 +11188,7 @@ Object.assign(T.es, {
   edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
   edGrip: "Arrastra para cambiar la altura del guion",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
-  edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edAuto: "Se guarda solo mientras escribes.",
+  edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edLocalFail: "No se pudo guardar en este dispositivo: el navegador bloquea el almacenamiento.", edAuto: "Se guarda solo mientras escribes.",
 });
 Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
@@ -11146,7 +11196,7 @@ Object.assign(T.en, {
   edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
   edGrip: "Drag to change the script box height",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
-  edCueText: "verse or phrase", edLocal: "Saved on this device", edAuto: "It saves itself as you write.",
+  edCueText: "verse or phrase", edLocal: "Saved on this device", edLocalFail: "Couldn't save on this device: the browser blocks storage.", edAuto: "It saves itself as you write.",
 });
 
 const FMT = { marks: [] };
@@ -11348,8 +11398,8 @@ const queueSync = () => { clearTimeout(ED.timer); ED.timer = setTimeout(syncFrom
 function afterChange() {
   if (typeof DEMO !== "undefined" && DEMO) return;
   if (!G.prodId) {
-    lsSet("sd-draft", JSON.stringify({ text: taGet(), marks: FMT.marks, at: Date.now() }));
-    setEdSave(t("edLocal"));
+    const kept = lsSet("sd-draft", JSON.stringify({ text: taGet(), marks: FMT.marks, at: Date.now() }));
+    setEdSave(t(kept ? "edLocal" : "edLocalFail")); // never «Guardado» when the browser blocked the write (B-020, 2026-10-29)
     autoCreate();
   } else markDirty();
 }
@@ -11921,7 +11971,7 @@ function structPanel(s, clipIdx) {
     <div class="gsec-body" id="gSecsBody">${html.replace(/^\s+|\s+$/g, "")}</div>
     <details class="gnotes"${open ? " open" : ""}><summary>${h(t("notes"))}${ns.length ? ` · ${h(t("openNotes")(open))}` : ""}</summary>
       <ul>${ns.map((n) => `<li class="${n.done ? "done" : ""}"><span class="chip">${h(t("roles")[n.role] || n.role)}</span> ${h(n.text)} <label class="hint"><input type="checkbox" data-done="${h(n.id)}"${n.done ? " checked" : ""}> ${h(t("resolved"))}</label></li>`).join("")}</ul>
-      <div class="gnote-form"><select data-role="${s.k}" aria-label="role">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
+      <div class="gnote-form"><select data-role="${s.k}" aria-label="${h(t("roleLbl"))}">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
     </details></div>`;
 }
 function wireStructPanel(el) {
@@ -12012,7 +12062,7 @@ Object.assign(T.es, {
   polKinds: { grammar: "Gramática", spelling: "Ortografía", punctuation: "Puntuación", filler: "Muletilla", clarity: "Claridad", word: "Palabra" },
   polDone: (n) => `${n} aplicada${n === 1 ? "" : "s"}.`,
   secAiBtn: "Mejorar esta sección con IA",
-  secAiHint: "Te da dos opciones de esta sección con Opus 5.5 (más lento, unos centavos). Los versículos entre comillas no se tocan.",
+  secAiHint: "Te da dos opciones de esta sección con la IA (más lento, unos centavos). Los versículos entre comillas no se tocan.",
   secAiBusy: "Escribiendo dos opciones…", secAiUse: "Usar esta", secAiDiscard: "Descartar", secAiApplied: "Sección reemplazada.",
   secAiChanged: "El guion cambió mientras se escribía la opción. Pídela de nuevo.",
   secAiBad: (n) => `${n} opción${n === 1 ? "" : "es"} descartada${n === 1 ? "" : "s"}: alteraba${n === 1 ? "" : "n"} un versículo, una referencia o una cita.`,
@@ -12033,7 +12083,7 @@ Object.assign(T.en, {
   polKinds: { grammar: "Grammar", spelling: "Spelling", punctuation: "Punctuation", filler: "Filler", clarity: "Clarity", word: "Word" },
   polDone: (n) => `${n} applied.`,
   secAiBtn: "Improve this section with AI",
-  secAiHint: "Gives you two options for this section using Opus 5.5 (slower, a few cents). Verses inside quotation marks are never touched.",
+  secAiHint: "Gives you two options for this section using the AI (slower, a few cents). Verses inside quotation marks are never touched.",
   secAiBusy: "Writing two options…", secAiUse: "Use this", secAiDiscard: "Discard", secAiApplied: "Section replaced.",
   secAiChanged: "The script changed while the option was being written. Ask again.",
   secAiBad: (n) => `${n} option${n === 1 ? "" : "s"} dropped: ${n === 1 ? "it" : "they"} altered a verse, a reference or a quote.`,
@@ -13672,7 +13722,7 @@ function coChoiceHTML(d, R) {
   return `<div class="cc-top"><b class="cc-t">${h(plainLabel(c.id, c.label))}</b>${d.kind === "risk" ? `<span class="cc-tag">${h(t("coRisk"))}: ${h(t("cat_hi"))}</span>` : ""}${pts.html}</div>
     ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}${pts.why ? `<div class="hint fx-why">${h(pts.why)}</div>` : ""}
     <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
-    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.label)}</span>${p.label === "IA" ? ` <span class="cc-tag cc-ai">${h(t("coAiTag"))}</span>` : ""}</div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : coAiBusy(d) ? `<p class="hint cc-prep" role="status">${h(t("coAiPrep"))}</p>` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
+    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.ai ? t("aiShort") : p.label)}</span>${p.ai ? ` <span class="cc-tag cc-ai">${h(t("coAiTag"))}</span>` : ""}</div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : coAiBusy(d) ? `<p class="hint cc-prep" role="status">${h(t("coAiPrep"))}</p>` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${writeBox}
     <div class="actions cc-act">${p ? `<button type="button" class="small primary" data-co="apply"${w && w.p ? "" : " data-co-primary"}>${h(t("fxApply"))}</button>` : ""}${opts.length > 1 ? `<button type="button" class="small" data-co="other">${h(t("fxOther"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-co="write">${h(t("coWrite"))}</button>` : ""}${d.needsAi && c.ai ? `<button type="button" class="small" data-fxai="0">${h(ai ? t("fxAiAgain") : t("fxAi"))}</button>` : ""}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>
     <div class="fx-ai" id="fxai-0">${ai ? aiOptionsHTML(0, ai) : ""}</div>`;
@@ -13835,7 +13885,9 @@ function coachManual(d) {
   coachRefresh();
 }
 // Manual clicks only (step 4 adds the automatic ones). Each result becomes one more choice; titles keep the 60-character limit.
-async function coachAiRun(fn) {
+// Was coachAiRun: coach_ai.js declares coachAiRun(items, epoch) for the automatic batch and, coming later in the bundle, won the
+// name, so the title/idea buttons called the batch with a function and threw «items.map is not a function» (B-009, 2026-10-29).
+async function coachAiAsk(fn) {
   const id = COACH.q.id;
   COACH.q.busy = true; COACH.q.err = ""; coachRefresh();
   try { const r = await fn(); if (COACH.q.id === id) { const before = coChoices(COACH.list[0]).length; COACH.q.ai.push(...r); if (r.length) COACH.q.sel = before; } }
@@ -13843,7 +13895,7 @@ async function coachAiRun(fn) {
   if (COACH.q.id === id) { COACH.q.busy = false; coachRefresh(); }
 }
 function coachAiTitles() {
-  coachAiRun(async () => {
+  coachAiAsk(async () => {
     const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
     const R = state.result, kw = (state.opts.keyword || R.keyword || ""), prom = R.promiseSent ? R.promiseSent.text : state.text.slice(0, 600);
     const prompt = `Para un episodio de un pódcast cristiano de enseñanza bíblica en YouTube, en ${R.lang === "en" ? "inglés" : "español"}, escribe cinco títulos de 60 caracteres o menos${kw ? `, con "${kw}" dentro de los primeros 60 caracteres` : ""}. Al menos dos como la pregunta que alguien escribiría en YouTube. Cada título debe prometer exactamente lo que promete la apertura del guion. Sin mayúsculas sostenidas, sin groserías, sin términos gráficos, sin prometer sanidad o dinero.
@@ -13862,7 +13914,7 @@ ${state.text.slice(0, 6000)}
   });
 }
 function coachAiIdea() {
-  coachAiRun(async () => {
+  coachAiAsk(async () => {
     const sample = await caps.sample; if (!sample) throw { code: "no_sample" };
     IDEA.busy = false;
     await ideaSuggest(true);
@@ -13985,11 +14037,11 @@ document.addEventListener("click", (e) => {
 // Every option is verified against all the checks when it is shown (verifyProposal), so a result computed before an Apply is
 // re-located by its fragment text instead of by position.
 Object.assign(T.es, {
-  coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…",
+  aiShort: "IA", coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…",
   coAiPauseMonth: (n) => `Sugerencias automáticas en pausa: se llegó al límite de $${n} del mes`, coAiPauseDay: "Sugerencias automáticas en pausa por hoy",
 });
 Object.assign(T.en, {
-  coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…",
+  aiShort: "AI", coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…",
   coAiPauseMonth: (n) => `Automatic suggestions paused: this month's $${n} limit was reached`, coAiPauseDay: "Automatic suggestions paused for today",
 });
 
@@ -14050,6 +14102,7 @@ async function coachAiRun(items, epoch) {
     const got = res && Array.isArray(res.items) ? res.items : [];
     items.forEach((it) => {
       const e = COAI.cache[it.d.card.id];
+      if (!e) return; // Revisar emptied the cache while this batch was in flight (B-022, 2026-10-29): the answer is for text that was re-read; busy is still released below
       const mine = got.find((g) => g && g.id === it.id);
       const raw = [];
       for (const o of ((mine && Array.isArray(mine.options)) ? mine.options : []).slice(0, 2)) {
@@ -14062,7 +14115,7 @@ async function coachAiRun(items, epoch) {
   } catch (err) {
     const code = err && err.code;
     if (code === "daily_limit" || code === "rate_limited" || code === "auto_paused") COAI.stop = code; // for the rest of the session
-    items.forEach((it) => { COAI.cache[it.d.card.id].status = "error"; }); // never retried by itself
+    items.forEach((it) => { const e = COAI.cache[it.d.card.id]; if (e) e.status = "error"; }); // never retried by itself; absent after a Revisar (B-022)
   }
   COAI.busy = false;
   if (epoch !== COAI.epoch) { coachAiPump(); return; }
@@ -14102,7 +14155,7 @@ function coachAiOptions(d) {
   let at = -1;
   if (!e.field) { at = locateUnique(state.text, e.orig); if (at < 0) { e.mat = { key, options: [] }; return []; } } // text changed there: stale result ignored
   for (const o of e.raw) {
-    const p = e.field ? { kind: "field", field: e.field, value: o.text, label: "IA", why: o.why } : { kind: "patch", patches: [{ start: at, end: at + e.orig.length, rep: e.lead + o.text + e.trail }], label: "IA", why: o.why };
+    const p = e.field ? { kind: "field", field: e.field, value: o.text, label: t("aiShort"), ai: true, why: o.why } : { kind: "patch", patches: [{ start: at, end: at + e.orig.length, rep: e.lead + o.text + e.trail }], label: t("aiShort"), ai: true, why: o.why };
     if (p.kind === "patch" && state.text.slice(at, at + e.orig.length) + "" === p.patches[0].rep) continue;
     p.check = verifyProposal(state.text, state.opts, state.result, p);
     if (p.check.broke.length) continue; // an option that breaks another check is not offered
@@ -14191,7 +14244,8 @@ function rpClean(r) {
     .slice(0, REPORT_MAX_ITEMS).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: rpStrs(x.alts, REPORT_MAX_ALTS), why: String(x.why || "").slice(0, 300), after: reportRating(x.after) }));
   const words = {};
   if (r.words && typeof r.words === "object" && !Array.isArray(r.words)) for (const [k, v] of Object.entries(r.words)) { const a = rpStrs(v, REPORT_MAX_WORD_ALTS); if (k && a.length) words[k.toLowerCase()] = a; }
-  const fixes = (Array.isArray(r.fixes) ? r.fixes : []).filter((f) => f && typeof f.id === "string" && f.id && typeof f.orig === "string" && f.orig && Array.isArray(f.options)).slice(0, REPORT_MAX_FIXES)
+  // a field fix keeps an EMPTY orig: a title not written yet is the very case it answers (B-006, 2026-10-29); script-text fixes need their text
+  const fixes = (Array.isArray(r.fixes) ? r.fixes : []).filter((f) => f && typeof f.id === "string" && f.id && typeof f.orig === "string" && (f.orig || (typeof f.field === "string" && f.field)) && Array.isArray(f.options)).slice(0, REPORT_MAX_FIXES)
     .map((f) => ({ id: f.id, orig: f.orig, lead: typeof f.lead === "string" ? f.lead : "", trail: typeof f.trail === "string" ? f.trail : "", field: typeof f.field === "string" && f.field ? f.field : null,
       options: f.options.filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, REPORT_MAX_FIX_OPTS).map((o) => ({ text: o.text.trim(), why: String(o.why || "").slice(0, 300) })) }))
     .filter((f) => f.options.length);
@@ -14259,6 +14313,7 @@ async function rpRun(force) {
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
+      if (out && !state.result) out = null; // the review was reset while the answer was in flight (a demo start, «Borrar todo»): nothing to attach it to (B-039)
       if (out) {
         // what the pill shows the moment the report lands is the «antes» of every «antes → ahora» (bubble, end card, Todo listo)
         const b = cleanBefore(readinessOf(state.result, out, state.fixDismissed, state.text).score), c = cleanCost(RP.cost);
@@ -14396,12 +14451,15 @@ function rpWalk(cur) {
 const rpPts = (rd) => (rd.score == null ? rd.rules : rd.score);
 // The points one card's patch moves the pill by (same recipe as the pill: readinessOf with the text), plus the area's rating before/after.
 // Items go through itemGain (report_logic.js); a risk card compares the readiness of the changed text with now. 0 = show nothing.
-const RPG = { text: null, rep: null, m: new Map() };
+const RPG = { text: null, rep: null, sig: "", m: new Map() };
+// The figures also depend on the packaging fields and on what the person ignored (B-027, 2026-10-29): a title change or a restored
+// risk card must refresh the caches, not only a text or report change.
+const rpSig = () => { const o = state.opts || {}; return JSON.stringify([o.title, o.keyword, o.thumb, o.description, o.nextEp, o.bigIdea, o.coldOpen, o.series, [...(state.fixDismissed || [])].sort()]); };
 function rpInfo(cur, p) {
   const out = { gain: 0 };
   if (!cur || !p || p.kind !== "patch" || !p.patches || !p.patches.length || !state.result) return out;
-  const text = state.text, rep = G.report;
-  if (RPG.text !== text || RPG.rep !== rep) { RPG.text = text; RPG.rep = rep; RPG.m = new Map(); }
+  const text = state.text, rep = G.report, sig = rpSig();
+  if (RPG.text !== text || RPG.rep !== rep || RPG.sig !== sig) { RPG.text = text; RPG.rep = rep; RPG.sig = sig; RPG.m = new Map(); }
   const key = cur.id + "|" + JSON.stringify(p.patches);
   if (RPG.m.has(key)) return RPG.m.get(key);
   let t2;
@@ -14448,14 +14506,14 @@ function rpAdsBand(R, rd) {
 }
 // The one helper for «a → b posible»: the readiness if every pending change were accepted, or null when there is none to show.
 // (the pill and the screen-reader label both use it; projectedReadiness stays the only recipe). Cached per text/report/pending set.
-const RPP = { text: null, rep: null, live: "", v: null };
+const RPP = { text: null, rep: null, live: "", sig: "", v: null };
 function rpProjected(rd) {
   if (!rd || rd.score == null || !G.report || !state.result || typeof state.text !== "string") return null;
   const rep = G.report, text = state.text, live = rpStates().filter((s) => s.st === "pending");
   if (!live.length) return null;
-  const lk = live.map((s) => s.i).join(",");
-  if (RPP.text !== text || RPP.rep !== rep || RPP.live !== lk) {
-    RPP.text = text; RPP.rep = rep; RPP.live = lk;
+  const lk = live.map((s) => s.i).join(","), sig = rpSig();
+  if (RPP.text !== text || RPP.rep !== rep || RPP.live !== lk || RPP.sig !== sig) {
+    RPP.text = text; RPP.rep = rep; RPP.live = lk; RPP.sig = sig;
     RPP.v = projectedReadiness(text, state.result, state.opts, { areas: effectiveReport(text, rep).areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) });
   }
   return RPP.v !== rd.score ? RPP.v : null;
@@ -14609,7 +14667,10 @@ function rpApplyP(cur, p) {
 }
 function rpAct(act) {
   const cur = rpCurrent();
-  if (act === "re") { RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
+  // (B-023, 2026-10-29) A new epoch stops a fix pump still running for the old report: its next batch would otherwise ask the NEW
+  // report's fragments a second time (paid twice, pushed twice). Not while the report itself is busy: rpRun would return and the
+  // in-flight answer would be orphaned.
+  if (act === "re") { if (!RP.busy) RP.epoch++; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
   if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
   if (!cur) return;
@@ -14874,7 +14935,9 @@ function pubAfterHTML(body) {
   if (rd) rd.addEventListener("click", async () => { rd.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
   // the ✓ line under the heading follows what is typed (the fields keep saving exactly as before)
   const upd = () => { const i = pubIndex(), it = pubItems()[i], ok = $("pubOk"); if (!ok || !it) return; ok.hidden = !it.done; $("pubOkV").textContent = it.val; };
-  body.addEventListener("input", () => { if (pubView() === "card" && PB.i < PUB_N - 1) upd(); });
+  // (jadri47, 2026-10-29: B-025) #guide is the same element on every render, so wire this once: one more listener per render piled up
+  // and every keystroke in step 3 ran them all (typing lag). `upd` only reads globals, so the first closure serves every render.
+  if (!body.__pubInput) { body.__pubInput = true; body.addEventListener("input", () => { if (pubView() === "card" && PB.i < PUB_N - 1) upd(); }); }
   const sb = $("stepBar"); if (sb) document.documentElement.style.setProperty("--sb-h", Math.ceil(sb.getBoundingClientRect().height) + "px"); // sticky action row sits above the phone's step bar
   if (typeof autoFitAll === "function") autoFitAll(body);
   if (PB.focus) { PB.focus = false; const c = $("pubCard") || $("gRecCard"); if (c) c.focus({ preventScroll: true }); }
