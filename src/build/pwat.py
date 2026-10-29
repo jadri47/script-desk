@@ -9,7 +9,7 @@ async def main():
         b = await p.chromium.launch(); errs = []
         for (w, h, n) in [(390, 844, "m"), (1440, 900, "d")]:
             pg = await b.new_page(viewport={"width": w, "height": h}); pg.on("pageerror", lambda e: errs.append(str(e)))
-            await pg.add_init_script("window.__SB_MODE='member'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-expert','0')")
+            await pg.add_init_script("window.__SB_MODE='member'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-expert','0'); localStorage.setItem('sd-more-open','1')")  # the ads list is in step 2's «Más detalles» (open it: 2026-10-22)
             await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
             await pg.goto(URL); await pg.wait_for_timeout(700)
             for k in ["worst", "mid", "best"]:

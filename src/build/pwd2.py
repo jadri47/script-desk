@@ -6,7 +6,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); errs=[]
         for w,hh,n in [(1100,900,"d"),(390,844,"m")]:
-            pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); pg.on("pageerror", lambda e: errs.append(str(e)))
+            pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); await pg.add_init_script("localStorage.setItem('sd-intro','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
             await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(400)
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(900)
             await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300)
@@ -14,13 +14,14 @@ async def main():
             for ui in ["es","en"]:
                 if ui=="en": await pg.click("[data-ui=en]"); await pg.wait_for_timeout(400)
                 for k in ["bad","mid","good"]:
-                    await pg.click(f'[data-ex="{k}"]'); await pg.wait_for_timeout(700)
+                    await pg.evaluate(f"startDemo('{k}')"); await pg.wait_for_timeout(700)  # the demo buttons moved into the examples picker; startDemo is what they call
                     await pg.click("#runBtn"); await pg.wait_for_timeout(1000)
-                    v = await pg.evaluate("(document.querySelector('.gv .lamp')||{}).textContent")
+                    v = await pg.evaluate("verdictOf(state.result).t")  # the verdict card (.gv) left step 2 (2026-10-26); verdictOf is what fed its lamp
                     info = await pg.evaluate("[state.result.lang, $('audience').value, $('translation').value, $('script').value.slice(0,40)]")
                     print(n, ui, k, "|", v, "|", info)
                     if k=="mid" and ui=="es":
                         await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300)
+                        await pg.evaluate("if (!V.s1More) $('s1MoreBtn').click(); $('setDet').open = true"); await pg.wait_for_timeout(200)  # the audience field is in step 1's «Más opciones», inside the closed #setDet
                         await pg.select_option("#audience","both"); await pg.wait_for_timeout(300)
                         print(n, "  mid with audience=both -> regional fails:", await pg.evaluate("state.result.sections.spoken.find(r=>r.id==='regional').passed===false"))
                         await pg.select_option("#audience","es"); await pg.wait_for_timeout(300)

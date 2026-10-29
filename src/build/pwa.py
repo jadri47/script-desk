@@ -8,11 +8,14 @@ async def main():
         b = await p.chromium.launch(); errs=[]
         for w,hh,n in [(390,844,"m"),(1100,900,"d")]:
             pg = await b.new_page(viewport={"width":w,"height":hh}); pg.on("pageerror", lambda e: errs.append(str(e)))
-            await pg.add_init_script("window.__SB_MODE='member';")
+            await pg.add_init_script("window.__SB_MODE='member'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-more-open','1'); localStorage.setItem('sd-coach-off','1')")  # the Ask card is built only while step 2's «Más detalles» is open
             await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
             seen = {}
             async def fn(route):
-                body = json.loads(route.request.post_data); seen["tier"]=body["tier"]; seen["prompt"]=body["prompt"]
+                body = json.loads(route.request.post_data)
+                if 'FRAGMENTO:' not in body["prompt"] and '{"idea": "frase"}' not in body["prompt"]:  # the editor's report now runs by itself on the first review (2026-10-22): it is not part of this test, so it fails and the Ask card is still tested
+                    await route.fulfill(status=500, content_type="application/json", body="{}"); return
+                seen["tier"]=body["tier"]; seen["prompt"]=body["prompt"]
                 pr = body["prompt"]
                 if '{"idea": "frase"}' in pr:
                     await route.fulfill(status=200, content_type="application/json", body=json.dumps({"data":{"idea":"Dios cuida del mañana."},"usage":{"cost_usd":0.002,"month_cost_usd":0.05,"model_name":"Sonnet 5.5","input_tokens":900,"output_tokens":40}})); return

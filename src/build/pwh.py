@@ -7,7 +7,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); errs=[]; seen=set()
         for w,hh,n in [(1100,900,"d"),(390,844,"m")]:
-            pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); pg.on("pageerror", lambda e: errs.append(str(e)))
+            pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); await pg.add_init_script("localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-more-open','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
             await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(400)
             async def shot(tag):
                 ks = await pg.evaluate(KEYS); seen.update(ks)
@@ -27,9 +27,10 @@ async def main():
             # summary ? does not toggle details
             await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(400)
             await pg.evaluate("document.querySelectorAll('.g-more-d').forEach(d=>d.open=false)")
-            await pg.click('.g-more-d[data-more="ads"] .qh-btn'); await pg.wait_for_timeout(100)
+            # phone: with every block closed the page is too short to scroll the ? out from under the docked script (sticky, step 2), so the click is dispatched on the button (same click event, same summary default action)
+            await pg.dispatch_event('.g-more-d[data-more="ads"] .qh-btn', "click"); await pg.wait_for_timeout(100)
             print(n, "details stays closed:", not await pg.evaluate("document.querySelector('.g-more-d[data-more=ads]').open"), "text visible:", await pg.evaluate("!document.querySelector('.g-more-d[data-more=ads] .qh-txt').hidden"))
-            await pg.click("#expertToggle"); await pg.wait_for_timeout(500)
+            await pg.evaluate("if ($('moreMenu').hidden) $('moreBtn').click()"); await pg.click("#expertToggle")  # «Modo completo» lives in the ⋯ menu; await pg.wait_for_timeout(500)
             await pg.evaluate("setMode('review')"); await pg.wait_for_timeout(400)
             await shot("full_review")
             await pg.evaluate("setMode('guion')"); await pg.wait_for_timeout(700)

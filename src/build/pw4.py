@@ -8,15 +8,18 @@ async def main():
         b = await p.chromium.launch(); errs=[]
         for w,hh,n in [(1200,900,"d"),(390,844,"m")]:
             pg = await b.new_page(viewport={"width": w, "height": hh})
-            await pg.add_init_script("localStorage.setItem('sd-expert','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
+            await pg.add_init_script("localStorage.setItem('sd-expert','1');localStorage.setItem('sd-intro','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
             await pg.goto(SDU+"build/work.html")
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.evaluate("document.getElementById('keyword').value='ansiedad'")
+            await pg.click("#runBtn"); await pg.wait_for_timeout(700)  # the Guion tab needs a review first (G.R)
             await pg.click("[data-mode=guion]"); await pg.wait_for_timeout(300)
+            await pg.evaluate("goPhase('prep')"); await pg.wait_for_timeout(300)  # approval gate + package live in the prep phase
             print(n, "aprobado disabled:", await pg.is_disabled("[data-status=aprobado]"), "|", (await pg.inner_text(".g-gate"))[:140])
             await pg.fill("#pkTitleIn", "¿Qué dice la Biblia sobre la ansiedad?")
             await pg.fill("#pkThumbIn", "No cargues mañana"); await pg.wait_for_timeout(600)
             print(n, "aprobado disabled after:", await pg.is_disabled("[data-status=aprobado]"))
             print(n, "chapters:", (await pg.input_value("#chOut")).replace("\n"," | "))
+            await pg.evaluate("goPhase('after')"); await pg.wait_for_timeout(300)  # shorts + results live in the after phase
             await pg.click("#gShorts [data-mark] >> nth=0"); await pg.wait_for_timeout(150)
             print(n, "shorts:", await pg.evaluate("G.shorts.length + ' / clips ' + G.clips.length"))
             await pg.fill("#rsDur", "5:20"); await pg.dispatch_event("#rsDur", "change"); await pg.wait_for_timeout(100)
@@ -24,8 +27,10 @@ async def main():
             print(n, "rs:", (await pg.inner_text("#gRes .rs-stats")).replace("\n"," | "))
             box = await pg.query_selector("#rcHit"); bb = await box.bounding_box()
             await pg.mouse.move(bb["x"]+bb["width"]*0.45, bb["y"]+bb["height"]/2); await pg.wait_for_timeout(100)
+            await pg.evaluate("goPhase('prep')"); await pg.wait_for_timeout(300)
             await (await pg.query_selector("#gPack")).scroll_into_view_if_needed()
             await pg.screenshot(path=f"p_{n}_pack.png")
+            await pg.evaluate("goPhase('after')"); await pg.wait_for_timeout(300)
             await (await pg.query_selector("#gShorts")).scroll_into_view_if_needed()
             await pg.screenshot(path=f"p_{n}_shorts.png")
             await (await pg.query_selector("#gRes .rc")).scroll_into_view_if_needed()

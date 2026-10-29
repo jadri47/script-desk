@@ -20,6 +20,7 @@ async def main():
                 await route.fulfill(status=200, content_type="application/json", body=json.dumps({"data":data,"usage":u}))
             await pg.route("**/functions/v1/sd-ai", fn)
             await pg.goto(URL); await pg.wait_for_timeout(600)
+            await pg.evaluate("if (!V.s1More) $('s1MoreBtn').click(); $('setDet').open = true"); await pg.wait_for_timeout(200)  # the variant + Bible version selects are in step 1's «Más opciones», inside the closed #setDet
             print(n, "versions:", await pg.evaluate("[...$('translation').options].map(o=>o.value).join(',')"))
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", LONG); await pg.wait_for_timeout(700)
             print(n, "hint es/RVR:", await pg.inner_text("#bibleHint"))
@@ -32,6 +33,7 @@ async def main():
             idea_pr = [x for x in seen if '{"idea": "frase"}' in x]
             print(n, "idea prompt has rule LBLA:", bool(idea_pr) and "La Biblia de las Américas" in idea_pr[-1])
             await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300)
+            await pg.evaluate("if ($('trToggle').getAttribute('aria-expanded') !== 'true') $('trToggle').click()"); await pg.wait_for_timeout(300)  # the translate box is folded behind #trToggle in step 1
             print(n, "trVer opts (en):", await pg.evaluate("[...$('trVer').options].map(o=>o.value).join(',')"), "sel", await pg.evaluate("$('trVer').value"))
             await pg.select_option("#trTarget","es"); await pg.wait_for_timeout(200)
             print(n, "trVer after es target:", await pg.evaluate("$('trVer').value"))
