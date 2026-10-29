@@ -51,7 +51,7 @@ function bibleRule(v: string): string {
     "No cambies las citas que el autor ya tiene en el guion salvo que te lo pida. " +
     "Si no estás seguro del texto exacto en esa versión, escribe solo la referencia entre corchetes, por ejemplo [Mateo 6:34], para que el autor copie el versículo.";
 }
-const MAX_TOKENS: Record<string, number> = { complex: 8000, default: 2500 };
+const MAX_TOKENS: Record<string, number> = { complex: 16000, default: 2500 };
 const SYSTEM =
   "Eres el asistente de Script Desk, una herramienta para revisar guiones de un pódcast cristiano de enseñanza bíblica en YouTube. " +
   "Quien escribe es un pastor que predica con regularidad y conoce bien la Biblia: no le enseñes teología ni evalúes su doctrina. " +
@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
   if (r.status === 429 || r.status === 529) return json({ code: "rate_limited", usage: bill }, 429);
   if (!r.ok) return json({ code: "upstream", detail: out?.error?.message || r.status, usage: bill }, 502);
 
+  // An answer cut at the cap is half a JSON object: say so, never "invalid_json" (the spend is already logged above).
+  if (out?.stop_reason === "max_tokens") return json({ code: "truncated", usage: bill }, 422);
   const text = (out?.content || []).filter((c: { type: string }) => c.type === "text").map((c: { text: string }) => c.text).join("");
   const data = parseJson(text);
   if (!data || typeof data !== "object") return json({ code: "invalid_json", usage: bill }, 422);
