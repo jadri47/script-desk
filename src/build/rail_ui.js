@@ -21,7 +21,7 @@ const MK_SVG = {
 
 const RL = { on: false, items: [], byBlock: [], rows: [], layer: null, mini: null, pop: null, raf: 0, bt: [], T: 1, popB: -1 };
 const rlPhone = () => !SPLIT.on;
-function rlPref(key, def) { try { const v = localStorage.getItem(key); return v === null ? def : v === "1"; } catch (e) { return def; } }
+function rlPref(key, def) { try { const v = localStorage.getItem(key); return v === null ? def : v === "1"; } catch (e) { /* best effort (jadri47, 2026-10-29: B54): storage blocked: use the default */ return def; } }
 function rlSet(key, v) { try { localStorage.setItem(key, v ? "1" : "0"); } catch (e) { /* best effort: storage blocked: the toggle works but isn't remembered */ } }
 const rlCuesOn = () => rlPref("sd-rail-cues", !rlPhone());
 const rlRefsOn = () => rlPref("sd-rail-refs", true);
@@ -152,7 +152,7 @@ function railLayout() {
 function railSched() { if (RL.raf) return; RL.raf = requestAnimationFrame(() => { RL.raf = 0; railLayout(); }); }
 function railUpdate() {
   if (!railOk()) { railClear(); return; }
-  try { railBuild(); railMake(); railLayout(); } catch (e) { railClear(); }
+  try { railBuild(); railMake(); railLayout(); } catch (e) { /* (jadri47, 2026-10-29: B54) the rail is an overlay: if it cannot be laid out, show none rather than a broken one */ railClear(); }
 }
 
 // popover with the notes of one paragraph

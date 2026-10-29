@@ -1131,7 +1131,7 @@ function applyLang() {
   renderHistory();
 }
 document.querySelectorAll(".langswitch button").forEach((b) => b.addEventListener("click", () => {
-  UI = b.dataset.ui; try { localStorage.setItem("sd-ui", UI); } catch (e) {}
+  UI = b.dataset.ui; try { localStorage.setItem("sd-ui", UI); } catch (e) { /* best effort (jadri47, 2026-10-29: B-007): storage blocked: the language applies now but is not remembered */ }
   applyLang();
 }));
 

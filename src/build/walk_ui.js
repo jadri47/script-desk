@@ -132,7 +132,7 @@ function wkBuild() {
     WK.list = WK.per.map((x, i) => (x.length ? i : -1)).filter((i) => i >= 0);
     if (WK.glob.length) WK.list.push(WK.blocks.length);
     WK.key = key; WK.R = R; WK.ok = true;
-  } catch (e) { WK.ok = false; return false; }
+  } catch (e) { /* (jadri47, 2026-10-29: B-007/B54) no Custom Highlight API or a bad range: the review still works without highlights */ WK.ok = false; return false; }
   return true;
 }
 

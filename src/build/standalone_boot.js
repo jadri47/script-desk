@@ -69,7 +69,7 @@
         });
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
       const j = await r.json().catch(() => null);
-      if (j && j.usage) { try { window.dispatchEvent(new CustomEvent("sd-ai-cost", { detail: j.usage })); } catch (e) {} }
+      if (j && j.usage) { try { window.dispatchEvent(new CustomEvent("sd-ai-cost", { detail: j.usage })); } catch (e) { /* best effort (jadri47, 2026-10-29: B-007): the cost badge is cosmetic; a listener that throws must not break the AI answer */ } }
       // A cut-off answer carries its partial text: the report keeps the complete items (Adrian, 2026-10-29).
       if (j && j.code === "truncated" && typeof j.raw === "string") throw { code: "truncated", raw: j.raw };
       if (!r.ok || !j || !j.data) throw { code: (j && j.code) || "upstream" };
