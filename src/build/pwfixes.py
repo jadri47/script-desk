@@ -45,6 +45,7 @@ MOCK = r"""() => {
     if (/^=== i\d+/m.test(prompt)) { window.__calls.coach++; return { items: [] }; }
     if (!/Reescribe SOLO el fragmento|Rewrite ONLY/.test(prompt)) return { idea: '' }; // the central-idea question and other prompts are not ours
     window.__calls.button++;
+    if (window.__failButton) throw { code: 'server_error' }; // B-017: the button call fails
     const frag = (prompt.match(/(?:FRAGMENTO A REESCRIBIR|FRAGMENT TO REWRITE):\n"{3}\n([\s\S]*?)\n"{3}/) || [])[1] || 'x';
     return { options: [{ text: frag.trim() + ' Del botón.', why: 'botón' }, { text: frag.trim() + ' ⟦V99⟧', why: 'inventa un versículo' }] };
   } });
@@ -106,6 +107,17 @@ async def main():
                     # the button's own call is vetted like a batch: an option with an invented verse mark never shows (B-002, 2026-10-29)
                     opts3 = await pg.evaluate(f"(state.fixAi[{cid!r}] || {{}}).options ? state.fixAi[{cid!r}].options.map((o) => o.patches ? o.patches[0].rep : o.value) : null")
                     ok(f"{n}: the button's options are vetted: the clean one shows, the one with a verse mark never does", opts3 is not None and len(opts3) == 1 and "Del botón." in opts3[0] and "⟦" not in opts3[0], opts3)
+                # B-017 (a): a failed button call shows the error and gives the button back (it was left disabled)
+                await pg.evaluate("window.__failButton = true; state.fixAi = {}")
+                idx3 = await pg.evaluate("state.fixCards.findIndex((c) => c.ai && !G.report.fixes.some((f) => f.id === c.id && f.orig && state.text.includes(f.orig)))")
+                if idx3 < 0: idx3 = await pg.evaluate("state.fixCards.findIndex((c) => c.ai)")
+                await pg.evaluate(f"(() => {{ const c = state.fixCards[{idx3}]; G.report.fixes = G.report.fixes.filter((f) => f.id !== c.id); COAI.cache = {{}}; renderGuide(); }})()")
+                await pg.wait_for_timeout(400)
+                idx3 = await pg.evaluate("state.fixCards.findIndex((c) => c.ai && !state.fixAi[c.id])")
+                await pg.evaluate(f"document.querySelector('[data-fxai=\"{idx3}\"]').click()"); await pg.wait_for_timeout(700)
+                fe = await pg.evaluate(f"(() => {{ const b = document.querySelector('[data-fxai=\"{idx3}\"]'); const bx = document.getElementById('fxai-{idx3}'); return {{ err: !!(state.fixAi[state.fixCards[{idx3}].id] || {{}}).error, btn: !!b, dis: b ? b.disabled : null, box: bx ? bx.textContent.length : -1 }}; }})()")
+                ok(f"{n}: a failed «Proponer con IA» call shows the error and the button is enabled again", fe["err"] and fe["btn"] and fe["dis"] is False, fe)
+                await pg.evaluate("window.__failButton = false")
                 ok(f"{n}: no page errors", not errs, errs)
                 await pg.close()
                 # ---- a report saved before this: no fixes key

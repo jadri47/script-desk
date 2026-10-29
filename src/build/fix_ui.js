@@ -300,7 +300,11 @@ async function aiFix(ci) {
         return { ...p, why: o.why, check: verifyProposal(text, state.opts, R, p) };
       }),
     };
-  } catch (e) { state.fixAi[c.id] = { error: errText(e) }; }
+  } catch (e) {
+    state.fixAi[c.id] = { error: errText(e) };
+    // (jadri47, 2026-10-29: B-017) the click disabled the button; after a failure it must be usable again to retry
+    const rb = document.querySelector(`[data-fxai="${ci}"]`); if (rb) rb.disabled = false;
+  }
   const box = $("fxai-" + ci);
   if (box) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
 }

@@ -809,13 +809,13 @@ function ppCountdown() {
   c.hidden = false; c.textContent = n;
   PP.counting = true;
   const tick = () => {
-    if (!PP.on) return;
+    if (!PP.on) { PP.counting = false; return; }
     n--;
-    if (n > 0) { c.textContent = n; setTimeout(tick, 1000); return; }
+    if (n > 0) { c.textContent = n; PP.countTimer = setTimeout(tick, 1000); return; }
     c.hidden = true; PP.counting = false; PP.started = true; PP.playing = true; PP.last = performance.now(); PP.lapStart = PP.elapsed;
     ppWake(true);
   };
-  setTimeout(tick, 1000);
+  PP.countTimer = setTimeout(tick, 1000);
 }
 function ppJump(dir) {
   const k = Math.max(0, Math.min(G.secs.length - 1, ppSecIdx(PP.tau) + dir));
@@ -850,6 +850,8 @@ function ppKey(e) {
   if (!PP.on) return;
   if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   const k = e.key;
+  // (jadri47, 2026-10-29: B-017) Space/Enter on a focused button or link is that control's own click (Enter on «Salir» exited nowhere)
+  if ((k === " " || k === "Spacebar" || k === "Enter") && e.target && /^(BUTTON|A)$/.test(e.target.tagName)) return;
   const map = { " ": "play", Spacebar: "play", ArrowUp: "faster", ArrowDown: "slower", ArrowLeft: "prev", PageUp: "prev", ArrowRight: "next", PageDown: "next", Enter: "next", r: "restart", R: "restart", m: "mirror", M: "mirror", v: "mirrorV", V: "mirrorV", c: "cues", C: "cues", f: "full", F: "full", "+": "fontup", "=": "fontup", "-": "fontdn", Escape: "exit" };
   const cmd = map[k];
   if (!cmd) return;
@@ -882,6 +884,8 @@ async function ppWake(on) {
 document.addEventListener("visibilitychange", () => { if (PP.on && PP.playing && document.visibilityState === "visible") ppWake(true); });
 function ppClose() {
   PP.on = false; PP.playing = false;
+  // (jadri47, 2026-10-29: B-017) closing during the 3-2-1 left counting=true, so a reopened prompter ignored Play/space/tap
+  PP.counting = false; clearTimeout(PP.countTimer);
   cancelAnimationFrame(PP.raf);
   ppWake(false);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
