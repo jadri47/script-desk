@@ -7,7 +7,7 @@ Object.assign(T.es, {
   gSaveFail: "No se pudo guardar.", gQuota: "Espacio lleno: borra instantáneas antiguas.", gNoDb: "Las producciones se guardan al abrir esta página en Claude; aquí todo funciona, pero no se guarda.",
   gConflict: "Alguien guardó cambios en esta producción después de que la abriste.", gLoadTheirs: "Cargar sus cambios", gOverwrite: "Guardar los míos encima",
   status: { borrador: "Borrador", revision: "En revisión", aprobado: "Aprobado", grabado: "Grabado" }, gStatusLbl: "Estado", gGrabadoLock: "Primero apruébalo.",
-  ppBtn: "Abrir prompter", rehBtn: "Ensayar con cronómetro", editSheetBtn: "Hoja para el editor (.md)",
+  targetBad: "Escribe la duración como mm:ss, por ejemplo 12:30.", ppBtn: "Abrir prompter", rehBtn: "Ensayar con cronómetro", editSheetBtn: "Hoja para el editor (.md)",
   ppKeys: "Teclado o pedal: Espacio inicia o pausa · ↑ ↓ velocidad · ← → sección · R repite la sección · M espejo · Esc sale.",
   coTitle: "Apertura en frío", coLead: "Elige un gancho y una promesa que ya estén en el guion. Se graban una sola vez, en su lugar, y en la edición se copian al inicio del video: no hay que grabar una apertura aparte.",
   coHooks: "Gancho", coProms: "Promesa", coUseHook: "Usar como gancho", coUseProm: "Usar como promesa", coInUse: "En la apertura", coEdit: "Editar", coSee: "Ver en el guion",
@@ -48,7 +48,7 @@ Object.assign(T.en, {
   gSaveFail: "Couldn't save.", gQuota: "Storage full: delete old snapshots.", gNoDb: "Productions are saved when this page is opened in Claude; everything works here, but nothing is saved.",
   gConflict: "Someone saved changes to this production after you opened it.", gLoadTheirs: "Load their changes", gOverwrite: "Save mine over it",
   status: { borrador: "Draft", revision: "In review", aprobado: "Approved", grabado: "Recorded" }, gStatusLbl: "Status", gGrabadoLock: "Approve it first.",
-  ppBtn: "Open prompter", rehBtn: "Rehearse with stopwatch", editSheetBtn: "Editor sheet (.md)",
+  targetBad: "Write the length as mm:ss, for example 12:30.", ppBtn: "Open prompter", rehBtn: "Rehearse with stopwatch", editSheetBtn: "Editor sheet (.md)",
   ppKeys: "Keyboard or pedal: Space starts or pauses · ↑ ↓ speed · ← → section · R repeats the section · M mirror · Esc exits.",
   coTitle: "Cold open", coLead: "Pick a hook and a promise that are already in the script. They're recorded once, in place, and the editor copies them to the start of the video: no separate opening to record.",
   coHooks: "Hook", coProms: "Promise", coUseHook: "Use as hook", coUseProm: "Use as promise", coInUse: "In the opening", coEdit: "Edit", coSee: "Show in script",
@@ -144,6 +144,8 @@ function finalT(t) {
 }
 const totalRec = () => (G.secs.length ? G.secs[G.secs.length - 1].t1 : 0);
 const totalVideo = () => finalT(totalRec());
+// A target that cannot be read as mm:ss is said and left out, never stored and silently ignored (B-019, 2026-10-29).
+function targetOk(ti) { const v = ti.value.trim(), bad = !!v && parseMMSS(v) == null; const er = $("gTargetErr"); if (er) er.textContent = bad ? t("targetBad") : ""; ti.setAttribute("aria-invalid", bad ? "true" : "false"); return !bad; }
 const parseMMSS = (s) => { const m = String(s || "").trim().match(/^(\d{1,3}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : null; };
 const secLabel = (s) => (s.type === "point" ? `${t("st").point} ${s.n}` : t("st")[s.type]) + (s.title && s.title.toLowerCase() !== (t("st")[s.type] || "").toLowerCase() ? ` · ${s.title}` : "");
 const secAt = (i) => G.secs.find((s) => i >= s.first && i <= s.last);
@@ -456,10 +458,10 @@ function renderEsc() {
   const diff = tgt ? vid - tgt : null;
   el.innerHTML = `<header class="g-h"><h2>${h(t("escTitle"))}</h2><span class="count">${h(t("totalRec")(fmtTime(rec)))}${showVideo ? " · " + h(t("totalVideo")(fmtTime(vid))) : ""}</span></header>
     <p class="lead">${h(t("escLead"))}</p>
-    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}</div>
+    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" placeholder="${h(t("targetPh"))}" value="${h(G.target)}"><span class="status err" id="gTargetErr" role="alert"></span>${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}</div>
     <div class="tablewrap"><table class="pf esc"><thead>${head}</thead><tbody>${coldRow}${rows}</tbody></table></div>`;
   const ti = $("gTarget");
-  ti.addEventListener("change", () => { G.target = ti.value.trim(); markDirty(); renderEsc(); });
+  ti.addEventListener("change", () => { if (targetOk(ti)) { G.target = ti.value.trim(); markDirty(); renderEsc(); } });
   el.querySelectorAll(".g-seclink").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); const x = $(a.getAttribute("href").slice(1)); if (x) x.scrollIntoView({ behavior: "smooth", block: "start" }); }));
 }
 

@@ -200,11 +200,11 @@ function renderStructure() {
   }).join("");
   el.innerHTML = `<header class="g-h"><h2>${h(t("strTitle"))}</h2><span class="count">${h(t("totalRec")(fmtTime(rec)))}${clips.length ? " · " + h(t("totalVideo")(fmtTime(vid))) : ""}</span></header>
     <p class="lead">${h(SPLIT.on ? t("strLeadSplit") : t("strLead"))}</p>
-    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" inputmode="numeric" placeholder="${h(t("targetPh"))}" value="${h(G.target)}">${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}
+    <div class="g-target"><label for="gTarget">${h(t("target"))}</label><input id="gTarget" placeholder="${h(t("targetPh"))}" value="${h(G.target)}"><span class="status err" id="gTargetErr" role="alert"></span>${diff != null ? `<span class="verdict-tag ${Math.abs(diff) <= 60 ? "v-ok" : "v-mid"}">${h(diff >= 0 ? t("overT")(fmtTime(diff)) : t("underT")(fmtTime(-diff)))}</span>` : ""}
       ${G.manual ? `<button class="small" id="gRedetect">${h(t("redetect"))}</button>` : ""}</div>
     <ol class="st-list">${coldRow}${rows}</ol>`;
   const ti = $("gTarget");
-  ti.addEventListener("change", () => { G.target = ti.value.trim(); markDirty(); renderStructure(); });
+  ti.addEventListener("change", () => { if (targetOk(ti)) { G.target = ti.value.trim(); markDirty(); renderStructure(); } });
   const rd = $("gRedetect"); if (rd) rd.addEventListener("click", () => { G.manual = false; G.layout = null; G.stOpen = null; markDirty(); gRefresh(); });
   el.querySelectorAll("[data-st]").forEach((b) => b.addEventListener("click", () => {
     const k = +b.dataset.st, s = G.secs[k];
