@@ -42,7 +42,10 @@ Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/si
 - Bug review (2026-10-29): the open list is `docs/BUGS-2026-10.md` (grep it before touching a feature it names). Rules it pinned: a
   report change keeps the reference set (`refsKey`); the «Proponer con IA» button masks and vets like a batch; typed text is never
   replaced by an older answer or snapshot (`pwstale`); starting an example makes no AI call (`pwbub`); a same-language adaptation
-  keeps every quote verbatim (`trVerse`).
+  keeps every quote verbatim (`trVerse`); a cut report (`partial`) has no score out of 100: the pill says «r/40 · informe incompleto»
+  (`rpRulesPartial`, pwai); the decision log's «a → b» is the pill's readiness (`rpNowScore`); the red cap and the sum live in
+  `READY_RED_CAP` / `readyTotal`; one `err` table in base.html (every code has a sentence, pwerr); «Borrar todo» and history «Abrir»
+  start a new episode after `flushProdSave` (`startNewProd`, `confirmSheet`; pwerr, pwep).
 - AI status (`aistatus_ui.js`): every AI call goes through one wrapper on `caps.sample` (a getter/setter, so later assignments and test mocks are wrapped too). A new AI feature needs nothing to show the bubble; pass `aiLabel`/`aiRetry` only for a name or a retry button (they never reach the connection). While the report runs the verdict says «Esperando el informe del editor», never «Listo para grabar».
 - Old score v2 (`scoreOf`, internal now: «Más detalles» chips and coach ordering): 100 − weights of open checks − small penalty for dismissed ones; any red ⇒ ≤ 69. Counted checks (long, fillers, weak, regional, aitell, onscreen, jargon, pulpit, openers, cta) give partial credit: 1 point per instance over the limit, capped by `SCORE_CAP`. Weights live in one table (`SCORE_W`); ladders are pinned in `eval/score_test.js`.
 - Desktop (≥900 px wide and ≥560 px tall) is a split view: script left, review right. Phone: single column, stepBar fixed at the bottom; in step 2 the script docks at the top.

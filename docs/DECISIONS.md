@@ -1,5 +1,15 @@
 # Decisions (newest first)
 
+## 2026-10-29 (later): the bug review's open letters (Adrian: "Ask me the questions"; then the picks below, "Approve all as proposed", "Deploy sd-ai, Push, Step 8 paid calls, Step 7 Firefox/WebKit + perf", "Yes, remove both" worktrees, "Fix the decided bugs")
+- B-003 **A**: the decision log's «a → b» row is the pill's readiness (`rpNowScore`), not the old internal score; without a whole report the row hides. B drop and C keep rejected.
+- B-004 **B**: a cut report has no score out of 100 until «Medir de nuevo»; the pill shows «Anuncios y empaque r/40 · informe incompleto». A (scale the rated areas) rejected: an invented number; C rejected: a drop of up to 10 per missing area.
+- B-037 **A**: history «Abrir» asks when the editor holds other text and opens the version as a new episode with the fields and the old result cleared. B (always a new episode without asking) rejected.
+- B-016 **A**: «Borrar todo» starts a new episode; the edit in flight is saved into the one being left, which stays in history with its status. B (text only) rejected. The "sample button" part turned out to be dead code (the example picker replaced it).
+- Strings: the B-005 sentences per error code and the twelve provisional strings of the morning approved as proposed. One deviation, flagged: `bad_request` keeps a length hint (a prompt over 120,000 characters is its one real cause).
+- Done the same turn: `sd-ai` deployed (v11: cap 16k, `truncated` + `raw`, usage-row error logged); the 38 commits pushed; the two agent worktrees removed (their commits were on main; the older one's uncommitted diff was already on main as `PUB_GATE`).
+- Step 7 (Firefox/WebKit + performance) and step 8 (six paid calls, ≈ $0.60) approved; B-028 (phone pointercancel) fixed blind, the phone check stays with Adrian.
+- Rejected / retired: B-016's "sample button" (dead code, removed).
+
 ## 2026-10-29: bug review (Adrian: "review the app for bugs and other errors so you can spot 99% of them. Assign models to each step for efficiency")
 - Plan `~/.claude/plans/bug-review.md` (11 steps); the single bug list is `docs/BUGS-2026-10.md` (id, severity, grade, repro, fix commit).
   "99 %" is not measurable; the proxy agreed: a second independent pass finds almost nothing new, every suite green, the click tour clean.
