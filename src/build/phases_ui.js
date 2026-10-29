@@ -230,7 +230,7 @@ function structPanel(s, clipIdx) {
     <div class="gsec-body" id="gSecsBody">${html.replace(/^\s+|\s+$/g, "")}</div>
     <details class="gnotes"${open ? " open" : ""}><summary>${h(t("notes"))}${ns.length ? ` · ${h(t("openNotes")(open))}` : ""}</summary>
       <ul>${ns.map((n) => `<li class="${n.done ? "done" : ""}"><span class="chip">${h(t("roles")[n.role] || n.role)}</span> ${h(n.text)} <label class="hint"><input type="checkbox" data-done="${h(n.id)}"${n.done ? " checked" : ""}> ${h(t("resolved"))}</label></li>`).join("")}</ul>
-      <div class="gnote-form"><select data-role="${s.k}" aria-label="role">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
+      <div class="gnote-form"><select data-role="${s.k}" aria-label="${h(t("roleLbl"))}">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
     </details></div>`;
 }
 function wireStructPanel(el) {

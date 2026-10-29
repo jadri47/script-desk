@@ -296,7 +296,7 @@ async function aiFix(ci) {
     if (!got.length) throw { code: "invalid_json" };
     state.fixAi[c.id] = {
       options: got.map((o) => {
-        const p = it.field ? { kind: "field", field: it.field, value: o.text, label: "IA" } : { kind: "patch", patches: [{ start: from, end: to, rep: it.lead + o.text + it.trail }], label: "IA" };
+        const p = it.field ? { kind: "field", field: it.field, value: o.text, label: t("aiShort"), ai: true } : { kind: "patch", patches: [{ start: from, end: to, rep: it.lead + o.text + it.trail }], label: t("aiShort"), ai: true };
         return { ...p, why: o.why, check: verifyProposal(text, state.opts, R, p) };
       }),
     };

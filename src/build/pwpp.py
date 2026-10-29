@@ -35,6 +35,10 @@ async def main():
             await pg.evaluate("document.querySelector('[data-pp=exit]').focus()")
             await pg.keyboard.press("Enter"); await pg.wait_for_timeout(400)
             ok(f"{n}: (c) Enter on the focused exit button closes the prompter", await pg.evaluate("!$('pp') && !PP.on"))
+            # B-030 (b): the section note form's role select reads to a screen reader in the UI language, not the literal "role"
+            lab = await pg.evaluate("(() => { gCompute(); const m = structPanel(G.secs[0], new Set()).match(/<select data-role=\"\\d+\" aria-label=\"([^\"]*)\"/); return m && m[1]; })()")
+            ok(f"{n}: (B-030) the note role select has a translated aria-label", lab == ("Rol" if ui == "es" else "Role"), lab)
+            ok(f"{n}: (B-030) the section-rewrite hint names no model (the server picks it)", not await pg.evaluate("/Opus|Sonnet|Haiku/.test(t('secAiHint'))"))
             ok(f"{n}: no page errors", not errs, errs)
             await pg.close()
         await b.close()

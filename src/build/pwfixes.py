@@ -206,6 +206,10 @@ async def main():
             r = await pg.evaluate("(() => { const d = COACH.list.find((x) => x.needsAi && x.card && x.card.ai); return d ? { opts: coachAiOptions(d).length, calls: COAI.calls } : null; })()")
             ok(f"{ui}: the coach has a ready option for its first AI problem and made no automatic call", r and r["opts"] >= 1 and r["calls"] == 0 and c["coach"] == 0, (r, c))
             ok(f"{ui}: the coach's fragments were answered by fix batches (no coach call even after a render)", c["fix"] >= 1 and c["coach"] == 0, c)
+            # B-030: the proposal's short label follows the UI language ("· AI" in English); the AI tag is keyed on a flag, not on the label text
+            lbl = await pg.evaluate("(() => { const d = COACH.list.find((x) => x.needsAi && x.card && x.card.ai && coachAiOptions(x).length); if (!d) return null; const o = coachAiOptions(d)[0]; return { ai: o.ai === true, html: coChoiceHTML(d, state.result) }; })()")
+            want = "· IA</span>" if ui == "es" else "· AI</span>"
+            ok(f"{ui}: the AI proposal reads «{want[:-7]}» and carries the AI flag and tag", bool(lbl) and lbl["ai"] and want in lbl["html"] and (ui == "es" or "· IA</span>" not in lbl["html"]) and "cc-ai" in lbl["html"], lbl and lbl["ai"])
             ok(f"{ui}: no page errors (coach)", not errs, errs)
             await pg.close()
         await b.close()

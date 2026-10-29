@@ -6,11 +6,11 @@
 // Every option is verified against all the checks when it is shown (verifyProposal), so a result computed before an Apply is
 // re-located by its fragment text instead of by position.
 Object.assign(T.es, {
-  coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…",
+  aiShort: "IA", coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…",
   coAiPauseMonth: (n) => `Sugerencias automáticas en pausa: se llegó al límite de $${n} del mes`, coAiPauseDay: "Sugerencias automáticas en pausa por hoy",
 });
 Object.assign(T.en, {
-  coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…",
+  aiShort: "AI", coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…",
   coAiPauseMonth: (n) => `Automatic suggestions paused: this month's $${n} limit was reached`, coAiPauseDay: "Automatic suggestions paused for today",
 });
 
@@ -124,7 +124,7 @@ function coachAiOptions(d) {
   let at = -1;
   if (!e.field) { at = locateUnique(state.text, e.orig); if (at < 0) { e.mat = { key, options: [] }; return []; } } // text changed there: stale result ignored
   for (const o of e.raw) {
-    const p = e.field ? { kind: "field", field: e.field, value: o.text, label: "IA", why: o.why } : { kind: "patch", patches: [{ start: at, end: at + e.orig.length, rep: e.lead + o.text + e.trail }], label: "IA", why: o.why };
+    const p = e.field ? { kind: "field", field: e.field, value: o.text, label: t("aiShort"), ai: true, why: o.why } : { kind: "patch", patches: [{ start: at, end: at + e.orig.length, rep: e.lead + o.text + e.trail }], label: t("aiShort"), ai: true, why: o.why };
     if (p.kind === "patch" && state.text.slice(at, at + e.orig.length) + "" === p.patches[0].rep) continue;
     p.check = verifyProposal(state.text, state.opts, state.result, p);
     if (p.check.broke.length) continue; // an option that breaks another check is not offered
