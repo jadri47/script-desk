@@ -1,5 +1,31 @@
 # Decisions (newest first)
 
+## 2026-10-29: bug review (Adrian: "review the app for bugs and other errors so you can spot 99% of them. Assign models to each step for efficiency")
+- Plan `~/.claude/plans/bug-review.md` (11 steps); the single bug list is `docs/BUGS-2026-10.md` (id, severity, grade, repro, fix commit).
+  "99 %" is not measurable; the proxy agreed: a second independent pass finds almost nothing new, every suite green, the click tour clean.
+- Steps done the same day: 1 automated sweeps (ESLint over the concatenated bundle: 3 `no-undef` hits = one real bug; translation tables
+  1,015 = 1,015 keys, no gap; duplicate names: one real; an 81-cell click tour: 2 page errors, both one bug), 2 money/faithfulness paths
+  by hand, 3 UI files by Sonnet (two batches, 125 rows graded), 4 the 14 known-red suites repaired (setup only; the two "removed"
+  features exist in the full view), 6 server + Supabase advisors + secrets grep, 10 a first fix round: 23 bugs fixed, one commit each,
+  every guard seen red first. Models: Sonnet implemented inside known shapes (5 fixes in a worktree, cherry-picked after review), Haiku ran
+  the suites, the session model did logic, stored shapes, the server and every review.
+- Doctrine holes closed: a report change could alter a Bible reference (B-001); «Proponer con IA» sent verses in clear and skipped the
+  vet (B-002); a same-language adaptation could change a quoted verse (B-015: same language + same version → every quote verbatim; a
+  swap of version or language changes quotes by design and keeps the «verify» list).
+- Money: Revisar during a coach batch stalled every later automatic proposal (B-022); «Medir de nuevo» paid the fix batches twice
+  (B-023); starting an example from step 2 fired a report call by itself (B-039).
+- Data: typed text could be replaced by an older Ask answer, Undo snapshot, translation or translation undo (B-013: each remembers what
+  it expects to find and refuses); an edit in the 2 s before switching episodes was lost (B-016 part); a fix for an empty title was
+  dropped on reload (B-006); `hookPassed` was saved as a row object (B-008: writer fixed, readers accept both shapes, nothing rewritten).
+- Rejected / retired: the pill's ▲/▼ baseline per example was reported as shared; a check showed it is per example (pin kept).
+- New user-facing strings went in provisionally, wording for Adrian: `fxAiVerse`, `fxAiAgain`, `fxUndoStale`, `trStale`, `trVerse`,
+  `epRange`, `copyFail`, `edLocalFail`, `rehNoEpisode`, `aiShort`, `roleLbl`, `secAiHint` (reworded).
+- Open for Adrian (letters in the bug log): B-003 (the log's «Puntuación» row: readiness, drop, keep), B-004 (a cut report's unrated
+  areas: scale, no 100-scale score, keep), B-005 (one sentence per error code), B-037 (history «Abrir»: confirm + reset, or a new
+  episode), B-016 rest (what «Borrar todo» means), B-028 (phone: a drag from a button fires it on the next tap, needs the real phone).
+- Not done yet: step 5 (`pwpersist` round-trips; the cloud holds no episode yet), step 7 (Firefox/WebKit, performance figures), step 8
+  (six paid calls), step 9 (real phone), step 11 (the second pass). Server: B-012 is in the source, not deployed.
+
 ## 2026-10-29: long answers — never lose a paid answer (Adrian: "How can you make it so if the API hits its top limit, it doesn't lose the work, and resume later from there so it's the most efficient use of the user money?"; "Make a plan for the most efficient models to implement A + B"; "Go")
 - Cause (2026-10-28, live site): the report answer hit the 8,000-token output cap on a 1,700-word script (two calls, 14,286 in → 8,000 out, $0.109 each, JSON cut mid-object → `invalid_json` → «La IA no respondió»). The script's length was not the limit; the answer's was: 12 fragments × 2 options rode in the same call.
 - "Resume from where it stopped" is not available: assistant prefill returns a 400 on Sonnet 5.5 and every current model (checked in the API reference, 2026-10-29). Resume = keep what arrived, ask only for the rest.
