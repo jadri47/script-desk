@@ -6,11 +6,11 @@
 // Every option is verified against all the checks when it is shown (verifyProposal), so a result computed before an Apply is
 // re-located by its fragment text instead of by position.
 Object.assign(T.es, {
-  aiShort: "IA", coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…",
+  aiShort: "IA", coAiTag: "Sugerencia de IA", coAiPrep: "Preparando una propuesta…", coAiFail: (m) => `La IA no pudo proponer nada aquí: ${m}`,
   coAiPauseMonth: (n) => `Sugerencias automáticas en pausa: se llegó al límite de $${n} del mes`, coAiPauseDay: "Sugerencias automáticas en pausa por hoy",
 });
 Object.assign(T.en, {
-  aiShort: "AI", coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…",
+  aiShort: "AI", coAiTag: "AI suggestion", coAiPrep: "Preparing a suggestion…", coAiFail: (m) => `The AI couldn't propose anything here: ${m}`,
   coAiPauseMonth: (n) => `Automatic suggestions paused: this month's $${n} limit was reached`, coAiPauseDay: "Automatic suggestions paused for today",
 });
 
@@ -84,7 +84,7 @@ async function coachAiRun(items, epoch) {
   } catch (err) {
     const code = err && err.code;
     if (code === "daily_limit" || code === "rate_limited" || code === "auto_paused") COAI.stop = code; // for the rest of the session
-    items.forEach((it) => { const e = COAI.cache[it.d.card.id]; if (e) e.status = "error"; }); // never retried by itself; absent after a Revisar (B-022)
+    items.forEach((it) => { const e = COAI.cache[it.d.card.id]; if (e) { e.status = "error"; e.err = code || "unknown"; } }); // never retried by itself (the card offers Reintentar, B-030); absent after a Revisar (B-022)
   }
   COAI.busy = false;
   if (epoch !== COAI.epoch) { coachAiPump(); return; }
@@ -134,6 +134,9 @@ function coachAiOptions(d) {
   return out;
 }
 const coachAiLoading = (d) => !!(d.card && COAI.cache[d.card.id] && COAI.cache[d.card.id].status === "loading");
+// Why the automatic proposal failed for this decision ("" when it did not), and a retry that asks again for this one (B-030, 2026-10-29).
+const coachAiError = (d) => { const e = d.card && COAI.cache[d.card.id]; return e && e.status === "error" ? errText({ code: e.err }) : ""; };
+function coachAiRetry(d) { if (d.card) delete COAI.cache[d.card.id]; coachAiPump(); }
 
 const _coachAfterRenderA = coachAfterRender;
 coachAfterRender = function () { _coachAfterRenderA(); coachAiPump(); };

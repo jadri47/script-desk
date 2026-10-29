@@ -15,6 +15,7 @@ MOCK = r"""([delay, mode]) => {
     window.__calls.push({ n: (prompt.match(/^=== i\d+/gm) || []).length, auto: !!opts.auto, tier: opts.modelTier, last: prompt.lastIndexOf('FRAGMENTO A REESCRIBIR') > prompt.indexOf('CONTEXTO') });
     await new Promise((r) => setTimeout(r, delay));
     if (window.__mode === 'daily') throw { code: 'daily_limit' };
+    if (window.__mode === 'upstream' && window.__calls.length === 1) throw { code: 'upstream' }; // one failure, then answers (B-030 retry check)
     const items = [...prompt.matchAll(/^=== (i\d+)\n[\s\S]*?FRAGMENTO A REESCRIBIR:\n\"\"\"\n([\s\S]*?)\n\"\"\"/gm)].map((m) => ({ id: m[1], options: [
       { text: m[2].trim() + ' Piénsalo.', why: 'ok' },
       { text: m[2].trim() + ' ' + 'palabra '.repeat(400) + '.', why: 'bad' }] }));
@@ -96,6 +97,18 @@ async def main():
             want = "Sugerencias automáticas en pausa por hoy" if ui == "es" else "Automatic suggestions paused for today"
             ok(f"{ui}: the daily pause line shows", (await pg.evaluate("(()=>{const e=document.querySelector('.cc-pause');return e?e.textContent.trim():''})()")) == want or pg2txt == want, pg2txt)
             ok(f"{ui}: no page errors (daily)", not errs, errs)
+            await pg.close()
+            # ---- a failed proposal says why and offers Reintentar, which asks again for that decision (B-030, 2026-10-29) ----
+            pg, errs = await open_page(b, ui, "bad", mode="upstream")
+            await pg.wait_for_timeout(2500)
+            for _ in range(12):  # the first decisions may be risk cards with no AI item: step to the one the failed batch covered
+                if await pg.locator(".cc-aierr").count(): break
+                await pg.evaluate("(()=>{const b=document.querySelector('[data-co=skip]'); if(b) b.click()})()"); await pg.wait_for_timeout(250)
+            er = await pg.evaluate("(() => { const e = document.querySelector('.cc-aierr'); return { msg: e ? e.textContent : '', btn: !!document.querySelector('[data-co=airetry]'), calls: window.__calls.length }; })()")
+            ok(f"{ui}: after a failed automatic call the card says why, with the error's own sentence", er["msg"] == await pg.evaluate("t('coAiFail')(errText({ code: 'upstream' }))") and er["btn"] and er["calls"] == 1, er)
+            await pg.evaluate("document.querySelector('[data-co=airetry]').click()"); await pg.wait_for_timeout(2500)
+            ok(f"{ui}: Reintentar asks again and the proposal arrives", await pg.evaluate("window.__calls.length") == 2 and await pg.locator(".cc-aierr").count() == 0 and await pg.locator(".cc-ai").count() >= 1, await pg.evaluate("window.__calls.length"))
+            ok(f"{ui}: no page errors (retry)", not errs, errs)
             await pg.close()
             # ---- Revisar while a batch is in flight: the next review must still get automatic proposals (B-022, 2026-10-29) ----
             pg, errs = await open_page(b, ui, "bad", delay=1500)

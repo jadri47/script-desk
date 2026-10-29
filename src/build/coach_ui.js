@@ -65,6 +65,7 @@ function coBatchHTML(d) {
 // Rule options first, then the automatic AI ones (coach_ai.js, already verified).
 const coOptions = (d) => d.options.concat(typeof coachAiOptions === "function" ? coachAiOptions(d) : []);
 const coAiBusy = (d) => typeof coachAiLoading === "function" && coachAiLoading(d);
+const coAiErr = (d) => (typeof coachAiError === "function" ? coachAiError(d) : "");
 function coChoiceHTML(d, R) {
   const c = d.card, w = COACH.write && COACH.write.id === d.id ? COACH.write : null;
   const opts = coOptions(d), k = COACH.sel.id === d.id && opts.length ? COACH.sel.k % opts.length : 0, p = opts[k];
@@ -76,7 +77,7 @@ function coChoiceHTML(d, R) {
   return `<div class="cc-top"><b class="cc-t">${h(plainLabel(c.id, c.label))}</b>${d.kind === "risk" ? `<span class="cc-tag">${h(t("coRisk"))}: ${h(t("cat_hi"))}</span>` : ""}${pts.html}</div>
     ${c.fix ? `<div class="tf-f">${h(c.fix)}</div>` : ""}${pts.why ? `<div class="hint fx-why">${h(pts.why)}</div>` : ""}
     <div class="fx-lbl">${h(t("fxInScript"))}</div>${evidenceHTML(c)}
-    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.ai ? t("aiShort") : p.label)}</span>${p.ai ? ` <span class="cc-tag cc-ai">${h(t("coAiTag"))}</span>` : ""}</div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : coAiBusy(d) ? `<p class="hint cc-prep" role="status">${h(t("coAiPrep"))}</p>` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
+    ${p ? `<div class="fx-lbl">${h(t("fxWould"))} <span class="hint">· ${h(p.ai ? t("aiShort") : p.label)}</span>${p.ai ? ` <span class="cc-tag cc-ai">${h(t("coAiTag"))}</span>` : ""}</div>${proposalHTML(c, p, R)}${p.why ? `<div class="hint">${h(p.why)}</div>` : ""}` : coAiBusy(d) ? `<p class="hint cc-prep" role="status">${h(t("coAiPrep"))}</p>` : coAiErr(d) ? `<p class="hint err cc-aierr" role="status">${h(t("coAiFail")(coAiErr(d)))}</p>${COAI.stop ? "" : `<button type="button" class="small" data-co="airetry">${h(t("aiRetry"))}</button>`}` : `<p class="hint">${h(t("fxNoProp"))}</p>`}
     ${writeBox}
     <div class="actions cc-act">${p ? `<button type="button" class="small primary" data-co="apply"${w && w.p ? "" : " data-co-primary"}>${h(t("fxApply"))}</button>` : ""}${opts.length > 1 ? `<button type="button" class="small" data-co="other">${h(t("fxOther"))}</button>` : ""}${canWrite && !w ? `<button type="button" class="small" data-co="write">${h(t("coWrite"))}</button>` : ""}${d.needsAi && c.ai ? `<button type="button" class="small" data-fxai="0">${h(ai ? t("fxAiAgain") : t("fxAi"))}</button>` : ""}<button type="button" class="small linkish" data-co="skip">${h(t("coSkip"))}</button></div>
     <div class="fx-ai" id="fxai-0">${ai ? aiOptionsHTML(0, ai) : ""}</div>`;
@@ -282,6 +283,7 @@ function coachAct(act) {
   if (act === "walker") return coachSetOn(false);
   if (act === "done") return goStep(3);
   if (!d) return;
+  if (act === "airetry") { coachAiRetry(d); coachRefresh(); return; } // ask again for this decision only (B-030)
   const opts = coOptions(d), k = COACH.sel.id === d.id && opts.length ? COACH.sel.k % opts.length : 0;
   if (act === "skip") coachSkip(d);
   else if (act === "prev") coachPrev();
