@@ -1,4 +1,6 @@
 
+// (jadri47, 2026-10-29: B-021) one place for the reduced-motion choice of every smooth scroll
+const sdSmooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
 /* ===== Guion · Escaleta · Prompter · Revisión (UI) ===== */
 Object.assign(T.es, {
   modeReview: "Revisión", modeGuion: "Guion y prompter",
@@ -34,6 +36,7 @@ Object.assign(T.es, {
   snapCompare: "Comparar las dos marcadas", snapVsCurrent: "Comparar con el texto actual", snapPick2: "Marca dos instantáneas.", snapNone: "Aún no hay instantáneas.", snapAuto: (s) => `Estado: ${s}`, snapNeedsDb: "Las instantáneas se guardan al abrir la página en Claude.",
   diffLegend: "Verde: añadido · tachado: quitado.", diffSame: "No hay diferencias.", diffTitle: (a, b) => `${a} → ${b}`, current: "texto actual", restore: "Usar este texto",
   ppSpeed: "ppm", ppElapsed: "Tiempo", ppSecLeft: "Queda en la sección", ppEnd: "Fin estimado", ppOn: "a tiempo", ppOver: (x) => `+${x} sobre el plan`, ppUnder: (x) => `−${x} bajo el plan`,
+  ppPrev: "Sección anterior", ppNext: "Sección siguiente", ppSlower: "Más lento, 5 ppm", ppFaster: "Más rápido, 5 ppm", ppFontDn: "Letra más pequeña", ppFontUp: "Letra más grande", ppPlayLbl: "Reproducir", ppPauseLbl: "Pausa",
   ppMirror: "Espejo", ppCues: "Señales", ppFull: "Pantalla completa", ppExit: "Salir", ppWidth: "Ancho", ppFont: "Letra", ppStart: "Toca o pulsa Espacio para empezar", ppClip: "CLIP", ppPaused: "En pausa", ppDone: "Fin del guion",
   ppLap: "Sección terminada", ppRehHint: "Ensayo: → o Intro marca la sección como terminada. Espacio pausa.", ppLapLbl: "Esta sección",
   rehTitle: "Resultado del ensayo", rehSave: "Guardar ensayo", rehDiscard: "Cerrar sin guardar", rehApply: (k) => `Usar este ritmo (factor ${k})`, rehSaved: "Ensayo guardado.", rehNoEpisode: "No se guardó: no hay un episodio abierto donde guardarlo.", rehNotSaved: "No se guardó el ritmo; se usará el anterior la próxima vez.", srLoadFail: "No se pudieron cargar tus episodios. Tus episodios siguen guardados.", srDateFail: "No se guardó la fecha. Se mantiene la anterior.", snapLoadFail: "No se pudieron cargar las versiones guardadas.", srRetry: "Reintentar", rehApplied: "Ritmo actualizado: las estimaciones usan el del ensayo.",
@@ -75,6 +78,7 @@ Object.assign(T.en, {
   snapCompare: "Compare the two checked", snapVsCurrent: "Compare with current text", snapPick2: "Check two snapshots.", snapNone: "No snapshots yet.", snapAuto: (s) => `Status: ${s}`, snapNeedsDb: "Snapshots are saved when this page is opened in Claude.",
   diffLegend: "Green: added · struck through: removed.", diffSame: "No differences.", diffTitle: (a, b) => `${a} → ${b}`, current: "current text", restore: "Use this text",
   ppSpeed: "wpm", ppElapsed: "Time", ppSecLeft: "Left in section", ppEnd: "Estimated end", ppOn: "on time", ppOver: (x) => `+${x} over plan`, ppUnder: (x) => `−${x} under plan`,
+  ppPrev: "Previous section", ppNext: "Next section", ppSlower: "Slower, 5 wpm", ppFaster: "Faster, 5 wpm", ppFontDn: "Smaller text", ppFontUp: "Larger text", ppPlayLbl: "Play", ppPauseLbl: "Pause",
   ppMirror: "Mirror", ppCues: "Cues", ppFull: "Full screen", ppExit: "Exit", ppWidth: "Width", ppFont: "Text", ppStart: "Tap or press Space to start", ppClip: "CLIP", ppPaused: "Paused", ppDone: "End of script",
   ppLap: "Section done", ppRehHint: "Rehearsal: → or Enter marks the section done. Space pauses.", ppLapLbl: "This section",
   rehTitle: "Rehearsal result", rehSave: "Save rehearsal", rehDiscard: "Close without saving", rehApply: (k) => `Use this pace (factor ${k})`, rehSaved: "Rehearsal saved.", rehNoEpisode: "Not saved: there is no open episode to save it in.", rehNotSaved: "Pace not saved; the previous one is used next time.", srLoadFail: "Couldn't load your episodes. They are still saved.", srDateFail: "The date wasn't saved. The previous one is kept.", snapLoadFail: "Couldn't load your saved versions.", srRetry: "Retry", rehApplied: "Pace updated: estimates now use the rehearsal's.",
@@ -340,7 +344,7 @@ function renderProdBar() {
       return `<button class="small" data-status="${s}" aria-pressed="${G.status === s}"${locked ? ` disabled title="${h(why)}"` : ""}>${h(t("status")[s])}</button>`;
     }).join(`<i aria-hidden="true">→</i>`) + (missing.length && !["aprobado", "grabado"].includes(G.status) ? `<span class="g-gate">${h(t("pkGate")(missing.map(mLabel).join("; ")))} <a href="#gPack" data-jump="gPack">${h(t("pkGoFix"))}</a></span>` : "");
     el.innerHTML = `<div class="g-bar">
-      <div class="g-prod">${db ? `<label for="gProdSel">${h(t("gProd"))}</label><select id="gProdSel">${G.prodId ? "" : `<option value="">${h(t("gProdNone"))}</option>`}${opts}</select>${G.prodId ? "" : `<button class="small primary" id="gNewProd">${h(t("gNewProd"))}</button>`}<span class="status" id="gSaveState">${h(saveText())}</span>` : `<span class="hint">${h(t("gNoDb"))}</span>`}</div>
+      <div class="g-prod">${db ? `<label for="gProdSel">${h(t("gProd"))}</label><select id="gProdSel">${G.prodId ? "" : `<option value="">${h(t("gProdNone"))}</option>`}${opts}</select>${G.prodId ? "" : `<button class="small primary" id="gNewProd">${h(t("gNewProd"))}</button>`}<span class="status" id="gSaveState" role="status">${h(saveText())}</span>` : `<span class="hint">${h(t("gNoDb"))}</span>`}</div>
       <div class="g-status" role="group" aria-label="${h(t("gStatusLbl"))}">${steps}</div>
       ${G.conflict ? `<div class="g-conflict"><span>${h(t("gConflict"))}</span><button class="small" id="gTheirs">${h(t("gLoadTheirs"))}</button><button class="small" id="gMine">${h(t("gOverwrite"))}</button></div>` : ""}
     </div>`;
@@ -349,7 +353,7 @@ function renderProdBar() {
     const np = $("gNewProd");
     if (np) np.addEventListener("click", async () => { np.disabled = true; await createProd(); renderProdBar(); });
     el.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => setStatus(b.dataset.status)));
-    el.querySelectorAll("[data-jump]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); const x = $(a.dataset.jump); if (x) x.scrollIntoView({ behavior: "smooth", block: "start" }); }));
+    el.querySelectorAll("[data-jump]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); const x = $(a.dataset.jump); if (x) x.scrollIntoView({ behavior: sdSmooth(), block: "start" }); }));
     const th = $("gTheirs"); if (th) th.addEventListener("click", () => { const d = G.conflict; applyProd(G.prodId, d); gRefresh(); });
     const mi = $("gMine"); if (mi) mi.addEventListener("click", () => saveProd(true));
   });
@@ -405,7 +409,7 @@ function renderCold() {
     <div class="co-box${clips.length ? " has" : ""}"><h3>${h(t("coChosen"))}</h3>${clips.length ? `<span class="verdict-tag ${good ? "v-ok" : "v-mid"}">${h(t("coTotal")(Math.round(tot)))}</span>` : ""}
       <div class="co-slots">${slot("hook")}${slot("promise")}</div>
       ${clips.length ? `<p class="hint co-foot">${h(t("coTargets"))} ${h(t("coRecNote"))}</p>` : ""}</div>
-    ${G.aiPick ? `<p class="hint">${h(t("coAiFrom"))}</p>` : `<p class="hint co-tap">${h(t("coTap"))}</p>`}<div class="co-cols">${col("hook")}${col("promise")}</div><p class="status" id="coAiStatus"></p>`;
+    ${G.aiPick ? `<p class="hint">${h(t("coAiFrom"))}</p>` : `<p class="hint co-tap">${h(t("coTap"))}</p>`}<div class="co-cols">${col("hook")}${col("promise")}</div><p class="status" id="coAiStatus" role="status"></p>`;
   el.querySelectorAll("[data-use]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.use, i = +b.dataset.i; if (G.cold[k] && G.cold[k].i === i) { G.cold[k] = null; markDirty(); gRefresh(); } else useCold(k, i); }));
   el.querySelectorAll("[data-rm]").forEach((b) => b.addEventListener("click", () => { G.cold[b.dataset.rm] = null; markDirty(); gRefresh(); }));
   el.querySelectorAll("[data-comore]").forEach((b) => b.addEventListener("click", () => { G.coMore[b.dataset.comore] = !G.coMore[b.dataset.comore]; renderCold(); }));
@@ -462,7 +466,7 @@ function renderEsc() {
     <div class="tablewrap"><table class="pf esc"><thead>${head}</thead><tbody>${coldRow}${rows}</tbody></table></div>`;
   const ti = $("gTarget");
   ti.addEventListener("change", () => { if (targetOk(ti)) { G.target = ti.value.trim(); markDirty(); renderEsc(); } });
-  el.querySelectorAll(".g-seclink").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); const x = $(a.getAttribute("href").slice(1)); if (x) x.scrollIntoView({ behavior: "smooth", block: "start" }); }));
+  el.querySelectorAll(".g-seclink").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); const x = $(a.getAttribute("href").slice(1)); if (x) x.scrollIntoView({ behavior: sdSmooth(), block: "start" }); }));
 }
 
 // Text slice with sentence spans and cue chips (shared by sections view and prompter).
@@ -511,7 +515,7 @@ function renderSecs() {
       <div class="gsec-body">${html.replace(/^\s+|\s+$/g, "")}</div>
       <details class="gnotes"${ns.length ? "" : ""}><summary>${h(t("notes"))}${ns.length ? ` · ${h(t("openNotes")(open))}` : ""}</summary>
         <ul>${ns.map((n) => `<li class="${n.done ? "done" : ""}"><span class="chip">${h(t("roles")[n.role] || n.role)}</span> ${h(n.text)} <label class="hint"><input type="checkbox" data-done="${h(n.id)}"${n.done ? " checked" : ""}> ${h(t("resolved"))}</label></li>`).join("")}</ul>
-        <div class="gnote-form"><select data-role="${s.k}" aria-label="role">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
+        <div class="gnote-form"><select data-role="${s.k}" aria-label="${h(t("roleLbl"))}">${Object.entries(t("roles")).map(([v, l]) => `<option value="${v}"${v === G.role ? " selected" : ""}>${h(l)}</option>`).join("")}</select><textarea rows="2" data-notetext="${s.k}" placeholder="${h(t("notePh"))}"></textarea><button class="small" data-addnote="${s.k}">${h(t("addNote"))}</button></div>
       </details></div>`;
   }).join("");
   el.innerHTML = `<header class="g-h"><h2>${h(t("secTitle"))}</h2>${G.manual ? `<button class="small" id="gRedetect">${h(t("redetect"))}</button>` : ""}</header><p class="lead">${h(t("secLead"))}</p><div class="gsecs" id="gSecsBody">${body}</div>`;
@@ -593,7 +597,7 @@ function renderRevisions() {
     const list = G.snaps.length ? `<ul class="snaps">${G.snaps.map((s) => `<li><label><input type="checkbox" data-snap="${h(s.id)}"${G.snapSel.includes(s.id) ? " checked" : ""}> <b>${h(s.name)}</b></label><span class="hint">${fmtD(s.at)} · ${h(t("status")[s.status] || s.status)} · ${s.wc} ${h(t("words"))}</span><button class="small linkish" data-vs="${h(s.id)}">${h(t("snapVsCurrent"))}</button></li>`).join("")}</ul>` : `<p class="hint">${h(t("snapNone"))}</p>`;
     el.innerHTML = `<header class="g-h"><h2>${h(t("revTitle"))}</h2></header><p class="lead">${h(t("revLead"))}</p>
       ${G.loadErr.snaps ? `<p class="status err" role="alert">${h(t("snapLoadFail"))} <button type="button" class="small" id="snapRetry">${h(t("srRetry"))}</button></p>` : ""}
-      ${db ? `<div class="snap-form"><input id="snapName" placeholder="${h(t("snapPh"))}" maxlength="80"><button class="small primary" id="snapSave">${h(t("snapSave"))}</button></div>${list}${G.snaps.length > 1 ? `<div class="actions"><button class="small" id="snapCmp">${h(t("snapCompare"))}</button><span class="status" id="snapMsg"></span></div>` : ""}` : `<p class="hint">${h(t("snapNeedsDb"))}</p>`}
+      ${db ? `<div class="snap-form"><input id="snapName" placeholder="${h(t("snapPh"))}" maxlength="80"><button class="small primary" id="snapSave">${h(t("snapSave"))}</button></div>${list}${G.snaps.length > 1 ? `<div class="actions"><button class="small" id="snapCmp">${h(t("snapCompare"))}</button><span class="status" id="snapMsg" role="status"></span></div>` : ""}` : `<p class="hint">${h(t("snapNeedsDb"))}</p>`}
       <div id="snapDiff">${G.diffHTML}</div>`;
     if ($("snapRetry")) $("snapRetry").addEventListener("click", async () => { await loadSnaps(); renderRevisions(); });
     if (!db) return;
@@ -617,7 +621,7 @@ function showDiff(na, nb, a, b) {
   const ops = diffOps(a, b);
   const changed = ops.some((o) => o.op !== "eq");
   G.diffHTML = `<div class="helper"><h3>${h(t("diffTitle")(na, nb))}</h3><p class="desc">${h(changed ? t("diffLegend") : t("diffSame"))}</p>${changed ? `<div class="diff">${ops.map((o) => (o.op === "eq" ? h(o.text) : o.op === "ins" ? `<ins>${h(o.text)}</ins>` : `<del>${h(o.text)}</del>`)).join("")}</div>` : ""}</div>`;
-  const d = $("snapDiff"); if (d) { d.innerHTML = G.diffHTML; d.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+  const d = $("snapDiff"); if (d) { d.innerHTML = G.diffHTML; d.scrollIntoView({ behavior: sdSmooth(), block: "nearest" }); }
 }
 
 // ---------- AI pick (indices only, so every line comes from the script) ----------
@@ -704,9 +708,9 @@ function openPrompter(mode) {
     <div class="pp-flash" id="ppFlash" hidden></div>
     <div class="pp-hud" id="ppHud"></div>
     <div class="pp-ctrl" id="ppCtrl">
-      <button data-pp="prev" aria-label="←">←</button><button data-pp="play" id="ppPlay" class="pp-main">▶</button><button data-pp="next" aria-label="→">→</button>
-      <span class="pp-grp"><button data-pp="slower" aria-label="−5">−</button><span id="ppWpm"></span><button data-pp="faster" aria-label="+5">+</button></span>
-      <span class="pp-grp"><button data-pp="fontdn" aria-label="A−">A−</button><button data-pp="fontup" aria-label="A+">A+</button></span>
+      <button data-pp="prev" aria-label="${h(t("ppPrev"))}">←</button><button data-pp="play" id="ppPlay" class="pp-main" aria-label="${h(t("ppPlayLbl"))}">▶</button><button data-pp="next" aria-label="${h(t("ppNext"))}">→</button>
+      <span class="pp-grp"><button data-pp="slower" aria-label="${h(t("ppSlower"))}">−</button><span id="ppWpm"></span><button data-pp="faster" aria-label="${h(t("ppFaster"))}">+</button></span>
+      <span class="pp-grp"><button data-pp="fontdn" aria-label="${h(t("ppFontDn"))}">A−</button><button data-pp="fontup" aria-label="${h(t("ppFontUp"))}">A+</button></span>
       <span class="pp-grp"><button data-pp="narrow" aria-label="${h(t("ppWidth"))} −">⇥⇤</button><button data-pp="wide" aria-label="${h(t("ppWidth"))} +">⇤⇥</button></span>
       <button data-pp="mirror" id="ppMirror">${h(t("ppMirror"))}</button><button data-pp="cues" id="ppCues">${h(t("ppCues"))}</button><button data-pp="full">${h(t("ppFull"))}</button><button data-pp="exit">${h(t("ppExit"))}</button>
     </div>
@@ -816,6 +820,7 @@ function ppRender(force, now) {
   $("ppHud").innerHTML = cells + (PP.started && !PP.playing && !PP.done ? `<span class="pp-paused">${h(t("ppPaused"))}</span>` : "");
   $("ppWpm").textContent = `${PP.wpm} ${t("ppSpeed")}`;
   $("ppPlay").textContent = PP.playing ? "❚❚" : "▶";
+  $("ppPlay").setAttribute("aria-label", t(PP.playing ? "ppPauseLbl" : "ppPlayLbl")); // (jadri47, 2026-10-29: B-021) the glyph alone is no name
   PP.el.classList.toggle("playing", PP.playing);
   const fl = $("ppFlash"); if (fl) fl.hidden = now > PP.flashUntil;
 }
@@ -931,7 +936,7 @@ function ppFinishRehearsal() {
   box.innerHTML = `<div class="pp-res-card"><h3>${h(t("rehTitle"))}</h3><p>${h(t("rehTot")(fmtTime(est), fmtTime(real)))}</p>
     <div class="tablewrap"><table class="pf"><thead><tr><th>${h(t("thSec"))}</th><th>${h(t("rehEst"))}</th><th>${h(t("rehReal"))}</th><th>${h(t("thDelta"))}</th></tr></thead><tbody>
     ${laps.map((l) => { const s = G.secs[l.k], d = l.sec - s.dur; return `<tr><td>${h(secLabel(s))}</td><td>${fmtTime(s.dur)}</td><td>${fmtTime(l.sec)}</td><td>${d >= 0 ? "+" : "−"}${fmtTime(Math.abs(d))}</td></tr>`; }).join("")}</tbody></table></div>
-    <div class="actions"><button class="primary small" id="rehSave">${h(t("rehSave"))}</button>${est >= 120 ? `<button class="small" id="rehApply">${h(t("rehApply")(kNew.toFixed(2)))}</button>` : ""}<button class="small" id="rehClose">${h(t("rehDiscard"))}</button><span class="status" id="rehMsg"></span></div></div>`;
+    <div class="actions"><button class="primary small" id="rehSave">${h(t("rehSave"))}</button>${est >= 120 ? `<button class="small" id="rehApply">${h(t("rehApply")(kNew.toFixed(2)))}</button>` : ""}<button class="small" id="rehClose">${h(t("rehDiscard"))}</button><span class="status" id="rehMsg" role="status"></span></div></div>`;
   box.hidden = false;
   $("rehSave").addEventListener("click", (e) => {
     e.currentTarget.disabled = true; // one rehearsal per click (B-020, 2026-10-29: a second click pushed a duplicate)

@@ -59,7 +59,7 @@ renderSeries = function (cid) {
       const tile = d ? `<span class="ep-date"><small>${h(d.toLocaleDateString(UI, { weekday: "short" }).replace(".", ""))}</small><b>${d.getDate()}</b><small>${h(d.toLocaleDateString(UI, { month: "short" }).replace(".", ""))}</small></span>` : `<span class="ep-date ep-nodate"><small>—</small></span>`;
       const nextBtn = p.nextEp && !titles.has(norm(p.nextEp)) ? `<button type="button" class="small linkish" data-srnext="${h(p.id)}">${h(t("srPlanNext")(p.nextEp))}</button>` : "";
       const tools = G.epEdit === p.id
-        ? `<span class="ep-edit"><input type="date" value="${h(p.pubDate || nextFreeDate())}" data-srdate="${h(p.id)}" aria-label="${h(t("tpDate"))}"><button type="button" class="small primary" data-srsave="${h(p.id)}">${h(t("epSave"))}</button><button type="button" class="small" data-srcancel>${h(t("epCancel"))}</button></span>`
+        ? `<span class="ep-edit"><input type="date" value="${h(p.pubDate || nextFreeDate())}" data-srdate="${h(p.id)}" aria-label="${h(t("tpDate") + ": " + (p.title || "—"))}"><button type="button" class="small primary" data-srsave="${h(p.id)}">${h(t("epSave"))}</button><button type="button" class="small" data-srcancel>${h(t("epCancel"))}</button></span>`
         : `<button type="button" class="small linkish" data-sredit="${h(p.id)}">${h(t("epChange"))}</button>${nextBtn}`;
       return `<li class="ep-row${cur ? " cur" : ""}${late ? " late" : ""}">
         <button type="button" class="ep-open" data-sropen="${h(p.id)}"${cur ? " disabled" : ""}>${tile}<span class="ep-main"><b>${h(p.title || "—")}</b>
@@ -113,12 +113,12 @@ function openEpSheet() {
   let d = $("epSheet");
   if (!d) {
     d = document.createElement("dialog");
-    d.id = "epSheet"; d.className = "ep-sheet";
+    d.id = "epSheet"; d.className = "ep-sheet"; d.setAttribute("aria-labelledby", "epSheetH"); // (jadri47, 2026-10-29: B-021)
     document.body.appendChild(d);
     d.addEventListener("click", (e) => { if (e.target === d) closeEpSheet(); });
     d.addEventListener("close", () => { G.epAdding = false; G.epEdit = ""; });
   }
-  d.innerHTML = `<div class="ep-sheet-in"><button type="button" class="ep-x" id="epX" aria-label="${h(t("epClose"))}">×</button><section id="epList"></section>
+  d.innerHTML = `<div class="ep-sheet-in"><button type="button" class="ep-x" id="epX" aria-label="${h(t("epClose"))}">×</button><h2 id="epSheetH" class="vh">${h(t("epBtn"))}</h2><section id="epList"></section>
     <details class="ep-bk"><summary>${h(t("epBackup"))}</summary><div id="epBackup"></div></details></div>`;
   $("epX").addEventListener("click", closeEpSheet);
   renderSeries("epList"); renderBackup("epBackup");
@@ -176,7 +176,7 @@ function renderNextPlan() {
     el.innerHTML = `${head}<p class="lead">${h(next ? t("npLeadNext")(next) : t("npLead"))}</p>
       <div class="np-fields"><div class="field"><label for="npT">${h(t("epAbout"))}</label><textarea id="npT" rows="1" data-one="1" maxlength="100" placeholder="${h(t("srNewPh"))}">${h(capFirst(next))}</textarea></div>
       <div class="field"><label for="npD">${h(t("epDay"))}</label><input id="npD" type="date" value="${h(date)}"><span class="hint" id="npDh">${h(t("npDateHint")(longDay(date)))}</span></div></div>
-      <div class="actions"><button type="button" class="primary small" id="npGo">${h(t("npGo"))}</button><button type="button" class="small linkish" id="npAll">${h(t("npAll"))}</button><span class="status" id="npSt"></span></div>`;
+      <div class="actions"><button type="button" class="primary small" id="npGo">${h(t("npGo"))}</button><button type="button" class="small linkish" id="npAll">${h(t("npAll"))}</button><span class="status" id="npSt" role="status"></span></div>`;
     $("npD").addEventListener("change", (e) => { $("npDh").textContent = e.target.value ? t("npDateHint")(longDay(e.target.value)) : ""; });
     $("npAll").addEventListener("click", openEpSheet);
     $("npGo").addEventListener("click", async (e) => {

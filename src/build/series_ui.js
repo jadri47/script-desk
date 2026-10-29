@@ -131,7 +131,7 @@ function renderSeries(cid) {
       const chip = !p.hasText ? t("srToWrite") : t("status")[p.status] || p.status;
       const nextBtn = p.nextEp && !titles.has(norm(p.nextEp)) ? `<button type="button" class="small linkish" data-srnext="${h(p.id)}">${h(t("srPlanNext")(p.nextEp))}</button>` : "";
       return `<li class="${late ? "late" : ""}${p.id === G.prodId ? " cur" : ""}">
-        <input type="date" value="${h(p.pubDate)}" data-srdate="${h(p.id)}" aria-label="${h(t("tpDate"))}">
+        <input type="date" value="${h(p.pubDate)}" data-srdate="${h(p.id)}" aria-label="${h(t("tpDate") + ": " + (p.title || "—"))}">
         <div class="sr-main"><b>${h(p.title || "—")}</b><span class="sr-tags"><span class="chip">${h(chip)}</span>${late ? `<span class="chip sr-late">${h(t("srLate"))}</span>` : ""}${upcoming && upcoming.id === p.id ? `<span class="chip sr-next">${h(t("srNext"))}</span>` : ""}${p.id === G.prodId ? `<span class="hint">· ${h(t("srCurrent"))}</span>` : ""}</span>${nextBtn}</div>
         <span class="sr-acts"><button type="button" class="small" data-sropen="${h(p.id)}">${h(t("srOpen"))}</button><button type="button" class="small linkish sr-del" data-srdel="${h(p.id)}">${h(t("srDel"))}</button></span></li>`;
     };

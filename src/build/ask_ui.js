@@ -80,7 +80,7 @@ function askHTML() {
     <div class="field"><label for="askTarget">${h(t("askTarget"))}</label><select id="askTarget">${opts}</select></div>
     <div class="field"><label for="askQ">${h(t("askQ"))}</label><textarea id="askQ" rows="3" placeholder="${h(t("askPh"))}">${h(ASK.q)}</textarea></div>
     <div class="chips ask-chips">${t("askChips").map((c) => `<button type="button" class="small" data-askchip="${h(c)}">${h(c)}</button>`).join("")}</div>
-    <div class="actions"><button type="button" class="primary small" id="askGo"${ASK.busy ? " disabled" : ""}>${h(t("askGo"))}</button><span class="status${ASK.err ? " err" : ""}" id="askSt">${h(ASK.busy ? t("thinking") : ASK.err)}</span></div>
+    <div class="actions"><button type="button" class="primary small" id="askGo"${ASK.busy ? " disabled" : ""}>${h(t("askGo"))}</button><span class="status${ASK.err ? " err" : ""}" id="askSt" role="${ASK.err ? "alert" : "status"}">${h(ASK.busy ? t("thinking") : ASK.err)}</span></div>
     <div id="askOut">${askAnswerHTML()}</div>`;
 }
 function askAnswerHTML() {

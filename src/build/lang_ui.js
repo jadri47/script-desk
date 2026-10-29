@@ -177,7 +177,7 @@ function renderTr() {
   if (!open) { el.innerHTML = ""; return; }
   el.innerHTML = `<div class="tr-row"><label for="trTarget" class="vh">${h(t("trTitle"))}</label>
       <div class="tr-ctl"><span class="hint">${h(T2[src])} →</span><select id="trTarget">${opts}</select><span class="tr-ver"><label for="trVer" class="hint">${h(t("trVer"))}</label><select id="trVer">${bibleOptions(TR.target, TR.ver)}</select></span><button type="button" class="small" id="trGo"${TR.busy ? " disabled" : ""}>${h(t("trGo"))}</button></div></div>
-    <p class="status${TR.err ? " err" : ""}" id="trSt">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}`;
+    <p class="status${TR.err ? " err" : ""}" id="trSt" role="${TR.err ? "alert" : "status"}">${h(TR.busy ? t("trWorking") : TR.err || TR.msg)}${TR.undo && !TR.busy ? ` <button type="button" class="small linkish" id="trUndo">${h(t("trUndo"))}</button>` : ""}</p>${out}`;
   $("trTarget").addEventListener("change", (e) => { TR.target = e.target.value; TR.ver = ""; renderTr(); });
   $("trVer").addEventListener("change", (e) => { TR.ver = e.target.value; });
   $("trGo").addEventListener("click", trRun);

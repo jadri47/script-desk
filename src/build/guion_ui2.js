@@ -94,7 +94,7 @@ function renderPack() {
         <div class="field" data-pk-part="thumb"><label for="pkThumbIn">${h(t("thumbLabel"))}</label><textarea id="pkThumbIn" rows="1" data-one="1" maxlength="24" placeholder="${h(t("thumbPh"))}">${h($("thumb").value)}</textarea><span class="pk-count" id="pkThumbN"></span></div>
       </div>
     </div>
-    <div id="pkSug"></div><p class="status" id="pkStatus"></p>
+    <div id="pkSug"></div><p class="status" id="pkStatus" role="status"></p>
     <div id="pkChecks"></div>
     <details class="pk-more" data-pk-part="desc"><summary>${h(t("pkMore"))}</summary>
     <div class="field pk-wide"><label for="pkDescIn">${h(t("descLabel"))}</label><textarea id="pkDescIn" rows="4">${h($("description").value)}</textarea></div>
@@ -143,7 +143,7 @@ function renderChapters() {
   const txt = ch.map((c) => `${fmtTime(c.t)} ${c.label}`).join("\n");
   box.innerHTML = `<h3>${h(t("chTitle"))}</h3><p class="hint">${h(t("chLead"))} ${h(real ? t("chScaled")(fmtTime(real)) : t("chEst"))}</p>
     ${ch.length < 3 ? `<p class="status err">${h(t("chFew"))}</p>` : ""}<textarea id="chOut" rows="${Math.min(10, ch.length + 1)}" spellcheck="false">${h(txt)}</textarea>
-    <div class="actions" style="margin-top:8px"><button class="small" id="chCopy">${h(t("chCopy"))}</button><button class="small" id="chDesc">${h(t("chToDesc"))}</button><span class="status" id="chMsg"></span></div>`;
+    <div class="actions" style="margin-top:8px"><button class="small" id="chCopy">${h(t("chCopy"))}</button><button class="small" id="chDesc">${h(t("chToDesc"))}</button><span class="status" id="chMsg" role="status"></span></div>`;
   $("chCopy").addEventListener("click", (e) => copyText($("chOut").value, e.target));
   renderAds();
   $("chDesc").addEventListener("click", () => {
@@ -250,7 +250,7 @@ function renderResultsCard() {
   el.innerHTML = `<header class="g-h"><h2>${h(t("rsTitle"))}</h2></header><p class="lead">${h(t("rsLead"))}</p>
     <div class="rs-in"><div class="field"><label for="rsDur">${h(t("rsDur"))}</label><input id="rsDur" placeholder="${h(t("targetPh"))}" value="${h(G.realDur)}"></div>
     <div class="field rs-wide"><label for="rsData">${h(t("rsPaste"))}</label><textarea id="rsData" rows="3" placeholder="${h(t("rsPh"))}" spellcheck="false"></textarea></div></div>
-    <div class="actions"><button class="small primary" id="rsImport">${h(t("rsImport"))}</button><label class="small filebtn"><input type="file" id="rsFile" accept=".csv,.tsv,.txt,text/csv,text/plain"> ${h(t("rsFile"))}</label><span class="status" id="rsMsg"></span></div>${body}`;
+    <div class="actions"><button class="small primary" id="rsImport">${h(t("rsImport"))}</button><label class="small filebtn"><input type="file" id="rsFile" accept=".csv,.tsv,.txt,text/csv,text/plain"> ${h(t("rsFile"))}</label><span class="status" id="rsMsg" role="status"></span></div>${body}`;
   $("rsDur").addEventListener("change", () => { G.realDur = $("rsDur").value.trim(); markDirty(); renderChapters(); renderResultsCard(); });
   const doImport = (raw) => {
     G.realDur = $("rsDur").value.trim();

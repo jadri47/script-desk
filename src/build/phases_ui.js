@@ -72,7 +72,7 @@ renderProdBar = function () {
     const gate = missing.length && !["aprobado", "grabado"].includes(G.status) && !(G.mode === "guion" && !V.guided && G.phase === "prep") ? `<p class="g-gate st-gate">${h(t("pkGate")(missing.map(mLabel).join("; ")))} <a href="#gPack" data-gopack>${h(t("pkGoFix"))}</a></p>` : "";
     el.innerHTML = `<div class="g-bar st-strip">
       <div class="st-row"><span class="st-lbl">${h(t("stLbl"))}</span><div class="st-steps" role="group" aria-label="${h(t("gStatusLbl"))}">${steps}</div>
-        <span class="st-end">${db ? `<span class="status" id="gSaveState">${h(saveText())}</span><button type="button" class="small" id="stEps">${h(t("stEpisodes"))}</button>` : ""}</span></div>
+        <span class="st-end">${db ? `<span class="status" id="gSaveState" role="status">${h(saveText())}</span><button type="button" class="small" id="stEps">${h(t("stEpisodes"))}</button>` : ""}</span></div>
       ${db ? "" : `<p class="hint">${h(t("gNoDb"))}</p>`}${gate}
       ${G.conflict ? `<div class="g-conflict"><span>${h(t("gConflict"))}</span><button class="small" id="gTheirs">${h(t("gLoadTheirs"))}</button><button class="small" id="gMine">${h(t("gOverwrite"))}</button></div>` : ""}
     </div>`;

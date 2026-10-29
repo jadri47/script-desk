@@ -8,7 +8,7 @@ Object.assign(T.es, {
   edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
   edGrip: "Arrastra para cambiar la altura del guion",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
-  edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edLocalFail: "No se pudo guardar en este dispositivo: el navegador bloquea el almacenamiento.", edAuto: "Se guarda solo mientras escribes.",
+  edCueTag: "TEXTO", edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edLocalFail: "No se pudo guardar en este dispositivo: el navegador bloquea el almacenamiento.", edAuto: "Se guarda solo mientras escribes.",
 });
 Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
@@ -16,7 +16,7 @@ Object.assign(T.en, {
   edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
   edGrip: "Drag to change the script box height",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
-  edCueText: "verse or phrase", edLocal: "Saved on this device", edLocalFail: "Couldn't save on this device: the browser blocks storage.", edAuto: "It saves itself as you write.",
+  edCueTag: "TEXT", edCueText: "verse or phrase", edLocal: "Saved on this device", edLocalFail: "Couldn't save on this device: the browser blocks storage.", edAuto: "It saves itself as you write.",
 });
 
 const FMT = { marks: [] };
@@ -263,7 +263,7 @@ function edCmd(k) {
     document.execCommand("formatBlock", false, b && /^H/.test(b.tagName) ? "p" : "h2");
   } else if (k === "ul") document.execCommand("insertUnorderedList");
   else if (k === "ol") document.execCommand("insertOrderedList");
-  else if (k === "cue") wrapSelection("[TEXTO: ", "]", t("edCueText"));
+  else if (k === "cue") wrapSelection("[" + t("edCueTag") + ": ", "]", t("edCueText")); // (jadri47, 2026-10-29: B-021) the English UI used to insert [TEXTO: …]
   else if (k === "undo") document.execCommand("undo");
   else if (k === "redo") document.execCommand("redo");
   else if (k === "full") { setFull(!ED.full); return; }
@@ -365,7 +365,7 @@ function onPaste(e) {
       if (!G.prodId && !(typeof DEMO !== "undefined" && DEMO)) lsSet("sd-draft", JSON.stringify({ text: String(v), marks: FMT.marks, at: Date.now() }));
     },
   });
-  TA.focus = () => { if (!ED.el) return; if (isPhone()) ED.wrap.scrollIntoView({ block: "nearest", behavior: "smooth" }); else ED.el.focus(); };
+  TA.focus = () => { if (!ED.el) return; if (isPhone()) ED.wrap.scrollIntoView({ block: "nearest", behavior: sdSmooth() }); else ED.el.focus(); };
   try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) { /* best effort: older browsers lack this command: paragraphs still work */ }
 
   const wrap = document.createElement("div");
@@ -452,6 +452,8 @@ gOnLang = function () {
   _gOnLangEd.apply(this, arguments);
   if (!ED.wrap) return;
   ED.wrap.querySelector(".ed-bar").innerHTML = toolbarHTML();
+  // (jadri47, 2026-10-29: B-021) the toolbar and grip names were set once at build time and stayed in the first language
+  ED.wrap.querySelector(".ed-bar").setAttribute("aria-label", t("scriptLabel")); const gr = ED.wrap.querySelector("#edGrip"); if (gr) gr.setAttribute("aria-label", t("edGrip"));
   ED.wrap.querySelectorAll("[data-ed]").forEach((b) => b.addEventListener("click", () => edCmd(b.dataset.ed)));
   ED.el.dataset.ph = t("edPh"); ED.el.lang = UI;
   if (ED.full) { const b = ED.wrap.querySelector('[data-ed="full"]'); b.innerHTML = fullBtnHTML(true); }

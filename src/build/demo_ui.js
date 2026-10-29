@@ -10,7 +10,7 @@ Object.assign(T.es, {
     good: "Quince minutos de un episodio de serie casi listo: recapitulación, promesa, lectura larga con texto en pantalla y cierre con oración. Quedan dos o tres detalles.",
     best: "Veintidós minutos listos para grabar, con capítulos en la descripción. Úsalo para recorrer la apertura, el prompter, los Shorts, las pausas para anuncios y los resultados.",
   },
-  exDur: "min",
+  exDur: "min", exLangTag: { en: " (English)", es: " (español)" },
   exBanner: (n) => `Estás practicando con el ejemplo «${n}». Nada de lo que hagas aquí se guarda.`,
   exStart: "Toca «Revisar guion» para empezar.",
   exExit: "Salir del ejemplo",
@@ -29,7 +29,7 @@ Object.assign(T.en, {
     good: "Fifteen minutes of a nearly ready series episode: recap, promise, a long reading with text on screen and a closing prayer. Two or three details left.",
     best: "Twenty-two minutes ready to record, with chapters in the description. Use it to walk through the opening, the prompter, Shorts, ad breaks and results.",
   },
-  exDur: "min",
+  exDur: "min", exLangTag: { en: " (English)", es: " (español)" },
   exBanner: (n) => `You're practicing with the “${n}” example. Nothing you do here is saved.`,
   exStart: "Tap “Review script” to start.",
   exExit: "Leave the example",
@@ -114,7 +114,7 @@ function renderDemoBar() {
   if (!el) return;
   if (!DEMO) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
-  el.innerHTML = `<span class="ex-dot ex-${DEMO}" aria-hidden="true"></span><p><b>${h(t("exBanner")(exName(DEMO) + (DEMO_LANG !== (UI === "en" ? "en" : "es") ? (DEMO_LANG === "en" ? " (English)" : " (español)") : "")))}</b>${V.guided && V.step === 1 && !state.result ? " " + h(t("exStart")) : ""}</p><button type="button" class="small" id="exExit">${h(t("exExit"))}</button>`;
+  el.innerHTML = `<span class="ex-dot ex-${DEMO}" aria-hidden="true"></span><p><b>${h(t("exBanner")(exName(DEMO) + (DEMO_LANG !== (UI === "en" ? "en" : "es") ? t("exLangTag")[DEMO_LANG === "en" ? "en" : "es"] : "")))}</b>${V.guided && V.step === 1 && !state.result ? " " + h(t("exStart")) : ""}</p><button type="button" class="small" id="exExit">${h(t("exExit"))}</button>`;
   $("exExit").addEventListener("click", (ev) => { ev.target.disabled = true; exitDemo(); });
 }
 function renderExPick() {
@@ -135,7 +135,7 @@ function renderExPick() {
     e.preventDefault();
     det.open = !det.open;
     el.dataset.open = det.open ? "1" : "0";
-    if (det.open) requestAnimationFrame(() => det.scrollIntoView({ block: "start", behavior: "smooth" }));
+    if (det.open) requestAnimationFrame(() => det.scrollIntoView({ block: "start", behavior: sdSmooth() }));
   });
   el.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { el.querySelectorAll("[data-ex]").forEach((x) => (x.disabled = true)); startDemo(b.dataset.ex); }));
 }
