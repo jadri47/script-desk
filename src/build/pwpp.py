@@ -39,7 +39,12 @@ async def main():
             lab = await pg.evaluate("(() => { gCompute(); const m = structPanel(G.secs[0], new Set()).match(/<select data-role=\"\\d+\" aria-label=\"([^\"]*)\"/); return m && m[1]; })()")
             ok(f"{n}: (B-030) the note role select has a translated aria-label", lab == ("Rol" if ui == "es" else "Role"), lab)
             ok(f"{n}: (B-030) the section-rewrite hint names no model (the server picks it)", not await pg.evaluate("/Opus|Sonnet|Haiku/.test(t('secAiHint'))"))
-            ok(f"{n}: no page errors", not errs, errs)
+            # B-038: opening another episode while the prompter is open replaced G.secs under its frame loop (a crash per frame); the prompter must close
+            await pg.evaluate("openPrompter('prompter')"); await pg.wait_for_timeout(300)
+            await pg.evaluate("(async () => { const db = await caps.db; await db.collection('producciones').doc('x2').set({ text: 'Hola. Este es otro guion corto para la prueba. Nos vemos.', title: 'B', status: 'borrador', updatedAt: 1 }); await openProd('x2'); })()")
+            await pg.wait_for_timeout(600)
+            ok(f"{n}: (B-038) opening another episode closes the prompter instead of crashing it", await pg.evaluate("!PP.on && !$('pp') && G.prodId === 'x2'"), await pg.evaluate("({on: PP.on, id: G.prodId})"))
+            ok(f"{n}: no page errors", not errs, [e[:200] for e in errs])
             await pg.close()
         await b.close()
     print("FAILS:", fails if fails else "none")

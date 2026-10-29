@@ -213,6 +213,7 @@ async function loadProds() {
   } catch (e) { G.loadErr.prods = true; if ($("gSeriesFull") || $("epList")) renderSeriesAll(); }
 }
 function applyProd(id, d) {
+  if (typeof PP !== "undefined" && PP.on && typeof ppClose === "function") ppClose(); // (B-038, 2026-10-29) the prompter reads the G.secs of the episode it was opened for; a new episode replaces them under its frame loop
   G.prodId = id;
   $("script").value = d.text || "";
   [["title", "title"], ["series", "series"], ["keyword", "keyword"], ["thumb", "thumb"], ["description", "description"]].forEach(([el, k]) => ($(el).value = d[k] || ""));
@@ -777,6 +778,7 @@ function ppRender(force, now) {
   if (!force && now - PP.hudAt < 200) return;
   PP.hudAt = now;
   const k = PP.mode === "ensayo" ? PP.lapK : ppSecIdx(PP.tau), s = G.secs[k];
+  if (!s) { ppClose(); return; } // (B-038) the sections changed under the prompter (another episode, a cleared script): stop instead of crashing every frame
   const ratio = PP.wpm / PP.base;
   const remain = (PP.total - PP.tau) / ratio, endAt = PP.elapsed + remain, plan = parseMMSS(G.target) ? parseMMSS(G.target) - (totalVideo() - totalRec()) : PP.total;
   const dlt = endAt - plan;
