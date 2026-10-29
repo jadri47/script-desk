@@ -133,13 +133,14 @@ async function askRun() {
   if (!state.result || state.text !== $("script").value) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); }
   const frag = askFragment();
   ASK.busy = true; ASK.ans = null; renderAsk();
+  const base = $("script").value; // the text the answer is for: «Aplicar» on the whole script must find it unchanged (B-013, 2026-10-29)
   try {
     const res = await sample.json(askPrompt(frag, q), { modelTier: frag.all ? "complex" : "default" });
     const reply = String((res && res.reply) || "").trim();
     let rep = res && typeof res.replacement === "string" ? res.replacement : null;
     if (rep && rep.trim() === frag.text.trim()) rep = null;
     if (!reply && !rep) throw { code: "invalid_json" };
-    const ans = { target: ASK.target, original: frag.text, replacement: rep, reply, applied: false };
+    const ans = { target: ASK.target, original: frag.text, replacement: rep, reply, applied: false, base };
     if (rep) {
       const full = $("script").value;
       const next = frag.all ? rep : full.replace(frag.text, () => rep);
@@ -157,10 +158,12 @@ function askApply() {
   const a = ASK.ans;
   if (!a || !a.replacement) return;
   const full = $("script").value;
-  if (a.target !== "all" && !full.includes(a.original)) { ASK.err = t("askChanged"); ASK.ans = null; renderAsk(); return; }
+  // a whole-script answer fits only the text it was asked about (B-013, 2026-10-29: it used to replace whatever was typed since); a paragraph answer needs its paragraph
+  if (a.target === "all" ? String(a.base || "").trimEnd() !== full.trimEnd() : !full.includes(a.original)) { ASK.err = t("askChanged"); ASK.ans = null; renderAsk(); return; }
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
   $("script").value = a.target === "all" ? a.replacement : full.replace(a.original, () => a.replacement);
+  state.fixUndo[state.fixUndo.length - 1].after = $("script").value; // what Deshacer expects to find (B-013)
   a.applied = true;
   state.fixSel = {}; state.fixAi = {};
   rerunReview(t("fxApplied"));

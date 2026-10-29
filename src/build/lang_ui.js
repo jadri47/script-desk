@@ -56,6 +56,8 @@ const VARIANT_GUIDE = {
 };
 const AUD_OF = { es: "es", latam: "latam", neutral: "both" };
 const TR = { target: "", ver: "", busy: false, res: null, msg: "", err: "", undo: null, open: false };
+Object.assign(T.es, { trStale: "El guion o el episodio cambió mientras tanto: la traducción ya no encaja. Vuelve a pedirla." });
+Object.assign(T.en, { trStale: "The script or the episode changed meanwhile: the translation no longer fits. Ask for it again." });
 function trSource() {
   const lang = state.result ? state.result.lang : (typeof detectLanguage === "function" ? detectLanguage($("script").value) : "es");
   if (lang === "en") return "en";
@@ -107,15 +109,18 @@ async function trRun() {
   try {
     const res = await sample.json(trPrompt(src, dst, ver), { modelTier: "complex", bibleRule: false });
     if (!res || typeof res.script !== "string" || res.script.trim().length < text.length * 0.4) throw { code: "invalid_json" };
-    TR.res = { ...res, src, dst, ver, verify: Array.isArray(res.verify) ? res.verify.slice(0, 20) : [] };
+    TR.res = { ...res, src, dst, ver, verify: Array.isArray(res.verify) ? res.verify.slice(0, 20) : [], base: text, prod: G.prodId || null }; // the script and episode it was made for (B-013, 2026-10-29)
   } catch (e) { TR.err = errText(e); }
   TR.busy = false; renderTr();
 }
 function trApply() {
   const r = TR.res;
   if (!r) return;
+  // (B-013, 2026-10-29) The call takes up to a minute: if the script or the open episode changed meanwhile, the translation is for another text
+  if (String(r.base || "") !== $("script").value.trim() || (r.prod || null) !== (G.prodId || null)) { TR.res = null; TR.err = t("trStale"); renderTr(); return; }
   TR.undo = { text: $("script").value, title: $("title").value, thumb: $("thumb").value, description: $("description").value, keyword: $("keyword").value,
-    bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)) };
+    bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)),
+    after: r.script, prod: G.prodId || null }; // what «Volver al original» expects to find, and where (B-013)
   $("script").value = r.script;
   for (const f of ["title", "thumb", "description", "keyword"]) if (typeof r[f] === "string" && (r[f] || !$(f).value)) $(f).value = r[f];
   if ($("bigIdea") && typeof r.bigIdea === "string" && r.bigIdea) $("bigIdea").value = r.bigIdea;
@@ -132,6 +137,8 @@ function trApply() {
 function trUndo() {
   const u = TR.undo;
   if (!u) return;
+  // (B-013, 2026-10-29) only straight after the translation, on the same episode: typing since, or another episode, would be overwritten
+  if ((u.prod || null) !== (G.prodId || null) || String(u.after || "").trimEnd() !== $("script").value.trimEnd()) { TR.undo = null; TR.err = t("trStale"); renderTr(); return; }
   $("script").value = u.text; for (const f of ["title", "thumb", "description", "keyword", "lang", "audience", "translation"]) $(f).value = u[f];
   if ($("bigIdea")) $("bigIdea").value = u.bigIdea;
   G.nextEp = u.nextEp; G.cold = u.cold; lsSet("sd-aud", u.audience);

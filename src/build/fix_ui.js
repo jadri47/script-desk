@@ -1,7 +1,7 @@
 
 /* ===== Lo primero que arreglaría: evidence, proposal, proof ===== */
 Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
-  fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras opciones con IA", fxAiVerse: "Este fragmento corta un versículo por la mitad: la IA no lo reescribe. Cámbialo a mano.",
+  fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras opciones con IA", fxAiVerse: "Este fragmento corta un versículo por la mitad: la IA no lo reescribe. Cámbialo a mano.", fxUndoStale: "El guion cambió después de ese arreglo: Deshacer ya no es seguro. Usa «Revertir este cambio» en la lista de cambios o corrígelo a mano.",
   fxMulti: (n) => `resuelve ${n} revisiones`, fxPartial: (n, m) => `Arregla ${n} de ${m}; el resto, con IA o a mano.`, fxApplied: "Aplicado.", fxUndo: "Deshacer", fxUndone: "Deshecho.",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxUpTo: "Hasta", fxNoteTag: "Nota", fxNoteHow: "Sin cambio automático: es una decisión tuya (no inventamos la referencia ni acortamos el pasaje).", fxZeroMore: (n) => `La nota sube cuando quedan menos: faltan ${n} en otros párrafos.`, fxZeroFloor: "La nota ya está en 0: empieza a subir cuando arregles varias cosas más.", fxZeroRed: "Un aviso rojo limita la nota a 69 hasta que lo arregles.", fxZeroCap: "Ya cuentas el máximo de puntos por esto; la nota sube al arreglar varios.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
@@ -9,7 +9,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxSkip: "Ahora no", fxDone: "Aplicado", fxWhy: "Qué corrige", fxOpt: "Opción elegida", fxWhere: "Dónde", fxWords: "Palabras", fxScore: "Puntuación", fxRevert: "Revertir este cambio", fxReverted: "Cambio revertido.", fxCantRevert: "No se puede revertir solo este cambio: el texto ya cambió en ese lugar. Usa Deshacer o corrígelo a mano.", fxParaN: (n, tm) => `Párrafo ${n}${tm ? " · " + tm : ""}`, fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
-  fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "More options with AI", fxAiVerse: "This fragment cuts a verse in half: the AI won't rewrite it. Change it by hand.",
+  fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "More options with AI", fxAiVerse: "This fragment cuts a verse in half: the AI won't rewrite it. Change it by hand.", fxUndoStale: "The script changed after that fix: Undo is no longer safe. Use “Revert this change” in the change list or fix it by hand.",
   fxMulti: (n) => `fixes ${n} checks`, fxPartial: (n, m) => `Fixes ${n} of ${m}; the rest with AI or by hand.`, fxApplied: "Applied.", fxUndo: "Undo", fxUndone: "Undone.",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxUpTo: "Up to", fxNoteTag: "Note", fxNoteHow: "No automatic change: this one is your call (we don't invent the reference or shorten the passage).", fxZeroMore: (n) => `The score moves once fewer remain: ${n} left in other paragraphs.`, fxZeroFloor: "The score is already at 0: it starts rising once you fix several more.", fxZeroRed: "A red warning holds the score at 69 until it's fixed.", fxZeroCap: "This already counts the most points it can; the score rises as you fix several.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
@@ -174,6 +174,7 @@ function fxRevert(uid) {
   state.fixUndo.push(snapshotForUndo());
   if (state.fixUndo.length > 20) state.fixUndo.shift();
   if (next != null) $("script").value = next;
+  state.fixUndo[state.fixUndo.length - 1].after = $("script").value; // (B-013)
   if (e.pk === "cold" && e.prev) G.cold = e.prev.cold;
   if (e.field && e.prev && e.prev.field != null) $(e.field).value = e.prev.field;
   state.fixLog = state.fixLog.filter((x) => x.uid !== uid);
@@ -221,6 +222,7 @@ function applyProposal(p, c) {
     chg = fxChgOf(before, after, pre, aEnd, pre, post);
     $("script").value = after;
   }
+  state.fixUndo[state.fixUndo.length - 1].after = $("script").value; // what Deshacer expects to find; typing since makes undo refuse (B-013, 2026-10-29)
   if (p.kind === "cold") {
     for (const k of ["hook", "promise"]) { const x = p[k]; G.cold[k] = x ? { i: x.i, anchor: x.text.slice(0, 80), text: x.text, mode: x.mode } : G.cold[k]; }
   }
@@ -248,8 +250,12 @@ function fxRestore(id) {
   const keep = window.scrollY; renderResults(); window.scrollTo(0, keep);
 }
 function undoFix() {
-  const s = state.fixUndo.pop();
+  const s = state.fixUndo[state.fixUndo.length - 1];
   if (!s) return;
+  // (B-013, 2026-10-29) Undo puts back the text from before the last change; anything typed since would go with it, so it refuses
+  // and points to «Revertir este cambio». Snapshots without `after` (older paths) behave as before.
+  if (typeof s.after === "string" && s.after.trimEnd() !== $("script").value.trimEnd()) { rerunReview(t("fxUndoStale")); return; }
+  state.fixUndo.pop();
   { const k = state.fixLog.map((x) => x.kind).lastIndexOf("done"); if (k >= 0) { const g = state.fixLog[k].grp; if (g) state.fixLog = state.fixLog.filter((x) => x.grp !== g); else state.fixLog.splice(k, 1); } } // grp: the entries of one coach batch go together
   $("script").value = s.text; $("title").value = s.title; $("keyword").value = s.keyword; $("thumb").value = s.thumb; $("description").value = s.description; G.cold = s.cold;
   state.fixSel = {}; state.fixAi = {};
