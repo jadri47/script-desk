@@ -294,5 +294,22 @@ ${mk.masked}
   ok("repair: a cut inside an area keeps the earlier areas only", r2 && Object.keys(r2.areas).join() === "hook" && r2.areas.hook.rating === 3);
 }
 
+// ---- a change never alters a Bible reference (B-001, bug review 2026-10-29): same count, different verse must be dropped ----
+{
+  const sent = "Pablo lo resume en Romanos 8:28 con una frase que todos recuerdan.";
+  const t2 = E.text + "\n\n" + sent, R2 = L.analyze(t2, O);
+  const item = (rep, alts) => ({ areas: { hook: { rating: 3, why: "x" } }, items: [{ area: "hook", original: sent, replacement: rep, alts, why: "w", after: 5 }] });
+  const same = "Pablo lo resume en Romanos 8:28 con una frase que todos recordamos.";
+  const v1 = L.vetReport(t2, item("Pablo lo resume en Romanos 8:29 con una frase que todos recuerdan."), O, R2);
+  ok("refs: a replacement that changes the verse number is dropped", v1.items.length === 0, v1.items.map((x) => x.replacement));
+  const v2 = L.vetReport(t2, item("Pablo lo resume en Juan 3:16 con una frase que todos recuerdan."), O, R2);
+  ok("refs: a replacement that swaps the book is dropped", v2.items.length === 0);
+  const v3 = L.vetReport(t2, item(same, ["Pablo lo resume en Romanos 8:29 con una frase que todos recordamos.", "Pablo lo resume en Romanos 8:28 con una frase que nadie olvida."]), O, R2);
+  ok("refs: the same reference keeps the item", v3.items.length === 1 && v3.items[0].replacement === same);
+  ok("refs: an alternative that changes the reference is dropped, the other kept", v3.items.length === 1 && v3.items[0].alts.length === 1 && /8:28/.test(v3.items[0].alts[0]), v3.items[0] && v3.items[0].alts);
+  const v4 = L.vetReport(t2, item("Pablo lo resume con una frase que todos recuerdan."), O, R2);
+  ok("refs: a replacement that removes the reference is dropped", v4.items.length === 0);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);

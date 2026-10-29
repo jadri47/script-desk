@@ -67,7 +67,8 @@ function vetReport(text, json, opts, R) {
   const vetRep = (o, start, end, c) => {
     if (typeof c !== "string" || !c.trim() || c === o || c.length > 1000) return null;
     if (/⟦|⟧/.test(c)) return null; // a verse mark never goes into a replacement
-    if (findReferences(c).length > findReferences(o).length || findQuotes(c).length > findQuotes(o).length) return null;
+    // the same references, none added, none changed («Romanos 8:28» → «8:29» is a different verse): the key vetSection uses (B-001, 2026-10-29)
+    if (refsKey(c) !== refsKey(o) || findQuotes(c).length > findQuotes(o).length) return null;
     const check = verifyProposal(text, opts, R, { kind: "patch", patches: [{ start, end, rep: c }] });
     if (check.broke.some((id) => /^(pf-|pack-)/.test(id))) return null; // no new ad or packaging problem
     if (analyze(check.text, check.opts).riskHits.length > riskBefore) return null; // no new sensitive term, even if that check was already open
