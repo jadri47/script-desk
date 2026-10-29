@@ -14,7 +14,7 @@ BAD = """(() => { const no = () => Promise.reject(new Error("offline"));
   const ref = { orderBy: () => ref, where: () => ref, limit: () => ref, get: no, set: no, update: no, delete: no, add: no, doc: () => ref, collection: () => ref };
   return { collection: () => ref, doc: () => ref, batch: () => ({ set() {}, update() {}, delete() {}, commit: no }) }; })()"""
 async def run(b, ui):
-    pg = await b.new_page(viewport={"width": 1400, "height": 900}); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg = await b.new_page(viewport={"width": 1400, "height": 900}); errs = []; pg.on("pageerror", lambda e: errs.append(e.message + " @ " + " | ".join((e.stack or "").split("\n")[1:4])))  # with the stack: a bare message hides where it came from
     await pg.add_init_script(MOCK)
     await pg.add_init_script(f"window.__SB_MODE='member'; localStorage.setItem('sd-expert','1'); localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}')")
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
@@ -55,6 +55,15 @@ async def run(b, ui):
         ok(f"{ui}: failed pace save says so", msg == await pg.evaluate("t('rehNotSaved')"), msg)
     else:
         ok(f"{ui}: rehearsal Apply button reachable", False)
+    await pg.evaluate("caps.db = window.__realDb; if (typeof ppClose === 'function') ppClose();")  # teardown of the rehearsal: an open prompter outlives an episode switch and crashes (B-038, its own test when fixed)
+    # 5. the clipboard fallback: execCommand("copy") returns false instead of throwing; «Copiado» must not show then (B-020, 2026-10-29)
+    n = await pg.evaluate("(() => { const real = document.execCommand; document.execCommand = () => false; let n = 0; try { fallbackCopy('x', () => n++); } finally { document.execCommand = real; } return n; })()")
+    ok(f"{ui}: a failed copy does not say «Copiado»", n == 0, n)
+    # 7. blocked storage (private mode): the editor must not claim the draft is saved on this device (B-020). Last: storage stays blocked.
+    await pg.evaluate("(() => { Storage.prototype.setItem = function () { throw new Error('blocked'); }; G.prodId = null; $('script').value = 'Texto sin episodio'; afterChange(); })()")
+    await pg.wait_for_timeout(300)
+    lbl = await pg.evaluate("($('edSave') || {}).textContent")
+    ok(f"{ui}: with storage blocked the editor says the draft was NOT saved on this device", lbl == await pg.evaluate("t('edLocalFail')") and lbl != await pg.evaluate("t('edLocal')"), lbl)
     ok(f"{ui}: no page errors", not errs, errs)
     await pg.close()
 async def main():

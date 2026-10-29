@@ -1115,8 +1115,8 @@ const T = {
 let UI = (() => { try { return localStorage.getItem("sd-ui") === "en" ? "en" : "es"; } catch (e) { return "es"; } })();
 const t = (k) => T[UI][k];
 // (B-019, 2026-10-29) the logged episode's percentages are checked at the boundary
-Object.assign(T.es, { epRange: "Intro y porcentaje visto van de 0 a 100." });
-Object.assign(T.en, { epRange: "Intro and percentage viewed go from 0 to 100." });
+Object.assign(T.es, { epRange: "Intro y porcentaje visto van de 0 a 100.", copyFail: "No se pudo copiar: selecciónalo y cópialo a mano." });
+Object.assign(T.en, { epRange: "Intro and percentage viewed go from 0 to 100.", copyFail: "Couldn't copy: select it and copy by hand." });
 
 function applyLang() {
   document.documentElement.lang = UI;
@@ -1585,11 +1585,19 @@ ${pairs.map(({ i, p }) => `id ${i}: ${p.ref.canonical} — «${p.quote.inner}»`
 }
 
 function copyText(x, btn) {
-  const done = () => { const o = btn.textContent; btn.textContent = t("copied"); setTimeout(() => (btn.textContent = o), 1400); };
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(x).then(done, () => fallbackCopy(x, done));
-  else fallbackCopy(x, done);
+  const flash = (k) => { const o = btn.textContent; btn.textContent = t(k); setTimeout(() => (btn.textContent = o), 1400); };
+  const done = () => flash("copied"), fail = () => flash("copyFail");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(x).then(done, () => fallbackCopy(x, done, fail));
+  else fallbackCopy(x, done, fail);
 }
-function fallbackCopy(x, done) { const ta = document.createElement("textarea"); ta.value = x; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) {} ta.remove(); }
+// execCommand("copy") returns false instead of throwing when it cannot copy: «Copiado» only on true (B-020, 2026-10-29)
+function fallbackCopy(x, done, fail) {
+  const ta = document.createElement("textarea"); ta.value = x; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+  let copied = false;
+  try { copied = document.execCommand("copy") === true; } catch (e) { copied = false; } // an old browser without the command: reported as not copied
+  ta.remove();
+  if (copied) done(); else if (fail) fail();
+}
 
 // ---------- exports ----------
 async function offerFile(filename, data) {

@@ -86,7 +86,7 @@ Object.assign(T.en, {
 const STATUSES = ["borrador", "revision", "aprobado", "grabado"];
 const SEC_COLOR = { hook: "var(--accent)", promise: "var(--verde)", intro: "var(--ink-2)", point: "var(--gold)", body: "var(--rule)", cta: "var(--amarillo)", close: "var(--reg)" };
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* best effort: storage blocked or full: the setting just isn't remembered */ } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }; // false = storage blocked or full: a setting just isn't remembered; the draft label says so (B-020, 2026-10-29)
 
 const G = {
   mode: lsGet("sd-mode") === "guion" ? "guion" : "review",

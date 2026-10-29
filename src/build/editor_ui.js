@@ -8,7 +8,7 @@ Object.assign(T.es, {
   edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
   edGrip: "Arrastra para cambiar la altura del guion",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
-  edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edAuto: "Se guarda solo mientras escribes.",
+  edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edLocalFail: "No se pudo guardar en este dispositivo: el navegador bloquea el almacenamiento.", edAuto: "Se guarda solo mientras escribes.",
 });
 Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
@@ -16,7 +16,7 @@ Object.assign(T.en, {
   edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
   edGrip: "Drag to change the script box height",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
-  edCueText: "verse or phrase", edLocal: "Saved on this device", edAuto: "It saves itself as you write.",
+  edCueText: "verse or phrase", edLocal: "Saved on this device", edLocalFail: "Couldn't save on this device: the browser blocks storage.", edAuto: "It saves itself as you write.",
 });
 
 const FMT = { marks: [] };
@@ -218,8 +218,8 @@ const queueSync = () => { clearTimeout(ED.timer); ED.timer = setTimeout(syncFrom
 function afterChange() {
   if (typeof DEMO !== "undefined" && DEMO) return;
   if (!G.prodId) {
-    lsSet("sd-draft", JSON.stringify({ text: taGet(), marks: FMT.marks, at: Date.now() }));
-    setEdSave(t("edLocal"));
+    const kept = lsSet("sd-draft", JSON.stringify({ text: taGet(), marks: FMT.marks, at: Date.now() }));
+    setEdSave(t(kept ? "edLocal" : "edLocalFail")); // never «Guardado» when the browser blocked the write (B-020, 2026-10-29)
     autoCreate();
   } else markDirty();
 }
