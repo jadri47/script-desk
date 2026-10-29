@@ -263,5 +263,36 @@ ${mk.masked}
   ok("cleanCost drops unknown or absurd values (never invented)", [undefined, null, -0.01, Infinity, NaN, "0.06", 1e6].every((v) => L.cleanCost(v) === null));
 }
 
+// ---- repair: a cut answer keeps every complete element and invents nothing (Adrian, 2026-10-29: "never lose the work") ----
+{
+  const areas = Object.fromEntries(L.REPORT_AREAS.map((k, i) => [k, { rating: (i % 5) + 1, why: "Porque " + k + " tiene una razón \"larga\" con comillas y llaves {x} [y], de unas cuantas palabras." }]));
+  const items = [0, 1, 2].map((i) => ({ area: L.REPORT_AREAS[i], original: "Frase original número " + i + " del guion, con coma, y más texto para llenar.", replacement: "Frase nueva número " + i + " del guion, más clara y más corta para hablar.", alts: ["Opción uno " + i + " distinta, con más palabras", "Opción dos " + i + " también distinta, aún más larga"], why: "Mejora el gancho " + i + " porque promete algo concreto.", after: 4 + (i % 2) }));
+  const words = { "gratis": ["sin costo", "de regalo", "incluido"], "garantizado": ["muy probable", "seguro de verdad"] };
+  const orig = { areas, items, words, dropped: 0 }, json = JSON.stringify(orig);
+  ok("repair: fixture is long enough", json.length >= 1200, json.length);
+  const aEnd = json.indexOf('"items"');
+  let bad = 0, nulls = 0, seen = 0, firstErr = "";
+  for (let off = 200; off < json.length; off += 50) {
+    const r = L.repairJson(json.slice(0, off));
+    const err = (m) => { bad++; if (!firstErr) firstErr = off + ": " + m; };
+    if (r === null) { nulls++; continue; }
+    if (typeof r !== "object") { err("not an object"); continue; }
+    seen++;
+    for (const it of r.items || []) if (!items.some((o) => ["original", "replacement", "why", "after", "alts", "area"].every((k) => JSON.stringify(o[k]) === JSON.stringify(it[k])) && Object.keys(it).length === Object.keys(o).length)) err("item not in original " + JSON.stringify(it));
+    for (const [k, a] of Object.entries(r.areas || {})) if (JSON.stringify(a) !== JSON.stringify(areas[k])) err("area " + k);
+    for (const [k, w] of Object.entries(r.words || {})) if (JSON.stringify(w) !== JSON.stringify(words[k])) err("word " + k);
+    if (off > aEnd && L.REPORT_AREAS.some((k) => !r.areas || !r.areas[k] || r.areas[k].rating !== areas[k].rating)) err("ratings missing past the areas block");
+  }
+  ok("repair: every cut gives null or only complete, unchanged elements", bad === 0 && seen > 10, firstErr || `${seen} repaired, ${nulls} null`);
+  ok("repair: the full string returns the full object", JSON.stringify(L.repairJson(json)) === json);
+  ok("repair: a ```json fence parses", JSON.stringify(L.repairJson("```json\n" + json + "\n```")) === json);
+  ok("repair: a fence cut short still repairs", (L.repairJson("```json\n" + json.slice(0, 700)) || {}).areas !== undefined);
+  ok("repair: garbage returns null", L.repairJson("hola, esto no es json") === null && L.repairJson("") === null && L.repairJson(undefined) === null);
+  const cut = json.slice(0, json.indexOf('"replacement":"Frase nueva número 1') + '"replacement":"Frase'.length), rc = L.repairJson(cut);
+  ok("repair: a cut inside \"replacement\" drops that whole item (no half string)", rc && rc.items.length === 1 && rc.items[0].original === items[0].original && !JSON.stringify(rc).includes("Frase nueva número 1"), JSON.stringify(rc && rc.items.length));
+  const r2 = L.repairJson('{"areas":{"hook":{"rating":3,"why":"a"},"promise":{"rating":4,"why":"abc');
+  ok("repair: a cut inside an area keeps the earlier areas only", r2 && Object.keys(r2.areas).join() === "hook" && r2.areas.hook.rating === 3);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);

@@ -31,6 +31,10 @@ MOCK = r"""() => {
       window.__fixN++;
       if (window.__failFix && window.__fixN === window.__failFix) throw { code: 'server_error' };
       const fixes = [...prompt.matchAll(/^=== (f\d+)\n[\s\S]*?(?:FRAGMENTO A REESCRIBIR|FRAGMENT TO REWRITE):\n"{3}\n([\s\S]*?)\n"{3}/gm)].map((m) => ({ id: m[1], options: [{ text: m[2].trim() + ' Piénsalo.', why: 'del informe' }, { text: m[2].trim() + ' ⟦V99⟧', why: 'inventa un versículo' }] }));
+      if (window.__truncFix && window.__fixN === window.__truncFix[0]) { // the answer hit the output cap (Adrian, 2026-10-29: "never lose the work")
+        const raw = JSON.stringify({ fixes }), o = raw.indexOf('"options":[');
+        throw { code: 'truncated', raw: window.__truncFix[1] === 'some' ? raw.slice(0, raw.indexOf('}', o) + 1) : raw.slice(0, o + 20) };
+      }
       return { fixes };
     }
     if (/^=== i\d+/m.test(prompt)) { window.__calls.coach++; return { items: [] }; }
@@ -46,10 +50,11 @@ async def open_page(b, ui, vp, coach_off=True):
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
     return pg, errs
-async def start(pg, demo="mid", fail=0):
+async def start(pg, demo="mid", fail=0, trunc=None):
     await pg.evaluate(f"startDemo('{demo}')"); await pg.wait_for_timeout(800)
     await pg.evaluate(MOCK)
     if fail: await pg.evaluate(f"window.__failFix = {fail}")
+    if trunc: await pg.evaluate(f"window.__truncFix = {trunc!r}")
     await pg.click("#runBtn"); await pg.wait_for_timeout(1500)
     await pg.wait_for_function("RP.fix && !RP.fix.run", timeout=20000)
 CALLS = "(() => ({ report: window.__calls.report.length, fix: window.__calls.fix.length, coach: window.__calls.coach, button: window.__calls.button }))()"
@@ -139,6 +144,23 @@ async def main():
         ok("es/d first batch failing: the pump still asked the 2nd batch and kept its options", c["fix"] == 2 and await pg.evaluate(f"G.report.fixes.length === {tot - BATCH} && Object.keys(RP.fix.err).join() === '1'"), c)
         ok("es/d first batch failing: no page errors", not errs, errs)
         await pg.close()
+        # ---- a batch cut at the output cap: the options that arrived complete are kept; a cut with nothing complete is an error
+        for ui in ["es", "en"]:
+            pg, errs = await open_page(b, ui, {"width": 1400, "height": 900})
+            await start(pg, "mid", trunc=[2, "some"])
+            tot = await pg.evaluate("RP.fix.total")
+            c = await pg.evaluate(CALLS)
+            ok(f"{ui} cut batch with one complete option: the pump still ran every batch", c["fix"] == -(-tot // BATCH) and tot > BATCH, (c, tot))
+            ok(f"{ui} cut batch with one complete option: its first fragment keeps that option, and no error is recorded", await pg.evaluate(f"G.report.fixes.length === {BATCH} + 1 && G.report.fixes[{BATCH}].options.length === 1 && G.report.fixes[{BATCH}].options[0].text.includes('Piénsalo.') && Object.keys(RP.fix.err).length === 0 && !document.querySelector('.rp-fixlost')"), await pg.evaluate("[G.report.fixes.length, Object.keys(RP.fix.err)]"))
+            ok(f"{ui} cut batch with one complete option: no page errors", not errs, errs)
+            await pg.close()
+            pg, errs = await open_page(b, ui, {"width": 1400, "height": 900})
+            await start(pg, "mid", trunc=[2, "none"])
+            tot = await pg.evaluate("RP.fix.total")
+            ok(f"{ui} cut batch with nothing complete: that batch is recorded as lost, the others stay", await pg.evaluate(f"Object.keys(RP.fix.err).join() === '2' && G.report.fixes.length === {BATCH}"), await pg.evaluate("[G.report.fixes.length, Object.keys(RP.fix.err)]"))
+            ok(f"{ui} cut batch with nothing complete: the walker offers Reintentar", await pg.evaluate("!!document.querySelector('[data-rp-fixre=\"2\"]')"))
+            ok(f"{ui} cut batch with nothing complete: no page errors", not errs, errs)
+            await pg.close()
         # ---- the coach (no walker): its first problem is answered with no automatic call
         for ui in ["es", "en"]:
             pg, errs = await open_page(b, ui, {"width": 1400, "height": 900}, coach_off=False)

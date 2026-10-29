@@ -11,16 +11,26 @@ fails = []
 def ok(n, c, x=""):
     print(("ok   " if c else "FAIL ") + n, x if not c else "")
     if not c: fails.append(n)
-TX = {"es": {"think": "La IA está pensando…", "two": "La IA está pensando… (2 tareas)", "wait": "Todavía no hay respuesta. Puede tardar hasta un minuto.", "done": "Listo: la IA ha respondido", "lbl": "Informe del editor", "fail": "La IA no respondió", "retry": "Reintentar", "noans": "Aún no ha respondido.", "vwait": "Esperando el informe del editor"},
-      "en": {"think": "The AI is thinking…", "two": "The AI is thinking… (2 tasks)", "wait": "No answer yet. It can take up to a minute.", "done": "Done: the AI has answered", "lbl": "Editor's report", "fail": "The AI did not answer", "retry": "Retry", "noans": "No answer yet.", "vwait": "Waiting for the editor's report"}}
+TX = {"es": {"partial": "La respuesta se cortó: el informe puede estar incompleto", "think": "La IA está pensando…", "two": "La IA está pensando… (2 tareas)", "wait": "Todavía no hay respuesta. Puede tardar hasta un minuto.", "done": "Listo: la IA ha respondido", "lbl": "Informe del editor", "fail": "La IA no respondió", "retry": "Reintentar", "noans": "Aún no ha respondido.", "vwait": "Esperando el informe del editor"},
+      "en": {"partial": "The answer was cut: the report may be incomplete", "think": "The AI is thinking…", "two": "The AI is thinking… (2 tasks)", "wait": "No answer yet. It can take up to a minute.", "done": "Done: the AI has answered", "lbl": "Editor's report", "fail": "The AI did not answer", "retry": "Retry", "noans": "No answer yet.", "vwait": "Waiting for the editor's report"}}
 # mode: "ok" answers after `delay` with a minimal valid report; "fail" rejects the first call, answers later ones
 MOCK = r"""([delay, mode]) => {
   window.__calls = []; window.__keys = [];
+  if (mode === 'trunc') { // a real-looking answer (6 areas, 3 items that the script really holds) cut at 70 %: the areas and the first items survive
+    const sp = verseSpans(state.text, state.result), T = state.text;
+    const ss = state.result.sents.filter((s) => s.text.length > 30 && s.text.length < 160 && T.split(s.text).length === 2 && !/[⟦⟧\n]/.test(s.text) && !sp.some((v) => s.start < v.end && s.start + s.text.length > v.start)).slice(0, 3);
+    const full = { areas: Object.fromEntries(['hook', 'promise', 'retention', 'voice', 'close', 'return'].map((k) => [k, { rating: 4, why: 'x' }])),
+      items: ss.map((s, i) => ({ area: ['hook', 'promise', 'retention'][i], original: s.text, replacement: s.text + ' Quédate hasta el final.', alts: [s.text + ' Quédate con nosotros.', s.text + ' Sigue conmigo.'], why: 'Mejora el gancho.', after: 5 })), words: {} };
+    const js = JSON.stringify(full); window.__raw = js.slice(0, Math.floor(js.length * 0.7)); window.__rawN = ss.length;
+    const rj = repairJson(window.__raw); window.__rawOk = ss.length === 3 && !!rj && Object.keys(rj.areas).length === 6 && rj.items.length >= 1 && rj.items.length < 3;
+  }
   const json = { areas: { hook: { rating: 4, why: 'x' }, promise: { rating: 4, why: '' }, retention: { rating: 4, why: '' }, voice: { rating: 4, why: '' }, close: { rating: 4, why: '' }, return: { rating: 4, why: '' } }, items: [] };
   caps.sample = Promise.resolve({ serverRules: true, json: async (prompt, opts) => {
     window.__calls.push(opts.modelTier); window.__keys.push(Object.keys(opts).join(','));
     await new Promise((r, j) => { const tm = setTimeout(r, delay); if (opts.signal) opts.signal.addEventListener('abort', () => { clearTimeout(tm); j({ code: 'cancelled' }); }); });
     if (mode === 'fail' && window.__calls.length === 1) throw { code: 'server_error', message: 'boom' };
+    if (mode === 'trunc' && window.__calls.length === 1) throw { code: 'truncated', raw: window.__raw };
+    if (mode === 'truncjunk' && window.__calls.length === 1) throw { code: 'truncated', raw: '{"areas": {"hook": {"rat' };
     return JSON.parse(JSON.stringify(json));
   } });
 }"""
@@ -111,6 +121,47 @@ async def main():
                 s = await pg.evaluate(BUB)
                 ok(f"{n}: after the retry answers, «Listo»", s and "done" in s["cls"], s)
                 ok(f"{n}: no page errors", not errs, errs)
+                await pg.close()
+                # a cut answer keeps every complete item and shows the report (Adrian, 2026-10-29: "A: salvage a cut answer; never lose the work")
+                pg, errs = await open_page(b, ui, {"width": w, "height": hh})
+                await pg.evaluate("startDemo('best')"); await pg.wait_for_timeout(900)
+                await pg.evaluate("ensureReview()")  # the mock cuts a real answer built from the reviewed script
+                await pg.evaluate(MOCK, [300, "trunc"])
+                ok(f"{n}: setup: the 70 % cut keeps 6 areas and some, not all, of 3 items", await pg.evaluate("window.__rawOk"), await pg.evaluate("[window.__rawN, window.__raw.length]"))
+                await pg.click("#runBtn"); await pg.wait_for_timeout(1200)
+                rp = await pg.evaluate("G.report ? { r: REPORT_AREAS.filter((k) => G.report.areas[k].rating != null).length, partial: G.report.partial, items: G.report.items.length } : null")
+                ok(f"{n}: a cut answer still gives a report with its ratings, marked partial", rp and rp["r"] == 6 and rp["partial"] is True and rp["items"] >= 1, rp)
+                s = await pg.evaluate(BUB)
+                ok(f"{n}: the bubble says «Listo», not a failure", s and "done" in s["cls"] and "fail" not in s["cls"] and s["h"] == X["done"], s)
+                ok(f"{n}: no error is shown", await pg.evaluate("RP.err") == "" and not await pg.evaluate("RP.failed"), await pg.evaluate("RP.err"))
+                await pg.evaluate("scOpenPop()"); await pg.wait_for_timeout(250)
+                pp = await pg.evaluate("(document.querySelector('#scPop .rp-partial') || {}).textContent || ''")
+                ok(f"{n}: the score bubble says the report may be incomplete", pp == X["partial"], pp)
+                await pg.evaluate("scClosePop(true)")
+                # walk to the end card: every decision skipped
+                for _ in range(40):
+                    if await pg.locator(".rp-end").count(): break
+                    b1 = pg.locator("[data-rp=skip]")
+                    if await b1.count(): await b1.first.click(); await pg.wait_for_timeout(150)
+                    else: break
+                ok(f"{n}: the end card shows the same line", await pg.locator(".rp-end .rp-partial[role=status]").count() == 1 and (await pg.locator(".rp-end .rp-partial").text_content()) == X["partial"])
+                gtxt = await pg.evaluate("document.getElementById('guide').textContent")
+                ok(f"{n}: no «Listo: no quedan decisiones» text", "no quedan decisiones" not in gtxt and "no decisions left" not in gtxt)
+                c0 = len(await pg.evaluate("window.__calls"))
+                await pg.click(".rp-end [data-rp=re]"); await pg.wait_for_timeout(800)
+                ok(f"{n}: «Volver a evaluar» makes one new call", len(await pg.evaluate("window.__calls")) == c0 + 1, await pg.evaluate("window.__calls"))
+                ok(f"{n}: the new full answer is not partial", await pg.evaluate("G.report.partial") is None)
+                ok(f"{n}: no page errors (cut answer)", not errs, errs)
+                await pg.close()
+                # nothing complete in the cut: the old failure path, with the «demasiado larga» message
+                pg, errs = await open_page(b, ui, {"width": w, "height": hh})
+                await pg.evaluate("startDemo('best')"); await pg.wait_for_timeout(900)
+                await pg.evaluate(MOCK, [300, "truncjunk"])
+                await pg.click("#runBtn"); await pg.wait_for_timeout(1200)
+                s = await pg.evaluate(BUB)
+                ok(f"{n}: a cut with no rating keeps the failure path (no report, bubble fails)", await pg.evaluate("!G.report && RP.failed") and s and "fail" in s["cls"], s)
+                ok(f"{n}: and says the answer was too long", ("demasiado larga" in await pg.evaluate("RP.err")) if ui == "es" else ("too long" in await pg.evaluate("RP.err")), await pg.evaluate("RP.err"))
+                ok(f"{n}: no page errors (junk cut)", not errs, errs)
                 await pg.close()
         await b.close()
     print("FAILS:", fails if fails else "none")

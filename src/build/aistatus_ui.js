@@ -23,6 +23,12 @@ const AIS = { n: 0, t0: 0, label: "", retry: null, ok: false, fail: false, st: "
 const AI_DONE_MS = 5000, AI_FAIL_MS = 12000, AI_CHECK_MS = 60000;
 const AI_MARK = Symbol.for("sd-ai-tracked");
 const aiCancelled = (e) => !!e && (e.code === "cancelled" || e.name === "AbortError");
+// A cut answer whose complete part could be repaired is paid work that the caller keeps: it counts as an answer, not a failure.
+// (Adrian, 2026-10-29: "A: salvage a cut answer; never lose the work")
+const aiSalvaged = (e) => {
+  const j = !!e && e.code === "truncated" && typeof e.raw === "string" ? repairJson(e.raw) : null;
+  return !!j && typeof j === "object" && Object.values(j).some((v) => (v && typeof v === "object" ? Object.keys(v).length > 0 : v != null)); // `{}` or empty containers saved nothing
+};
 const aiClock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
 
 function aiTrack(s) {
@@ -53,7 +59,7 @@ function aiStart(label, retry) {
 }
 function aiEnd(ok, e, retry) {
   AIS.n = Math.max(0, AIS.n - 1);
-  if (ok) AIS.ok = true;
+  if (ok || aiSalvaged(e)) AIS.ok = true;
   else if (!aiCancelled(e)) { AIS.fail = true; if (retry) AIS.retry = retry; }
   if (AIS.n > 0) { aiShow("busy"); return; }
   AIS.end = Date.now();

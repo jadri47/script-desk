@@ -253,3 +253,28 @@ function projectedReadiness(text, R, opts, report) {
   const r2 = readinessOf(analyze(t2, opts), { areas });
   return r2.score;
 }
+
+// A cut answer (the model hit the output cap) is still paid work: keep every COMPLETE element that arrived, never invent text.
+// (Adrian, 2026-10-29: "A: salvage a cut answer; never lose the work") Walks the JSON once and remembers the last "safe" cut: the end of
+// a value whose parent sits at depth <= `depth` (2: an area, an item, a word's alternatives, a top-level field), with the closers that were open
+// there (the fix batches ask for depth 4 so a half-finished list of options keeps the complete ones). A cut inside a string or inside an element (even between its fields) therefore drops that WHOLE element. Returns an object or null.
+function repairJson(text, depth = 2) {
+  const s = String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try { return JSON.parse(s); } catch (e) { /* cut or malformed: repair below */ }
+  const st = [], ek = []; // st: closer of each open container; ek: an object that now expects a key
+  let str = false, esc = false, key = false, tok = -1, safe = null;
+  const mark = (p) => { if (st.length <= depth) safe = [p, st.slice().reverse().join("")]; };
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (str) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') { str = false; if (!key) mark(i + 1); } continue; }
+    if (tok >= 0 && /[,}\]\s]/.test(c)) { mark(i); tok = -1; }
+    if (c === '"') { str = true; key = !!st.length && st[st.length - 1] === "}" && ek[ek.length - 1]; }
+    else if (c === "{" || c === "[") { st.push(c === "{" ? "}" : "]"); ek.push(c === "{"); mark(i + 1); }
+    else if (c === "}" || c === "]") { st.pop(); ek.pop(); mark(i + 1); }
+    else if (c === ",") { if (st.length && st[st.length - 1] === "}") ek[ek.length - 1] = true; }
+    else if (c === ":") { if (ek.length) ek[ek.length - 1] = false; }
+    else if (tok < 0 && !/\s/.test(c)) tok = i;
+  }
+  if (!safe) return null;
+  try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
+}

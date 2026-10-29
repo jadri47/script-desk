@@ -4,6 +4,7 @@
 // the person through the rule-based ad risks first and then the report's changes. Today's coach / walker / rail / legend / «Más
 // revisiones» / Ask Claude live behind «Más detalles» and are only built (so only painted) while that is open.
 Object.assign(T.es, {
+  rpPartial: "La respuesta se cortó: el informe puede estar incompleto",
   rpWhere: "Dónde está", rpFull: "Ver guion completo", rpFocusBack: "Ver solo este párrafo",
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
@@ -30,6 +31,7 @@ Object.assign(T.es, {
   rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
 Object.assign(T.en, {
+  rpPartial: "The answer was cut: the report may be incomplete",
   rpWhere: "Where it is", rpFull: "Show the full script", rpFocusBack: "Show only this paragraph",
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
@@ -76,7 +78,7 @@ function rpClean(r) {
     .filter((f) => f.options.length);
   const baseline = cleanBaseline(r.baseline); // ratings of the first measurement; old reports have none
   const before = cleanBefore(r.before), costUsd = cleanCost(r.costUsd); // old reports have neither
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}) };
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}), ...(r.partial === true ? { partial: true } : {}) };
 }
 // The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
 // already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
@@ -105,11 +107,18 @@ async function rpRun(force) {
   if (RP.busy) return;
   const epoch = RP.epoch;
   RP.busy = true; RP.err = ""; RP.cost = null; if (force) RP.failed = false;
-  let out = null, sent = [];
+  let out = null, sent = [], text, R, opts, key;
+  // one recipe for a whole answer and for the repaired part of a cut one; null when there is not a single rating (not a report)
+  const build = (res, partial) => {
+    if (!res || typeof res !== "object") { if (partial) return null; throw { code: "invalid_json" }; }
+    const v = vetReport(text, res, opts, R);
+    if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) { if (partial) return null; throw { code: "invalid_json" }; } // an answer without a single rating is not a report
+    return { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped, fixes: [], ...(partial ? { partial: true } : {}) }; // fixes: filled batch by batch by rpFixPump
+  };
   try {
     const sample = await caps.sample;
     if (!sample) { RP.noAI = true; return; }
-    const text = state.text, R = state.result, opts = state.opts, key = rpKey();
+    text = state.text; R = state.result; opts = state.opts; key = rpKey();
     RP.calls++;
     // The problems «Proponer con IA» and the coach would ask one at a time: every decision whose card has the button, those with no
     // rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. They are NOT in this call: rpFixPump asks for them in small
@@ -123,12 +132,10 @@ async function rpRun(force) {
       if (it) sent.push(it);
     }
     const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
-    const v = vetReport(text, res, opts, R);
-    if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
-    out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped };
-    out.fixes = []; // filled batch by batch by rpFixPump
+    out = build(res);
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
+    else if (e && e.code === "truncated" && typeof e.raw === "string" && (out = build(repairJson(e.raw), true))) { /* cut answer: kept what arrived (Adrian, 2026-10-29: "never lose the work") */ }
     else { RP.err = errText(e); RP.failed = true; }
   } finally {
     if (epoch === RP.epoch) {
@@ -162,7 +169,14 @@ async function rpFixBatch(n, epoch) {
   try {
     const sample = await caps.sample;
     if (!sample) throw { code: "no_sample" };
-    const res = await sample.json(fixesPrompt(items.map(rpFixReq), { en: state.result && state.result.lang === "en" }), { modelTier: "complex", aiLabel: t("aiLblFixes")(F.done, F.total) }); // not auto: the $5 automatic pause must not block it
+    let res;
+    try { res = await sample.json(fixesPrompt(items.map(rpFixReq), { en: state.result && state.result.lang === "en" }), { modelTier: "complex", aiLabel: t("aiLblFixes")(F.done, F.total) }); } // not auto: the $5 automatic pause must not block it
+    catch (e) {
+      // A half batch is still paid work (Adrian, 2026-10-29: "never lose the work"): keep the options that arrived complete; only a batch with nothing is an error.
+      if (!(e && e.code === "truncated" && typeof e.raw === "string")) throw e;
+      res = repairJson(e.raw, 4);
+      if (!res || !Object.keys(vetFixes(res, items)).length) throw e;
+    }
     if (epoch !== RP.epoch || !G.report) return;
     const fx = vetFixes(res, items);
     for (const it of items) {
@@ -348,7 +362,7 @@ function rpPopHTML(R, rd) {
   return {
     sub: showBefore ? `${t("rpBy")} · ${t("rpBefore")(before)}` : "",
     table: `<div class="sc-tw"><table class="sc-t"><caption class="vh">${h(t("rpTitle"))}</caption><thead><tr><th scope="col">${h(t("rpColArea"))}</th>${base ? `<th scope="col">${h(t("rpColOrig"))}</th>` : ""}<th scope="col">${h(t("rpColNow"))}</th><th scope="col"><span class="vh">${h(t("rpColChange"))}</span></th><th scope="col">${h(t("rpColSaid"))}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`,
-    foot: `<div class="sc-foot"><span class="sc-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" id="scRe" class="sc-re${stale ? " primary" : ""}"${RP.busy ? " disabled" : ""}>${h(t("rpRe2"))}</button></div><p class="hint sc-bnote">${h(t("rpBubNote"))}</p>`,
+    foot: `${rep.partial === true ? `<p class="hint rp-partial" role="status">${h(t("rpPartial"))}</p>` : ""}<div class="sc-foot"><span class="sc-asof">${h(t("rpAsOf")(rpTime(rep.at)))}</span><button type="button" id="scRe" class="sc-re${stale ? " primary" : ""}"${RP.busy ? " disabled" : ""}>${h(t("rpRe2"))}</button></div><p class="hint sc-bnote">${h(t("rpBubNote"))}</p>`,
   };
 }
 function rpWriteHTML(cur) {
@@ -434,6 +448,7 @@ function rpEndHTML(R, states) {
     <h3 id="rpD">${h(t(a ? "rpEndH" : "rpEndNoneH"))}</h3>
     <p class="rp-end-row">${nums}<span class="hint">${h(t("rpBy"))}</span></p>
     <p class="rp-end-c">${h(t("rpEndCount")(a, sk))}</p>
+    ${G.report.partial === true ? `<p class="hint rp-partial" role="status">${h(t("rpPartial"))}</p>` : ""}
     ${list ? `<ul class="rp-end-l" aria-label="${h(t("rpEndList"))}">${list}</ul>` : ""}
     <div class="actions rp-act"><button type="button" class="small primary rp-go" data-rp="publish" data-rp-primary>${h(t("rpEndPub"))}</button><button type="button" class="small linkish" data-rp="re">${h(t("rpRe2"))}</button></div>
     ${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}</section>`;
