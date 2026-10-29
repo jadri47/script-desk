@@ -97,5 +97,13 @@ async def main():
             ok(f"{ui}: the daily pause line shows", (await pg.evaluate("(()=>{const e=document.querySelector('.cc-pause');return e?e.textContent.trim():''})()")) == want or pg2txt == want, pg2txt)
             ok(f"{ui}: no page errors (daily)", not errs, errs)
             await pg.close()
+            # ---- Revisar while a batch is in flight: the next review must still get automatic proposals (B-022, 2026-10-29) ----
+            pg, errs = await open_page(b, ui, "bad", delay=1500)
+            await pg.wait_for_timeout(700)
+            ok(f"{ui}: a batch is in flight", await pg.evaluate("COAI.busy === true && window.__calls.length === 1"), await pg.evaluate("[COAI.busy, window.__calls.length]"))
+            await pg.evaluate("$('runBtn').click()"); await pg.wait_for_timeout(3500)  # hidden in step 2: same handler as the button
+            ok(f"{ui}: after Revisar during a batch the coach is free again and asked for the new review", await pg.evaluate("COAI.busy === false && window.__calls.length >= 2"), await pg.evaluate("[COAI.busy, window.__calls.length]"))
+            ok(f"{ui}: no page errors (Revisar during a batch)", not errs, errs)
+            await pg.close()
         print("FAILS:", fails); await b.close()
 asyncio.run(main())

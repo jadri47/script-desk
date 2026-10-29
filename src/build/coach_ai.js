@@ -71,6 +71,7 @@ async function coachAiRun(items, epoch) {
     const got = res && Array.isArray(res.items) ? res.items : [];
     items.forEach((it) => {
       const e = COAI.cache[it.d.card.id];
+      if (!e) return; // Revisar emptied the cache while this batch was in flight (B-022, 2026-10-29): the answer is for text that was re-read; busy is still released below
       const mine = got.find((g) => g && g.id === it.id);
       const raw = [];
       for (const o of ((mine && Array.isArray(mine.options)) ? mine.options : []).slice(0, 2)) {
@@ -83,7 +84,7 @@ async function coachAiRun(items, epoch) {
   } catch (err) {
     const code = err && err.code;
     if (code === "daily_limit" || code === "rate_limited" || code === "auto_paused") COAI.stop = code; // for the rest of the session
-    items.forEach((it) => { COAI.cache[it.d.card.id].status = "error"; }); // never retried by itself
+    items.forEach((it) => { const e = COAI.cache[it.d.card.id]; if (e) e.status = "error"; }); // never retried by itself; absent after a Revisar (B-022)
   }
   COAI.busy = false;
   if (epoch !== COAI.epoch) { coachAiPump(); return; }
