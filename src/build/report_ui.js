@@ -320,7 +320,7 @@ function rpChip(info, cur) {
 }
 // «antes» (the bubble, the end card and Todo listo all use this one): the readiness shown when the report landed (report.before). An old report without it falls back to the rules now plus
 // the measured editor part, which counts fixes made since in «antes» (that was the «75 → 83» after a start at 55).
-const rpBeforeOf = (rd) => (G.report && cleanBefore(G.report.before) != null ? G.report.before : Math.min(rd.red ? 69 : 100, rd.rules + rd.editorBase));
+const rpBeforeOf = (rd) => (G.report && cleanBefore(G.report.before) != null ? G.report.before : readyTotal(rd.red, rd.rules, rd.editorBase));
 
 // ---- html ----
 const rpDots = (n) => (n == null ? "○○○○○" : "●".repeat(n) + "○".repeat(5 - n));

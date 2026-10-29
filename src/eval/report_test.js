@@ -18,6 +18,8 @@ ok("fixture: the demo has clean sentences and a verse", sents.length >= 4 && ver
   const r = L.readinessOf(R, null);
   ok("excelente: rules part 40/40", r.rules === 40 && r.rulesMax === 40, JSON.stringify(r.parts));
   ok("no report: score null, no editor part, rules given", r.score === null && r.editor === null && r.rules === 40);
+  // B-010 (2026-10-29): the red cap and the sum live in one place (readinessOf, rpBeforeOf's fallback and the «+0» reason all read them)
+  ok("red cap in one place", L.READY_RED_CAP === 69 && L.readyTotal(true, 40, 60) === 69 && L.readyTotal(false, 40, 60) === 100 && L.readyTotal(false, 30, 20) === 50);
   ok("excelente, all 4s = 40 + 54 = 94", L.readinessOf(R, rep(4)).score === 94, L.readinessOf(R, rep(4)).score);
   ok("excelente, all 5s = 100", L.readinessOf(R, rep(5)).score === 100);
   ok("a missing rating counts 0 once a report exists", L.readinessOf(R, { areas: { ...rep(5).areas, hook: { rating: null } } }).score === 90);

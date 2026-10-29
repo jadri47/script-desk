@@ -93,7 +93,7 @@ function fxPtsHTML(c, p, R) {
   if (gain > 0) return { html: `<span class="fix-pts" title="${h(t("scPtsTip"))}">+${gain}</span>`, why: "" };
   const row = rows.find((r) => r.n != null);
   const left = row ? Math.max(0, row.n - (p.patches ? p.patches.length : 0)) : 0;
-  const why = cur.score === 0 ? t("fxZeroFloor") : cur.band === "rojo" && cur.score >= 69 ? t("fxZeroRed") : row && left > (row.lim || 0) ? t("fxZeroMore")(left) : row ? t("fxZeroCap") : "";
+  const why = cur.score === 0 ? t("fxZeroFloor") : cur.band === "rojo" && cur.score >= READY_RED_CAP ? t("fxZeroRed") : row && left > (row.lim || 0) ? t("fxZeroMore")(left) : row ? t("fxZeroCap") : "";
   return { html: `<span class="fix-pts fix-pts0" title="${h(why || t("scPtsTip"))}">+0</span>`, why };
 }
 // Advice the rules forbid turning into a text change: shown as a note (no Apply, no points badge, no "Ahora no"). It still counts in the score.

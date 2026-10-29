@@ -38,7 +38,7 @@ function scoreOf(R, dismissed) {
   const redOpen = open.some((r) => r.level === "rojo" && (!r.passed || r.warn));
   const redLamp = R.worst === "rojo" || rows.some((r) => (!r.passed || r.warn) && r.level === "rojo");
   let score = Math.max(0, Math.min(100, 100 - lost));
-  if (redLamp) score = Math.min(score, 69);
+  if (redLamp) score = Math.min(score, READY_RED_CAP);
   // verde = nada abierto: el tope de lo descartado (10) garantiza ≥ 90
   const band = redLamp ? "rojo" : open.length ? "amarillo" : "verde";
   if (band === "verde") score = Math.max(90, score);
@@ -58,6 +58,9 @@ const READY_LEN_IDS = new Set(["runtime", "cta", "ending"]);
 // scoreOf weighs runtime 0 (it is not a fault in the text), but under 8 min there are no mid-roll ads: here it costs.
 const READY_W = { runtime: 4 };
 const readyWeight = (r) => READY_W[r.id] ?? weightOf(r); // what an open row costs in readiness (the popover shows the same figure)
+// Any red ad risk caps the number at 69 (the same cap scoreOf uses). One place (B-010, 2026-10-29): readinessOf, the «antes» fallback and the «+0» reason read it here.
+const READY_RED_CAP = 69;
+const readyTotal = (red, rules, editor) => Math.min(red ? READY_RED_CAP : 100, rules + editor);
 // report: {areas:{hook:{rating}…}} or null. Without a report there is NO editor part and NO 100-scale score: score is null
 // (no invented number). dismissed: rows the person ignored count as passed here.
 // text (optional): the script as it is now. With it the editor part counts the report's changes already applied (effectiveReport,
@@ -81,9 +84,7 @@ function readinessOf(R, report, dismissed, text) {
   const editorBase = editorOf(report);
   const eff = typeof text === "string" ? effectiveReport(text, report) : report;
   const editor = eff === report ? editorBase : editorOf(eff);
-  let score = rules + editor;
-  if (red) score = Math.min(score, 69);
-  const out = { score, rules, rulesMax: 40, editor, red, parts, openIds };
+  const out = { score: readyTotal(red, rules, editor), rules, rulesMax: 40, editor, red, parts, openIds };
   if (typeof text === "string") { out.editorBase = editorBase; out.editorEst = REPORT_AREAS.filter((k) => eff.areas[k] && eff.areas[k].est).length; }
   return out;
 }
