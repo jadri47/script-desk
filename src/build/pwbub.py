@@ -75,6 +75,9 @@ async def main():
                 e = await pg.evaluate("(() => { const rd = readinessOf(state.result, G.report, state.fixDismissed, state.text); return { a: rd.score, b: rpProjected(rd) }; })()")
                 ok(f"{n}: the pill number is the readiness and its text says «→ b {X['pos']}»", s0["n"] == e["a"] and e["b"] and e["b"] > e["a"] and s0["pos"] == f"→ {e['b']} {X['pos']}", (s0, e))
                 ok(f"{n}: step 2 has no verdict card, no report header, no second number", await pg.locator("#guide .gv, #rpScore, .rp-head, .rp-score").count() == 0)
+                # «→ b posible» follows the packaging too: a title that fails the gate changes the projected total even though text and report are the same (B-027, 2026-10-29)
+                p2 = await pg.evaluate("(() => { const t0 = $('title').value; $('title').value = 'x'.repeat(104); state.opts = readOpts(); state.result = analyze(state.text, state.opts); const rd = readinessOf(state.result, G.report, state.fixDismissed, state.text); const live = rpStates().filter((s) => s.st === 'pending'); const fresh = projectedReadiness(state.text, state.result, state.opts, { areas: effectiveReport(state.text, G.report).areas, items: live.map((s) => ({ area: G.report.items[s.i].area, start: s.start, end: s.end, replacement: G.report.items[s.i].replacement, after: G.report.items[s.i].after })) }); const shown = rpProjected(rd); $('title').value = t0; state.opts = readOpts(); state.result = analyze(state.text, state.opts); return { fresh, shown, score: rd.score }; })()")
+                ok(f"{n}: after a title change the projected figure is recomputed, not served from the cache", p2["shown"] == (p2["fresh"] if p2["fresh"] != p2["score"] else None), p2)
                 # ---- the popover is the report ----
                 await pg.focus("#scorePill"); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(350)
                 q = await pg.evaluate(POP)

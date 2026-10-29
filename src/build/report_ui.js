@@ -278,12 +278,15 @@ function rpWalk(cur) {
 const rpPts = (rd) => (rd.score == null ? rd.rules : rd.score);
 // The points one card's patch moves the pill by (same recipe as the pill: readinessOf with the text), plus the area's rating before/after.
 // Items go through itemGain (report_logic.js); a risk card compares the readiness of the changed text with now. 0 = show nothing.
-const RPG = { text: null, rep: null, m: new Map() };
+const RPG = { text: null, rep: null, sig: "", m: new Map() };
+// The figures also depend on the packaging fields and on what the person ignored (B-027, 2026-10-29): a title change or a restored
+// risk card must refresh the caches, not only a text or report change.
+const rpSig = () => { const o = state.opts || {}; return JSON.stringify([o.title, o.keyword, o.thumb, o.description, o.nextEp, o.bigIdea, o.coldOpen, o.series, [...(state.fixDismissed || [])].sort()]); };
 function rpInfo(cur, p) {
   const out = { gain: 0 };
   if (!cur || !p || p.kind !== "patch" || !p.patches || !p.patches.length || !state.result) return out;
-  const text = state.text, rep = G.report;
-  if (RPG.text !== text || RPG.rep !== rep) { RPG.text = text; RPG.rep = rep; RPG.m = new Map(); }
+  const text = state.text, rep = G.report, sig = rpSig();
+  if (RPG.text !== text || RPG.rep !== rep || RPG.sig !== sig) { RPG.text = text; RPG.rep = rep; RPG.sig = sig; RPG.m = new Map(); }
   const key = cur.id + "|" + JSON.stringify(p.patches);
   if (RPG.m.has(key)) return RPG.m.get(key);
   let t2;
