@@ -1,6 +1,5 @@
 /* ===== Público del canal: Latinoamérica y España (neutro), Latinoamérica o España ===== */
-Object.assign(T.es, { audLabel: "Público del canal", audBoth: "Latinoamérica y España (neutro)", audLatam: "Latinoamérica", audEs: "España" });
-Object.assign(T.en, { audLabel: "Channel audience", audBoth: "Latin America and Spain (neutral)", audLatam: "Latin America", audEs: "Spain" });
+// (jadri47, 2026-10-29: B-011) the audLabel/audBoth/audLatam/audEs texts live in lang_ui.js (it loads later and used to overwrite the copies that were here)
 const AUD_OK = new Set(["both", "latam", "es"]);
 (function initAudience() {
   const sel = $("audience");
