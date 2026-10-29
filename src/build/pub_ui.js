@@ -76,7 +76,7 @@ function pubCardHTML(R) {
   const sc = pubScore(R), band = rpAdsBand(R, sc.rd), missing = packGateMissing();
   const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
   const names = t("pubItems");
-  const num = sc.full ? `<span class="pub-lbl">${h(t("pubFinal"))}</span><b class="pub-n">${sc.now}</b>${sc.from != null ? `<span class="hint">${h(t("pubFrom")(sc.from))}</span>` : ""}` : `<span class="pub-lbl">${h(t("rpRulesName"))}</span><b class="pub-n">${sc.now}<small>/${sc.rd.rulesMax}</small></b>`;
+  const num = sc.full ? `<span class="pub-lbl">${h(t("pubFinal"))}</span><b class="pub-n">${sc.now}</b>${sc.from != null ? `<span class="hint">${h(t("pubFrom")(sc.from))}</span>` : ""}` : `<span class="pub-lbl">${h(rpRulesLbl(sc.rd))}</span><b class="pub-n">${sc.now}<small>/${sc.rd.rulesMax}</small></b>`;
   const rows = its.map((x, k) => `<li class="${x.done ? "ok" : "pend"}"><span class="pub-mk" aria-hidden="true">${x.done ? "✓" : "○"}</span><span class="pub-iv"><b>${h(names[k])}</b><span class="pub-v">${h(x.done ? x.val : x.why || t("pubNone"))}</span></span><button type="button" class="small linkish" data-pub-go="${k}" aria-label="${h(t("pubChangeL")(names[k]))}">${h(t("pubChange"))}</button></li>`).join("");
   const gate = missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => pkReason(c).toLowerCase()).join("; ")))}</span>` : "";
   return `<div class="pub pub-walk pub-all" data-pub-i="${i}"><section class="pub-card" role="region" aria-labelledby="pubH" tabindex="-1" id="pubCard">${prog}<h3 id="pubH">${h(t("pubH")[i])}</h3>

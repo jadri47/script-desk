@@ -24,6 +24,10 @@ ok("fixture: the demo has clean sentences and a verse", sents.length >= 4 && ver
   ok("excelente, all 5s = 100", L.readinessOf(R, rep(5)).score === 100);
   ok("a missing rating counts 0 once a report exists", L.readinessOf(R, { areas: { ...rep(5).areas, hook: { rating: null } } }).score === 90);
   ok("rating map 1..5 -> 0,4,7,9,10", [1, 2, 3, 4, 5].map((n) => L.readinessOf(R, { areas: { hook: { rating: n } } }).editor).join() === "0,4,7,9,10");
+  // B-004 (jadri47, 2026-10-29, pick B): a cut answer never rated some areas; counting them 0 invents a drop, so a partial report has no 100-scale score
+  const half = { areas: { hook: { rating: 4 }, promise: { rating: 3 } }, items: [], partial: true }, P = L.readinessOf(R, half);
+  ok("partial report: no 100-scale score, rules kept, flagged partial", P.score === null && P.partial === true && P.rules === 40, JSON.stringify(P));
+  ok("the same ratings in a whole report: 40 + 9 + 7 = 56", L.readinessOf(R, { ...half, partial: false }).score === 56 && L.readinessOf(R, { ...half, partial: undefined }).partial !== true);
 }
 {
   const w = ex.es.worst, Ow = opts(w, "es"), Rw = L.analyze(w.text, Ow), r = L.readinessOf(Rw, rep(5));

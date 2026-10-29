@@ -120,7 +120,7 @@ function verdictHTML(R) {
   // The number is readiness (score_logic.js readinessOf): with the editor's report /100, without it only the rules part /40.
   const v = verdictOf(R), rd = typeof readinessOf === "function" ? readinessOf(R, G.report, state.fixDismissed, state.text) : null;
   const n = rd ? (rd.score != null ? rd.score : rd.rules) : 0, full = !!(rd && rd.score != null);
-  return `<div class="gv gv-${v.k}">${rd ? `<div class="gv-top"><span class="gv-n">${n}<small>/${full ? 100 : rd.rulesMax}</small></span><span class="gv-l">${h(t(full ? "rpName" : "rpRulesName"))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
+  return `<div class="gv gv-${v.k}">${rd ? `<div class="gv-top"><span class="gv-n">${n}<small>/${full ? 100 : rd.rulesMax}</small></span><span class="gv-l">${h(full ? t("rpName") : rpRulesLbl(rd))}</span></div>` : ""}<span class="lamp ${v.k}">${h(v.t)}</span><p>${h(v.d)}</p></div>`;
 }
 
 function renderGuide() {

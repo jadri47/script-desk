@@ -8,6 +8,7 @@ Object.assign(T.es, {
   rpWhere: "Dónde está", rpFull: "Ver guion completo", rpFocusBack: "Ver solo este párrafo",
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
+  rpRulesPartial: "Anuncios y empaque · informe incompleto", rpRulesPartialLbl: (r) => `Anuncios y empaque: ${r}/40 · informe incompleto, sin nota sobre 100 hasta medir de nuevo`,
   rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpFixLost: (n) => `No llegaron ${n} arreglos`, rpReading: "La IA está leyendo tu guion como lo haría un editor",
   rpNoAnswer: "Aún no ha respondido.", rpSoFar: "Lleva", rpWaiting: "esperando…",
   rpNoAI: "El informe del editor necesita la IA. Mientras tanto ves los avisos de anuncios y de empaque.",
@@ -35,6 +36,7 @@ Object.assign(T.en, {
   rpWhere: "Where it is", rpFull: "Show the full script", rpFocusBack: "Show only this paragraph",
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
+  rpRulesPartial: "Ads and packaging · incomplete report", rpRulesPartialLbl: (r) => `Ads and packaging: ${r}/40 · incomplete report, no score out of 100 until you measure again`,
   rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpFixLost: (n) => `${n} fixes did not arrive`, rpReading: "The AI is reading your script the way an editor would",
   rpNoAnswer: "No answer yet.", rpSoFar: "So far", rpWaiting: "waiting…",
   rpNoAI: "The editor's report needs the AI. Meanwhile you see the ad and packaging warnings.",
@@ -346,13 +348,15 @@ function rpProjected(rd) {
   }
   return RPP.v !== rd.score ? RPP.v : null;
 }
+// The label beside «r/40»: without a report, or with a cut one that has no 100-scale number (B-004). A function: other files render before this one runs.
+function rpRulesLbl(rd) { return t(rd && rd.partial ? "rpRulesPartial" : "rpRulesName"); }
 // The report inside the score bubble: { sub, table, foot } for scRenderPop (score_ui.js), or null without a report.
 function rpPopHTML(R, rd) {
   const rep = G.report;
-  if (!rep || rd.score == null) return null;
+  if (!rep || (rd.score == null && !rd.partial)) return null; // a cut report has no number but its rated areas and «Medir de nuevo» still show (B-004)
   const A = t("rpArea"), eff = effectiveReport(state.text, rep).areas, base = rep.baseline || null;
   // «before» = what the same report was worth without the applied changes
-  const before = rpBeforeOf(rd), showBefore = rd.editorEst > 0 && before !== rd.score;
+  const before = rd.score != null ? rpBeforeOf(rd) : null, showBefore = rd.score != null && rd.editorEst > 0 && before !== rd.score;
   const dots = (n, k) => `<span class="rp-dots" role="img" aria-label="${h(A[k] + ": " + (n == null ? t("rpNoRate") : t("rpOf5")(n)))}"><span aria-hidden="true">${rpDots(n)}${n == null ? "" : " " + n}</span></span>`;
   const rows = REPORT_AREAS.map((k) => {
     const a = eff[k], now = a.rating, est = !!a.est, o = base ? (base[k] != null ? base[k] : null) : undefined;
@@ -447,7 +451,8 @@ function rpEndHTML(R, states) {
   }
   const ap = states.filter((s) => s.st === "applied"), a = ap.length + riskDone.length, sk = states.filter((s) => s.st === "skipped").length + riskSkip.length;
   const now = rd.score != null ? rd.score : rd.rules, before = rd.score != null ? rpBeforeOf(rd) : now;
-  const nums = rd.score != null && a > 0 && rd.editorEst > 0 && before !== now ? `<span class="rp-end-n"><span class="vh">${h(t("rpBefore")(before))} </span><span aria-hidden="true">${before} → </span><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>` : `<span class="rp-end-n"><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>`;
+  const of40 = rd.score != null ? "" : `<small>/${rd.rulesMax}</small>`; // no 100-scale number: say the scale (no report, or a cut one, B-004)
+  const nums = rd.score != null && a > 0 && rd.editorEst > 0 && before !== now ? `<span class="rp-end-n"><span class="vh">${h(t("rpBefore")(before))} </span><span aria-hidden="true">${before} → </span><span class="vh">${h(t("rpEndNow")(now))}</span><span aria-hidden="true">${now}</span></span>` : `<span class="rp-end-n"><span class="vh">${h(rd.score != null ? t("rpEndNow")(now) : t("rpRulesLbl")(now))}</span><span aria-hidden="true">${now}${of40}</span></span>`;
   const list = [...ap.map((s) => A[G.report.items[s.i].area]), ...riskDone].map((x) => `<li><span aria-hidden="true">✓</span> ${h(x)}</li>`).join("");
   return `<section class="rp-dec rp-end" role="region" aria-labelledby="rpD" tabindex="-1"><div class="rp-prog"><span class="rp-prog-t">${h(t("rpEndStep"))}</span></div>
     <h3 id="rpD">${h(t(a ? "rpEndH" : "rpEndNoneH"))}</h3>

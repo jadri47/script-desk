@@ -86,5 +86,8 @@ function readinessOf(R, report, dismissed, text) {
   const editor = eff === report ? editorBase : editorOf(eff);
   const out = { score: readyTotal(red, rules, editor), rules, rulesMax: 40, editor, red, parts, openIds };
   if (typeof text === "string") { out.editorBase = editorBase; out.editorEst = REPORT_AREAS.filter((k) => eff.areas[k] && eff.areas[k].est).length; }
+  // A cut answer (partial) never reached some areas: counting them 0 would invent a drop of up to 10 per area, so there is no 100-scale
+  // number until «Medir de nuevo»; the rated areas and the editor part stay readable for the bubble (jadri47, 2026-10-29, B-004 pick B).
+  if (report.partial === true) { out.score = null; out.partial = true; }
   return out;
 }

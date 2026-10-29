@@ -179,7 +179,7 @@ function scPaint() {
   // «a → b posible»: the same figure the report used to show in the panel (rpProjected, report_ui.js); only with a report
   const proj = SC.kind === "100" && typeof rpProjected === "function" ? rpProjected(SC.RD) : null;
   $("scPos").textContent = proj != null ? t("rpPossible")(proj) : "";
-  const lbl = `${SC.kind === "40" ? t("rpRulesLbl")(SC.cur) : proj != null ? t("rpReadyTo")(SC.cur, proj) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
+  const lbl = `${SC.kind === "40" ? t(SC.RD && SC.RD.partial ? "rpRulesPartialLbl" : "rpRulesLbl")(SC.cur) : proj != null ? t("rpReadyTo")(SC.cur, proj) : t("rpReady")(SC.cur)} · ${t("scBand")[S.band]}`;
   pill.setAttribute("aria-label", lbl); pill.title = t("scNote");
   const now = Date.now();
   if (now - SC.liveAt > 5000) { SC.liveAt = now; $("scLive").textContent = lbl; }

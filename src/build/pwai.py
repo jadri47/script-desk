@@ -131,6 +131,9 @@ async def main():
                 await pg.click("#runBtn"); await pg.wait_for_timeout(1200)
                 rp = await pg.evaluate("G.report ? { r: REPORT_AREAS.filter((k) => G.report.areas[k].rating != null).length, partial: G.report.partial, items: G.report.items.length } : null")
                 ok(f"{n}: a cut answer still gives a report with its ratings, marked partial", rp and rp["r"] == 6 and rp["partial"] is True and rp["items"] >= 1, rp)
+                # B-004 (2026-10-29, pick B): no 100-scale number from a cut answer; the pill shows the rules part /40 and says the report is incomplete
+                pl = await pg.evaluate("({ kind: SC.kind, of: $('scOf').textContent, lbl: $('scorePill').getAttribute('aria-label'), want: typeof t('rpRulesPartialLbl') === 'function' ? t('rpRulesPartialLbl')(SC.cur) : null })")
+                ok(f"{n}: a partial report gives no 100-scale number: pill /40, labelled incomplete", pl["kind"] == "40" and pl["of"] == "/40" and pl["want"] and pl["lbl"].startswith(pl["want"]), pl)
                 s = await pg.evaluate(BUB)
                 ok(f"{n}: the bubble says «Listo», not a failure", s and "done" in s["cls"] and "fail" not in s["cls"] and s["h"] == X["done"], s)
                 ok(f"{n}: no error is shown", await pg.evaluate("RP.err") == "" and not await pg.evaluate("RP.failed"), await pg.evaluate("RP.err"))
