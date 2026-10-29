@@ -13,9 +13,9 @@ Object.assign(T.en, {
   rlClose: "Close", rlRisk: "Risky word", rlPromise: "Promise", rlCta: "Call to action", rlRef: "Bible reference", rlMore: (n) => `+${n} more`,
 });
 const MK_SVG = {
-    risk: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 L20 19 H2 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="9" width="2" height="5" rx="1" fill="#fff"/><circle cx="11" cy="16.2" r="1.1" fill="#fff"/></svg>`,
+    risk: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 L20 19 H2 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="9" width="2" height="5" rx="1" fill="var(--on-mark)"/><circle cx="11" cy="16.2" r="1.1" fill="var(--on-mark)"/></svg>`,
     promise: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3 V20" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><path d="M6 4 H18 L14.5 8.5 L18 13 H6 Z" fill="${c}" stroke="var(--sheet)" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
-    cta: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3.5" y="3.5" width="15" height="15" rx="3" fill="${c}" stroke="var(--sheet)" stroke-width="2"/><path d="M8 11 H14 M11.5 8 L14.5 11 L11.5 14" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    cta: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3.5" y="3.5" width="15" height="15" rx="3" fill="${c}" stroke="var(--sheet)" stroke-width="2"/><path d="M8 11 H14 M11.5 8 L14.5 11 L11.5 14" stroke="var(--on-mark)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     ref: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2.5 L19.5 11 L11 19.5 L2.5 11 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/></svg>`,
   };
 

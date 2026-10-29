@@ -26,6 +26,15 @@ PROBE = r"""() => {
     secBg: cs('.secai-opt', 'backgroundColor'), secRatio: ratio(q('.secai-opt')), stBorder: cs('.st-ai', 'borderTopColor'), insBg: cs('ins', 'backgroundColor'), insRatio: ratio(q('ins')),
     okRatio: ratio(q('#chipBox .chip.ok')), warnRatio: ratio(q('#chipBox .chip.warn')) };
 }"""
+# B-029 leftovers (jadri47, 2026-10-29): the speaker/editor labels (.em-*) used hand-typed hex with !important, so the same colours in light and dark.
+EMPROBE = r"""() => {
+  const host = document.createElement('div'); host.className = 'manuscript';
+  host.innerHTML = '<span class="em em-hook">GANCHO</span><span class="em em-ad">ANUNCIO</span><span class="em-lg em-cta">PEDIDO</span>';
+  document.querySelector('main').appendChild(host);
+  const pick = (s) => { const c = getComputedStyle(host.querySelector(s)); return c.backgroundColor + '/' + c.color; };
+  return { hook: pick('.em-hook'), ad: pick('.em-ad'), cta: pick('.em-cta') };
+}"""
+EM = {}
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -36,7 +45,7 @@ async def main():
                 await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}')")
                 await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
                 await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
-                r = await pg.evaluate(PROBE)
+                r = await pg.evaluate(PROBE); EM[n] = await pg.evaluate(EMPROBE)
                 if scheme == "dark":
                     ok(f"{n}: OS dark with no manual toggle (data-theme unset)", r["theme"] == "", r)
                     ok(f"{n}: a suggestion card is not white and its text is readable (>= 4.5)", r["polBg"] != "rgb(255, 255, 255)" and r["polRatio"] >= 4.5, r)
@@ -49,5 +58,9 @@ async def main():
                 ok(f"{n}: no page errors", not errs, errs)
                 await pg.close()
         await b.close()
+    for ui in ["es", "en"]:
+        d, l = EM[ui + "/dark"], EM[ui + "/light"]
+        for k in ("hook", "ad", "cta"):
+            ok(f"{ui}: the .em-{k} label (background/text) differs between dark and light", d[k] != l[k], (d[k], l[k]))
     print("FAILS:", fails if fails else "none")
 asyncio.run(main())
