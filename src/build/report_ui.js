@@ -490,7 +490,10 @@ function rpApplyP(cur, p) {
 }
 function rpAct(act) {
   const cur = rpCurrent();
-  if (act === "re") { RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
+  // (B-023, 2026-10-29) A new epoch stops a fix pump still running for the old report: its next batch would otherwise ask the NEW
+  // report's fragments a second time (paid twice, pushed twice). Not while the report itself is busy: rpRun would return and the
+  // in-flight answer would be orphaned.
+  if (act === "re") { if (!RP.busy) RP.epoch++; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
   if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
   if (!cur) return;

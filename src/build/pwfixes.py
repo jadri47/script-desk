@@ -18,7 +18,7 @@ MOCK = r"""() => {
   window.__calls = { report: [], fix: [], coach: 0, button: 0 }; window.__fixN = 0; window.__failFix = 0;
   const areas = Object.fromEntries(['hook', 'promise', 'retention', 'voice', 'close', 'return'].map((k) => [k, { rating: 4, why: 'x' }]));
   caps.sample = Promise.resolve({ serverRules: true, json: async (prompt, opts) => {
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, window.__delay || 200));
     if (/Eres editor de un canal|You are an editor for a YouTube/.test(prompt)) {
       const ids = [...prompt.matchAll(/^=== (f\d+)$/gm)].map((m) => m[1]);
       window.__calls.report.push({ ids, tier: opts.modelTier, auto: !!opts.auto, last: prompt.lastIndexOf('GUION:') > prompt.indexOf('Responde solo con JSON') || prompt.lastIndexOf('SCRIPT:') > prompt.indexOf('Answer only with JSON') });
@@ -168,6 +168,20 @@ async def main():
             ok(f"{ui} cut batch with nothing complete: that batch is recorded as lost, the others stay", await pg.evaluate(f"Object.keys(RP.fix.err).join() === '2' && G.report.fixes.length === {BATCH}"), await pg.evaluate("[G.report.fixes.length, Object.keys(RP.fix.err)]"))
             ok(f"{ui} cut batch with nothing complete: the walker offers Reintentar", await pg.evaluate("!!document.querySelector('[data-rp-fixre=\"2\"]')"))
             ok(f"{ui} cut batch with nothing complete: no page errors", not errs, errs)
+            await pg.close()
+        # ---- «Medir de nuevo» while the fix batches run: the old pump stops, no batch is paid twice (B-023, 2026-10-29) ----
+        for ui in ["es"]:
+            pg, errs = await open_page(b, ui, {"width": 1400, "height": 900})
+            await pg.evaluate("startDemo('mid')"); await pg.wait_for_timeout(800)
+            await pg.evaluate(MOCK); await pg.evaluate("window.__delay = 600")
+            await pg.click("#runBtn")
+            await pg.wait_for_function("RP.fix && RP.fix.run && RP.fix.done === 0", timeout=20000)  # the first batch is in flight (the mock records a call only when its delay ends)
+            await pg.evaluate("rpAct('re')")
+            await pg.wait_for_timeout(1000)
+            await pg.wait_for_function(PUMPED, timeout=30000); await pg.wait_for_timeout(1500)
+            tot = await pg.evaluate("RP.fix.total"); c = await pg.evaluate(CALLS); nb = -(-tot // BATCH)
+            ok(f"{ui} re-measure during the batches: two reports, {nb} new fix calls plus the one already in flight, every fragment once", tot > BATCH and c["report"] == 2 and c["fix"] == nb + 1 and await pg.evaluate("new Set(G.report.fixes.map((f) => f.id)).size === G.report.fixes.length && RP.fix.done === RP.fix.total"), (c, nb, await pg.evaluate("[RP.fix.done, RP.fix.total, G.report.fixes.map((f) => f.id)]")))
+            ok(f"{ui} re-measure during the batches: no page errors", not errs, errs)
             await pg.close()
         # ---- the coach (no walker): its first problem is answered with no automatic call
         for ui in ["es", "en"]:
