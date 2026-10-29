@@ -228,6 +228,8 @@ function applyProd(id, d) {
 async function openProd(id) {
   const db = await caps.db;
   if (!db || !id) return;
+  // (B-016, 2026-10-29) an edit made in the 2 s before switching sat in the save debounce and was lost: save the episode being left first
+  if (G.prodId && G.prodId !== id && G.saveState === "unsaved" && !(typeof DEMO !== "undefined" && DEMO)) { clearTimeout(saveTimer); await saveProd(false); }
   try {
     const snap = await db.collection("producciones").doc(id).get();
     if (!snap.exists) return;

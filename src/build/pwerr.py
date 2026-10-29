@@ -59,6 +59,13 @@ async def run(b, ui):
     # 5. the clipboard fallback: execCommand("copy") returns false instead of throwing; «Copiado» must not show then (B-020, 2026-10-29)
     n = await pg.evaluate("(() => { const real = document.execCommand; document.execCommand = () => false; let n = 0; try { fallbackCopy('x', () => n++); } finally { document.execCommand = real; } return n; })()")
     ok(f"{ui}: a failed copy does not say «Copiado»", n == 0, n)
+    # 6. opening another episode within the 2 s save debounce must save the one being left first (B-016)
+    await pg.evaluate("(t) => { window.__rows['producciones/a'] = { collection: 'producciones', id: 'a', data: { text: t + '\\n\\nTexto A.', title: 'A', status: 'borrador', updatedAt: 1 } }; window.__rows['producciones/b'] = { collection: 'producciones', id: 'b', data: { text: t + '\\n\\nTexto B.', title: 'B', status: 'borrador', updatedAt: 1 } }; }", TEXT)
+    await pg.evaluate("openProd('a')"); await pg.wait_for_timeout(300)
+    await pg.evaluate("$('script').value = $('script').value + ' Editado.'; markDirty()")
+    await pg.evaluate("openProd('b')"); await pg.wait_for_timeout(2600)
+    rows = await pg.evaluate("({ a: window.__rows['producciones/a'].data.text.slice(-20), b: window.__rows['producciones/b'].data.text.slice(-20), open: G.prodId })")
+    ok(f"{ui}: the edit made just before switching episodes is saved, the other episode untouched", rows["a"].endswith("Texto A. Editado.") and rows["b"].endswith("Texto B.") and rows["open"] == "b", rows)
     # 7. blocked storage (private mode): the editor must not claim the draft is saved on this device (B-020). Last: storage stays blocked.
     await pg.evaluate("(() => { Storage.prototype.setItem = function () { throw new Error('blocked'); }; G.prodId = null; $('script').value = 'Texto sin episodio'; afterChange(); })()")
     await pg.wait_for_timeout(300)
