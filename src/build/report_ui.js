@@ -141,6 +141,7 @@ async function rpRun(force) {
   } finally {
     if (epoch === RP.epoch) {
       RP.busy = false;
+      if (out && !state.result) out = null; // the review was reset while the answer was in flight (a demo start, «Borrar todo»): nothing to attach it to (B-039)
       if (out) {
         // what the pill shows the moment the report lands is the «antes» of every «antes → ahora» (bubble, end card, Todo listo)
         const b = cleanBefore(readinessOf(state.result, out, state.fixDismissed, state.text).score), c = cleanCost(RP.cost);
@@ -333,14 +334,14 @@ function rpAdsBand(R, rd) {
 }
 // The one helper for «a → b posible»: the readiness if every pending change were accepted, or null when there is none to show.
 // (the pill and the screen-reader label both use it; projectedReadiness stays the only recipe). Cached per text/report/pending set.
-const RPP = { text: null, rep: null, live: "", v: null };
+const RPP = { text: null, rep: null, live: "", sig: "", v: null };
 function rpProjected(rd) {
   if (!rd || rd.score == null || !G.report || !state.result || typeof state.text !== "string") return null;
   const rep = G.report, text = state.text, live = rpStates().filter((s) => s.st === "pending");
   if (!live.length) return null;
-  const lk = live.map((s) => s.i).join(",");
-  if (RPP.text !== text || RPP.rep !== rep || RPP.live !== lk) {
-    RPP.text = text; RPP.rep = rep; RPP.live = lk;
+  const lk = live.map((s) => s.i).join(","), sig = rpSig();
+  if (RPP.text !== text || RPP.rep !== rep || RPP.live !== lk || RPP.sig !== sig) {
+    RPP.text = text; RPP.rep = rep; RPP.live = lk; RPP.sig = sig;
     RPP.v = projectedReadiness(text, state.result, state.opts, { areas: effectiveReport(text, rep).areas, items: live.map((s) => ({ area: rep.items[s.i].area, start: s.start, end: s.end, replacement: rep.items[s.i].replacement, after: rep.items[s.i].after })) });
   }
   return RPP.v !== rd.score ? RPP.v : null;

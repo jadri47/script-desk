@@ -83,6 +83,9 @@ async function startDemo(k) {
   const ref = await mem.collection("producciones").add({ title: e.title, series: e.series || "", keyword: e.keyword || "", thumb: e.thumb || "", description: e.description || "", translation: e.translation || "RVR1960", lang: e.lang || lg, audience: e.audience || "both", bigIdea: e.bigIdea || "", text: e.text, status: "borrador", manual: false, layout: null, cold: { hook: null, promise: null }, notes: [], rehearsals: [], target: "", retention: null, realDur: "", shorts: [], pubDate: addDays(isoToday(), 7), nextEp: e.nextEp || "", updatedAt: now, updatedBy: G.sid });
   G.prods = [];
   await loadProds();
+  // (B-039, 2026-10-29) step 1 BEFORE the episode opens: openProd re-renders the current step, and step 2 asks the editor's report for
+  // whatever text is there (a paid call on the example the person has not reviewed yet, whose answer then landed on a reset state)
+  if (V.guided && V.step !== 1) goStep(1);
   await openProd(ref.id);
   resetWorkState();
   renderDemoBar(); renderExPick();

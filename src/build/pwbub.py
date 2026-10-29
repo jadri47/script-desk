@@ -47,7 +47,7 @@ CONTRAST = r"""() => { const p = document.getElementById('scPop');
   const ratio = (el) => { const a = lum(getComputedStyle(el).color), b = lum(bgOf(el)); return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); };
   return [['.sc-by'], ['.sc-sub'], ['.sc-asof'], ['.sc-re'], ['.sc-ch.up'], ['.sc-w'], ['.rp-dots'], ['.rp-st']].map(([s]) => { const el = p.querySelector(s); return el ? [s, Math.round(ratio(el) * 100) / 100] : null; }).filter(Boolean); }"""
 async def open_page(b, ui, vp):
-    pg = await b.new_page(viewport=vp); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg = await b.new_page(viewport=vp); errs = []; pg.on("pageerror", lambda e: errs.append(e.message + " @ " + " | ".join((e.stack or "").split("\n")[1:4])))  # with the stack: a bare message hides where it came from
     await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}');")
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
@@ -146,5 +146,20 @@ async def main():
                 ok(f"{n}: the new measurement keeps the first one as «Original»", await pg.evaluate("!!G.report.baseline && G.report.baseline.hook === 3"))
                 ok(f"{n}: no page errors", not errs, errs)
                 await pg.close()
+        # ---- the ▲/▼ baseline of the pill is per example: every demo's first doc id is the same, so the second example once compared with the first (B-027, 2026-10-29) ----
+        pg, errs = await open_page(b, "es", {"width": 1400, "height": 900})
+        safe = lambda ps: [p or "una frase que no está en el guion" for p in ps]  # the mock needs a string per pick; a short demo may give fewer
+        await pg.evaluate("startDemo('best')"); await pg.wait_for_timeout(900)
+        await pg.evaluate(MOCK, [safe(await pg.evaluate(PICK)), False]); await pg.click("#runBtn"); await pg.wait_for_timeout(2200)
+        b1 = await pg.evaluate("({ base: SC.base, cur: SC.cur })")
+        # starting another example while in step 2 must not fire a report call by itself (B-039, 2026-10-29): the person has not pressed Revisar
+        c0 = await pg.evaluate("window.__calls.length")
+        await pg.evaluate("startDemo('worst')"); await pg.wait_for_timeout(900)
+        ok("demos: starting an example makes no AI call on its own", await pg.evaluate("window.__calls.length") == c0, (c0, await pg.evaluate("window.__calls.length")))
+        await pg.evaluate(MOCK, [safe(await pg.evaluate(PICK)), False]); await pg.click("#runBtn"); await pg.wait_for_timeout(2200)
+        b2 = await pg.evaluate("({ base: SC.base, cur: SC.cur })")
+        ok("demos: the second example starts from its own baseline, not the first example's", b2["base"] == b2["cur"] and b2["base"] != b1["base"], (b1, b2))
+        ok("demos: no page errors", not errs, [e[:400] for e in errs])
+        await pg.close()
         print("FAILS:", fails if fails else "none"); await b.close()
 asyncio.run(main())
