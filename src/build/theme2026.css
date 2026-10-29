@@ -519,20 +519,22 @@ button.icon:hover{color:var(--ink)}
 .pol-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 6px}
 .pol-head .hint{margin-right:auto}
 .pol-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.pol-item{border:1px solid var(--line,#d9dcea);border-radius:14px;padding:12px 14px;background:var(--card,#fff)}
+.pol-item{/* (jadri47, 2026-10-29: B-029) --line/--card/--ins were never defined, so the light fallbacks always won in dark mode */border:1px solid var(--rule);border-radius:14px;padding:12px 14px;background:var(--sheet)}
 .pol-item .chip{margin-bottom:6px;display:inline-block}
 .pol-diff{margin:4px 0;font-family:var(--serif,Georgia,serif);font-size:1.02rem;line-height:1.55;overflow-wrap:anywhere}
 .pol-diff s{opacity:.62;text-decoration-thickness:1.5px}
-.pol-diff ins{background:var(--ins,rgba(34,150,100,.16));text-decoration:none;border-radius:4px;padding:0 2px}
+.pol-diff ins{background:var(--verde-bg);text-decoration:none;border-radius:4px;padding:0 2px}
 .pol-drop{margin-top:10px}
-.st-ai{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line,#c9cde2);border-radius:14px}
+.st-ai{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--rule);border-radius:14px}
 .st-ai-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .st-ai-bar .hint{flex:1 1 220px;margin:0}
-.secai-opt{margin-top:12px;padding:12px 14px;border:1px solid var(--line,#d9dcea);border-radius:14px;background:var(--card,#fff)}
+.secai-opt{margin-top:12px;padding:12px 14px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
 .secai-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:4px}
 .secai-opt .diff{max-height:340px;overflow:auto;margin:8px 0}
 .chip.ok{background:rgba(34,150,100,.14);color:#167a52}
 .chip.warn{background:rgba(214,148,40,.18);color:#8a5a00}
+/* (jadri47, 2026-10-29: B-029) dark colours also when the OS is dark and nobody pressed the theme button (data-theme is only set by the button) */
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .chip.ok{color:#6fd3a6} :root:not([data-theme="light"]) .chip.warn{color:#f0c36a} }
 html[data-theme="dark"] .chip.ok{color:#6fd3a6} html[data-theme="dark"] .chip.warn{color:#f0c36a}
 
 /* Translate/adapt: collapsed until tapped */
