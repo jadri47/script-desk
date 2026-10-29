@@ -35,6 +35,8 @@ async def run(b,ui,vp,ex):
     if await pg.locator(".fx-ev[data-es]:visible").count():
         await pg.locator(".fx-ev[data-es]:visible").first.click(); await pg.wait_for_timeout(300)
         ok(n+": evidence tap flashes",await pg.evaluate("CSS.highlights.has('sd-flash')"))
+        await pg.wait_for_timeout(2500)  # the old timer cleared it after 1.5 s (Adrian, 2026-10-28: it must stay)
+        ok(n+": the highlight is still there after 2.5 s",await pg.evaluate("CSS.highlights.has('sd-flash')"))
     # score row jumps to its paragraph
     await pg.evaluate("scOpenPop()"); await pg.wait_for_timeout(300)
     if await pg.locator("[data-scrow]").count():
