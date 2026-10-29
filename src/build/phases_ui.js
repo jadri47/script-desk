@@ -86,6 +86,7 @@ renderProdBar = function () {
 };
 
 // ---------- phase bar ----------
+// (jadri47, 2026-10-29: B-033) these were role=tab with no tabpanel and no arrow keys: a labelled nav of plain buttons, the current one marked aria-current
 function renderPhaseBar() {
   const el = $("phBar");
   if (!el) return;
@@ -93,7 +94,7 @@ function renderPhaseBar() {
   el.innerHTML = PH_KEYS.map((k, i) => {
     const list = items[k], done = list.filter((x) => x[1]).length, all = done === list.length;
     const tip = list.map(([id, ok]) => `${ok ? "✓" : "○"} ${t("phItems")[id]}`).join("\n");
-    return `<button type="button" role="tab" class="ph-tab ph-${k}${all ? " all" : ""}" data-phase="${k}" aria-selected="${G.phase === k}" title="${h(tip)}">
+    return `<button type="button" class="ph-tab ph-${k}${all ? " all" : ""}" data-phase="${k}"${G.phase === k ? ' aria-current="true"' : ""} title="${h(tip)}">
       <span class="ph-n" aria-hidden="true">${all ? "✓" : i + 1}</span><span class="ph-t"><b>${h(names[k])}</b><span class="ph-p"><i style="--p:${Math.round((done / list.length) * 100)}%"></i><small>${done}/${list.length}</small></span></span></button>`;
   }).join("");
   el.querySelectorAll("[data-phase]").forEach((b) => b.addEventListener("click", () => goPhase(b.dataset.phase)));
@@ -123,7 +124,7 @@ renderGuion = function () {
   } else if (k === "rec") body = recordCardHTML();
   else body = `${G.status !== "grabado" ? `<p class="ph-note">${h(t("phNotYet"))}</p>` : ""}<section class="g-card" id="gNextPlan"></section><section class="g-card" id="gShorts"></section><section class="g-card" id="gRes"></section><section class="g-card" id="gRev"></section>`;
   root.innerHTML = `<div id="gProdBar"></div>
-    <nav class="ph-bar" id="phBar" role="tablist" aria-label="${h(t("sections"))}"></nav>
+    <nav class="ph-bar" id="phBar" aria-label="${h(t("sections"))}"></nav>
     <div class="ph-pane ph-${k}" id="phPane"><p class="ph-lead">${h(t("phLead")[k])}</p>${body}
       ${nextK ? `<div class="ph-next"><button type="button" class="primary" data-phase-next="${nextK}">${h(t("phNext")[k])} →</button></div>` : ""}</div>
     <div class="g-selbar" id="gSelBar" hidden></div>`;

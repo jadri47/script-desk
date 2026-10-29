@@ -364,8 +364,8 @@ html.sd-split main[data-view="guide"]:not([data-step="1"]) .pane-l>.actions{disp
 .ph-tab.ph-after{--c:var(--j5);--ct:var(--j5t);--con:var(--j-on)}
 .ph-n{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font:700 14px/1 var(--sans);border:1.5px solid var(--c);color:var(--ct)}
 .ph-tab.all .ph-n{background:var(--verde-bg);border-color:var(--verde);color:var(--verde)}
-.ph-tab[aria-selected="true"]{background:var(--sheet);border-color:var(--rule);box-shadow:var(--lift)}
-.ph-tab[aria-selected="true"] .ph-n{background:var(--c);border-color:var(--c);color:var(--con)}
+.ph-tab[aria-current="true"]{background:var(--sheet);border-color:var(--rule);box-shadow:var(--lift)}
+.ph-tab[aria-current="true"] .ph-n{background:var(--c);border-color:var(--c);color:var(--con)}
 .ph-t{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
 .ph-t b{font:600 15px/1.1 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ph-p{display:flex;align-items:center;gap:6px}

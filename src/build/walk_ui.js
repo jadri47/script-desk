@@ -7,6 +7,7 @@
 Object.assign(T.es, {
   wkTitle: "Revisión por párrafos", wkDoneN: (n) => (n === 1 ? "1 aplicada" : `${n} aplicadas`), wkSkipN: (n) => (n === 1 ? "1 ignorada" : `${n} ignoradas`), wkOf: (i, n) => `Párrafo ${i} de ${n}`, wkHere: (n) => (n === 1 ? "1 revisión" : `${n} revisiones`),
   wkPos: (k, m) => `${k} de ${m} con revisiones`, wkPrev: "Anterior", wkNext: "Siguiente", wkDone: "Listo: pasar a Publicar", wkTickN: (i, n) => (n ? `Párrafo ${i}: ${n} revisiones` : `Párrafo ${i}: sin revisiones`),
+  wkSevL: { r: "riesgo alto", a: "mejoras sugeridas", d: "ya aplicado" },
   wkClean: "Este párrafo está bien. Sigue con el siguiente.", wkGlobal: "Título, miniatura y descripción", wkGlobalSub: "Estas revisiones no están dentro del guion.",
   wkPartial: (n, m) => `Cambia ${n} en este párrafo; quedan ${m} en otros.`, wkLoc: "Ver en el guion", wkSuffix: " (este párrafo)",
   wkEnd: "Terminaste el recorrido del guion.",
@@ -16,6 +17,7 @@ Object.assign(T.es, {
 Object.assign(T.en, {
   wkTitle: "Paragraph-by-paragraph review", wkDoneN: (n) => `${n} applied`, wkSkipN: (n) => `${n} ignored`, wkOf: (i, n) => `Paragraph ${i} of ${n}`, wkHere: (n) => (n === 1 ? "1 check" : `${n} checks`),
   wkPos: (k, m) => `${k} of ${m} with checks`, wkPrev: "Previous", wkNext: "Next", wkDone: "Done: go to Publish", wkTickN: (i, n) => (n ? `Paragraph ${i}: ${n} checks` : `Paragraph ${i}: no checks`),
+  wkSevL: { r: "high risk", a: "suggested improvements", d: "already applied" },
   wkClean: "This paragraph is fine. Move on to the next.", wkGlobal: "Title, thumbnail and description", wkGlobalSub: "These checks aren't inside the script.",
   wkPartial: (n, m) => `Changes ${n} in this paragraph; ${m} remain in others.`, wkLoc: "Show in the script", wkSuffix: " (this paragraph)",
   wkEnd: "You've been through the whole script.",
@@ -176,11 +178,14 @@ function wkLogItemsHTML(list) {
     ? `<li class="fx fx-done" data-fid="${h(x.id)}"><div class="fx-top" role="button" tabindex="0" aria-expanded="false" title="${h(t("fxShowChange"))}"><span class="fx-st" aria-hidden="true">✓</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxDone"))}</span><span class="fx-chev" aria-hidden="true">▾</span></div><div class="fx-body">${wkInfoHTML(x)}${x.where === "script" ? wkChgHTML(x) : `<div class="hint">${h(x.where === "cold" ? t("fxOutCold") : t("fxOut")((t("fxField") || {})[x.where] || x.where))}</div>`}<div class="actions"><button type="button" class="small" data-fxrevert="${x.uid}">${h(t("fxRevert"))}</button></div></div></li>`
     : `<li class="fx fx-skipped" data-fid="${h(x.id)}"><div class="fx-top"><span class="fx-st" aria-hidden="true">–</span><span class="tf-t">${h(x.label)}</span><span class="fx-badge">${h(t("fxSkipped"))}</span><button type="button" class="small linkish" data-fxrestore="${h(x.id)}">${h(t("fxRestore"))}</button></div></li>`).join("");
 }
+// (jadri47, 2026-10-29: B-033) the ticks and the rail bars told severity by colour only: the name now says it in words too
+const wkTickN0 = (i) => t("wkTickN")(i + 1, WK.per[i].length);
+const wkSevName = (base, sev) => (sev ? base + (t("wkSevL")[sev] ? ". " + t("wkSevL")[sev] : "") : base);
 const wkSev = (i) => (i >= WK.blocks.length ? "g" : !WK.per[i].length ? (wkLogFor(i).some((x) => x.kind === "done") ? "d" : "ok") : WK.per[i].some((x) => x.card.level === "rojo") ? "r" : "a");
 
 function wkStripHTML() {
   const n = WK.blocks.length;
-  const ticks = WK.blocks.map((b, i) => `<button type="button" class="wk-tick wk-${wkSev(i)}${i === WK.i ? " on" : ""}" data-wk="${i}" aria-label="${h(t("wkTickN")(i + 1, WK.per[i].length))}"></button>`).join("");
+  const ticks = WK.blocks.map((b, i) => `<button type="button" class="wk-tick wk-${wkSev(i)}${i === WK.i ? " on" : ""}" data-wk="${i}" aria-label="${h(wkSevName(wkTickN0(i), wkSev(i)))}"></button>`).join("");
   const glob = WK.glob.length ? `<button type="button" class="wk-tick wk-g${WK.i === n ? " on" : ""}" data-wk="${n}" aria-label="${h(t("wkGlobal"))}"></button>` : "";
   return `<div class="wk-strip" role="group">${ticks}${glob}</div>`;
 }

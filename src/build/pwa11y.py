@@ -27,6 +27,18 @@ NAME = r"""(root) => [...root.querySelectorAll('button')].filter((b) => !b.hidde
   .map((b) => ({ k: b.dataset.pp || b.id || b.textContent, name: (b.getAttribute('aria-label') || b.textContent || '').trim() }))
   .filter((x) => !/\p{L}{2,}/u.test(x.name))"""   # a name needs real words: «←», «−5», «A−» and «▶» are glyphs, not names
 
+# the report mock of pwwalk.py (three real sentences of a demo, one AI answer): read from that file so there is one copy
+_WALK = open(os.path.join(HERE, "pwwalk.py"), encoding="utf-8").read()
+PICK = re.search(r'PICK = r"""(.*?)"""', _WALK, re.S).group(1)
+MOCK = re.search(r'MOCK = r"""(.*?)"""', _WALK, re.S).group(1)
+RPHEAD = "((document.querySelector('.rp-dec .rp-prog b') || document.querySelector('.rp-dec .rp-prog-t') || {}).textContent || '').trim()"
+
+SEVQ = """() => ({ bars: [...document.querySelectorAll('.rl-bar')].map((b) => [(b.className.match(/sev-(\w+)/) || [])[1], b.getAttribute('aria-label')]),
+  ticks: [...document.querySelectorAll('.wk-tick')].map((b) => [(b.className.match(/wk-(r|a|d|ok|g)(?![\w-])/) || [])[1], b.getAttribute('aria-label')]) })"""
+POPQ = """() => { const p = document.querySelector('.rl-pop'), id = p.getAttribute('aria-labelledby'), e = id && document.getElementById(id);
+  return { open: !p.classList.contains('hidden'), role: p.getAttribute('role'), name: e ? e.textContent.trim() : '', inside: p.contains(document.activeElement) }; }"""
+SCQ = """() => { const b = document.querySelector('#scPop [data-scrow]'); if (!b) return null; b.focus(); const k = b.dataset.scrow; scRenderPop();
+  const a = document.activeElement; return { k, same: !!a && !!a.dataset && a.dataset.scrow === k }; }"""
 async def open_page(b, ui):
     pg = await b.new_page(viewport={"width": 1280, "height": 800}); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.add_init_script(f"window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','{ui}'); localStorage.setItem('sd-tips-off','1');")
@@ -68,8 +80,71 @@ async def main():
             txt = await pg.evaluate("ED.el.textContent")
             want = "[TEXT:" if other == "en" else "[TEXTO:"
             ok(f"{n}->{other}: B-021 the cue button inserts {want} in the {other.upper()} UI", want in txt, txt)
+            await pg.evaluate("V.guided = false; lsSet('sd-expert','1'); applyView(); setMode('guion')"); await pg.wait_for_timeout(700)
+            r = await pg.evaluate("({ tabs: document.querySelectorAll('#phBar [role=tab], #phBar[role=tablist]').length, cur: document.querySelectorAll('#phBar [aria-current=true]').length, btns: document.querySelectorAll('#phBar button').length })")
+            ok(f"{n}: B-033 the section bar has no tab roles (no tabpanel behind them) and marks exactly one current button", r["tabs"] == 0 and r["cur"] == 1 and r["btns"] > 1, r)
             ok(f"{n}: no page errors", not errs, errs)
             await pg.close()
+        # ---- B-033: severity in words, the rail popover, the score popover, arrow keys
+        for ui in ["es", "en"]:
+            n = ui
+            pg, errs = await open_page(b, ui)
+            await pg.evaluate("lsSet('sd-more-open','1'); lsSet('sd-coach-off','1'); lsSet('sd-rail-cues','1')")
+            await pg.reload(); await pg.wait_for_timeout(600)
+            await pg.evaluate("startDemo('bad')"); await pg.wait_for_timeout(900)
+            await pg.click("#runBtn"); await pg.wait_for_timeout(2500)
+            sev = {"es": ["riesgo alto", "mejoras sugeridas"], "en": ["high risk", "suggested improvements"]}[ui]
+            r = await pg.evaluate(SEVQ)
+            for kind, rows in (("rail bar", r["bars"]), ("paragraph tick", r["ticks"])):
+                red = [x for x in rows if x[0] == "r"]; amb = [x for x in rows if x[0] == "a"]
+                ok(f"{n}: B-033 {kind}s have a name; the red ones say {sev[0]!r}, the amber ones {sev[1]!r}", bool(rows) and all(x[1] for x in rows) and all(sev[0] in x[1] for x in red) and all(sev[1] in x[1] for x in amb) and bool(red or amb), rows[:6])
+            opener = "document.querySelector('.rl-row .g, .rl-row .rl-cue')"
+            has = await pg.evaluate(f"!!{opener}")
+            ok(f"{n}: B-033 the demo has a rail marker to open", has)
+            if has:
+                await pg.evaluate(f"{opener}.focus()"); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(400)
+                r = await pg.evaluate(POPQ)
+                ok(f"{n}: B-033 the rail popover is a named dialog and takes focus when it opens", r["open"] and r["role"] == "dialog" and bool(r["name"]) and r["inside"], r)
+                await pg.keyboard.press("Escape"); await pg.wait_for_timeout(300)
+                r = await pg.evaluate("({ hidden: document.querySelector('.rl-pop').classList.contains('hidden'), onMarker: !!(document.activeElement && document.activeElement.closest('.rl-row')) })")
+                ok(f"{n}: B-033 Escape closes it and focus goes back to the marker", r["hidden"] and r["onMarker"], r)
+            await pg.click("#scorePill"); await pg.wait_for_timeout(500)
+            r = await pg.evaluate(SCQ)
+            ok(f"{n}: B-033 a score-popover row keeps focus after the popover redraws", r is not None and r["same"], r)
+            ok(f"{n}: no page errors", not errs, errs)
+            await pg.close()
+        # arrow keys: the coach and the report card
+        pg, errs = await open_page(b, "es")
+        await pg.evaluate("lsSet('sd-more-open','1')"); await pg.reload(); await pg.wait_for_timeout(600)
+        await pg.evaluate("startDemo('bad')"); await pg.wait_for_timeout(900)
+        await pg.click("#runBtn"); await pg.wait_for_timeout(2200)
+        COH = "(document.querySelector('.topfix.coach h3') || {}).textContent"
+        h0 = await pg.evaluate(COH)
+        has = await pg.evaluate("!!document.querySelector('[data-co=walker]')")
+        if has:
+            await pg.evaluate("document.querySelector('[data-co=walker]').focus()"); await pg.keyboard.press("ArrowRight"); await pg.wait_for_timeout(500)
+            ok("coach: B-033 ArrowRight on a focused button does not skip the decision", (await pg.evaluate("!!document.querySelector('.topfix.coach')")) and await pg.evaluate(COH) == h0, (h0, await pg.evaluate(COH)))
+        else:
+            ok("coach: B-033 the coach has a button to focus", False)
+        await pg.close()
+        pg, errs = await open_page(b, "es")
+        await pg.evaluate("startDemo('best')"); await pg.wait_for_timeout(900)
+        picks = await pg.evaluate(PICK); await pg.evaluate(MOCK, [picks, False])
+        await pg.click("#runBtn"); await pg.wait_for_timeout(2400)
+        h0 = await pg.evaluate(RPHEAD)
+        ok("report: B-033 the first change card is on screen", bool(h0), h0)
+        await pg.focus("input[name=rpPick]"); await pg.keyboard.press("ArrowRight"); await pg.wait_for_timeout(500)
+        ok("report: B-033 ArrowRight on a focused radio does not advance the card", await pg.evaluate(RPHEAD) == h0, (h0, await pg.evaluate(RPHEAD)))
+        # a visible button of the card that is not skip / previous / apply (on the desktop the full-script link is hidden)
+        BTN = "[...document.querySelectorAll('.rp-dec button')].find((x) => x.offsetParent !== null && !x.disabled && !/^(skip|prev|apply)$/.test(x.dataset.rp || ''))"
+        got = await pg.evaluate(f"(() => {{ const x = {BTN}; if (!x) return ''; x.focus(); return document.activeElement === x ? x.textContent.trim() : ''; }})()")
+        ok("report: B-033 the card has another button to focus", bool(got), got)
+        await pg.keyboard.press("ArrowRight"); await pg.wait_for_timeout(500)
+        ok("report: B-033 ArrowRight on a focused button does not advance the card", await pg.evaluate(RPHEAD) == h0, (got, h0, await pg.evaluate(RPHEAD)))
+        ok("report: B-033 the full-script link keeps its flipping label and has no aria-pressed", await pg.evaluate("document.querySelector('[data-rp-full]').getAttribute('aria-pressed')") is None)
+        await pg.evaluate("document.querySelector('.rp-dec').focus()"); await pg.keyboard.press("ArrowRight"); await pg.wait_for_timeout(500)
+        ok("report: B-033 ArrowRight with focus on the card itself still skips (the shortcut works)", await pg.evaluate(RPHEAD) != h0, await pg.evaluate(RPHEAD))
+        await pg.close()
         await b.close()
     print("FAILS:", fails if fails else "none")
     raise SystemExit(1 if fails else 0)

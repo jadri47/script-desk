@@ -336,6 +336,9 @@ function coachWire() {
     const tg = e.target;
     if (e.altKey || e.ctrlKey || e.metaKey || /^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
     const click = (sel) => { const b = root.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    // (jadri47, 2026-10-29: B-033) ← → on a focused button, link or summary is that control's own business (it used to skip a decision)
+    const onCtl = /^(BUTTON|A|SUMMARY)$/.test(tg.tagName) || !!tg.closest("[role=button]");
+    if (onCtl && (e.key === "ArrowRight" || e.key === "ArrowLeft")) return;
     if (e.key === "ArrowRight") click('[data-co="skip"]');
     else if (e.key === "ArrowLeft") click('[data-co="prev"]');
     else if (e.key === "Enter" && !/^(BUTTON|A|SUMMARY)$/.test(tg.tagName) && !tg.closest("[role=button]")) click("[data-co-primary]");

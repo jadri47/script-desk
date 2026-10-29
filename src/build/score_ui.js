@@ -198,7 +198,8 @@ function scRenderPop() {
   const top = scTopRows(S);
   // With the editor's report the bubble IS the report (report_ui.js rpPopHTML): number, areas before / now, why, ads, when, re-measure.
   const rp = typeof rpPopHTML === "function" ? rpPopHTML(SC.R, SC.RD) : null;
-  const keep = pop.contains(document.activeElement) ? document.activeElement.id : "";
+  // (jadri47, 2026-10-29: B-033) rows have no id: remember the focused control by id or by its data-scrow / data-scshow, and find it again after the redraw
+  const ae = document.activeElement, keep = pop.contains(ae) ? (ae.id ? "#" + ae.id : ae.dataset.scrow ? `[data-scrow="${CSS.escape(ae.dataset.scrow)}"]` : ae.dataset.scshow ? `[data-scshow="${CSS.escape(ae.dataset.scshow)}"]` : "") : "";
   pop.classList.toggle("rep", !!rp); pop.setAttribute("aria-label", t(rp ? "rpTitle" : "scTitle"));
   const money = rp && typeof failedRows === "function" && state.result && failedRows(state.result).some((r) => r.sec === "money");
   const busyNote = !rp && typeof RP !== "undefined" && RP.busy && !G.report ? `<p class="hint sc-wait" role="status"><b>${h(t("vWait"))}</b> ${h(t("vWaitD"))}</p>` : "";
@@ -217,7 +218,7 @@ function scRenderPop() {
   $("scHide").addEventListener("click", () => scSetOff(true));
   const re = $("scRe");
   if (re) re.addEventListener("click", () => { scClosePop(true); if (ensureReview()) rpAct("re"); }); // same action as the old panel button; the status bubble then shows the wait
-  if (keep) { const f = $(keep); if (f && !f.disabled) f.focus(); }
+  if (keep) { const f = pop.querySelector(keep) || $("scX"); if (f && !f.disabled) f.focus(); }
   pop.querySelectorAll("[data-scrow]").forEach((b) => b.addEventListener("click", () => scGoRow(b.dataset.scrow)));
   pop.querySelectorAll("[data-scshow]").forEach((b) => b.addEventListener("click", () => { state.fixDismissed.delete(b.dataset.scshow); scApply(); scRefreshView(); }));
 }

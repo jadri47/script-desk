@@ -440,7 +440,7 @@ function reportHTML(R) {
     body += cur ? rpDecisionHTML(R, cur, states) : ended ? rpEndHTML(R, states) : `<p class="lead rp-none" role="status">${h(t("coNone"))}</p>${state.fixUndo.length ? `<div class="rp-nav"><button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button></div>` : ""}`;
   }
   // phone: under the card only the paragraph being changed shows; this label and link belong to it (CSS shows them only then)
-  const where = cur ? `<p class="rp-wh">${h(t("rpWhere"))}</p><p class="rp-wf"><button type="button" class="linkish" data-rp-full aria-pressed="${RP.full ? "true" : "false"}">${h(t(RP.full ? "rpFocusBack" : "rpFull"))}</button></p>` : "";
+  const where = cur ? `<p class="rp-wh">${h(t("rpWhere"))}</p><p class="rp-wf"><button type="button" class="linkish" data-rp-full>${h(t(RP.full ? "rpFocusBack" : "rpFull"))}</button></p>` : "";
   return `<section class="rp" data-rp-root aria-label="${h(t("rpDecLbl"))}"><span class="status" id="rpMsg" role="status">${h(msg)}</span>${body}</section>${where}`;
 }
 // End of the walk: no pending or lost card left. Counts: items from rpStates, risk cards from the ones seen in this walk and their log entries.
@@ -598,6 +598,9 @@ function rpWire() {
     const click = (sel) => { const b = root.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
     if (e.key === "Enter" && tg.tagName === "INPUT" && /^(radio|checkbox)$/.test(tg.type)) return click("[data-rp-primary]"); // a choice is not a text field
     if (/^(TEXTAREA|INPUT|SELECT)$/.test(tg.tagName)) return;
+    // (jadri47, 2026-10-29: B-033) ← → on a focused button, link or summary is that control's own business (it used to skip a change)
+    const onCtl = /^(BUTTON|A|SUMMARY)$/.test(tg.tagName) || !!tg.closest("[role=button]");
+    if (onCtl && (e.key === "ArrowRight" || e.key === "ArrowLeft")) return;
     if (e.key === "ArrowRight") click('[data-rp="skip"]');
     else if (e.key === "ArrowLeft") click('[data-rp="prev"]');
     else if (e.key === "Enter" && !/^(BUTTON|A|SUMMARY)$/.test(tg.tagName) && !tg.closest("[role=button]")) click("[data-rp-primary]");

@@ -6,11 +6,11 @@
 // The editor's DOM is not touched: the rail is an overlay laid over the box's left padding and positioned from the paragraphs' rectangles.
 Object.assign(T.es, {
   rlCues: "Para el editor", rlRefs: "Citas", rlBar: (n) => `Seleccionar el párrafo ${n} para editarlo`, rlMini: "Mapa del episodio: toca o arrastra para ir a ese punto", rlGoPara: "Revisar este párrafo",
-  rlClose: "Cerrar", rlRisk: "Palabra de riesgo", rlPromise: "Promesa", rlCta: "Pedido al oyente", rlRef: "Cita bíblica", rlMore: (n) => `+${n} más`,
+  rlClose: "Cerrar", rlPopT: (n) => `Notas del párrafo ${n}`, rlRisk: "Palabra de riesgo", rlPromise: "Promesa", rlCta: "Pedido al oyente", rlRef: "Cita bíblica", rlMore: (n) => `+${n} más`,
 });
 Object.assign(T.en, {
   rlCues: "For the editor", rlRefs: "Verses", rlBar: (n) => `Select paragraph ${n} to edit it`, rlMini: "Episode map: tap or drag to jump to that point", rlGoPara: "Review this paragraph",
-  rlClose: "Close", rlRisk: "Risky word", rlPromise: "Promise", rlCta: "Call to action", rlRef: "Bible reference", rlMore: (n) => `+${n} more`,
+  rlClose: "Close", rlPopT: (n) => `Notes for paragraph ${n}`, rlRisk: "Risky word", rlPromise: "Promise", rlCta: "Call to action", rlRef: "Bible reference", rlMore: (n) => `+${n} more`,
 });
 const MK_SVG = {
     risk: (c) => `<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 L20 19 H2 Z" fill="${c}" stroke="var(--sheet)" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="9" width="2" height="5" rx="1" fill="var(--on-mark)"/><circle cx="11" cy="16.2" r="1.1" fill="var(--on-mark)"/></svg>`,
@@ -69,7 +69,7 @@ function railMake() {
   RL.layer.className = "rl-layer";
   wrap.appendChild(RL.layer);
   RL.pop = document.createElement("div");
-  RL.pop.className = "rl-pop hidden"; RL.pop.setAttribute("role", "dialog");
+  RL.pop.className = "rl-pop hidden"; RL.pop.setAttribute("role", "dialog"); RL.pop.setAttribute("aria-labelledby", "rlPopH");
   wrap.appendChild(RL.pop);
   wrap.classList.add("rail-on"); wrap.classList.toggle("rail-phone", rlPhone());
   wrap.style.setProperty("--gw", (rlPhone() ? 46 : 104) + "px");
@@ -101,7 +101,12 @@ function railMake() {
 }
 function railMarkActive() {
   if (!RL.bars) return;
-  RL.bars.forEach((b, i) => { b.classList.toggle("on", i === WK.i); b.className = b.className.replace(/ sev-\w+/, "") + " sev-" + (typeof wkSev === "function" ? wkSev(i) : "ok"); });
+  RL.bars.forEach((b, i) => {
+    const sev = typeof wkSev === "function" ? wkSev(i) : "ok";
+    b.classList.toggle("on", i === WK.i); b.className = b.className.replace(/ sev-\w+/, "") + " sev-" + sev;
+    // (jadri47, 2026-10-29: B-033) the bar's colour is not the only cue: its name carries the severity word
+    b.title = b.ariaLabel = typeof wkSevName === "function" ? wkSevName(t("rlBar")(i + 1), sev) : t("rlBar")(i + 1);
+  });
 }
 // tap on a bar: that paragraph becomes the one under review and the caret goes to its start
 function railSelect(i) {
@@ -174,11 +179,18 @@ function railPopOpen(bi) {
     ? `<div class="rl-pl"><span class="g">${MK_SVG[x.shape](`var(--m-${x.shape})`)}</span><div><b>${h(rlShapeTitle(x))}</b> <span class="hint">${h(fmtTime(x.t))}</span>${x.tip ? `<div class="hint">${h(x.tip)}</div>` : ""}</div></div>`
     : `<div class="rl-pl"><span class="rl-cue c-${x.cue}${x.warn ? " warn" : ""}">${h(rlCueLabel(x))}</span><div><span class="hint">${h(fmtTime(x.t))}</span><div class="hint">${h(x.tip || "")}</div></div></div>`;
   const hasCards = WK.list.includes(bi);
-  RL.pop.innerHTML = `<button type="button" class="rl-x" aria-label="${h(t("rlClose"))}">×</button>${its.map(line).join("")}${hasCards ? `<button type="button" class="small primary" data-rlgo="${bi}">${h(t("rlGoPara"))}</button>` : ""}`;
+  if (RL.popB !== bi || RL.pop.classList.contains("hidden")) RL.popFrom = document.activeElement; // (jadri47, 2026-10-29: B-033) where focus returns on close
+  RL.pop.innerHTML = `<h3 id="rlPopH" class="vh">${h(t("rlPopT")(bi + 1))}</h3><button type="button" class="rl-x" aria-label="${h(t("rlClose"))}">×</button>${its.map(line).join("")}${hasCards ? `<button type="button" class="small primary" data-rlgo="${bi}">${h(t("rlGoPara"))}</button>` : ""}`;
   RL.pop.classList.remove("hidden");
   railPopPlace();
+  const fx = RL.pop.querySelector(".rl-x"); if (fx) fx.focus({ preventScroll: true });
 }
-function railPopClose() { RL.popB = -1; if (RL.pop) RL.pop.classList.add("hidden"); }
+function railPopClose() {
+  const was = RL.popB >= 0 && RL.pop && !RL.pop.classList.contains("hidden"), back = RL.popFrom; RL.popB = -1; RL.popFrom = null;
+  if (RL.pop) RL.pop.classList.add("hidden");
+  // (jadri47, 2026-10-29: B-033) give focus back to the marker that opened it (only if it is still on the page and focus was inside the popover)
+  if (was && back && back.isConnected && RL.pop.contains(document.activeElement)) { try { back.focus({ preventScroll: true }); } catch (e) { /* best effort: the marker may have been redrawn */ } }
+}
 
 // seek: a fraction of the episode -> scroll the box to the paragraph at that minute
 function railSeek(frac) {
