@@ -1,7 +1,7 @@
 
 /* ===== Lo primero que arreglaría: evidence, proposal, proof ===== */
 Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
-  fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras 3 con IA",
+  fxInScript: "En tu guion", fxWould: "Cómo quedaría", fxApply: "Aplicar", fxOther: "Otra opción", fxAi: "Proponer con IA", fxAiAgain: "Otras opciones con IA", fxAiVerse: "Este fragmento corta un versículo por la mitad: la IA no lo reescribe. Cámbialo a mano.",
   fxMulti: (n) => `resuelve ${n} revisiones`, fxPartial: (n, m) => `Arregla ${n} de ${m}; el resto, con IA o a mano.`, fxApplied: "Aplicado.", fxUndo: "Deshacer", fxUndone: "Deshecho.",
   fxNoProp: "No hay un arreglo automático seguro para esto: usa la IA o corrígelo a mano.", fxUpTo: "Hasta", fxNoteTag: "Nota", fxNoteHow: "Sin cambio automático: es una decisión tuya (no inventamos la referencia ni acortamos el pasaje).", fxZeroMore: (n) => `La nota sube cuando quedan menos: faltan ${n} en otros párrafos.`, fxZeroFloor: "La nota ya está en 0: empieza a subir cuando arregles varias cosas más.", fxZeroRed: "Un aviso rojo limita la nota a 69 hasta que lo arregles.", fxZeroCap: "Ya cuentas el máximo de puntos por esto; la nota sube al arreglar varios.", fxEmpty: "(vacío)", fxClip: (a) => `clip de ${a}`, fxMoved: (a) => `se mueve desde ${a}`,
   fxTrim: (x) => `También se quita «${x}» de esa frase en el guion.`, fxThen: "y sigue tu guion", fxBreaks: (x) => `Ojo: haría fallar ${x}.`, fxUse: "Usar esta", fxMore: (n) => `y ${n} más`,
@@ -9,7 +9,7 @@ Object.assign(T.es, { fxOpen: "Toca para ver qué cambiaría",
   fxSkip: "Ahora no", fxDone: "Aplicado", fxWhy: "Qué corrige", fxOpt: "Opción elegida", fxWhere: "Dónde", fxWords: "Palabras", fxScore: "Puntuación", fxRevert: "Revertir este cambio", fxReverted: "Cambio revertido.", fxCantRevert: "No se puede revertir solo este cambio: el texto ya cambió en ese lugar. Usa Deshacer o corrígelo a mano.", fxParaN: (n, tm) => `Párrafo ${n}${tm ? " · " + tm : ""}`, fxBefore: "Antes", fxAfter: "Después", fxShowChange: "Ver el cambio", fxEmptyChg: "(se quitó)", fxSkipped: "Ignorado", fxRestore: "Restaurar", fxStale: "El guion cambió mientras tanto: la revisión se actualizó. Vuelve a aplicar.", fxNoChange: "Esto no cambió el texto del guion.", fxOut: (f) => `Se aplicó en «${f}» (en Preparar), no dentro del guion.`, fxOutCold: "Se aplicó al arranque (los primeros segundos), no dentro del texto del guion.", fxRestored: "Restaurado.", fxAiFrom: "Solo cambia este fragmento. Cada opción pasa otra vez por todas las revisiones.", fxNone: "Nada urgente: todas las revisiones con texto que corregir pasan.",
 });
 Object.assign(T.en, { fxOpen: "Tap to see what would change",
-  fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "3 more with AI",
+  fxInScript: "In your script", fxWould: "How it would read", fxApply: "Apply", fxOther: "Other option", fxAi: "Suggest with AI", fxAiAgain: "More options with AI", fxAiVerse: "This fragment cuts a verse in half: the AI won't rewrite it. Change it by hand.",
   fxMulti: (n) => `fixes ${n} checks`, fxPartial: (n, m) => `Fixes ${n} of ${m}; the rest with AI or by hand.`, fxApplied: "Applied.", fxUndo: "Undo", fxUndone: "Undone.",
   fxNoProp: "There's no safe automatic fix for this: use the AI or fix it by hand.", fxUpTo: "Up to", fxNoteTag: "Note", fxNoteHow: "No automatic change: this one is your call (we don't invent the reference or shorten the passage).", fxZeroMore: (n) => `The score moves once fewer remain: ${n} left in other paragraphs.`, fxZeroFloor: "The score is already at 0: it starts rising once you fix several more.", fxZeroRed: "A red warning holds the score at 69 until it's fixed.", fxZeroCap: "This already counts the most points it can; the score rises as you fix several.", fxEmpty: "(empty)", fxClip: (a) => `clip from ${a}`, fxMoved: (a) => `moved from ${a}`,
   fxTrim: (x) => `"${x}" is also removed from that line in the script.`, fxThen: "and your script continues", fxBreaks: (x) => `Careful: it would make ${x} fail.`, fxUse: "Use this", fxMore: (n) => `and ${n} more`,
@@ -277,35 +277,21 @@ async function aiFix(ci) {
   if (!sample) { state.fixAi[c.id] = { error: t("aiOnlyClaude") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; }
   state.fixAi[c.id] = { loading: true };
   $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]);
-  const R = state.result, text = state.text, a = c.ai;
-  const fieldMode = !!a.field;
-  const frag = fieldMode ? (state.opts[a.field] || "") : text.slice(a.start, a.end);
-  const ctx = fieldMode ? text.slice(0, 2500) : text.slice(Math.max(0, a.start - 400), Math.min(text.length, a.end + 400));
-  const extra = fxAiExtra(a);
-  const prompt = `Eres editor de guiones para un pódcast cristiano de enseñanza bíblica en YouTube. ${voice()}
-Problema detectado: «${c.label}». ${c.info || ""} ${c.fix || ""}
-Reescribe SOLO el fragmento de abajo para resolver ese problema. Escribe 3 opciones distintas. Mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; copia exacto cualquier versículo entre comillas; sin frases de plantilla. ${extra}
-El fragmento reescrito va en ${scriptLangName()}. ${t("outLang")}
-Responde solo con JSON: {"options": [{"text": "...", "why": "una frase"}]}
-
-CONTEXTO (no lo reescribas):
-"""
-${ctx}
-"""
-
-FRAGMENTO A REESCRIBIR:
-"""
-${frag}
-"""`;
+  // (B-002, bug review 2026-10-29) The button asks exactly like the report's batches: the fragment travels with its verses masked
+  // (fixItem) and every option goes through vetFixes → vetSection, so a verse lost, altered or invented never shows. The old
+  // direct prompt sent the verses in clear and checked the answer against the rules only.
+  const R = state.result, text = state.text, a = c.ai, ev = c.evidence[0];
+  const from = a.start != null ? a.start : ev ? ev.start : null, to = a.end != null ? a.end : ev ? ev.end : null;
+  const it = fixItem({ card: c, at: from != null ? { start: from, end: to } : null }, "b1", text, state.opts, verseSpans(text, R));
+  if (!it) { state.fixAi[c.id] = { error: t("fxAiVerse") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; } // a verse crosses the fragment's edge: it cannot be protected, so it is not sent
   try {
-    const res = await sample.json(prompt, { modelTier: "default" });
-    const opts = (res && Array.isArray(res.options) ? res.options : []).filter((o) => o && typeof o.text === "string" && o.text.trim()).slice(0, 3);
-    if (!opts.length) throw { code: "invalid_json" };
+    const res = await sample.json(fixesPrompt([rpFixReq(it)], { en: R.lang === "en" }), { modelTier: "default" });
+    const got = vetFixes(res, [it])[it.id] || [];
+    if (!got.length) throw { code: "invalid_json" };
     state.fixAi[c.id] = {
-      options: opts.map((o) => {
-        const val = o.text.trim();
-        const p = fieldMode ? { kind: "field", field: a.field, value: val, label: "IA" } : { kind: "patch", patches: [{ start: a.start, end: a.end, rep: val }], label: "IA" };
-        return { ...p, why: String(o.why || ""), check: verifyProposal(text, state.opts, R, p) };
+      options: got.map((o) => {
+        const p = it.field ? { kind: "field", field: it.field, value: o.text, label: "IA" } : { kind: "patch", patches: [{ start: from, end: to, rep: it.lead + o.text + it.trail }], label: "IA" };
+        return { ...p, why: o.why, check: verifyProposal(text, state.opts, R, p) };
       }),
     };
   } catch (e) { state.fixAi[c.id] = { error: errText(e) }; }

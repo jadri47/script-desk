@@ -25,7 +25,12 @@ MOCK = r"""() => {
       return { areas, items: [], words: [] };
     }
     if (/FRAGMENTOS A ARREGLAR|FRAGMENTS TO FIX/.test(prompt)) {
-      const ids = [...prompt.matchAll(/^=== (f\d+)$/gm)].map((m) => m[1]);
+      const ids = [...prompt.matchAll(/^=== ([bf]\d+)$/gm)].map((m) => m[1]);
+      if (ids.length && ids[0][0] === 'b') { // «Proponer con IA» with no stored answer asks like a batch (B-002, 2026-10-29): one clean option, one with an invented verse mark
+        window.__calls.button++;
+        const frag = (prompt.match(/(?:FRAGMENTO A REESCRIBIR|FRAGMENT TO REWRITE):\n"{3}\n([\s\S]*?)\n"{3}/) || [])[1] || 'x';
+        return { fixes: [{ id: ids[0], options: [{ text: frag.trim() + ' Del botón.', why: 'botón' }, { text: frag.trim() + ' ⟦V99⟧', why: 'inventa un versículo' }] }] };
+      }
       window.__calls.fix.push({ ids, tier: opts.modelTier, auto: !!opts.auto, label: typeof AIS !== 'undefined' ? AIS.label : null, // the wrapper strips aiLabel from opts; the bubble holds it
          script: /GUION:|SCRIPT:/.test(prompt), busy: RP.busy });
       window.__fixN++;
@@ -41,7 +46,7 @@ MOCK = r"""() => {
     if (!/Reescribe SOLO el fragmento|Rewrite ONLY/.test(prompt)) return { idea: '' }; // the central-idea question and other prompts are not ours
     window.__calls.button++;
     const frag = (prompt.match(/(?:FRAGMENTO A REESCRIBIR|FRAGMENT TO REWRITE):\n"{3}\n([\s\S]*?)\n"{3}/) || [])[1] || 'x';
-    return { options: [{ text: frag.trim() + ' Del botón.', why: 'botón' }] };
+    return { options: [{ text: frag.trim() + ' Del botón.', why: 'botón' }, { text: frag.trim() + ' ⟦V99⟧', why: 'inventa un versículo' }] };
   } });
 }"""
 async def open_page(b, ui, vp, coach_off=True):
@@ -98,6 +103,9 @@ async def main():
                     await pg.evaluate(f"aiFix({max(idx2, 0)})"); await pg.wait_for_timeout(600)
                     c3 = await pg.evaluate(CALLS)
                     ok(f"{n}: after that fragment changed, the button asks again (one button call) and no new report is made behind its back", c3["button"] == 1 and c3["report"] == 1, c3)
+                    # the button's own call is vetted like a batch: an option with an invented verse mark never shows (B-002, 2026-10-29)
+                    opts3 = await pg.evaluate(f"(state.fixAi[{cid!r}] || {{}}).options ? state.fixAi[{cid!r}].options.map((o) => o.patches ? o.patches[0].rep : o.value) : null")
+                    ok(f"{n}: the button's options are vetted: the clean one shows, the one with a verse mark never does", opts3 is not None and len(opts3) == 1 and "Del botón." in opts3[0] and "⟦" not in opts3[0], opts3)
                 ok(f"{n}: no page errors", not errs, errs)
                 await pg.close()
                 # ---- a report saved before this: no fixes key
