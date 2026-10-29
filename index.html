@@ -13125,9 +13125,8 @@ function wkScrollTo(target) {
 function wkFlash(ranges) {
   const hl = wkHL();
   if (!hl || !ranges.length) return;
+  // (Adrian, 2026-10-28: "I would like it to stay") No timer: it stays until the next flash, the next paragraph or an edit (wkClearPaint).
   hl.set("sd-flash", new Highlight(...ranges));
-  clearTimeout(WK.flashT);
-  WK.flashT = setTimeout(() => hl.delete("sd-flash"), 1500);
 }
 
 // ---- navigation ----
