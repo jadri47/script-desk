@@ -3,25 +3,35 @@
 # that fragment changes. A report saved before this (no `fixes`) still works and the button calls as before; an option that alters a verse mark
 # never shows. caps.sample is a test-local mock, so no real call is ever made. Needs mock_sb.js (guest demo).
 SDU = __import__("pathlib").Path(__file__).resolve().parents[1].as_uri() + "/"  # the src folder, wherever the repo lives
-import asyncio, os
+import asyncio, os, re
 from playwright.async_api import async_playwright
 SB = open("mock_sb.js").read()
 fails = []
 def ok(n, c, x=""):
     print(("ok   " if c else "FAIL ") + n, x if not c else "")
     if not c: fails.append(n)
-# kinds of call: report (carries the fixes block), coach (=== i1…), button (aiFix: «3 opciones»). The report answer gives each fragment
+# (Adrian, 2026-10-29: "B: fixes leave the report call") The report call carries no fragments; they go in their own calls after it,
+# 6 per call, one at a time, each batch saved as it arrives. A failed batch leaves the others and offers «Reintentar».
+# kinds of call: report (no ids), fix (=== f1…, its own marker text, no script), coach (=== i1…), button (aiFix: «3 opciones»). The report answer gives each fragment
 # one clean option, one that invents a verse mark (must never show) and areas for the ratings.
 MOCK = r"""() => {
-  window.__calls = { report: [], coach: 0, button: 0 };
+  window.__calls = { report: [], fix: [], coach: 0, button: 0 }; window.__fixN = 0; window.__failFix = 0;
   const areas = Object.fromEntries(['hook', 'promise', 'retention', 'voice', 'close', 'return'].map((k) => [k, { rating: 4, why: 'x' }]));
   caps.sample = Promise.resolve({ serverRules: true, json: async (prompt, opts) => {
     await new Promise((r) => setTimeout(r, 200));
-    if (/FRAGMENTOS A ARREGLAR|FRAGMENTS TO FIX/.test(prompt) || /Eres editor de un canal|You are an editor for a YouTube/.test(prompt)) {
+    if (/Eres editor de un canal|You are an editor for a YouTube/.test(prompt)) {
       const ids = [...prompt.matchAll(/^=== (f\d+)$/gm)].map((m) => m[1]);
-      window.__calls.report.push({ ids, tier: opts.modelTier, auto: !!opts.auto, last: prompt.lastIndexOf('GUION:') > prompt.indexOf('FRAGMENTOS A ARREGLAR') || prompt.lastIndexOf('SCRIPT:') > prompt.indexOf('FRAGMENTS TO FIX') || ids.length === 0 });
+      window.__calls.report.push({ ids, tier: opts.modelTier, auto: !!opts.auto, last: prompt.lastIndexOf('GUION:') > prompt.indexOf('Responde solo con JSON') || prompt.lastIndexOf('SCRIPT:') > prompt.indexOf('Answer only with JSON') });
+      return { areas, items: [], words: [] };
+    }
+    if (/FRAGMENTOS A ARREGLAR|FRAGMENTS TO FIX/.test(prompt)) {
+      const ids = [...prompt.matchAll(/^=== (f\d+)$/gm)].map((m) => m[1]);
+      window.__calls.fix.push({ ids, tier: opts.modelTier, auto: !!opts.auto, label: typeof AIS !== 'undefined' ? AIS.label : null, // the wrapper strips aiLabel from opts; the bubble holds it
+         script: /GUION:|SCRIPT:/.test(prompt), busy: RP.busy });
+      window.__fixN++;
+      if (window.__failFix && window.__fixN === window.__failFix) throw { code: 'server_error' };
       const fixes = [...prompt.matchAll(/^=== (f\d+)\n[\s\S]*?(?:FRAGMENTO A REESCRIBIR|FRAGMENT TO REWRITE):\n"{3}\n([\s\S]*?)\n"{3}/gm)].map((m) => ({ id: m[1], options: [{ text: m[2].trim() + ' Piénsalo.', why: 'del informe' }, { text: m[2].trim() + ' ⟦V99⟧', why: 'inventa un versículo' }] }));
-      return { areas, items: [], words: [], fixes };
+      return { fixes };
     }
     if (/^=== i\d+/m.test(prompt)) { window.__calls.coach++; return { items: [] }; }
     if (!/Reescribe SOLO el fragmento|Rewrite ONLY/.test(prompt)) return { idea: '' }; // the central-idea question and other prompts are not ours
@@ -36,11 +46,15 @@ async def open_page(b, ui, vp, coach_off=True):
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(500)
     return pg, errs
-async def start(pg, demo="mid"):
+async def start(pg, demo="mid", fail=0):
     await pg.evaluate(f"startDemo('{demo}')"); await pg.wait_for_timeout(800)
     await pg.evaluate(MOCK)
-    await pg.click("#runBtn"); await pg.wait_for_timeout(2200)
-CALLS = "(() => ({ report: window.__calls.report.length, coach: window.__calls.coach, button: window.__calls.button }))()"
+    if fail: await pg.evaluate(f"window.__failFix = {fail}")
+    await pg.click("#runBtn"); await pg.wait_for_timeout(1500)
+    await pg.wait_for_function("RP.fix && !RP.fix.run", timeout=20000)
+CALLS = "(() => ({ report: window.__calls.report.length, fix: window.__calls.fix.length, coach: window.__calls.coach, button: window.__calls.button }))()"
+PUMPED = "RP.fix && !RP.fix.run"
+BATCH = 6
 async def main():
     async with async_playwright() as p:
         b = await getattr(p, os.environ.get("SD_BROWSER", "chromium")).launch()
@@ -51,7 +65,11 @@ async def main():
                 await start(pg)
                 c = await pg.evaluate(CALLS)
                 rc = (await pg.evaluate("window.__calls.report"))[0] if c["report"] else {}
-                ok(f"{n}: one report call, complex, not automatic, with the problems in it and the script last", c["report"] == 1 and rc.get("tier") == "complex" and not rc.get("auto") and len(rc.get("ids", [])) >= 2 and rc.get("last"), rc)
+                ok(f"{n}: one report call, complex, not automatic, with no fragments in it and the script last", c["report"] == 1 and rc.get("tier") == "complex" and not rc.get("auto") and len(rc.get("ids", [])) == 0 and rc.get("last"), rc)
+                fc = await pg.evaluate("window.__calls.fix")
+                tot = await pg.evaluate("RP.fix.total")
+                ok(f"{n}: the fragments go in ceil(n/6) fix calls of at most 6 each, complex, not automatic, no script, report not busy, labelled «Arreglos/Fixes d/n»", tot >= 7 and len(fc) == -(-tot // BATCH) and all(0 < len(x["ids"]) <= BATCH and x["tier"] == "complex" and not x["auto"] and not x["script"] and x["busy"] is False and re.match(r"^(Arreglos|Fixes) \d+/" + str(tot) + "$", x["label"] or "") for x in fc) and sum(len(x["ids"]) for x in fc) == tot, (tot, fc))
+                ok(f"{n}: the pump never held the report's busy flag and every batch landed", await pg.evaluate("RP.busy === false && RP.fix.done === RP.fix.total && Object.keys(RP.fix.err).length === 0 && !document.querySelector('.rp-fixlost')"))
                 ok(f"{n}: the report keeps the vetted answers for those problems (the invented verse mark is gone)", await pg.evaluate("!!G.report && G.report.fixes.length >= 2 && G.report.fixes.every((f) => f.options.length === 1 && !/⟦/.test(f.options[0].text))"), await pg.evaluate("G.report && JSON.stringify(G.report.fixes).slice(0, 300)"))
                 ok(f"{n}: no coach call and no button call so far", c["coach"] == 0 and c["button"] == 0, c)
                 # a card with the AI button whose problem the report answered
@@ -92,6 +110,35 @@ async def main():
                 cl = await pg.evaluate("rpClean({ at: 'x', key: 'k', areas: {}, items: [], fixes: [null, { id: 'p', orig: 'o', options: [{ text: ' a ' }, { text: 5 }, null, { text: 'b' }, { text: 'c' }] }, { id: '', orig: 'o', options: [{ text: 'z' }] }, { id: 'q', orig: 'o', options: [] }, 'x'] })")
                 ok(f"{n}: stored fixes are cleaned (strings only, at most 2 options, empty ones dropped)", cl and len(cl["fixes"]) == 1 and [o["text"] for o in cl["fixes"][0]["options"]] == ["a", "b"], cl and cl["fixes"])
                 await pg.close()
+        # ---- a batch that fails: the others stay, the line says how many did not arrive, Reintentar asks that batch again (one call)
+        for ui in ["es", "en"]:
+            for (w, hh, nm) in [(1400, 900, "d"), (390, 844, "m")]:
+                n = f"{ui}/{nm} failing batch"
+                pg, errs = await open_page(b, ui, {"width": w, "height": hh})
+                await start(pg, "mid", fail=2)
+                tot = await pg.evaluate("RP.fix.total")
+                c = await pg.evaluate(CALLS)
+                ok(f"{n}: the 2nd fix call threw once and the pump still ran every batch", c["fix"] == 2 and tot > BATCH, c)
+                ok(f"{n}: the first batch's options stay in the report and the failed batch is recorded", await pg.evaluate("G.report.fixes.length === 6 && Object.keys(RP.fix.err).join() === '2' && RP.fix.done === 6 && RP.fix.total > 6"), await pg.evaluate("[G.report.fixes.length, JSON.stringify(RP.fix.err)]"))
+                ok(f"{n}: the options that did arrive are primed for the buttons", await pg.evaluate("G.report.fixes.every((f) => COAI.cache[f.id] && COAI.cache[f.id].status === 'done')"))
+                txt = await pg.evaluate("(document.querySelector('.rp-fixlost') || {}).textContent || ''")
+                lost = tot - BATCH
+                want = f"No llegaron {lost} arreglos" if ui == "es" else f"{lost} fixes did not arrive"
+                ok(f"{n}: the walker shows «{want}» with a Reintentar button", want in txt and await pg.evaluate("!!document.querySelector('[data-rp-fixre=\"2\"]')") and await pg.is_visible("[data-rp-fixre=\"2\"]"), txt)
+                await pg.click("[data-rp-fixre=\"2\"]"); await pg.wait_for_function("RP.fix && !RP.fix.run", timeout=15000); await pg.wait_for_timeout(300)
+                c = await pg.evaluate(CALLS)
+                ok(f"{n}: Reintentar made exactly one more call, with only the failed batch's fragments", c["fix"] == 3 and len((await pg.evaluate("window.__calls.fix"))[2]["ids"]) == lost, c)
+                ok(f"{n}: after the retry all of them are in the report, no error and no line", await pg.evaluate(f"G.report.fixes.length === {tot} && RP.fix.done === {tot} && Object.keys(RP.fix.err).length === 0 && !document.querySelector('.rp-fixlost') && RP.busy === false"))
+                ok(f"{n}: no page errors", not errs, errs)
+                await pg.close()
+        # ---- the FIRST batch fails: the pump goes on with the second one, whose options are kept
+        pg, errs = await open_page(b, "es", {"width": 1400, "height": 900})
+        await start(pg, "mid", fail=1)
+        tot = await pg.evaluate("RP.fix.total")
+        c = await pg.evaluate(CALLS)
+        ok("es/d first batch failing: the pump still asked the 2nd batch and kept its options", c["fix"] == 2 and await pg.evaluate(f"G.report.fixes.length === {tot - BATCH} && Object.keys(RP.fix.err).join() === '1'"), c)
+        ok("es/d first batch failing: no page errors", not errs, errs)
+        await pg.close()
         # ---- the coach (no walker): its first problem is answered with no automatic call
         for ui in ["es", "en"]:
             pg, errs = await open_page(b, ui, {"width": 1400, "height": 900}, coach_off=False)
@@ -99,6 +146,7 @@ async def main():
             c = await pg.evaluate(CALLS)
             r = await pg.evaluate("(() => { const d = COACH.list.find((x) => x.needsAi && x.card && x.card.ai); return d ? { opts: coachAiOptions(d).length, calls: COAI.calls } : null; })()")
             ok(f"{ui}: the coach has a ready option for its first AI problem and made no automatic call", r and r["opts"] >= 1 and r["calls"] == 0 and c["coach"] == 0, (r, c))
+            ok(f"{ui}: the coach's fragments were answered by fix batches (no coach call even after a render)", c["fix"] >= 1 and c["coach"] == 0, c)
             ok(f"{ui}: no page errors (coach)", not errs, errs)
             await pg.close()
         await b.close()

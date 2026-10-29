@@ -9,14 +9,14 @@ Object.assign(T.es, {
   aiWait: "Todavía no hay respuesta. Puede tardar hasta un minuto.",
   aiDone: "Listo: la IA ha respondido", aiFail: "La IA no respondió", aiFailSub: "El aviso en pantalla dice por qué.",
   aiRetry: "Reintentar", aiClose: "Cerrar", aiPillBusy: "La IA está pensando", aiPillDone: "La IA ha respondido",
-  aiLblReport: "Informe del editor",
+  aiLblReport: "Informe del editor", aiLblFixes: (d, n) => `Arreglos ${d}/${n}`,
 });
 Object.assign(T.en, {
   aiThinking: "The AI is thinking…", aiThinkingN: (n) => `The AI is thinking… (${n} tasks)`,
   aiWait: "No answer yet. It can take up to a minute.",
   aiDone: "Done: the AI has answered", aiFail: "The AI did not answer", aiFailSub: "The message on screen says why.",
   aiRetry: "Retry", aiClose: "Close", aiPillBusy: "The AI is thinking", aiPillDone: "The AI has answered",
-  aiLblReport: "Editor's report",
+  aiLblReport: "Editor's report", aiLblFixes: (d, n) => `Fixes ${d}/${n}`,
 });
 
 const AIS = { n: 0, t0: 0, label: "", retry: null, ok: false, fail: false, st: "", tick: 0, hideTm: 0, checkTm: 0, check: false, end: 0 };

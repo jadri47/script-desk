@@ -9,7 +9,9 @@ const REPORT_MAX_ITEMS = 7;
 const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
 // (jadri47, 2026-10-25: "read the text once, instead of every time the user taps sugerir con IA"; picked A.) The same call also
 // answers the problems the rules flagged but could not fix by themselves (what «Proponer con IA» and the coach ask one at a time).
-const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2;
+// (Adrian, 2026-10-29: "B: fixes leave the report call") The fragments no longer ride in the report call (the answer overran the output
+// cap): they go in their own small calls after the report lands, REPORT_FIX_BATCH at a time, REPORT_MAX_FIXES in all.
+const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2, REPORT_FIX_BATCH = 6;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
@@ -28,14 +30,22 @@ function reportPrompt(text, R, opts) {
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
-  const fixes = (opts.fixes || []).slice(0, REPORT_MAX_FIXES);
-  const fixBlock = fixes.length ? "\n\n" + (en
-    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order. These are separate from "items".`
-    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden. Esto va aparte de "items".`)
-    + "\n\n" + fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n") : "";
-  const shape2 = fixes.length ? shape.replace(/\}$/, `, "fixes": [{"id": "${fixes[0].id}", "options": [{"text": "...", "why": "..."}]}]}`) : shape;
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape2;
-  return `${brief}\n\n${facts}\n\n${rules}${fixBlock}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+}
+
+// The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
+// item carries its own context. opts.en = English. At most REPORT_FIX_BATCH items; the caller sends the rest in the next call.
+// (Adrian, 2026-10-29: "B: fixes leave the report call")
+function fixesPrompt(items, opts) {
+  const en = !!(opts && opts.en);
+  const fixes = (items || []).slice(0, REPORT_FIX_BATCH);
+  const head = en
+    ? `FRAGMENTS TO FIX: below are ${fixes.length} fragment(s) of the same script, each with its problem. In "fixes" write, for EACH one, up to ${REPORT_MAX_FIX_OPTS} different options that rewrite ONLY that fragment to solve that problem: keep the meaning, the theology and the presenter's tone; invent no facts, names, figures or quotes; no template phrases. Marks like ⟦V1⟧ are verses: leave them unchanged, once each and in the same order.`
+    : `FRAGMENTOS A ARREGLAR: abajo hay ${fixes.length} fragmento(s) del mismo guion, cada uno con su problema. En "fixes" escribe, para CADA uno, hasta ${REPORT_MAX_FIX_OPTS} opciones distintas que reescriban SOLO ese fragmento para resolver ese problema: mantén el sentido, la teología y el tono del presentador; no inventes datos, nombres, cifras ni citas; sin frases de plantilla. Las marcas ⟦V1⟧… son versículos: déjalas tal cual, una vez cada una y en el mismo orden.`;
+  const list = fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n");
+  const shape = `{"fixes": [{"id": "f1", "options": [{"text": "...", "why": "..."}]}]}`;
+  return `${head}\n\n${list}\n\n${(en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape}`;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };

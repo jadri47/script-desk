@@ -7,7 +7,7 @@ Object.assign(T.es, {
   rpWhere: "Dónde está", rpFull: "Ver guion completo", rpFocusBack: "Ver solo este párrafo",
   rpTitle: "Informe del editor", rpName: "Preparado para YouTube", rpRulesName: "Anuncios y empaque",
   rpReady: (a) => `Preparado para YouTube: ${a}`, rpReadyTo: (a, b) => `Preparado para YouTube: ${a} → ${b} si aceptas lo propuesto`, rpRulesLbl: (r) => `Anuncios y empaque: ${r}/40`,
-  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpReading: "La IA está leyendo tu guion como lo haría un editor",
+  rpAsOf: (tm) => `según el informe de las ${tm}`, rpRe: "Volver a evaluar", rpFixLost: (n) => `No llegaron ${n} arreglos`, rpReading: "La IA está leyendo tu guion como lo haría un editor",
   rpNoAnswer: "Aún no ha respondido.", rpSoFar: "Lleva", rpWaiting: "esperando…",
   rpNoAI: "El informe del editor necesita la IA. Mientras tanto ves los avisos de anuncios y de empaque.",
   rpArea: { hook: "Gancho", promise: "Promesa", retention: "Retención", voice: "Voz hablada", close: "Cierre", return: "Que vuelvan", ads: "Anuncios" },
@@ -33,7 +33,7 @@ Object.assign(T.en, {
   rpWhere: "Where it is", rpFull: "Show the full script", rpFocusBack: "Show only this paragraph",
   rpTitle: "Editor's report", rpName: "YouTube-ready", rpRulesName: "Ads and packaging",
   rpReady: (a) => `YouTube-ready: ${a}`, rpReadyTo: (a, b) => `YouTube-ready: ${a} → ${b} if you accept the suggestions`, rpRulesLbl: (r) => `Ads and packaging: ${r}/40`,
-  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpReading: "The AI is reading your script the way an editor would",
+  rpAsOf: (tm) => `as of the ${tm} report`, rpRe: "Re-evaluate", rpFixLost: (n) => `${n} fixes did not arrive`, rpReading: "The AI is reading your script the way an editor would",
   rpNoAnswer: "No answer yet.", rpSoFar: "So far", rpWaiting: "waiting…",
   rpNoAI: "The editor's report needs the AI. Meanwhile you see the ad and packaging warnings.",
   rpArea: { hook: "Hook", promise: "Promise", retention: "Retention", voice: "Spoken voice", close: "Close", return: "Return viewers", ads: "Ads" },
@@ -56,10 +56,10 @@ Object.assign(T.en, {
 if (typeof HELP !== "undefined") { HELP.es.rpReport = RP_INFO.es; HELP.en.rpReport = RP_INFO.en; }
 
 // more: «Más detalles» open. sd-more-open=1 opens it on load (suites that drive the walker / coach set it; Juan never does).
-const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0, full: false };
+const RP = { busy: false, err: "", noAI: false, failed: false, skip: new Set(), hist: [], write: null, more: lsGet("sd-more-open") === "1", shown: "", delay: 0, applying: null, epoch: 0, tm: 0, calls: 0, risk: [], riskKey: "", riskR: null, pick: {}, wpick: {}, refocus: "", seen: new Map(), chipTm: 0, full: false, fix: null };
 const rpKey = () => coHash(($("script").value || "") + "|" + (($("keyword") || {}).value || "") + "|" + (($("title") || {}).value || ""));
 const rpMoreOpen = () => RP.more;
-function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); }
+function rpReset() { RP.epoch++; RP.busy = false; RP.err = ""; RP.noAI = false; RP.failed = false; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.riskKey = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); RP.fix = null; }
 
 // A stored report is untrusted (old versions, other devices): keep only what has the right shape.
 function rpClean(r) {
@@ -105,15 +105,16 @@ async function rpRun(force) {
   if (RP.busy) return;
   const epoch = RP.epoch;
   RP.busy = true; RP.err = ""; RP.cost = null; if (force) RP.failed = false;
-  let out = null;
+  let out = null, sent = [];
   try {
     const sample = await caps.sample;
     if (!sample) { RP.noAI = true; return; }
     const text = state.text, R = state.result, opts = state.opts, key = rpKey();
     RP.calls++;
-    // The problems «Proponer con IA» and the coach would ask one at a time ride in this call: every decision whose card has the button,
-    // those with no rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. Questions and notes have their own prompts.
-    const spans = verseSpans(text, R), sent = [];
+    // The problems «Proponer con IA» and the coach would ask one at a time: every decision whose card has the button, those with no
+    // rule-made fix first, in the coach's order, at most REPORT_MAX_FIXES. They are NOT in this call: rpFixPump asks for them in small
+    // batches once the report has landed. (Adrian, 2026-10-29: "B: fixes leave the report call"; the one answer overran the output cap.)
+    const spans = verseSpans(text, R);
     const cand = buildDecisions(text, R, opts, state.fixDismissed).filter((d) => d.card && d.card.ai && d.kind !== "question" && d.kind !== "note");
     cand.sort((a, b) => (b.needsAi ? 1 : 0) - (a.needsAi ? 1 : 0));
     for (const d of cand) {
@@ -121,13 +122,11 @@ async function rpRun(force) {
       const it = fixItem(d, "f" + (sent.length + 1), text, opts, spans);
       if (it) sent.push(it);
     }
-    const fixes = sent.map((it) => { const c = it.d.card; return { id: it.id, problem: `«${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(c.ai)}`.replace(/\s+/g, " ").trim(), frag: it.frag, ctx: it.ctx }; });
-    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value, fixes }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
+    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
     const v = vetReport(text, res, opts, R);
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" }; // an answer without a single rating is not a report
     out = { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped };
-    const fx = vetFixes(res, sent);
-    out.fixes = sent.filter((it) => fx[it.id]).map((it) => ({ id: it.d.card.id, orig: it.orig, lead: it.lead || "", trail: it.trail || "", field: it.field || null, options: fx[it.id] }));
+    out.fixes = []; // filled batch by batch by rpFixPump
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
     else { RP.err = errText(e); RP.failed = true; }
@@ -139,12 +138,56 @@ async function rpRun(force) {
         const b = cleanBefore(readinessOf(state.result, out, state.fixDismissed, state.text).score), c = cleanCost(RP.cost);
         if (b != null) out.before = b;
         if (c != null) out.costUsd = c;
-        G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); if (typeof COAI !== "undefined") for (const f of out.fixes) if (COAI.cache[f.id] && COAI.cache[f.id].status !== "loading") delete COAI.cache[f.id]; rpPrimeFixes(); if (G.prodId) markDirty(); }
+        G.report = withBaseline(out, G.report); RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; RP.pick = {}; RP.wpick = {}; RP.seen = new Map(); rpPrimeFixes(); if (G.prodId) markDirty(); if (sent.length) rpFixPump(sent, epoch); }
       if (out && typeof scApply === "function" && SC.R) scApply(); // the pill and the verdict switch to the full readiness
       if (V.guided && V.step === 2) renderGuide();
     }
   }
 }
+// ---- the problems «Proponer con IA» and the coach would ask one at a time, in small calls after the report ----
+// (Adrian, 2026-10-29: "B: fixes leave the report call") REPORT_FIX_BATCH fragments per call, one call in flight, each batch kept (and
+// saved with the episode) as it arrives. A batch that fails is recorded in RP.fix.err and the next one still goes; rpFixRetry re-asks it.
+// RP.busy stays false the whole time: the verdict waits only for the report itself. A result for an older report (epoch) is dropped.
+const rpFixReq = (it) => { const c = it.d.card; return { id: it.id, problem: `«${plainLabel(c.id, c.label)}». ${c.info || ""} ${c.fix || ""} ${fxAiExtra(c.ai)}`.replace(/\s+/g, " ").trim(), frag: it.frag, ctx: it.ctx }; };
+async function rpFixPump(sent, epoch) {
+  const F = RP.fix = { total: sent.length, done: 0, err: {}, items: sent, run: true };
+  for (let n = 0; n * REPORT_FIX_BATCH < sent.length; n++) {
+    if (epoch !== RP.epoch) return;
+    await rpFixBatch(n, epoch);
+  }
+  if (epoch === RP.epoch) { F.run = false; rpFixShow(); }
+}
+async function rpFixBatch(n, epoch) {
+  const F = RP.fix, items = F.items.slice(n * REPORT_FIX_BATCH, (n + 1) * REPORT_FIX_BATCH);
+  try {
+    const sample = await caps.sample;
+    if (!sample) throw { code: "no_sample" };
+    const res = await sample.json(fixesPrompt(items.map(rpFixReq), { en: state.result && state.result.lang === "en" }), { modelTier: "complex", aiLabel: t("aiLblFixes")(F.done, F.total) }); // not auto: the $5 automatic pause must not block it
+    if (epoch !== RP.epoch || !G.report) return;
+    const fx = vetFixes(res, items);
+    for (const it of items) {
+      if (!fx[it.id]) continue;
+      const id = it.d.card.id;
+      if (typeof COAI !== "undefined" && COAI.cache[id] && COAI.cache[id].status !== "loading") delete COAI.cache[id];
+      G.report.fixes.push({ id, orig: it.orig, lead: it.lead || "", trail: it.trail || "", field: it.field || null, options: fx[it.id] });
+    }
+    F.done += items.length; delete F.err[n + 1];
+    rpPrimeFixes(); if (G.prodId) markDirty();
+  } catch (e) {
+    if (epoch !== RP.epoch) return;
+    F.err[n + 1] = errText(e);
+  }
+  rpFixShow();
+}
+async function rpFixRetry(no) {
+  const F = RP.fix, epoch = RP.epoch;
+  if (!F || F.run || !F.err[no]) return;
+  F.run = true; rpFixShow();
+  await rpFixBatch(no - 1, epoch);
+  if (epoch === RP.epoch) { F.run = false; rpFixShow(); }
+}
+// the cards and the coach read the new answers; nothing else is redrawn while a card is open
+function rpFixShow() { if (V.guided && V.step === 2 && !RP.write) renderGuide(); }
 // The server's bill for the call in flight (standalone site only; standalone_boot.js sends it before the answer returns).
 // The coach waits while the report runs (coachAiPump), so a bill that arrives while RP.busy is the report's.
 window.addEventListener("sd-ai-cost", (e) => { const u = e && e.detail; if (RP.busy && u && u.cost_usd != null) RP.cost = Number(u.cost_usd); });
@@ -363,6 +406,8 @@ function reportHTML(R) {
   // the wait says plainly that no answer has come yet; the seconds tick from aistatus_ui.js ([data-ai-el])
   if (RP.busy) body = `<div class="rp-wait" role="status"><div class="rp-wait-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(t("rpReading"))}</b></div><p>${h(t("rpNoAnswer"))} <span aria-hidden="true">${h(t("rpSoFar"))} <b class="ai-el" data-ai-el>${typeof AIS !== "undefined" && AIS.n ? aiClock(Date.now() - AIS.t0) : "0:00"}</b></span></p></div>`;
   else {
+    const fe = RP.fix ? Object.keys(RP.fix.err) : [];
+    if (fe.length) body += `<p class="status err rp-fixlost" role="alert">${h(t("rpFixLost")(fe.reduce((a, k) => a + Math.min(REPORT_FIX_BATCH, RP.fix.items.length - (k - 1) * REPORT_FIX_BATCH), 0)))} ${fe.map((k) => `<button type="button" class="small" data-rp-fixre="${k}">${h(t("aiRetry"))}</button>`).join(" ")}</p>`;
     if (RP.err) body += `<p class="status err" role="alert">${h(RP.err)}</p><div class="rp-nav"><button type="button" class="small primary" data-rp="re">${h(t("rpRe"))}</button></div>`;
     if (!rep && RP.noAI) body += `<p class="hint rp-noai" role="status">${h(t("rpNoAI"))}</p>`;
     const ended = !cur && rep && states.some((s) => s.st === "applied" || s.st === "skipped");
@@ -499,6 +544,7 @@ window.addEventListener("resize", () => { if (V.guided && V.step === 2) rpFocusS
 function rpWire() {
   const root = document.querySelector("[data-rp-root]");
   if (!root) return;
+  root.querySelectorAll("[data-rp-fixre]").forEach((b) => b.addEventListener("click", () => rpFixRetry(+b.dataset.rpFixre)));
   root.querySelectorAll("[data-rp]").forEach((b) => b.addEventListener("click", () => rpAct(b.dataset.rp)));
   root.querySelectorAll(".rp-orig[data-es], .fx-ev[data-es]").forEach((el) => {
     el.setAttribute("role", "button"); el.tabIndex = 0; el.title = t("wkLoc");

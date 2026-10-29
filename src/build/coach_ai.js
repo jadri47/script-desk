@@ -96,7 +96,7 @@ async function coachAiRun(items, epoch) {
 // decisions ahead still have one.
 function coachAiPump() {
   if (COAI.busy || !state.result || !COACH.list.length || !document.querySelector(".topfix.coach")) return;
-  if (typeof RP !== "undefined" && RP.busy) return; // the editor's report is reading the script and answers these problems too; renderGuide pumps again when it lands
+  if (typeof RP !== "undefined" && (RP.busy || (RP.fix && RP.fix.run))) return; // the editor's report is reading the script and answers these problems too; renderGuide pumps again when it lands
   if (!coachAiBudget().ok) return;
   const L = COACH.list, ahead = L.filter((d) => d.needsAi && d.card && d.card.ai);
   const todo = coachAiPick(L, (id) => !!COAI.cache[id], COACH_AI_BATCH);

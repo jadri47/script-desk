@@ -135,11 +135,19 @@ const good = { area: "hook", original: sents[0].text, replacement: sents[0].text
   const items = need.map((d, k) => L.fixItem(d, "f" + (k + 1), B.text, OB, spB)).filter(Boolean);
   ok("fixItem: masked fragment + context, what is needed to put the answer back", items.length === need.length && items.every((i) => i.frag && i.ctx && i.orig === B.text.slice(B.text.indexOf(i.orig), B.text.indexOf(i.orig) + i.orig.length)), items.length);
   const sent = items.map((i) => ({ id: i.id, problem: "p " + i.id, frag: i.frag, ctx: i.ctx }));
-  const p = L.reportPrompt(B.text, RB, { ...OB, fixes: sent }), p0 = L.reportPrompt(B.text, RB, OB), mk = L.maskVerses(B.text, spB, 0, B.text.length);
-  ok("prompt with fixes: block before the JSON shape, every id and problem present, the script still last", p.includes("FRAGMENTOS A ARREGLAR") && sent.every((s) => p.includes("=== " + s.id) && p.includes("p " + s.id)) && p.indexOf("FRAGMENTOS A ARREGLAR") < p.indexOf("Responde solo con JSON") && p.endsWith(`"""\n${mk.masked}\n"""`) && /"fixes": \[\{"id": "f1"/.test(p));
-  ok("prompt without fixes is the one from before (no block, no \"fixes\" key)", !/FRAGMENTOS|"fixes"/.test(p0));
-  ok("prompt with fixes: no raw verse text anywhere", spB.filter((s) => s.kind !== "ref").every((s) => B.text.slice(s.start, s.end).length < 20 || !p.includes(B.text.slice(s.start, s.end))));
-  ok("prompt asks for at most 12 fixes", L.reportPrompt(B.text, RB, { ...OB, fixes: Array.from({ length: 20 }, (_, i) => ({ id: "f" + (i + 1), problem: "x", frag: "a", ctx: "b" })) }).split("=== f").length - 1 === 12);
+  // (Adrian, 2026-10-29: "B: fixes leave the report call") the fragments have their own prompt; the report prompt never carries them
+  const p0 = L.reportPrompt(B.text, RB, OB), pw = L.reportPrompt(B.text, RB, { ...OB, fixes: sent }), mk = L.maskVerses(B.text, spB, 0, B.text.length);
+  ok("report prompt: no fragments block and no \"fixes\" key, even when opts.fixes is passed", !/FRAGMENTOS A ARREGLAR|FRAGMENTS TO FIX|"fixes"|=== f1/.test(pw) && pw === p0);
+  ok("report prompt: the script is still last", p0.endsWith(`"""
+${mk.masked}
+"""`));
+  const p = L.fixesPrompt(sent, OB), pe = L.fixesPrompt(sent, { en: true });
+  ok("fixesPrompt: every id and problem present, the JSON shape last, ES and EN", sent.every((s) => p.includes("=== " + s.id) && p.includes("p " + s.id)) && p.includes("FRAGMENTOS A ARREGLAR") && /"fixes": \[\{"id": "f1"/.test(p) && p.trimEnd().endsWith("}]}") && pe.includes("FRAGMENTS TO FIX") && pe.includes("Problem: p f1"));
+  ok("fixesPrompt: no raw verse text anywhere", spB.filter((s) => s.kind !== "ref").every((s) => B.text.slice(s.start, s.end).length < 20 || !p.includes(B.text.slice(s.start, s.end))));
+  ok("fixesPrompt: 20 items give at most REPORT_FIX_BATCH (6) fragments", L.REPORT_FIX_BATCH === 6 && L.REPORT_MAX_FIXES === 12 && L.fixesPrompt(Array.from({ length: 20 }, (_, i) => ({ id: "f" + (i + 1), problem: "x", frag: "a", ctx: "b" })), OB).split("=== f").length - 1 === 6);
+  ok("fixesPrompt: carries no script block and none of the script text", !/GUION:|SCRIPT:/.test(L.fixesPrompt(Array.from({ length: 20 }, (_, i) => ({ id: "f" + (i + 1), problem: "x", frag: "a", ctx: "b" })), OB)) && !/GUION:|SCRIPT:/.test(L.fixesPrompt(Array.from({ length: 20 }, (_, i) => ({ id: "f" + (i + 1), problem: "x", frag: "a", ctx: "b" })), { en: true })) && !L.fixesPrompt(sent, OB).includes(B.text.slice(0, 200)));
+  const vf = [{ id: "f1", problem: "p", frag: "Dice Juan 3:16 hoy".replace("Juan 3:16", "⟦V1⟧") + " fin", ctx: "antes ⟦V1⟧ después" }];
+  ok("fixesPrompt: a verse mark in a fragment survives in the prompt", L.fixesPrompt(vf, OB).includes("Dice ⟦V1⟧ hoy fin") && L.fixesPrompt(vf, OB).includes("antes ⟦V1⟧ después"));
 
   const V = { id: "f1", orig: "Dice Juan 3:16 hoy", toks: [{ tok: "⟦V1⟧", text: "Juan 3:16" }] }, P = { id: "f2", orig: "Una frase sencilla de ejemplo", toks: [] };
   const fx = (o1, o2) => L.vetFixes({ fixes: [{ id: "f1", options: o1 }, { id: "f2", options: o2 }, { id: "zzz", options: [{ text: "x" }] }] }, [V, P]);
