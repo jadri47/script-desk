@@ -147,8 +147,10 @@ function renderChapters() {
   $("chCopy").addEventListener("click", (e) => copyText($("chOut").value, e.target));
   renderAds();
   $("chDesc").addEventListener("click", () => {
-    const d = $("description").value.replace(/\n*(?:^|\n)0:00[\s\S]*$/, "").trimEnd();
-    $("description").value = (d ? d + "\n\n" : "") + $("chOut").value.trim();
+    // (jadri47, 2026-10-29: B-014) replace only the old chapter block (the «0:00» line and the timestamp lines right after it);
+    // what the person typed after it (hashtags, links) used to be deleted with it. No old block: append as before.
+    const cur = $("description").value, block = $("chOut").value.trim(), m = /^0:00[ \t].*(?:\n\d{1,2}(?::\d{2}){1,2}[ \t].*)*/m.exec(cur);
+    $("description").value = m ? cur.slice(0, m.index) + block + cur.slice(m.index + m[0].length) : (cur.trimEnd() ? cur.trimEnd() + "\n\n" : "") + block;
     const pd = $("pkDescIn"); if (pd) pd.value = $("description").value;
     markDirty(); gCompute(); renderPackChecks(); $("chMsg").textContent = t("chAdded");
   });

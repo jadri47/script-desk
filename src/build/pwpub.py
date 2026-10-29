@@ -89,6 +89,11 @@ async def main():
                 await nxt(pg); c = await pg.evaluate(CARD)
                 ok(f"{n}: (b) card 3 «Descripción»: description box and chapters, no title / thumbnail field, no preview", c["i"] == 2 and await pg.evaluate(VIS, "#pkDescIn") and await pg.evaluate(VIS, "#pkChapters") and not await pg.evaluate(VIS, "#pkTitleIn") and not await pg.evaluate(VIS, "#pkPreview"), c)
                 ok(f"{n}: (b) the description details are open without a summary to click", await pg.evaluate("(()=>{const d=document.querySelector('details.pk-more');return d.open && getComputedStyle(d.querySelector('summary')).display==='none'})()"))
+                # B-014: «Añadir a la descripción» replaces only the old chapter block; text typed after it stays
+                await pg.evaluate("window.__d0 = [$('description').value, $('pkDescIn').value]; $('description').value = 'Intro\\n\\n0:00 Inicio\\n1:20 Punto\\n\\n#fe #biblia https://x'; $('chDesc').click()"); await pg.wait_for_timeout(300)
+                dv = await pg.evaluate("({ d: $('description').value, ch: $('chOut').value })")
+                ok(f"{n}: (b) adding chapters to the description keeps the text after the old chapter list", "#fe #biblia https://x" in dv["d"] and dv["d"].startswith("Intro\n\n") and dv["ch"].strip() in dv["d"] and "1:20 Punto" not in dv["d"] and dv["d"].count("0:00") == 1, dv)
+                await pg.evaluate("$('description').value = window.__d0[0]; $('pkDescIn').value = window.__d0[1]; markDirty(); gCompute()")  # leave the data as it was for the checks below
                 # ---- (c) Saltar: advances, data unchanged; Anterior: back with the values kept
                 before = await pg.evaluate(FIELDS)
                 await pg.click("[data-pub=skip]"); await pg.wait_for_timeout(450); c = await pg.evaluate(CARD)
