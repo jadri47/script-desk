@@ -131,9 +131,10 @@ Deno.serve(async (req) => {
   if (r.status === 429 || r.status === 529) return json({ code: "rate_limited", usage: bill }, 429);
   if (!r.ok) return json({ code: "upstream", detail: out?.error?.message || r.status, usage: bill }, 502);
 
-  // An answer cut at the cap is half a JSON object: say so, never "invalid_json" (the spend is already logged above).
-  if (out?.stop_reason === "max_tokens") return json({ code: "truncated", usage: bill }, 422);
   const text = (out?.content || []).filter((c: { type: string }) => c.type === "text").map((c: { text: string }) => c.text).join("");
+  // An answer cut at the cap is half a JSON object: say so, never "invalid_json", and hand the partial text back so the client
+  // can keep the complete items instead of paying again. (Adrian, 2026-10-29: "it doesn't lose the work")
+  if (out?.stop_reason === "max_tokens") return json({ code: "truncated", raw: text, usage: bill }, 422);
   const data = parseJson(text);
   if (!data || typeof data !== "object") return json({ code: "invalid_json", usage: bill }, 422);
   return json({ data, usage: bill });
