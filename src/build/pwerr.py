@@ -71,6 +71,16 @@ async def run(b, ui):
     await pg.evaluate("openProd('b')"); await pg.wait_for_timeout(2600)
     rows = await pg.evaluate("({ a: window.__rows['producciones/a'].data.text.slice(-20), b: window.__rows['producciones/b'].data.text.slice(-20), open: G.prodId })")
     ok(f"{ui}: the edit made just before switching episodes is saved, the other episode untouched", rows["a"].endswith("Texto A. Editado.") and rows["b"].endswith("Texto B.") and rows["open"] == "b", rows)
+    # 6b. «Borrar todo» starts a new episode (B-016, 2026-10-29, pick A): the edit in flight is saved into the episode being left, which keeps its status; nothing typed afterwards lands in it
+    await pg.evaluate("window.__rows['producciones/b'].data.status = 'aprobado'; openProd('b')"); await pg.wait_for_timeout(500)
+    await pg.evaluate("$('script').value = $('script').value + ' Más.'; markDirty()")
+    await pg.evaluate("$('clearBtn').click()"); await pg.wait_for_timeout(300)
+    ok(f"{ui}: «Borrar todo» asks first", await pg.evaluate("!!($('clrDlg') && $('clrDlg').open)"))
+    await pg.evaluate("$('clrYes').click()"); await pg.wait_for_timeout(900)
+    st = await pg.evaluate("({ id: G.prodId, status: G.status, text: $('script').value, b: window.__rows['producciones/b'].data.text.slice(-12), bst: window.__rows['producciones/b'].data.status, log: state.fixLog.length })")
+    ok(f"{ui}: after «Borrar todo» the editor is a new episode and the old one kept its last edit and its status", st["id"] is None and st["status"] == "borrador" and st["text"] == "" and st["b"].endswith("Más.") and st["bst"] == "aprobado", st)
+    await pg.evaluate("$('script').value = 'Texto nuevo tras borrar'; markDirty()"); await pg.wait_for_timeout(2600)
+    ok(f"{ui}: text typed after «Borrar todo» does not land in the old episode", await pg.evaluate("window.__rows['producciones/b'].data.text.endsWith('Más.')"), await pg.evaluate("window.__rows['producciones/b'].data.text.slice(-40)"))
     # 7. blocked storage (private mode): the editor must not claim the draft is saved on this device (B-020). Last: storage stays blocked.
     await pg.evaluate("(() => { Storage.prototype.setItem = function () { throw new Error('blocked'); }; G.prodId = null; $('script').value = 'Texto sin episodio'; afterChange(); })()")
     await pg.wait_for_timeout(300)

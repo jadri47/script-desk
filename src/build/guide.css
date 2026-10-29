@@ -28,7 +28,6 @@ html:not(.guided) #stepBar, main[data-view="expert"] #guideTop, main[data-view="
 #guideTop .lead{font-size:16px;margin:4px 0 14px}
 main[data-view="guide"] textarea#script{min-height:320px;font-size:18px}
 main[data-view="guide"] #runBtn{font-size:17px;padding:15px 26px}
-.g-s1-extra{margin-top:10px}
 .g-card-soft{margin-top:20px;padding:14px 16px;border-radius:14px;background:var(--sheet);border:1px solid var(--rule)}
 .g-card-soft h3{font-size:16px;margin-bottom:6px}
 .g-card-soft p{margin:0 0 8px}

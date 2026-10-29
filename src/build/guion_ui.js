@@ -226,6 +226,27 @@ function applyProd(id, d) {
   setSave(d.updatedAt ? "saved:" + d.updatedAt : "");
   updateLive();
 }
+// Before the editor is emptied or replaced (Borrar todo, the sample, a history version): what sits in the 2 s save debounce lands in the
+// episode being left. False = a conflict stopped the save (saveProd shows it) and the caller must not go on (B-016, jadri47 2026-10-29, pick A).
+async function flushProdSave() {
+  if (!G.prodId || G.saveState !== "unsaved" || (typeof DEMO !== "undefined" && DEMO)) return true;
+  clearTimeout(saveTimer); await saveProd(false);
+  return !G.conflict;
+}
+// «Borrar todo» starts a new episode: nothing typed afterwards can land in the one being left (it stays in history with its status).
+// Same fields applyProd sets, back to the fresh values of G (jadri47, 2026-10-29: "A. start a new episode").
+function startNewProd() {
+  if (typeof PP !== "undefined" && PP.on && typeof ppClose === "function") ppClose();
+  clearTimeout(saveTimer);
+  G.prodId = null; G.status = "borrador"; G.manual = false; G.layout = null; G.cold = { hook: null, promise: null }; G.coldLost = false;
+  G.notes = []; G.rehearsals = []; G.target = ""; G.retention = null; G.realDur = ""; G.shorts = []; G.pkSug = null;
+  G.loadedAt = 0; G.conflict = null; G.aiPick = null; G.diffHTML = ""; G.snapSel = []; G.sel = null; G.editing = null; G.snaps = [];
+  G.R = null; G.U = []; G.secs = []; G.flags = []; G.cands = null; G.text = "";
+  setSave("");
+  if (G.mode === "guion") gRefresh();
+}
+const _doClearScriptG = doClearScript;
+doClearScript = function () { _doClearScriptG(); startNewProd(); };
 async function openProd(id) {
   const db = await caps.db;
   if (!db || !id) return;

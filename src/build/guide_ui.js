@@ -7,7 +7,7 @@ Object.assign(T.es, {
   // (jadri47, 2026-10-22: "merge «Grabar» and «Después» into step 3")
   steps: ["Escribir", "Mejorar", "Publicar"],
   stepQ: ["Escribe o pega el guion del episodio", "Lo que conviene mejorar antes de grabar", "Publicar: empaque, apertura y grabación"],
-  s1Lead: "Pega aquí el guion completo del episodio. Te diremos qué conviene arreglar antes de grabar.", s1Sample: "Probar con un guion de ejemplo", s1Continue: "Seguir con un episodio guardado", s1Open: "Abrir",
+  s1Lead: "Pega aquí el guion completo del episodio. Te diremos qué conviene arreglar antes de grabar.", s1Continue: "Seguir con un episodio guardado", s1Open: "Abrir",
   stFold: (n, d) => `Ver las ${n} secciones · ${d}`,
   s2Lead: "Toca «Aplicar» para aceptar un cambio. Si no te convence, toca «Ahora no». Siempre puedes deshacer.",
   s3Lead: "Elige cómo empieza el video y cómo se llama, apruébalo y grábalo con el prompter.",
@@ -33,7 +33,7 @@ Object.assign(T.en, {
   moreBtn: "More options", expertHint: "Off: the app walks you step by step. On: every check and tool on one screen.", s1More: "More options",
   steps: ["Write", "Improve", "Publish"],
   stepQ: ["Write or paste the episode script", "What's worth improving before you record", "Publish: packaging, opening and recording"],
-  s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Sample: "Try a sample script", s1Continue: "Continue a saved episode", s1Open: "Open",
+  s1Lead: "Paste the whole episode script here. We'll tell you what to fix before recording.", s1Continue: "Continue a saved episode", s1Open: "Open",
   stFold: (n, d) => `Show the ${n} sections · ${d}`,
   s2Lead: "Tap \"Apply\" to accept a change. If you don't like it, tap \"Not now\". You can always undo.",
   s3Lead: "Choose how the video opens and what it's called, approve it, and record it with the prompter.",
@@ -133,8 +133,6 @@ function renderGuide() {
   s1MoreSync();
   if (V.step === 1) {
     top.innerHTML = `${head(1)}<p class="lead">${h(t("s1Lead"))}</p>`;
-    body.innerHTML = `<div class="g-s1-extra"><button type="button" class="linkish" id="gSample">${h(t("s1Sample"))}</button></div>`;
-    $("gSample").addEventListener("click", () => { $("script").value = SAMPLE_ES; updateLive(); $("script").focus(); });
     return;
   }
   if (!ensureReview()) { body.innerHTML = `<p class="lead">${h(t("needText"))}</p>${navHTML(1)}`; wireGuideNav(body); return; }

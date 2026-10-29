@@ -328,3 +328,5 @@ function wireFixes() {
 const _renderResultsFx = renderResults;
 renderResults = function () { _renderResultsFx(); wireFixes(); };
 $("runBtn").addEventListener("click", () => { state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); state.fixLog = []; }, true);
+const _doClearScriptF = doClearScript;
+doClearScript = function () { _doClearScriptF(); state.fixUndo = []; state.fixSel = {}; state.fixAi = {}; state.fixDismissed = new Set(); state.fixLog = []; }; // the log belongs to the episode being left (B-016)

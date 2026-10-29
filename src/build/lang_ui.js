@@ -56,6 +56,8 @@ const VARIANT_GUIDE = {
 };
 const AUD_OF = { es: "es", latam: "latam", neutral: "both" };
 const TR = { target: "", ver: "", busy: false, res: null, msg: "", err: "", undo: null, open: false };
+const _doClearScriptT = doClearScript;
+doClearScript = function () { _doClearScriptT(); TR.res = null; TR.undo = null; TR.err = ""; TR.msg = ""; }; // a translation of the old text must not be applied to the new one (B-016)
 Object.assign(T.es, { trStale: "El guion o el episodio cambió mientras tanto: la traducción ya no encaja. Vuelve a pedirla.", trVerse: "La adaptación cambió una cita bíblica y se descartó: el texto bíblico no se adapta. Vuelve a pedirla." });
 Object.assign(T.en, { trStale: "The script or the episode changed meanwhile: the translation no longer fits. Ask for it again.", trVerse: "The adaptation changed a Bible quote and was discarded: Bible text is never adapted. Ask for it again." });
 function trSource() {

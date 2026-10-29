@@ -477,16 +477,22 @@ richSlice = function (text, from, to, units, cues, unitWrap, cueWrap) {
 };
 
 // ---------- «Borrar guion» asks first, in a popup ----------
-Object.assign(T.es, { clrTitle: "¿Borrar todo el guion?", clrBody: "Se borra el texto del guion y también el título, la miniatura y la descripción que escribiste en esta pantalla.", clrSaved: "Este episodio está guardado: también quedará vacío.", clrNo: "No, conservar", clrYes: "Sí, borrar todo", clrUndo: "No se puede deshacer." });
-Object.assign(T.en, { clrTitle: "Delete the whole script?", clrBody: "This clears the script text and also the title, thumbnail and description you typed on this screen.", clrSaved: "This episode is saved: it will be left empty too.", clrNo: "No, keep it", clrYes: "Yes, delete everything", clrUndo: "This can't be undone." });
-function askClearScript() {
+Object.assign(T.es, { clrTitle: "¿Borrar todo el guion?", clrBody: "Se borra el guion, el título, la miniatura y la descripción, y se empieza un episodio nuevo.", clrSaved: "El episodio guardado se conserva en el historial con lo último que escribiste.", clrNo: "No, conservar", clrYes: "Sí, borrar todo", clrUndo: "No se puede deshacer." });
+Object.assign(T.en, { clrTitle: "Delete the whole script?", clrBody: "This clears the script, title, thumbnail and description and starts a new episode.", clrSaved: "The saved episode is kept in the history with the last thing you wrote.", clrNo: "No, keep it", clrYes: "Yes, delete everything", clrUndo: "This can't be undone." });
+// One confirm sheet for every «this replaces what you typed» moment (Borrar todo, the sample, a history version): title, body, an optional
+// bold line and hint, No (focused) / Yes. The dialog is named by its heading. (B-016, 2026-10-29; the history version uses it too)
+function confirmSheet(o) {
   let d = $("clrDlg");
-  if (!d) { d = document.createElement("dialog"); d.id = "clrDlg"; d.className = "ep-sheet clr-dlg"; document.body.appendChild(d); d.addEventListener("click", (e) => { if (e.target === d) d.close(); }); }
-  const saved = !!G.prodId && !(typeof DEMO !== "undefined" && DEMO);
-  d.innerHTML = `<div class="ep-sheet-in"><h2>${h(t("clrTitle"))}</h2><p>${h(t("clrBody"))}</p>${saved ? `<p><b>${h(t("clrSaved"))}</b></p>` : ""}<p class="hint">${h(t("clrUndo"))}</p>
-    <div class="clr-act"><button type="button" class="primary" id="clrNo">${h(t("clrNo"))}</button><button type="button" class="danger" id="clrYes">${h(t("clrYes"))}</button></div></div>`;
+  if (!d) { d = document.createElement("dialog"); d.id = "clrDlg"; d.className = "ep-sheet clr-dlg"; d.setAttribute("aria-labelledby", "clrDlgH"); document.body.appendChild(d); d.addEventListener("click", (e) => { if (e.target === d) d.close(); }); }
+  d.innerHTML = `<div class="ep-sheet-in"><h2 id="clrDlgH">${h(o.title)}</h2><p>${h(o.body)}</p>${o.extra ? `<p><b>${h(o.extra)}</b></p>` : ""}${o.note ? `<p class="hint">${h(o.note)}</p>` : ""}
+    <div class="clr-act"><button type="button" class="primary" id="clrNo">${h(o.no)}</button><button type="button" class="${o.danger ? "danger" : "small"}" id="clrYes">${h(o.yes)}</button></div></div>`;
   $("clrNo").addEventListener("click", () => d.close());
-  $("clrYes").addEventListener("click", () => { d.close(); doClearScript(); });
+  $("clrYes").addEventListener("click", () => { d.close(); o.onYes(); });
   try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
   $("clrNo").focus();
+}
+function askClearScript() {
+  const saved = !!G.prodId && !(typeof DEMO !== "undefined" && DEMO);
+  // (B-016, pick A) the edit in flight is saved into the episode being left before the editor is emptied; a conflict stops here
+  confirmSheet({ title: t("clrTitle"), body: t("clrBody"), extra: saved ? t("clrSaved") : "", note: t("clrUndo"), no: t("clrNo"), yes: t("clrYes"), danger: true, onYes: async () => { if (typeof flushProdSave === "function" && !(await flushProdSave())) return; doClearScript(); } });
 }

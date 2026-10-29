@@ -163,7 +163,7 @@ renderBackup = function (cid) {
 };
 // The old single sample link is replaced by the three examples.
 const _renderGuideD = renderGuide;
-renderGuide = function () { _renderGuideD(); const s = $("gSample"); if (s) s.parentElement.remove(); renderDemoBar(); };
+renderGuide = function () { _renderGuideD(); renderDemoBar(); }; // (2026-10-29) the old step-1 sample button is gone from guide_ui: the picker is the sample
 const _gOnLangD = gOnLang;
 gOnLang = function () { _gOnLangD(); renderDemoBar(); renderExPick(); };
 renderExPick();

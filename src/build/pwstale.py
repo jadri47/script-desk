@@ -19,12 +19,12 @@ MOCK = r"""() => { caps.sample = Promise.resolve({ serverRules: true, json: asyn
   return { reply: 'ok', replacement: 'RESPUESTA ENTERA.' }; // Ask Claude
 } }); }"""
 NEW = "\n\nTEXTO NUEVO que escribí después."
-async def open_page(b):
+async def open_page(b, demo=True):
     pg = await b.new_page(viewport={"width": 1400, "height": 900}); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.add_init_script("window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','es'); localStorage.setItem('sd-more-open','1'); localStorage.setItem('sd-coach-off','1')")
     await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
     await pg.goto(URL); await pg.wait_for_timeout(500)
-    await pg.evaluate("startDemo('mid')"); await pg.wait_for_timeout(800)
+    if demo: await pg.evaluate("startDemo('mid')"); await pg.wait_for_timeout(800)
     await pg.evaluate(MOCK)
     return pg, errs
 async def main():
@@ -85,6 +85,15 @@ async def main():
         await pg.evaluate("trRun()"); await pg.wait_for_timeout(700)
         ok("adapt: an answer that changed a quoted verse is refused, with a message", await pg.evaluate("!TR.res && !!TR.err"), await pg.evaluate("[!!TR.res, TR.err]"))
         ok("no page errors (adapt)", not errs, errs)
+        await pg.close()
+        # ---- an example never loses typed text: the picker keeps it and «Salir del ejemplo» brings it back (design; the old step-1 sample button is gone, B-016) ----
+        pg, errs = await open_page(b, demo=False)
+        await pg.evaluate("goStep(1); $('script').value = 'Mi propio texto'; updateLive()"); await pg.wait_for_timeout(300)
+        await pg.evaluate("startDemo('best')"); await pg.wait_for_timeout(900)
+        ok("example: the picker loads the example", await pg.evaluate("$('script').value === EXAMPLES.es.best.text"))
+        await pg.evaluate("exitDemo()"); await pg.wait_for_timeout(700)
+        ok("example: leaving the example brings the typed text back", await pg.evaluate("$('script').value === 'Mi propio texto'"), await pg.evaluate("$('script').value.slice(0, 40)"))
+        ok("no page errors (example)", not errs, errs)
         await pg.close()
         print("FAILS:", fails); await b.close()
 asyncio.run(main())

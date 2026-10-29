@@ -49,6 +49,8 @@ Object.assign(T.en, {
 });
 
 const ASK = { target: "all", q: "", busy: false, ans: null, err: "", hist: [] };
+const _doClearScriptA = doClearScript;
+doClearScript = function () { _doClearScriptA(); ASK.ans = null; ASK.err = ""; ASK.q = ""; }; // an answer about the old text must not be applied to the new one (B-016)
 const RISK_RANK = { verde: 0, amarillo: 1, rojo: 2 };
 
 function askParas() {
