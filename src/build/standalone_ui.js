@@ -43,8 +43,6 @@ Object.assign(T.en, {
   costClose: "Close",
   expertConfirm: "Switch to full mode? It shows every check and tool at once. You can go back to guided mode anytime with the same switch.",
 });
-Object.assign(T.es.err, { not_member: "Tu cuenta no está en el equipo; pide a Adrian que te agregue.", no_key: "La IA no está configurada todavía (falta la clave). Avisa a Adrian.", daily_limit: "Se alcanzó el límite diario de la IA. Prueba mañana.", upstream: "La IA no respondió. Prueba de nuevo en un momento.", network: "Sin conexión. Revisa internet y prueba de nuevo.", bad_request: "La solicitud no es válida; prueba con un guion más corto." });
-Object.assign(T.en.err, { not_member: "Your account isn't on the team; ask Adrian to add you.", no_key: "AI isn't set up yet (missing key). Tell Adrian.", daily_limit: "Daily AI limit reached. Try tomorrow.", upstream: "The AI didn't answer. Try again in a moment.", network: "No connection. Check the internet and try again.", bad_request: "The request isn't valid; try a shorter script." });
 
 let AUTH = { session: null, member: false };
 function renderAuthBar() {

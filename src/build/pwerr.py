@@ -76,6 +76,12 @@ async def run(b, ui):
     await pg.wait_for_timeout(300)
     lbl = await pg.evaluate("($('edSave') || {}).textContent")
     ok(f"{ui}: with storage blocked the editor says the draft was NOT saved on this device", lbl == await pg.evaluate("t('edLocalFail')") and lbl != await pg.evaluate("t('edLocal')"), lbl)
+    # 8. every error code the server or the client can throw has its own sentence (B-005, 2026-10-29); none falls to «error desconocido»
+    codes = ["network", "upstream", "daily_limit", "auto_paused", "not_member", "no_sample", "bad_request", "no_key", "quota_exceeded", "db_error", "not_granted", "rate_limited", "cancelled", "invalid_json", "truncated"]
+    bad = await pg.evaluate("(cs) => cs.filter((c) => { const s = errText({ code: c }); return !s || s === t('errGeneric')(t('unknownErr')); })", codes)
+    ok(f"{ui}: every AI/db error code has its own sentence", bad == [], bad)
+    ij = await pg.evaluate("errText({ code: 'invalid_json' })")
+    ok(f"{ui}: invalid_json no longer tells the person to shorten the script (that was truncation)", "corto" not in ij and "shorter" not in ij, ij)
     ok(f"{ui}: no page errors", not errs, errs)
     await pg.close()
 async def main():
