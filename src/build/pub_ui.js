@@ -33,13 +33,20 @@ const PUB_N = 6;
 function pubSync() { const k = G.prodId || "-"; if (PB.key !== k) { PB.key = k; PB.i = null; PB.view = null; } }
 function pubReset() { PB.key = G.prodId || "-"; PB.i = null; PB.view = null; }
 // What each of the five items holds right now (read from the same fields the cards edit).
+// Which gate check (packChecks id) blocks which item. Next episode and opening have no gate check.
+// The description has no required check today; "desc" is listed so a future required one lands on its card.
+const PUB_GATE = { title: "title", titleLen: "title", titleRisk: "title", thumb: "thumb", thumbRisk: "thumb", desc: "desc" };
+const pkReason = (c) => { const P = t("pk"); return typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]; }; // the gate line's own wording (one source)
 function pubItems() {
   const title = $("title").value.trim(), thumb = $("thumb").value.trim(), desc = $("description").value.trim(), next = (G.nextEp || "").trim();
   const clips = typeof coldClips === "function" ? coldClips() : [];
   const chaps = (desc.match(/^\s*\d{1,2}:\d{2}/gm) || []).length;
   const dv = desc ? (chaps ? t("pubChaps")(chaps) : desc.length > 60 ? desc.slice(0, 60) + "…" : desc) : "";
   const cv = clips.length ? "«" + clips[0].text.slice(0, 60) + (clips[0].text.length > 60 ? "…" : "") + "»" : "";
-  return [{ done: !!title, val: title }, { done: !!thumb, val: thumb }, { done: !!desc, val: dv }, { done: !!next, val: next }, { done: clips.length > 0, val: cv }];
+  const miss = packGateMissing();
+  // filled but blocked by the Aprobar gate = not done, and the row says why (same text as the gate line)
+  const item = (key, filled, val) => { const bad = filled ? miss.filter((c) => PUB_GATE[c.id] === key) : []; return { done: filled && !bad.length, val, why: bad.map(pkReason).join("; ") }; };
+  return [item("title", !!title, title), item("thumb", !!thumb, thumb), item("desc", !!desc, dv), { done: !!next, val: next }, { done: clips.length > 0, val: cv }];
 }
 function pubIndex() {
   pubSync();
@@ -70,8 +77,8 @@ function pubCardHTML(R) {
   const approved = G.status === "aprobado", recorded = G.status === "grabado", done = approved || recorded;
   const names = t("pubItems");
   const num = sc.full ? `<span class="pub-lbl">${h(t("pubFinal"))}</span><b class="pub-n">${sc.now}</b>${sc.from != null ? `<span class="hint">${h(t("pubFrom")(sc.from))}</span>` : ""}` : `<span class="pub-lbl">${h(t("rpRulesName"))}</span><b class="pub-n">${sc.now}<small>/${sc.rd.rulesMax}</small></b>`;
-  const rows = its.map((x, k) => `<li class="${x.done ? "ok" : "pend"}"><span class="pub-mk" aria-hidden="true">${x.done ? "✓" : "○"}</span><span class="pub-iv"><b>${h(names[k])}</b><span class="pub-v">${h(x.done ? x.val : t("pubNone"))}</span></span><button type="button" class="small linkish" data-pub-go="${k}" aria-label="${h(t("pubChangeL")(names[k]))}">${h(t("pubChange"))}</button></li>`).join("");
-  const gate = missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => { const P = t("pk"); return (typeof P[c.id] === "function" ? P[c.id](c.v) : P[c.id]).toLowerCase(); }).join("; ")))}</span>` : "";
+  const rows = its.map((x, k) => `<li class="${x.done ? "ok" : "pend"}"><span class="pub-mk" aria-hidden="true">${x.done ? "✓" : "○"}</span><span class="pub-iv"><b>${h(names[k])}</b><span class="pub-v">${h(x.done ? x.val : x.why || t("pubNone"))}</span></span><button type="button" class="small linkish" data-pub-go="${k}" aria-label="${h(t("pubChangeL")(names[k]))}">${h(t("pubChange"))}</button></li>`).join("");
+  const gate = missing.length ? `<span class="g-gate">${h(t("pkGate")(missing.map((c) => pkReason(c).toLowerCase()).join("; ")))}</span>` : "";
   return `<div class="pub pub-walk pub-all" data-pub-i="${i}"><section class="pub-card" role="region" aria-labelledby="pubH" tabindex="-1" id="pubCard">${prog}<h3 id="pubH">${h(t("pubH")[i])}</h3>
     <div class="g-card"><p class="pub-final">${num}</p><ul class="pub-chk" aria-label="${h(t("pubH")[i])}">${rows}</ul>
     <p class="pub-ads ${band}"><span class="lamp ${band}">${h(t("pubAds")[band])}</span></p></div>
