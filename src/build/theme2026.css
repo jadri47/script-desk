@@ -179,6 +179,8 @@ li.fx-idea .fx-lbl,li.fx-idea .fx-lbl + *,li.fx-idea .fx-act [data-fxai]{display
 .vr-row .aud-field{max-width:none}
 .bible-field{margin:12px 0 0}
 .bible-field select{width:100%;max-width:420px}
+/* (jadri47, 2026-10-29: B-034) selects are content-box, so width:100% plus padding and border stuck out 26px past a 390 px phone */
+.vr-row select{box-sizing:border-box;max-width:100%;min-width:0}
 .bible-field .hint{margin:6px 0 0;font-size:13px}
 .hint.warn-t{color:var(--j2t,#b4233c);font-weight:600}
 .tr-ver{display:inline-flex;align-items:center;gap:6px}
