@@ -33,6 +33,7 @@ FONTS = r"""() => {
     const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
     let hid = false; for (let e = el; e; e = e.parentElement) { if (getComputedStyle(e).display === 'none' || e.hidden) { hid = true; break; } } if (hid) continue;
     const fs = parseFloat(cs.fontSize);
+    if (fs === 0) continue; // the ES / EN switch hides its word on purpose and shows the code in ::after at 13px; the word stays the accessible name
     if (fs < 12) out.push(fs.toFixed(2) + ' ' + (el.id ? '#' + el.id : el.tagName.toLowerCase()) + '.' + String(el.className).split(' ').join('.') + ' "' + txt.slice(0, 24) + '"');
   }
   return [...new Set(out)];
@@ -62,6 +63,51 @@ async def main():
             await pg.screenshot(path=OUT + f"phone_s1_more_{ui}.png", full_page=True)
             ok(f"{ui}/390: «Más opciones» open: the page does not scroll sideways (scrollWidth <= 390)", r["sw"] <= 390, r)
             ok(f"{ui}/390: «Más opciones» open: no select, step bar or step button reaches past 390 px", not r["bad"], r)
+            await pg.close()
+        # ---- B-035: guided steps 1-3 (desktop 1280 and phone 390, ES): no visible text under 12 px
+        for (w, hh, nm) in [(1280, 800, "d"), (390, 844, "m")]:
+            pg, errs = await open_page(b, "es", {"width": w, "height": hh})
+            await review(pg)
+            for st in (2, 3, 1):
+                await pg.evaluate(f"goStep({st})"); await pg.wait_for_timeout(700)
+                small = await pg.evaluate(FONTS)
+                ok(f"{nm}: B-035 guided step {st}: no visible text under 12 px", not small, small)
+                if nm == "m":
+                    r = await pg.evaluate(OVER, w)
+                    ok(f"{nm}: guided step {st}: step bar and selects inside {w} px, no sideways scroll", not r["bad"] and r["sw"] <= w, r)
+            # the language buttons: text may be icon-only, but they need a name for assistive tech
+            lb = await pg.evaluate("[...document.querySelectorAll('[data-ui]')].map(x => ({ fs: getComputedStyle(x).fontSize, name: (x.getAttribute('aria-label') || x.textContent || '').trim(), pressed: x.getAttribute('aria-pressed') }))")
+            ok(f"{nm}: B-035 the ES / EN buttons have an accessible name", lb and all(x["name"] for x in lb), lb)
+            ok(f"{nm}: no page errors", not errs, errs)
+            await pg.close()
+        # ---- B-035: step 2 with the paragraph review open (rail, minimap, cards) and one applied change (the «QUÉ CORRIGE / ANTES» card)
+        for (w, hh, nm) in [(1280, 800, "d"), (390, 844, "m")]:
+            pg, errs = await open_page(b, "es", {"width": w, "height": hh})
+            await pg.evaluate("lsSet('sd-more-open','1'); lsSet('sd-coach-off','1'); lsSet('sd-rail-cues','1')")
+            await pg.reload(); await pg.wait_for_timeout(600)
+            await pg.evaluate("startDemo('bad')"); await pg.wait_for_timeout(900)
+            await pg.click("#runBtn"); await pg.wait_for_timeout(2500)
+            small = await pg.evaluate(FONTS)
+            ok(f"{nm}: B-035 step 2 with the paragraph review, rail and minimap: no visible text under 12 px", not small, small)
+            if await pg.locator("[data-fxapply]:visible").count():
+                await pg.locator("[data-fxapply]:visible").first.click(); await pg.wait_for_timeout(1500)
+            ok(f"{nm}: an applied change card is on screen (so the «ANTES» / «QUÉ CORRIGE» labels were measured)", await pg.locator(".fx-chg-l:visible").count() > 0 or await pg.locator(".fx-done").count() > 0)
+            if await pg.locator(".fx-done > summary, .fx-done summary").count():
+                await pg.locator(".fx-done summary").first.click(); await pg.wait_for_timeout(400)
+            small = await pg.evaluate(FONTS)
+            ok(f"{nm}: B-035 step 2 after an applied change (expanded): no visible text under 12 px", not small, small)
+            if nm == "m":
+                r = await pg.evaluate(OVER, w)
+                ok(f"{nm}: step 2 review: step bar inside {w} px, no sideways scroll", not r["bad"] and r["sw"] <= w, r)
+            ok(f"{nm}: step 2 review: no page errors", not errs, errs)
+            await pg.close()
+        # ---- B-036: the full (expert) view
+        for (w, hh, nm) in [(1280, 800, "d"), (390, 844, "m")]:
+            pg, errs = await open_page(b, "es", {"width": w, "height": hh}, expert=True)
+            await review(pg); await pg.wait_for_timeout(500)
+            small = await pg.evaluate(FONTS)
+            ok(f"{nm}: B-036 expert view: no visible text under 12 px", not small, small)
+            ok(f"{nm}: expert view: no page errors", not errs, errs)
             await pg.close()
         await b.close()
     print("FAILS:", fails if fails else "none")
