@@ -125,7 +125,10 @@ Deno.serve(async (req) => {
   const inTok = (usage.input_tokens || 0) + cacheWrite + cacheRead; // total input; the cache numbers are included in it
   const outTok = usage.output_tokens || 0;
   const cost = r.ok ? costOf(model, inTok, outTok, cacheWrite, cacheRead) : 0;
-  await sb.from("sd_ai_usage").insert({ user_id: userData.user.id, tier, model, input_tokens: inTok || null, output_tokens: outTok || null, cache_creation_input_tokens: r.ok ? cacheWrite : null, cache_read_input_tokens: r.ok ? cacheRead : null, ok: r.ok, cost_usd: cost });
+  // Best effort by design: the answer is already paid for, so a failed usage row never fails the call; but it must be visible in the
+  // function logs, because the daily limit and the month budget count these rows (B-012, 2026-10-29).
+  const { error: usageErr } = await sb.from("sd_ai_usage").insert({ user_id: userData.user.id, tier, model, input_tokens: inTok || null, output_tokens: outTok || null, cache_creation_input_tokens: r.ok ? cacheWrite : null, cache_read_input_tokens: r.ok ? cacheRead : null, ok: r.ok, cost_usd: cost });
+  if (usageErr) console.error("sd-ai: usage row not saved (limits under-count):", usageErr.message);
   const { data: month } = await sb.rpc("sd_month_cost");
   const bill = { model, model_name: NAMES[model] || model, input_tokens: inTok, output_tokens: outTok, cache_creation_input_tokens: cacheWrite, cache_read_input_tokens: cacheRead, cost_usd: cost, month_cost_usd: month == null ? null : Number(month) };
   if (r.status === 429 || r.status === 529) return json({ code: "rate_limited", usage: bill }, 429);
