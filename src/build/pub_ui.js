@@ -128,7 +128,9 @@ function pubAfterHTML(body) {
   if (rd) rd.addEventListener("click", async () => { rd.disabled = true; V.s3After = true; await setStatus("grabado"); const d = $("gAfter"); if (d) d.scrollIntoView({ block: "start" }); });
   // the ✓ line under the heading follows what is typed (the fields keep saving exactly as before)
   const upd = () => { const i = pubIndex(), it = pubItems()[i], ok = $("pubOk"); if (!ok || !it) return; ok.hidden = !it.done; $("pubOkV").textContent = it.val; };
-  body.addEventListener("input", () => { if (pubView() === "card" && PB.i < PUB_N - 1) upd(); });
+  // (jadri47, 2026-10-29: B-025) #guide is the same element on every render, so wire this once: one more listener per render piled up
+  // and every keystroke in step 3 ran them all (typing lag). `upd` only reads globals, so the first closure serves every render.
+  if (!body.__pubInput) { body.__pubInput = true; body.addEventListener("input", () => { if (pubView() === "card" && PB.i < PUB_N - 1) upd(); }); }
   const sb = $("stepBar"); if (sb) document.documentElement.style.setProperty("--sb-h", Math.ceil(sb.getBoundingClientRect().height) + "px"); // sticky action row sits above the phone's step bar
   if (typeof autoFitAll === "function") autoFitAll(body);
   if (PB.focus) { PB.focus = false; const c = $("pubCard") || $("gRecCard"); if (c) c.focus({ preventScroll: true }); }

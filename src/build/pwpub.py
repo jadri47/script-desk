@@ -94,6 +94,13 @@ async def main():
                 dv = await pg.evaluate("({ d: $('description').value, ch: $('chOut').value })")
                 ok(f"{n}: (b) adding chapters to the description keeps the text after the old chapter list", "#fe #biblia https://x" in dv["d"] and dv["d"].startswith("Intro\n\n") and dv["ch"].strip() in dv["d"] and "1:20 Punto" not in dv["d"] and dv["d"].count("0:00") == 1, dv)
                 await pg.evaluate("$('description').value = window.__d0[0]; $('pkDescIn').value = window.__d0[1]; markDirty(); gCompute()")  # leave the data as it was for the checks below
+                # B-025: the input listener on #guide was added on every render; typing must run one pubItems per keystroke however many renders happened
+                await pg.evaluate("for (let i = 0; i < 10; i++) renderGuide()"); await pg.wait_for_timeout(300)
+                await pg.evaluate("window.__pi = 0; window.__pi0 = pubItems; pubItems = function () { window.__pi++; return window.__pi0.apply(this, arguments); }")
+                await pg.focus("#pkDescIn"); await pg.keyboard.type("x"); await pg.wait_for_timeout(200)
+                pi = await pg.evaluate("window.__pi")
+                await pg.evaluate("pubItems = window.__pi0; document.getElementById('pkDescIn').value = window.__d0[1]; $('description').value = window.__d0[0]; markDirty()")
+                ok(f"{n}: (b) after 10 renders one keystroke runs pubItems at most twice (no stacked input listeners)", 1 <= pi <= 2, pi)
                 # ---- (c) Saltar: advances, data unchanged; Anterior: back with the values kept
                 before = await pg.evaluate(FIELDS)
                 await pg.click("[data-pub=skip]"); await pg.wait_for_timeout(450); c = await pg.evaluate(CARD)
