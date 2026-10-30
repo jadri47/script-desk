@@ -447,7 +447,15 @@ function detectLanguage(text) {
 
 // Spanish syllables: nuclei per vowel group = number of strong vowels (a e o, or an accented í ú), min 1.
 // "qu"/"gu" before e/i drop the u; a final "y" acts as a weak vowel.
+// A word's count never changes and analyze asks for every word of the script on every run (about 55 runs per review of a long
+// script): remembered by word, emptied past 20,000 entries.
+const SYL_MEMO = new Map();
 function syllablesES(word) {
+  let n = SYL_MEMO.get(word);
+  if (n === undefined) { n = syllablesESCount(word); if (SYL_MEMO.size > 20000) SYL_MEMO.clear(); SYL_MEMO.set(word, n); }
+  return n;
+}
+function syllablesESCount(word) {
   let w = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
   if (!w) return /\d/.test(word) ? 2 : 0;
   w = w.replace(/qu(?=[eiéí])/g, "q").replace(/gu(?=[eiéí])/g, "g");
@@ -834,8 +842,9 @@ function analyze(text, opts = {}) {
   let readability;
   // Readability is judged on the speaker's own words: quoted Scripture (RVR1960 wording, long sentences) is not theirs to simplify.
   const verseOnly = verseSpans(text, { quotes, refs }).filter((x) => x.kind !== "ref");
-  const ownWords = words.filter((w) => !insideAny(verseOnly, w.start, w.end));
-  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => ownWords.some((w) => w.start >= x.start && w.end <= x.end)).length);
+  const inVerse = insideTester(verseOnly);
+  const ownWords = words.filter((w) => !inVerse(w.start, w.end));
+  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => { const [a, b] = wordsWithin(ownWords, x); return b > a; }).length);
   const excludedWords = wc - rWc;
   if (rWc < 30) { rSyl = totalSyl; rWc = wc; rSc = sc; }
   const nqNote = excludedWords > 0 && rWc !== wc ? L(" (sin contar las citas bíblicas)", " (not counting Scripture quotes)") : "";

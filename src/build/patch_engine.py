@@ -10,6 +10,20 @@ def rep(old, new, count=1):
 # 1. cue helpers after insideAny
 rep("""function insideAny(spans, start, end) { return spans.some((s) => start >= s.start && end <= s.end); }
 """, """function insideAny(spans, start, end) { return spans.some((s) => start >= s.start && end <= s.end); }
+// Same answer as insideAny for many lookups against one list: a span contains [start,end] when the largest end among the spans that
+// begin at or before start reaches end. Sorted once, then a binary search per lookup (a 30-minute script asked it ~6,000 times per
+// analyze over ~400 sentences; the plain scan made every analyze 45 ms of which half was these loops).
+function insideTester(spans) {
+  const sp = spans.slice().sort((a, b) => a.start - b.start), reach = []; let m = -Infinity;
+  for (const x of sp) { m = Math.max(m, x.end); reach.push(m); }
+  return (start, end) => { let lo = 0, hi = sp.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (sp[mid].start <= start) lo = mid + 1; else hi = mid; } return lo > 0 && reach[lo - 1] >= end; };
+}
+// The words that lie inside a span, from a list in text order (words never overlap, so their ends rise with their starts).
+function wordsWithin(ws, s) {
+  let lo = 0, hi = ws.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (ws[mid].start >= s.start) hi = mid; else lo = mid + 1; }
+  let e = lo; while (e < ws.length && ws[e].end <= s.end) e++;
+  return [lo, e];
+}
 
 // Production cues: [B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA] and "## Heading" lines are not spoken.
 const CUE_RE = /\\[[^\\]\\n]{1,200}\\]|^[ \\t]*#{1,3}[^\\n]*$/gm;
@@ -76,7 +90,8 @@ rep("""tickPos, words, sents, blocks, clusters, firstPromiseT: promiseT, content
 rep("""  const re = /[^.!?…\\n]+(?:[.!?…]+(?=\\s|$)|\\n|$)/g;""", """  const re = /[^.!?…\\n]+(?:[.!?…]+[»”"’)]*(?=\\s|$)|\\n|$)/g;""")
 rep("""    packaging.push({ label, level, issues });""", """    packaging.push({ key: strict || "desc", label, level, issues });""")
 rep("""  const longSents = sents.filter((s) => wordTokens(s.text).length > 30);""", """  // Scripture inside quotation marks can't be split, so only the presenter's own words count.
-  const spokenOutsideQuotes = (s) => words.filter((w) => w.start >= s.start && w.end <= s.end && !insideAny(quotes, w.start, w.end)).length;
+  const inQuote = insideTester(quotes);
+  const spokenOutsideQuotes = (s) => { const [a, b] = wordsWithin(words, s); let n = 0; for (let i = a; i < b; i++) if (!inQuote(words[i].start, words[i].end)) n++; return n; };
   const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);""")
 rep("""cues, rate, coSec, loopHits, qPositions };""", """cues, rate, coSec, loopHits, qPositions, weakHits, regHits, aiHits, greetHits, ctaHits, longSents, firstPromise, nextHits, lang };""")
 rep("""const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten", "comparte", "compartan",""", """const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten", "comparte", "compartan", "compártelo", "compártela", "compártanlo", "compártanla", "share it",""")
