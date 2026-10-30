@@ -220,7 +220,7 @@ main[data-mode="guion"] #editor, main[data-mode="guion"] #results, main[data-mod
 main[data-mode="review"] #guion{display:none}
 .modes{display:flex;gap:4px;margin:-8px 0 22px;border-bottom:1px solid var(--rule)}
 .modes button{border:0;border-radius:0;background:transparent;padding:10px 14px;font-weight:600;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px}
-.modes button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.modes button[aria-current="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 .g-empty{padding:28px 20px;border:1px dashed var(--rule);border-radius:14px;text-align:center;background:var(--sheet);display:flex;flex-direction:column;gap:12px;align-items:center}
 .g-empty p{margin:0;color:var(--ink-2)}
 .g-bar{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:var(--sheet);border:1px solid var(--rule);border-radius:14px}
@@ -315,12 +315,12 @@ html.pp-open,html.pp-open body{overflow:hidden}
 .pp-col{margin:0 auto;font-family:var(--sans);font-weight:500;line-height:1.4;will-change:transform;white-space:pre-wrap;word-wrap:break-word}
 .pp-sec{margin-bottom:.5em}
 .pp-label{font-size:max(12px,.3em);font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--pp-dim);margin:.5em 0 .15em;line-height:1.2;white-space:normal}
-.pp-cue{font-size:.42em;font-weight:500;color:var(--pp-dim);border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.3em}
+.pp-cue{font-size:max(12px,.42em);font-weight:500;color:var(--pp-dim);border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.3em}
 .pp.no-cues .pp-cue:not(.pp-pause){display:none}
 .pp-pause{color:var(--pp-line)}
 .pp-clip{color:var(--pp-clip)}
-.pp-cliptag{font-size:.4em;letter-spacing:.08em;border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.35em}
-.pp-end{color:var(--pp-dim);font-size:.5em;padding:1.5em 0 70vh}
+.pp-cliptag{font-size:max(12px,.4em);letter-spacing:.08em;border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.35em}
+.pp-end{color:var(--pp-dim);font-size:max(12px,.5em);padding:1.5em 0 70vh}
 .pp-line{position:absolute;left:0;right:0;top:28%;border-top:2px solid var(--pp-line);opacity:.5;pointer-events:none}
 .pp-line::before{content:"";position:absolute;left:6px;top:-9px;border-style:solid;border-width:8px 0 8px 12px;border-color:transparent transparent transparent var(--pp-line)}
 .pp-hint{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);background:var(--pp-panel);padding:14px 18px;border-radius:12px;text-align:center;pointer-events:none;font-size:18px;max-width:calc(100% - 32px)}
@@ -377,11 +377,11 @@ html.pp-open,html.pp-open body{overflow:hidden}
 @media (max-width:620px){.rs-stats{grid-template-columns:1fr}}
 .rc{margin:12px 0 4px}
 .rc-wrap{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:6px 4px 0;overflow-x:auto}
-.rc-in{position:relative;min-width:560px}
+.rc-in{position:relative;min-width:720px} /* the chart is drawn 720 wide: narrower and its 12px labels would shrink under 12px */
 .rc-wrap svg{display:block;width:100%;height:auto;aspect-ratio:720/260}
 .rc-grid{stroke:var(--rule-2);stroke-width:1}
-.rc-ax{fill:var(--ink-2);font:11px var(--sans);font-variant-numeric:tabular-nums}
-.rc-band{fill:var(--ink-2);font:600 11px var(--sans)}
+.rc-ax{fill:var(--ink-2);font:12px var(--sans);font-variant-numeric:tabular-nums}
+.rc-band{fill:var(--ink-2);font:600 12px var(--sans)}
 .rc-30{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;opacity:.6}
 .rc-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .rc-end{fill:var(--accent);stroke:var(--sheet);stroke-width:2}
@@ -1932,8 +1932,8 @@ small{font-size:max(12px,.83em)}
   <div id="demoBar" class="demo-bar" role="status" hidden></div>
     </div>
   </header>
-  <nav class="modes" role="tablist" aria-label="Modo / Mode">
-    <button type="button" role="tab" data-mode="review" aria-selected="true" data-i18n="modeReview">Revisión</button><button type="button" role="tab" data-mode="guion" aria-selected="false" data-i18n="modeGuion">Guion y prompter</button>
+  <nav class="modes" aria-label="Modo / Mode">
+    <button type="button" data-mode="review" aria-current="true" data-i18n="modeReview">Revisión</button><button type="button" data-mode="guion" data-i18n="modeGuion">Guion y prompter</button>
   </nav>
   <div id="guideTop"></div>
 
@@ -2187,7 +2187,15 @@ function detectLanguage(text) {
 
 // Spanish syllables: nuclei per vowel group = number of strong vowels (a e o, or an accented í ú), min 1.
 // "qu"/"gu" before e/i drop the u; a final "y" acts as a weak vowel.
+// A word's count never changes and analyze asks for every word of the script on every run (about 55 runs per review of a long
+// script): remembered by word, emptied past 20,000 entries.
+const SYL_MEMO = new Map();
 function syllablesES(word) {
+  let n = SYL_MEMO.get(word);
+  if (n === undefined) { n = syllablesESCount(word); if (SYL_MEMO.size > 20000) SYL_MEMO.clear(); SYL_MEMO.set(word, n); }
+  return n;
+}
+function syllablesESCount(word) {
   let w = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
   if (!w) return /\d/.test(word) ? 2 : 0;
   w = w.replace(/qu(?=[eiéí])/g, "q").replace(/gu(?=[eiéí])/g, "g");
@@ -2243,6 +2251,20 @@ function findPhrases(text, phrases, kind, extra) {
 }
 
 function insideAny(spans, start, end) { return spans.some((s) => start >= s.start && end <= s.end); }
+// Same answer as insideAny for many lookups against one list: a span contains [start,end] when the largest end among the spans that
+// begin at or before start reaches end. Sorted once, then a binary search per lookup (a 30-minute script asked it ~6,000 times per
+// analyze over ~400 sentences; the plain scan made every analyze 45 ms of which half was these loops).
+function insideTester(spans) {
+  const sp = spans.slice().sort((a, b) => a.start - b.start), reach = []; let m = -Infinity;
+  for (const x of sp) { m = Math.max(m, x.end); reach.push(m); }
+  return (start, end) => { let lo = 0, hi = sp.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (sp[mid].start <= start) lo = mid + 1; else hi = mid; } return lo > 0 && reach[lo - 1] >= end; };
+}
+// The words that lie inside a span, from a list in text order (words never overlap, so their ends rise with their starts).
+function wordsWithin(ws, s) {
+  let lo = 0, hi = ws.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (ws[mid].start >= s.start) hi = mid; else lo = mid + 1; }
+  let e = lo; while (e < ws.length && ws[e].end <= s.end) e++;
+  return [lo, e];
+}
 
 // Production cues: [B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA] and "## Heading" lines are not spoken.
 const CUE_RE = /\[[^\]\n]{1,200}\]|^[ \t]*#{1,3}[^\n]*$/gm;
@@ -2606,8 +2628,9 @@ function analyze(text, opts = {}) {
   let readability;
   // Readability is judged on the speaker's own words: quoted Scripture (RVR1960 wording, long sentences) is not theirs to simplify.
   const verseOnly = verseSpans(text, { quotes, refs }).filter((x) => x.kind !== "ref");
-  const ownWords = words.filter((w) => !insideAny(verseOnly, w.start, w.end));
-  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => ownWords.some((w) => w.start >= x.start && w.end <= x.end)).length);
+  const inVerse = insideTester(verseOnly);
+  const ownWords = words.filter((w) => !inVerse(w.start, w.end));
+  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => { const [a, b] = wordsWithin(ownWords, x); return b > a; }).length);
   const excludedWords = wc - rWc;
   if (rWc < 30) { rSyl = totalSyl; rWc = wc; rSc = sc; }
   const nqNote = excludedWords > 0 && rWc !== wc ? L(" (sin contar las citas bíblicas)", " (not counting Scripture quotes)") : "";
@@ -2621,7 +2644,8 @@ function analyze(text, opts = {}) {
     add("spoken", { id: "readability", label: L("Legibilidad (Flesch-Kincaid)", "Readability (Flesch-Kincaid)"), passed: g <= 9, info: L(`Nivel escolar ${g.toFixed(1)}${nqNote}. La fórmula es estándar; el límite de 9 es nuestra meta.`, `Grade level ${g.toFixed(1)}${nqNote}. The formula is standard; the grade-9 bar is our cutoff.`), fix: g <= 9 ? null : L("Acorta oraciones y simplifica palabras largas.", "Shorten sentences and simplify long words.") });
   }
   // Scripture inside quotation marks can't be split, so only the presenter's own words count.
-  const spokenOutsideQuotes = (s) => words.filter((w) => w.start >= s.start && w.end <= s.end && !insideAny(quotes, w.start, w.end)).length;
+  const inQuote = insideTester(quotes);
+  const spokenOutsideQuotes = (s) => { const [a, b] = wordsWithin(words, s); let n = 0; for (let i = a; i < b; i++) if (!inQuote(words[i].start, words[i].end)) n++; return n; };
   const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);
   add("spoken", { id: "long", n: longSents.length, lim: 0, label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
 
@@ -3559,7 +3583,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
       const off = R.msg.offscreen.slice(0, cap);
       card.evidence = off.map((x) => ({ start: x.ref.start, end: Math.min(x.quote.end, x.ref.end + 160), t: R.timeAt(x.ref.start), marks: [[x.ref.start, x.ref.end]] }));
       const seen = new Set(), ps = [];
-      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[TEXTO: ${x.ref.canonical}]\n` }); }
+      // (jadri47, 2026-10-30) the cue tag follows the language, as the editor button's does (edCueTag): the English UI never writes a Spanish word into the script
+      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[${en ? "TEXT" : "TEXTO"}: ${x.ref.canonical}]\n` }); }
       if (ps.length) card.proposals.push({ kind: "patch", label: L("Añadir la señal para el editor", "Add the cue for the editor"), patches: ps });
     } else if (row.id === "reading" && R.msg) {
       card.evidence = R.msg.longReads.slice(0, cap2).map((q) => ({ start: q.start, end: Math.min(q.end, q.start + 220), t: R.timeAt(q.start), marks: [] }));
@@ -4442,7 +4467,7 @@ function repairJson(text, depth = 2) {
   try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -4738,7 +4763,15 @@ function detectLanguage(text) {
 
 // Spanish syllables: nuclei per vowel group = number of strong vowels (a e o, or an accented í ú), min 1.
 // "qu"/"gu" before e/i drop the u; a final "y" acts as a weak vowel.
+// A word's count never changes and analyze asks for every word of the script on every run (about 55 runs per review of a long
+// script): remembered by word, emptied past 20,000 entries.
+const SYL_MEMO = new Map();
 function syllablesES(word) {
+  let n = SYL_MEMO.get(word);
+  if (n === undefined) { n = syllablesESCount(word); if (SYL_MEMO.size > 20000) SYL_MEMO.clear(); SYL_MEMO.set(word, n); }
+  return n;
+}
+function syllablesESCount(word) {
   let w = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
   if (!w) return /\d/.test(word) ? 2 : 0;
   w = w.replace(/qu(?=[eiéí])/g, "q").replace(/gu(?=[eiéí])/g, "g");
@@ -4794,6 +4827,20 @@ function findPhrases(text, phrases, kind, extra) {
 }
 
 function insideAny(spans, start, end) { return spans.some((s) => start >= s.start && end <= s.end); }
+// Same answer as insideAny for many lookups against one list: a span contains [start,end] when the largest end among the spans that
+// begin at or before start reaches end. Sorted once, then a binary search per lookup (a 30-minute script asked it ~6,000 times per
+// analyze over ~400 sentences; the plain scan made every analyze 45 ms of which half was these loops).
+function insideTester(spans) {
+  const sp = spans.slice().sort((a, b) => a.start - b.start), reach = []; let m = -Infinity;
+  for (const x of sp) { m = Math.max(m, x.end); reach.push(m); }
+  return (start, end) => { let lo = 0, hi = sp.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (sp[mid].start <= start) lo = mid + 1; else hi = mid; } return lo > 0 && reach[lo - 1] >= end; };
+}
+// The words that lie inside a span, from a list in text order (words never overlap, so their ends rise with their starts).
+function wordsWithin(ws, s) {
+  let lo = 0, hi = ws.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (ws[mid].start >= s.start) hi = mid; else lo = mid + 1; }
+  let e = lo; while (e < ws.length && ws[e].end <= s.end) e++;
+  return [lo, e];
+}
 
 // Production cues: [B-ROLL: …], [TEXTO: …], [CITA: …], [PAUSA] and "## Heading" lines are not spoken.
 const CUE_RE = /\[[^\]\n]{1,200}\]|^[ \t]*#{1,3}[^\n]*$/gm;
@@ -5157,8 +5204,9 @@ function analyze(text, opts = {}) {
   let readability;
   // Readability is judged on the speaker's own words: quoted Scripture (RVR1960 wording, long sentences) is not theirs to simplify.
   const verseOnly = verseSpans(text, { quotes, refs }).filter((x) => x.kind !== "ref");
-  const ownWords = words.filter((w) => !insideAny(verseOnly, w.start, w.end));
-  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => ownWords.some((w) => w.start >= x.start && w.end <= x.end)).length);
+  const inVerse = insideTester(verseOnly);
+  const ownWords = words.filter((w) => !inVerse(w.start, w.end));
+  let rSyl = ownWords.reduce((a, w) => a + w.syl, 0), rWc = ownWords.length, rSc = Math.max(1, sents.filter((x) => { const [a, b] = wordsWithin(ownWords, x); return b > a; }).length);
   const excludedWords = wc - rWc;
   if (rWc < 30) { rSyl = totalSyl; rWc = wc; rSc = sc; }
   const nqNote = excludedWords > 0 && rWc !== wc ? L(" (sin contar las citas bíblicas)", " (not counting Scripture quotes)") : "";
@@ -5172,7 +5220,8 @@ function analyze(text, opts = {}) {
     add("spoken", { id: "readability", label: L("Legibilidad (Flesch-Kincaid)", "Readability (Flesch-Kincaid)"), passed: g <= 9, info: L(`Nivel escolar ${g.toFixed(1)}${nqNote}. La fórmula es estándar; el límite de 9 es nuestra meta.`, `Grade level ${g.toFixed(1)}${nqNote}. The formula is standard; the grade-9 bar is our cutoff.`), fix: g <= 9 ? null : L("Acorta oraciones y simplifica palabras largas.", "Shorten sentences and simplify long words.") });
   }
   // Scripture inside quotation marks can't be split, so only the presenter's own words count.
-  const spokenOutsideQuotes = (s) => words.filter((w) => w.start >= s.start && w.end <= s.end && !insideAny(quotes, w.start, w.end)).length;
+  const inQuote = insideTester(quotes);
+  const spokenOutsideQuotes = (s) => { const [a, b] = wordsWithin(words, s); let n = 0; for (let i = a; i < b; i++) if (!inQuote(words[i].start, words[i].end)) n++; return n; };
   const longSents = sents.filter((s) => spokenOutsideQuotes(s) > 30);
   add("spoken", { id: "long", n: longSents.length, lim: 0, label: L("Oraciones que se dicen de un aliento", "Sentences you can say in one breath"), passed: !longSents.length, info: longSents.length ? L(`${longSents.length} oración(es) de más de 30 palabras. Regla práctica, no de investigación.`, `${longSents.length} sentence(s) over 30 words. Rule of thumb.`) : L("Ninguna supera 30 palabras.", "None over 30 words."), fix: longSents.length ? L("Divide cada una en dos o tres.", "Split each into two or three.") : null, samples: longSents.slice(0, 3).map((s) => s.text.slice(0, 120) + (s.text.length > 120 ? "…" : "")) });
 
@@ -6110,7 +6159,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
       const off = R.msg.offscreen.slice(0, cap);
       card.evidence = off.map((x) => ({ start: x.ref.start, end: Math.min(x.quote.end, x.ref.end + 160), t: R.timeAt(x.ref.start), marks: [[x.ref.start, x.ref.end]] }));
       const seen = new Set(), ps = [];
-      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[TEXTO: ${x.ref.canonical}]\n` }); }
+      // (jadri47, 2026-10-30) the cue tag follows the language, as the editor button's does (edCueTag): the English UI never writes a Spanish word into the script
+      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[${en ? "TEXT" : "TEXTO"}: ${x.ref.canonical}]\n` }); }
       if (ps.length) card.proposals.push({ kind: "patch", label: L("Añadir la señal para el editor", "Add the cue for the editor"), patches: ps });
     } else if (row.id === "reading" && R.msg) {
       card.evidence = R.msg.longReads.slice(0, cap2).map((q) => ({ start: q.start, end: Math.min(q.end, q.start + 220), t: R.timeAt(q.start), marks: [] }));
@@ -6993,7 +7043,7 @@ function repairJson(text, depth = 2) {
   try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson };
+if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -7974,15 +8024,23 @@ async function createProd() {
     return true;
   } catch (e) { setSave(e && e.code === "quota_exceeded" ? "quota" : "fail"); return false; }
 }
-async function saveProd(force) {
+// The save in flight, so «Borrar todo» / «Abrir» wait for it instead of emptying the editor under it (jadri47, 2026-10-30).
+let savingP = null;
+function saveProd(force) {
+  const run = saveProdNow(force);
+  savingP = run; run.then(() => { if (savingP === run) savingP = null; });
+  return run;
+}
+async function saveProdNow(force) {
   const db = await caps.db;
   if (!db || !G.prodId) return;
-  const ref = db.collection("producciones").doc(G.prodId);
+  const id = G.prodId, ref = db.collection("producciones").doc(id);
   setSave("saving");
   try {
     if (!force) {
       const snap = await ref.get();
       const d = snap.exists ? snap.data() : null;
+      if (G.prodId !== id) return; // another episode (or a new one) took the editor while the check was out: this body is not that episode's
       if (d && d.updatedAt > G.loadedAt && d.updatedBy !== G.sid) { G.conflict = d; setSave("unsaved"); renderGuion(); return; }
     }
     const now = Date.now();
@@ -8017,10 +8075,15 @@ function applyProd(id, d) {
 }
 // Before the editor is emptied or replaced (Borrar todo, the sample, a history version): what sits in the 2 s save debounce lands in the
 // episode being left. False = a conflict stopped the save (saveProd shows it) and the caller must not go on (B-016, jadri47 2026-10-29, pick A).
+// Waits for a save already out, then saves again when the last one did not land ("unsaved", or "fail"/"quota": the text never reached
+// the database). True only when nothing is left unsaved; after a failure the status line says so and the caller keeps the text.
 async function flushProdSave() {
-  if (!G.prodId || G.saveState !== "unsaved" || (typeof DEMO !== "undefined" && DEMO)) return true;
+  if (!G.prodId || (typeof DEMO !== "undefined" && DEMO)) return true;
+  if (savingP) await savingP;
+  const s = G.saveState;
+  if (s !== "unsaved" && s !== "fail" && s !== "quota") return true;
   clearTimeout(saveTimer); await saveProd(false);
-  return !G.conflict;
+  return !G.conflict && String(G.saveState).startsWith("saved:");
 }
 // «Borrar todo» starts a new episode: nothing typed afterwards can land in the one being left (it stays in history with its status).
 // Same fields applyProd sets, back to the fresh values of G (jadri47, 2026-10-29: "A. start a new episode").
@@ -8040,7 +8103,7 @@ async function openProd(id) {
   const db = await caps.db;
   if (!db || !id) return;
   // (B-016, 2026-10-29) an edit made in the 2 s before switching sat in the save debounce and was lost: save the episode being left first
-  if (G.prodId && G.prodId !== id && G.saveState === "unsaved" && !(typeof DEMO !== "undefined" && DEMO)) { clearTimeout(saveTimer); await saveProd(false); }
+  if (G.prodId && G.prodId !== id && !(await flushProdSave())) return; // a conflict or a failed save keeps the episode being left on screen
   try {
     const snap = await db.collection("producciones").doc(id).get();
     if (!snap.exists) return;
@@ -8747,7 +8810,7 @@ function setMode(m) {
   G.mode = m === "guion" ? "guion" : "review";
   lsSet("sd-mode", G.mode);
   document.querySelector("main").dataset.mode = G.mode;
-  document.querySelectorAll(".modes [data-mode]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.mode === G.mode)));
+  document.querySelectorAll(".modes [data-mode]").forEach((b) => { if (b.dataset.mode === G.mode) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current"); });
   if (G.mode === "guion") { gRefresh(); loadProds(); }
   else if (state.result) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); renderResults(); }
   window.scrollTo({ top: 0 });
@@ -8758,7 +8821,7 @@ $("script").addEventListener("input", () => { if (G.prodId) markDirty(); });
 document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest("#results [data-gomode]"); if (a) { e.preventDefault(); setMode(a.dataset.gomode); } });
 function gOnLang() { if (G.mode === "guion") renderGuion(); }
 document.querySelector("main").dataset.mode = G.mode;
-document.querySelectorAll(".modes [data-mode]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.mode === G.mode)));
+document.querySelectorAll(".modes [data-mode]").forEach((b) => { if (b.dataset.mode === G.mode) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current"); });
 
 /* ===== Empaque · Shorts · Resultados ===== */
 Object.assign(T.es, {
@@ -9360,6 +9423,7 @@ async function aiFix(ci) {
   if (!it) { state.fixAi[c.id] = { error: t("fxAiVerse") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; } // a verse crosses the fragment's edge: it cannot be protected, so it is not sent
   try {
     const res = await sample.json(fixesPrompt([rpFixReq(it)], { en: R.lang === "en" }), { modelTier: "default" });
+    if ($("script").value !== text) { delete state.fixAi[c.id]; return; } // the script moved on while the answer was out (another card was applied): the cards were rebuilt, this answer belongs to the old ones
     const got = vetFixes(res, [it])[it.id] || [];
     if (!got.length) throw { code: "invalid_json" };
     state.fixAi[c.id] = {
@@ -9374,7 +9438,7 @@ async function aiFix(ci) {
     const rb = document.querySelector(`[data-fxai="${ci}"]`); if (rb) rb.disabled = false;
   }
   const box = $("fxai-" + ci);
-  if (box) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
+  if (box && state.fixCards[ci] && state.fixCards[ci].id === c.id) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
 }
 function wireAiOptions(root) {
   root.querySelectorAll("[data-fxaiuse]").forEach((b) => b.addEventListener("click", () => { const [ci, k] = b.dataset.fxaiuse.split(":").map(Number); const c = state.fixCards[ci]; applyProposal(state.fixAi[c.id].options[k], c); }));
@@ -14775,7 +14839,7 @@ function rpAct(act) {
   // (B-023, 2026-10-29) A new epoch stops a fix pump still running for the old report: its next batch would otherwise ask the NEW
   // report's fragments a second time (paid twice, pushed twice). Not while the report itself is busy: rpRun would return and the
   // in-flight answer would be orphaned.
-  if (act === "re") { if (!RP.busy) RP.epoch++; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
+  if (act === "re") { if (!RP.busy) RP.epoch++; RP.fix = null; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
   if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
   if (!cur) return;
