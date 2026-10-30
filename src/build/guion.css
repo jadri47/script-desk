@@ -7,7 +7,7 @@ main[data-mode="guion"] #editor, main[data-mode="guion"] #results, main[data-mod
 main[data-mode="review"] #guion{display:none}
 .modes{display:flex;gap:4px;margin:-8px 0 22px;border-bottom:1px solid var(--rule)}
 .modes button{border:0;border-radius:0;background:transparent;padding:10px 14px;font-weight:600;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px}
-.modes button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.modes button[aria-current="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 .g-empty{padding:28px 20px;border:1px dashed var(--rule);border-radius:14px;text-align:center;background:var(--sheet);display:flex;flex-direction:column;gap:12px;align-items:center}
 .g-empty p{margin:0;color:var(--ink-2)}
 .g-bar{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:var(--sheet);border:1px solid var(--rule);border-radius:14px}

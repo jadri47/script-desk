@@ -964,7 +964,7 @@ function setMode(m) {
   G.mode = m === "guion" ? "guion" : "review";
   lsSet("sd-mode", G.mode);
   document.querySelector("main").dataset.mode = G.mode;
-  document.querySelectorAll(".modes [data-mode]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.mode === G.mode)));
+  document.querySelectorAll(".modes [data-mode]").forEach((b) => { if (b.dataset.mode === G.mode) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current"); });
   if (G.mode === "guion") { gRefresh(); loadProds(); }
   else if (state.result) { state.text = $("script").value; state.opts = readOpts(); state.result = analyze(state.text, state.opts); renderResults(); }
   window.scrollTo({ top: 0 });
@@ -975,4 +975,4 @@ $("script").addEventListener("input", () => { if (G.prodId) markDirty(); });
 document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest("#results [data-gomode]"); if (a) { e.preventDefault(); setMode(a.dataset.gomode); } });
 function gOnLang() { if (G.mode === "guion") renderGuion(); }
 document.querySelector("main").dataset.mode = G.mode;
-document.querySelectorAll(".modes [data-mode]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.mode === G.mode)));
+document.querySelectorAll(".modes [data-mode]").forEach((b) => { if (b.dataset.mode === G.mode) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current"); });

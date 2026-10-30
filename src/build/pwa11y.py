@@ -83,6 +83,10 @@ async def main():
             await pg.evaluate("V.guided = false; lsSet('sd-expert','1'); applyView(); setMode('guion')"); await pg.wait_for_timeout(700)
             r = await pg.evaluate("({ tabs: document.querySelectorAll('#phBar [role=tab], #phBar[role=tablist]').length, cur: document.querySelectorAll('#phBar [aria-current=true]').length, btns: document.querySelectorAll('#phBar button').length })")
             ok(f"{n}: B-033 the section bar has no tab roles (no tabpanel behind them) and marks exactly one current button", r["tabs"] == 0 and r["cur"] == 1 and r["btns"] > 1, r)
+            r = await pg.evaluate("({ tabs: document.querySelectorAll('.modes [role=tab], .modes[role=tablist]').length, cur: [...document.querySelectorAll('.modes [aria-current=true]')].map((x) => x.dataset.mode), sel: document.querySelectorAll('.modes [aria-selected]').length })")
+            ok(f"{n}: B-033 the mode switch has no tab roles and marks the current mode", r["tabs"] == 0 and r["sel"] == 0 and r["cur"] == ["guion"], r)
+            await pg.evaluate("setMode('review')"); await pg.wait_for_timeout(200)
+            ok(f"{n}: and follows the switch", await pg.evaluate("[...document.querySelectorAll('.modes [aria-current=true]')].map((x) => x.dataset.mode).join() === 'review'"))
             ok(f"{n}: no page errors", not errs, errs)
             await pg.close()
         # ---- B-033: severity in words, the rail popover, the score popover, arrow keys

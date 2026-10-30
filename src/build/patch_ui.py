@@ -58,8 +58,8 @@ rep("""  </header>
       <div id="demoBar" class="demo-bar" role="status" hidden></div>
     </div>
   </header>
-  <nav class="modes" role="tablist" aria-label="Modo / Mode">
-    <button type="button" role="tab" data-mode="review" aria-selected="true" data-i18n="modeReview">Revisión</button><button type="button" role="tab" data-mode="guion" aria-selected="false" data-i18n="modeGuion">Guion y prompter</button>
+  <nav class="modes" aria-label="Modo / Mode">
+    <button type="button" data-mode="review" aria-current="true" data-i18n="modeReview">Revisión</button><button type="button" data-mode="guion" data-i18n="modeGuion">Guion y prompter</button>
   </nav>
   <div id="guideTop"></div>
 
