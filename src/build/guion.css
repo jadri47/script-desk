@@ -102,12 +102,12 @@ html.pp-open,html.pp-open body{overflow:hidden}
 .pp-col{margin:0 auto;font-family:var(--sans);font-weight:500;line-height:1.4;will-change:transform;white-space:pre-wrap;word-wrap:break-word}
 .pp-sec{margin-bottom:.5em}
 .pp-label{font-size:max(12px,.3em);font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--pp-dim);margin:.5em 0 .15em;line-height:1.2;white-space:normal}
-.pp-cue{font-size:.42em;font-weight:500;color:var(--pp-dim);border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.3em}
+.pp-cue{font-size:max(12px,.42em);font-weight:500;color:var(--pp-dim);border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.3em}
 .pp.no-cues .pp-cue:not(.pp-pause){display:none}
 .pp-pause{color:var(--pp-line)}
 .pp-clip{color:var(--pp-clip)}
-.pp-cliptag{font-size:.4em;letter-spacing:.08em;border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.35em}
-.pp-end{color:var(--pp-dim);font-size:.5em;padding:1.5em 0 70vh}
+.pp-cliptag{font-size:max(12px,.4em);letter-spacing:.08em;border:1px solid currentColor;border-radius:.3em;padding:0 .35em;vertical-align:.35em}
+.pp-end{color:var(--pp-dim);font-size:max(12px,.5em);padding:1.5em 0 70vh}
 .pp-line{position:absolute;left:0;right:0;top:28%;border-top:2px solid var(--pp-line);opacity:.5;pointer-events:none}
 .pp-line::before{content:"";position:absolute;left:6px;top:-9px;border-style:solid;border-width:8px 0 8px 12px;border-color:transparent transparent transparent var(--pp-line)}
 .pp-hint{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);background:var(--pp-panel);padding:14px 18px;border-radius:12px;text-align:center;pointer-events:none;font-size:18px;max-width:calc(100% - 32px)}
@@ -164,11 +164,11 @@ html.pp-open,html.pp-open body{overflow:hidden}
 @media (max-width:620px){.rs-stats{grid-template-columns:1fr}}
 .rc{margin:12px 0 4px}
 .rc-wrap{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:6px 4px 0;overflow-x:auto}
-.rc-in{position:relative;min-width:560px}
+.rc-in{position:relative;min-width:720px} /* the chart is drawn 720 wide: narrower and its 12px labels would shrink under 12px */
 .rc-wrap svg{display:block;width:100%;height:auto;aspect-ratio:720/260}
 .rc-grid{stroke:var(--rule-2);stroke-width:1}
-.rc-ax{fill:var(--ink-2);font:11px var(--sans);font-variant-numeric:tabular-nums}
-.rc-band{fill:var(--ink-2);font:600 11px var(--sans)}
+.rc-ax{fill:var(--ink-2);font:12px var(--sans);font-variant-numeric:tabular-nums}
+.rc-band{fill:var(--ink-2);font:600 12px var(--sans)}
 .rc-30{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;opacity:.6}
 .rc-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .rc-end{fill:var(--accent);stroke:var(--sheet);stroke-width:2}

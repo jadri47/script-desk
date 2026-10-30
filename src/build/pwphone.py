@@ -109,6 +109,16 @@ async def main():
             ok(f"{nm}: B-036 expert view: no visible text under 12 px", not small, small)
             ok(f"{nm}: expert view: no page errors", not errs, errs)
             await pg.close()
+        # ---- the retention chart is an SVG drawn 720 wide: its labels, as the eye sees them, stay at 12 px or more at every width
+        for (w, hh, nm) in [(1280, 800, "d"), (390, 844, "m")]:
+            pg, errs = await open_page(b, "es", {"width": w, "height": hh}, expert=True)
+            seen = await pg.evaluate("""() => {
+              const pts = Array.from({ length: 41 }, (_, i) => [i * 15, 100 - i * 1.2]), rows = [{ a: 0, b: 300, k: -1, type: 'cold', worst: false }, { a: 300, b: 600, k: 0, type: 'intro', worst: true }];
+              const wrap = document.createElement('div'); wrap.className = 'rc-wrap'; wrap.innerHTML = '<div class="rc-in">' + retChartHTML(pts, 600, rows) + '</div>'; document.body.appendChild(wrap);
+              const svg = wrap.querySelector('svg'), scale = svg.getBoundingClientRect().width / 720;
+              const r = [...svg.querySelectorAll('text')].map((x) => [x.textContent, +(parseFloat(getComputedStyle(x).fontSize) * scale).toFixed(1)]); wrap.remove(); return { scale: +scale.toFixed(2), r }; }""")
+            ok(f"{nm}: B-035 retention chart labels are 12 px or more as drawn", seen["r"] and all(px >= 11.95 for _, px in seen["r"]), seen)
+            await pg.close()
         await b.close()
     print("FAILS:", fails if fails else "none")
     raise SystemExit(1 if fails else 0)

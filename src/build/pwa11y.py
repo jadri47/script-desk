@@ -60,6 +60,9 @@ async def main():
             bad = await pg.evaluate(NAME, await pg.query_selector("#pp"))
             ok(f"{n}: B-021 every prompter button has an accessible name made of words", not bad, bad)
             ok(f"{n}: B-021 the play button has a name", bool(await pg.evaluate("$('ppPlay').getAttribute('aria-label')")))
+            # smallest prompter letter size (20 px): the cue tags and the end line stay at 12 px or more (they are em-based)
+            small = await pg.evaluate("(() => { PP.font = 20; ppApplyLook(); const col = $('ppCol'), box = document.createElement('div'); box.innerHTML = '<span class=\"pp-cue\">TEXTO</span><span class=\"pp-cliptag\">CLIP</span><div class=\"pp-end\">FIN</div>'; col.appendChild(box); const r = [...box.children].map((x) => [x.className, parseFloat(getComputedStyle(x).fontSize)]); box.remove(); return r; })()")
+            ok(f"{n}: B-035 prompter cue tags and end line are at least 12 px at the smallest letter size", all(px >= 12 for _, px in small), small)
             await pg.keyboard.press("Escape"); await pg.wait_for_timeout(300)
             # ---- dialogs have a name that resolves to their heading
             await pg.evaluate("openEpSheet()"); await pg.wait_for_timeout(400)
