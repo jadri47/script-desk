@@ -81,6 +81,20 @@ async def run(b, ui):
     ok(f"{ui}: after «Borrar todo» the editor is a new episode and the old one kept its last edit and its status", st["id"] is None and st["status"] == "borrador" and st["text"] == "" and st["b"].endswith("Más.") and st["bst"] == "aprobado", st)
     await pg.evaluate("$('script').value = 'Texto nuevo tras borrar'; markDirty()"); await pg.wait_for_timeout(2600)
     ok(f"{ui}: text typed after «Borrar todo» does not land in the old episode", await pg.evaluate("window.__rows['producciones/b'].data.text.endsWith('Más.')"), await pg.evaluate("window.__rows['producciones/b'].data.text.slice(-40)"))
+    # 6c. «Borrar todo» never empties text that has not reached the database (independent review, 2026-10-30): a save already out is waited for, and after a failed save the text stays
+    await pg.evaluate("window.__rows['producciones/b'].data.text = 'viejo'; openProd('b')"); await pg.wait_for_timeout(500)
+    r = await pg.evaluate("""(async () => { const base = await caps.db, slow = { ...base, collection: (c) => { const q = base.collection(c); return { ...q, doc: (id) => { const d = q.doc(id); return { ...d, get: async () => { await new Promise((x) => setTimeout(x, 400)); return d.get(); } }; } }; } };
+      caps.db = Promise.resolve(slow); $('script').value = 'TEXTO EN VUELO'; markDirty(); saveProd(false); await new Promise((x) => setTimeout(x, 80)); const inFlight = G.saveState; const flushed = await flushProdSave(); doClearScript(); await new Promise((x) => setTimeout(x, 800)); caps.db = Promise.resolve(base); return { inFlight, flushed, row: window.__rows['producciones/b'].data.text, ed: $('script').value, id: G.prodId }; })()""")
+    ok(f"{ui}: a save in flight finishes before «Borrar todo» empties the editor (the old episode keeps the typed text, not a blank)", r["inFlight"] == "saving" and r["flushed"] is True and r["row"] == "TEXTO EN VUELO" and r["ed"] == "" and r["id"] is None, r)
+    await pg.evaluate("openProd('b')"); await pg.wait_for_timeout(500)
+    await pg.evaluate("window.__SB_MODE = 'stranger'; $('script').value = 'NO LLEGO A LA NUBE'; markDirty()"); await pg.evaluate("saveProd(true)"); await pg.wait_for_timeout(500)
+    ok(f"{ui}: the refused save says so", await pg.evaluate("G.saveState") == "fail", await pg.evaluate("G.saveState"))
+    await pg.evaluate("$('clearBtn').click()"); await pg.wait_for_timeout(300); await pg.evaluate("$('clrYes').click()"); await pg.wait_for_timeout(900)
+    st = await pg.evaluate("({ ed: $('script').value, id: G.prodId, save: G.saveState })")
+    ok(f"{ui}: after a failed save «Borrar todo» keeps the text and the episode (nothing is thrown away that the cloud does not have)", st["ed"] == "NO LLEGO A LA NUBE" and st["id"] == "b", st)
+    await pg.evaluate("window.__SB_MODE = 'member'"); r = await pg.evaluate("(async () => ({ ok: await flushProdSave(), row: window.__rows['producciones/b'].data.text }))()")
+    ok(f"{ui}: once the cloud answers again the same text is saved", r["ok"] is True and r["row"] == "NO LLEGO A LA NUBE", r)
+    await pg.evaluate("doClearScript()")
     # 7. blocked storage (private mode): the editor must not claim the draft is saved on this device (B-020). Last: storage stays blocked.
     await pg.evaluate("(() => { Storage.prototype.setItem = function () { throw new Error('blocked'); }; G.prodId = null; $('script').value = 'Texto sin episodio'; afterChange(); })()")
     await pg.wait_for_timeout(300)

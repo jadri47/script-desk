@@ -191,15 +191,23 @@ async function createProd() {
     return true;
   } catch (e) { setSave(e && e.code === "quota_exceeded" ? "quota" : "fail"); return false; }
 }
-async function saveProd(force) {
+// The save in flight, so «Borrar todo» / «Abrir» wait for it instead of emptying the editor under it (jadri47, 2026-10-30).
+let savingP = null;
+function saveProd(force) {
+  const run = saveProdNow(force);
+  savingP = run; run.then(() => { if (savingP === run) savingP = null; });
+  return run;
+}
+async function saveProdNow(force) {
   const db = await caps.db;
   if (!db || !G.prodId) return;
-  const ref = db.collection("producciones").doc(G.prodId);
+  const id = G.prodId, ref = db.collection("producciones").doc(id);
   setSave("saving");
   try {
     if (!force) {
       const snap = await ref.get();
       const d = snap.exists ? snap.data() : null;
+      if (G.prodId !== id) return; // another episode (or a new one) took the editor while the check was out: this body is not that episode's
       if (d && d.updatedAt > G.loadedAt && d.updatedBy !== G.sid) { G.conflict = d; setSave("unsaved"); renderGuion(); return; }
     }
     const now = Date.now();
@@ -234,10 +242,15 @@ function applyProd(id, d) {
 }
 // Before the editor is emptied or replaced (Borrar todo, the sample, a history version): what sits in the 2 s save debounce lands in the
 // episode being left. False = a conflict stopped the save (saveProd shows it) and the caller must not go on (B-016, jadri47 2026-10-29, pick A).
+// Waits for a save already out, then saves again when the last one did not land ("unsaved", or "fail"/"quota": the text never reached
+// the database). True only when nothing is left unsaved; after a failure the status line says so and the caller keeps the text.
 async function flushProdSave() {
-  if (!G.prodId || G.saveState !== "unsaved" || (typeof DEMO !== "undefined" && DEMO)) return true;
+  if (!G.prodId || (typeof DEMO !== "undefined" && DEMO)) return true;
+  if (savingP) await savingP;
+  const s = G.saveState;
+  if (s !== "unsaved" && s !== "fail" && s !== "quota") return true;
   clearTimeout(saveTimer); await saveProd(false);
-  return !G.conflict;
+  return !G.conflict && String(G.saveState).startsWith("saved:");
 }
 // «Borrar todo» starts a new episode: nothing typed afterwards can land in the one being left (it stays in history with its status).
 // Same fields applyProd sets, back to the fresh values of G (jadri47, 2026-10-29: "A. start a new episode").
@@ -257,7 +270,7 @@ async function openProd(id) {
   const db = await caps.db;
   if (!db || !id) return;
   // (B-016, 2026-10-29) an edit made in the 2 s before switching sat in the save debounce and was lost: save the episode being left first
-  if (G.prodId && G.prodId !== id && G.saveState === "unsaved" && !(typeof DEMO !== "undefined" && DEMO)) { clearTimeout(saveTimer); await saveProd(false); }
+  if (G.prodId && G.prodId !== id && !(await flushProdSave())) return; // a conflict or a failed save keeps the episode being left on screen
   try {
     const snap = await db.collection("producciones").doc(id).get();
     if (!snap.exists) return;
