@@ -292,6 +292,7 @@ async function aiFix(ci) {
   if (!it) { state.fixAi[c.id] = { error: t("fxAiVerse") }; $("fxai-" + ci).innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); return; } // a verse crosses the fragment's edge: it cannot be protected, so it is not sent
   try {
     const res = await sample.json(fixesPrompt([rpFixReq(it)], { en: R.lang === "en" }), { modelTier: "default" });
+    if ($("script").value !== text) { delete state.fixAi[c.id]; return; } // the script moved on while the answer was out (another card was applied): the cards were rebuilt, this answer belongs to the old ones
     const got = vetFixes(res, [it])[it.id] || [];
     if (!got.length) throw { code: "invalid_json" };
     state.fixAi[c.id] = {
@@ -306,7 +307,7 @@ async function aiFix(ci) {
     const rb = document.querySelector(`[data-fxai="${ci}"]`); if (rb) rb.disabled = false;
   }
   const box = $("fxai-" + ci);
-  if (box) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
+  if (box && state.fixCards[ci] && state.fixCards[ci].id === c.id) { box.innerHTML = aiOptionsHTML(ci, state.fixAi[c.id]); wireAiOptions(box); }
 }
 function wireAiOptions(root) {
   root.querySelectorAll("[data-fxaiuse]").forEach((b) => b.addEventListener("click", () => { const [ci, k] = b.dataset.fxaiuse.split(":").map(Number); const c = state.fixCards[ci]; applyProposal(state.fixAi[c.id].options[k], c); }));

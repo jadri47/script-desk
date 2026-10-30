@@ -132,6 +132,13 @@ async def main():
                 await pg.evaluate(f"aiFix({idx})"); await pg.wait_for_timeout(600)
                 after = await pg.evaluate(CALLS)
                 ok(f"{n}: with an old report the button calls as before", after["button"] == before["button"] + 1, (before, after))
+                # the script moves on while the button's answer is out (another card was applied): the late answer is dropped, not drawn in a rebuilt card (independent review, 2026-10-30)
+                await pg.evaluate("window.__delay = 800")
+                cid = await pg.evaluate(f"state.fixCards[{idx}].id")
+                await pg.evaluate("(id) => { delete state.fixAi[id]; }", cid)
+                await pg.evaluate(f"(() => {{ aiFix({idx}); }})()"); await pg.evaluate("$('script').value = $('script').value + ' Otra frase.'")  # not awaited: the answer is still out when the text changes
+                await pg.wait_for_timeout(1400); await pg.evaluate("window.__delay = 200")
+                ok(f"{n}: a button answer that arrives after the script changed is dropped", await pg.evaluate("(id) => !state.fixAi[id]", cid), [await pg.evaluate(CALLS), await pg.evaluate("(id) => JSON.stringify(state.fixAi[id] || null).slice(0, 60)", cid), await pg.evaluate("[state.text === $('script').value]")])
                 # garbage in a stored report is cleaned
                 cl = await pg.evaluate("rpClean({ at: 'x', key: 'k', areas: {}, items: [], fixes: [null, { id: 'p', orig: 'o', options: [{ text: ' a ' }, { text: 5 }, null, { text: 'b' }, { text: 'c' }] }, { id: '', orig: 'o', options: [{ text: 'z' }] }, { id: 'q', orig: 'o', options: [] }, 'x'] })")
                 ok(f"{n}: stored fixes are cleaned (strings only, at most 2 options, empty ones dropped)", cl and len(cl["fixes"]) == 1 and [o["text"] for o in cl["fixes"][0]["options"]] == ["a", "b"], cl and cl["fixes"])
@@ -193,6 +200,7 @@ async def main():
             await pg.click("#runBtn")
             await pg.wait_for_function("RP.fix && RP.fix.run && RP.fix.done === 0", timeout=20000)  # the first batch is in flight (the mock records a call only when its delay ends)
             await pg.evaluate("rpAct('re')")
+            ok(f"{ui} re-measure: the old pump's state is dropped at once (a stuck run:true would hold back the coach's automatic suggestions)", await pg.evaluate("RP.fix === null"), await pg.evaluate("JSON.stringify(RP.fix && { run: RP.fix.run })"))
             await pg.wait_for_timeout(1000)
             await pg.wait_for_function(PUMPED, timeout=30000); await pg.wait_for_timeout(1500)
             tot = await pg.evaluate("RP.fix.total"); c = await pg.evaluate(CALLS); nb = -(-tot // BATCH)
