@@ -367,7 +367,8 @@ function buildFixCards(text, R, opts, failed, max = 3, cap = 4) {
       const off = R.msg.offscreen.slice(0, cap);
       card.evidence = off.map((x) => ({ start: x.ref.start, end: Math.min(x.quote.end, x.ref.end + 160), t: R.timeAt(x.ref.start), marks: [[x.ref.start, x.ref.end]] }));
       const seen = new Set(), ps = [];
-      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[TEXTO: ${x.ref.canonical}]\n` }); }
+      // (jadri47, 2026-10-30) the cue tag follows the language, as the editor button's does (edCueTag): the English UI never writes a Spanish word into the script
+      for (const x of off) { if (seen.has(x.paraStart)) continue; seen.add(x.paraStart); ps.push({ start: x.paraStart, end: x.paraStart, rep: `[${en ? "TEXT" : "TEXTO"}: ${x.ref.canonical}]\n` }); }
       if (ps.length) card.proposals.push({ kind: "patch", label: L("Añadir la señal para el editor", "Add the cue for the editor"), patches: ps });
     } else if (row.id === "reading" && R.msg) {
       card.evidence = R.msg.longReads.slice(0, cap2).map((q) => ({ start: q.start, end: Math.min(q.end, q.start + 220), t: R.timeAt(q.start), marks: [] }));

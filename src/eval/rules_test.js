@@ -69,5 +69,14 @@ const base = "Hoy vamos a hablar de la fe en medio de la tormenta y de cómo Dio
   const { cards } = run(`Bienvenidos de nuevo a este canal de enseñanza bíblica cada semana. Hoy vas a descubrir cómo Dios te sostiene en la ansiedad. Empecemos con una historia que conoces bien de la Biblia.`, { bigIdea: "La paz de Cristo guarda tu corazón" });
   ok("bigidea: «La idea de hoy es esta» goes after the promise sentence", texts(cards, "bigidea").some((x) => x.includes("en la ansiedad. La idea de hoy es esta: La paz de Cristo guarda tu corazón.")), texts(cards, "bigidea"));
 }
+{ // the cue added for a passage read aloud follows the interface language (B-021 leftover, 2026-10-30)
+  const verse = "“And we know that all things work together for good to them that love God, to them who are the called according to his purpose”";
+  const es = "«Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su propósito son llamados»";
+  const en = run(`Today we talk about hope in hard times. Paul writes in Romans 8:28: ${verse} and that is the whole promise.`, { uiLang: "en", lang: "en" });
+  const sp = run(`Hoy hablamos de la esperanza en tiempos difíciles. Pablo escribe en Romanos 8:28: ${es} y esa es toda la promesa.`);
+  const rep = (r) => (r.cards.find((c) => c.id === "onscreen") || { proposals: [] }).proposals.flatMap((p) => p.patches || []).map((x) => x.rep);
+  ok("onscreen cue, English UI: [TEXT: …]", rep(en).length > 0 && rep(en).every((x) => x.startsWith("[TEXT: ")), rep(en));
+  ok("onscreen cue, Spanish UI: [TEXTO: …]", rep(sp).length > 0 && rep(sp).every((x) => x.startsWith("[TEXTO: ")), rep(sp));
+}
 console.log(fails ? `FAILS: ${fails}` : "ALL PASS");
 process.exit(fails ? 1 : 0);
