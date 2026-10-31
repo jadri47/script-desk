@@ -52,6 +52,10 @@ function bibleRule(v: string): string {
     "Si no estás seguro del texto exacto en esa versión, escribe solo la referencia entre corchetes, por ejemplo [Mateo 6:34], para que el autor copie el versículo.";
 }
 const MAX_TOKENS: Record<string, number> = { complex: 16000, default: 2500 };
+// (Adrian, 2026-10-30: "A", B-044) Sonnet 5.5 thinks at effort "high" unless told otherwise and on a weak script spent the whole 16,000-token
+// cap thinking, writing nothing (112 s and 138 s, answer cut, $0.17). The report is an editor's judgement, not a proof: "medium" for the
+// complex tier only. The default tier keeps the model's own default.
+const EFFORT: Record<string, string> = { complex: "medium" };
 const SYSTEM =
   "Eres el asistente de Script Desk, una herramienta para revisar guiones de un pódcast cristiano de enseñanza bíblica en YouTube. " +
   "Quien escribe es un pastor que predica con regularidad y conoce bien la Biblia: no le enseñes teología ni evalúes su doctrina. " +
@@ -114,7 +118,7 @@ Deno.serve(async (req) => {
     r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: MAX_TOKENS[tier], system, messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model, max_tokens: MAX_TOKENS[tier], system, messages: [{ role: "user", content: prompt }], ...(EFFORT[tier] ? { output_config: { effort: EFFORT[tier] } } : {}) }),
     });
   } catch {
     return json({ code: "upstream" }, 502);
