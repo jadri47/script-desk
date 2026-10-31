@@ -4,6 +4,10 @@
 // hook, promise, retention, spoken voice, close and the return viewer need an editor's judgement. Scripture is masked as
 // ⟦Vn⟧ before the AI sees it (same masker as polish_logic.js) and every answer is checked here; nothing depends on the AI behaving.
 const REPORT_MAX_ITEMS = 7;
+// (jadri47, 2026-10-30: "fix b-044, fewer items on weak scripts") On a script the rules score under REPORT_WEAK_BELOW the real model
+// spent the whole 16,000-token output cap deliberating over a long list (112 s, answer cut). Fewer changes on those: the worst problems first.
+const REPORT_MAX_ITEMS_WEAK = 4, REPORT_WEAK_BELOW = 60;
+const reportItemCap = (R) => (R && scoreOf(R, new Set()).score < REPORT_WEAK_BELOW ? REPORT_MAX_ITEMS_WEAK : REPORT_MAX_ITEMS);
 // (jadri47, 2026-10-25: "Provide synonyms or alternatives to problematic words when suggesting changes"; picked A: the same call
 // returns them, each one checked here.) Up to 2 other ways to write each change, up to 3 replacements for each flagged word.
 const REPORT_MAX_ALTS = 2, REPORT_MAX_WORD_ALTS = 3;
@@ -15,15 +19,15 @@ const REPORT_MAX_FIXES = 12, REPORT_MAX_FIX_OPTS = 2, REPORT_FIX_BATCH = 6;
 
 function reportPrompt(text, R, opts) {
   opts = opts || {};
-  const en = R.lang === "en";
+  const en = R.lang === "en", cap = reportItemCap(R);
   const spans = verseSpans(text, R), mk = maskVerses(text, spans, 0, text.length);
   const risk = [...new Set((R.riskHits || []).map((x) => x.text))].map((x) => `«${x}»`).join(", ") || "—";
   const mins = Math.round((R.runtimeSec || 0) / 60);
   const kw = (opts.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "—";
   const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "voice": {...}, "close": {...}, "return": {...}}, "items": [{"area": "hook", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const brief = en
-    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${REPORT_MAX_ITEMS} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. Keep every "why" to one sentence of at most 20 words. The script is in English: write every "why" and "replacement" in English.`
-    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${REPORT_MAX_ITEMS} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. Cada "why" es una sola frase de 20 palabras como máximo. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis and doctrine are not touched, nor are his quotations. Rate from 1 to 5 how the script works for someone watching alone on a phone who has never been to church: the hook in the first 30 seconds, the promise, retention (open questions, re-hooks, nothing dead in the middle), spoken voice (not an essay read aloud), the close and a reason to come back. Propose at most ${cap} changes, only the ones that raise those ratings most; each copies the exact original text and replaces it in the author's own voice. If something already works, do not change it. Keep every "why" to one sentence of at most 20 words. The script is in English: write every "why" and "replacement" in English.`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis y su doctrina no se tocan, ni sus citas. Valora del 1 al 5 cómo funciona el guion para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: gancho de los primeros 30 s, promesa, retención (preguntas abiertas, re-enganches, nada muerto en el medio), voz hablada (no un ensayo leído), cierre y razón para volver. Propón como máximo ${cap} cambios, solo los que más suben esa valoración; cada uno copia el texto original exacto y lo reemplaza con la misma voz del autor. Si algo ya funciona, no lo cambies. Cada "why" es una sola frase de 20 palabras como máximo. El guion está en español neutro (ustedes, sin vosotros ni voseo): escribe cada "why" y "replacement" en español.`;
   const facts = en
     ? `FACTS FROM THE RULES (do not contradict them): sensitive terms found (YouTube can limit ads for them; do not add new ones): ${risk}. Do not change them inside "items". In "words" give, for each of them, up to ${REPORT_MAX_WORD_ALTS} alternatives: plain words that state the same fact without the term YouTube flags, in the same grammatical form (gender, number, tense) so they drop into the same sentence, without softening what the text says happened: the same who, to whom and what happened. Estimated runtime: ${mins} min. Target keyword: ${kw}.`
     : `DATOS DE LAS REGLAS (no los contradigas): términos sensibles encontrados (YouTube puede limitar los anuncios por ellos; no añadas otros): ${risk}. No los cambies dentro de "items". En "words" da, para cada uno, hasta ${REPORT_MAX_WORD_ALTS} alternativas: palabras sencillas que dicen el mismo hecho sin el término que YouTube marca, en la misma forma gramatical (género, número, tiempo) para que encajen en la misma frase, sin suavizar lo que el texto dice que pasó: el mismo quién, a quién y qué pasó. Duración estimada: ${mins} min. Palabra clave: ${kw}.`;
@@ -75,7 +79,7 @@ function vetReport(text, json, opts, R) {
     return check;
   };
   for (const it of list) {
-    if (items.length >= REPORT_MAX_ITEMS) break;
+    if (items.length >= reportItemCap(R)) break;
     if (!it || !REPORT_AREAS.includes(it.area)) continue;
     let o = typeof it.original === "string" ? it.original : "";
     const c = typeof it.replacement === "string" ? it.replacement : "";

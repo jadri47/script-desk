@@ -317,5 +317,19 @@ ${mk.masked}
   ok("refs: a replacement that removes the reference is dropped", v4.items.length === 0);
 }
 
+// ---- B-044 (jadri47, 2026-10-30): a weak script gets a shorter list so the real model's answer is not cut
+{
+  const W = ex.es.worst, OW = opts(W, "es"), RW = L.analyze(W.text, OW), G = ex.es.best, OG = opts(G, "es"), RG = L.analyze(G.text, OG);
+  ok("cap: a script the rules score low gets the short list, a good one the full list", L.reportItemCap(RW) === 4 && L.reportItemCap(RG) === 7, [L.reportItemCap(RW), L.reportItemCap(RG)]);
+  ok("cap: the prompt says so, in both languages", /como máximo 4 cambios/.test(L.reportPrompt(W.text, RW, OW)) && /como máximo 7 cambios/.test(L.reportPrompt(G.text, RG, OG)));
+  const EW = ex.en.worst, REW = L.analyze(EW.text, opts(EW, "en"));
+  ok("cap: English too", /at most 4 changes/.test(L.reportPrompt(EW.text, REW, opts(EW, "en"))));
+  // the answer is cut to the cap even when the model sends more
+  const many = (text) => (text.match(/[^.!?\n]{40,160}[.!?]/g) || []).map((x) => x.trim()).filter((x) => text.indexOf(x) === text.lastIndexOf(x));
+  const mk = (text, R, o) => L.vetReport(text, { areas: {}, items: many(text).slice(0, 30).map((x) => ({ area: "voice", original: x, replacement: x + " Mira esto.", why: "x", after: 4 })) }, o, R).items.length;
+  const nw = mk(W.text, RW, OW), ng = mk(G.text, RG, OG);
+  ok("cap: a weak script keeps at most 4 vetted items, a good one still gets more than 4", nw === 4 && ng > 4 && ng <= 7, [nw, ng]);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);
