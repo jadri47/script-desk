@@ -965,7 +965,7 @@ function ppFinishRehearsal() {
     if (!state.kCalibrated) state.k = state.kReh;
     const db = await caps.db;
     let paceFail = false;
-    if (db) { try { await db.doc("ajustes/ritmo").set({ k: state.kReh, n: (state.kRehN || 0) + 1, updatedAt: Date.now() }); state.kRehN = (state.kRehN || 0) + 1; } catch (e) { paceFail = true; } }
+    if (db) { try { await db.doc(paceDocPath()).set({ k: state.kReh, n: (state.kRehN || 0) + 1, updatedAt: Date.now() }); state.kRehN = (state.kRehN || 0) + 1; } catch (e) { paceFail = true; } }
     updateLive();
     $("rehMsg").textContent = paceFail ? t("rehNotSaved") : t("rehApplied");
   });

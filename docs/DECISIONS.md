@@ -1,5 +1,20 @@
 # Decisions (newest first)
 
+## 2026-11-01: Juan joins; team review (Adrian: "the computer version is critical", "I would like to be able to see Juan's finished texts, but not mess with them", "the idea is to support Juan in the review of his episodes", "do B")
+- Priority: desktop first; the phone is a nice-to-have until Juan is using it (step 9 phone checklist parked).
+- Juan added to `sd_team` (`juannaffzigersanchez@gmail.com`, «Juan»), read back.
+- Before: `sd_docs` let any member read, overwrite and delete every row, and «Mis episodios» mixed both people's episodes.
+- **B** picked over A (read only, no notes) and C (shared editing, rejected: "not mess with them"). Every member reads every
+  document; only its author writes or deletes it (server trigger stamps `owner`/`owner_email`; RLS on update/delete/insert).
+  «Mis episodios» = my rows; «Episodios del equipo» = the others', «Ver» opens a read-only sheet (never loaded into the editor).
+  Notes = collection `notas`, one row per note owned by its author (`prodId`, `para` 0 = general, `quote`, `text`, `at`); the
+  author of the episode ticks «Hecho», stored as `teamNotesDone` (ids) in their own episode. «Abrir una copia» = a new episode
+  of mine. Backups, logged episodes, versions and the pace calibration use only my own rows; the pace is one doc per person.
+- Defaults taken (Adrian approved the plan with them): drafts are visible too (support before recording); symmetric (Juan sees
+  Adrian's the same way); no note editing (delete + write again); no alert beyond the count chip.
+- Migration `supabase/migrations/20261101_sd_docs_owner.sql`, written while `sd_docs` had 0 rows; applying it to the live
+  project needs Adrian's yes (the tool's guard refused it). The client reads the new columns, so the site deploys only after it.
+
 ## 2026-10-29 (later): the bug review's open letters (Adrian: "Ask me the questions"; then the picks below, "Approve all as proposed", "Deploy sd-ai, Push, Step 8 paid calls, Step 7 Firefox/WebKit + perf", "Yes, remove both" worktrees, "Fix the decided bugs")
 - B-003 **A**: the decision log's «a → b» row is the pill's readiness (`rpNowScore`), not the old internal score; without a whole report the row hides. B drop and C keep rejected.
 - B-004 **B**: a cut report has no score out of 100 until «Medir de nuevo»; the pill shows «Anuncios y empaque r/40 · informe incompleto». A (scale the rated areas) rejected: an invented number; C rejected: a drop of up to 10 per missing area.

@@ -1650,8 +1650,10 @@ async function loadHistory() {
   if (!db) { state.historyError = "needs"; renderHistory(); return; }
   try {
     const [g, e] = await Promise.all([db.collection("guiones").orderBy("createdAt", "desc").limit(30).get(), db.collection("episodios").orderBy("createdAt", "desc").limit(60).get()]);
-    state.saved = g.docs.map((d) => ({ id: d.id, ...d.data() }));
-    state.episodes = e.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // Team review (Adrian, 2026-11-01: "B"): my own versions and logged episodes only; the reading pace is calibrated on my voice.
+    const mine = (d) => typeof tmMine !== "function" || tmMine(d.owner);
+    state.saved = g.docs.filter(mine).map((d) => ({ id: d.id, ...d.data() }));
+    state.episodes = e.docs.filter(mine).map((d) => ({ id: d.id, ...d.data() }));
     state.historyError = null; state.historyReady = true;
   } catch (err) { state.historyError = "read"; }
   calibrate();

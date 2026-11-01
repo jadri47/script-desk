@@ -14,20 +14,21 @@
       const session = data && data.session;
       if (!session) return { session: null, member: false };
       const r = await sb.rpc("sd_is_member");
-      return { session, email: session.user && session.user.email, member: r.data === true, error: r.error || null };
+      return { session, email: session.user && session.user.email, uid: (session.user && session.user.id) || null, member: r.data === true, error: r.error || null };
     } catch (e) { return { session: null, member: false, error: e }; }
   })();
 
   const clone = (x) => JSON.parse(JSON.stringify(x));
   const uid = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "").slice(0, 20) : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
   const dbErr = (e) => { const x = new Error((e && e.message) || "db"); x.code = e && /quota|exceed|limit/i.test(e.message || "") ? "quota_exceeded" : "db_error"; return x; };
-  const snap = (id, d) => ({ id, exists: !!d, data: () => (d ? clone(d) : undefined) });
+  // owner / ownerEmail: who wrote the row (set by the server trigger, never by the client). Team review (Adrian, 2026-11-01: "B").
+  const snap = (id, d, row) => ({ id, exists: !!d, owner: (row && row.owner) || null, ownerEmail: (row && row.owner_email) || null, data: () => (d ? clone(d) : undefined) });
 
   function makeDb() {
     const T = () => sb.from("sd_docs");
     const docRef = (c, id) => ({
       id,
-      get: async () => { const { data, error } = await T().select("data").eq("collection", c).eq("id", id).maybeSingle(); if (error) throw dbErr(error); return snap(id, data && data.data); },
+      get: async () => { const { data, error } = await T().select("data,owner,owner_email").eq("collection", c).eq("id", id).maybeSingle(); if (error) throw dbErr(error); return snap(id, data && data.data, data); },
       set: async (d) => { const { error } = await T().upsert({ collection: c, id, data: clone(d), updated_at: new Date().toISOString() }); if (error) throw dbErr(error); },
       update: async (d) => { const { error } = await sb.rpc("sd_merge", { p_collection: c, p_id: id, p_patch: clone(d) }); if (error) throw dbErr(error); },
       delete: async () => { const { error } = await T().delete().eq("collection", c).eq("id", id); if (error) throw dbErr(error); },
@@ -37,14 +38,14 @@
       orderBy: (k, dir) => query(c, f, [k, dir], lim),
       limit: (n) => query(c, f, ord, n),
       get: async () => {
-        let q = T().select("id,data").eq("collection", c);
+        let q = T().select("id,data,owner,owner_email").eq("collection", c);
         for (const [k, v] of f) q = q.eq("data->>" + k, String(v));
         const { data, error } = await q.limit(1000);
         if (error) throw dbErr(error);
-        let docs = (data || []).map((r) => [r.id, r.data]);
+        let docs = (data || []).map((r) => [r.id, r.data, r]);
         if (ord) docs.sort((a, b) => (ord[1] === "desc" ? -1 : 1) * ((a[1][ord[0]] || 0) > (b[1][ord[0]] || 0) ? 1 : -1));
         docs = docs.slice(0, lim);
-        return { docs: docs.map(([id, d]) => snap(id, d)), size: docs.length, empty: !docs.length };
+        return { docs: docs.map(([id, d, r]) => snap(id, d, r)), size: docs.length, empty: !docs.length };
       },
     });
     return {

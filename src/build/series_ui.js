@@ -151,15 +151,19 @@ function renderSeries(cid) {
 }
 
 // ---------- backup ----------
-const BK_COLS = ["producciones", "instantaneas", "episodios", "guiones"];
+const BK_COLS = ["producciones", "instantaneas", "episodios", "guiones", "notas"];
+// Team review (Adrian, 2026-11-01: "B"): a backup holds only my own documents (the others' are theirs to back up, and a restore
+// could not write them anyway); the rehearsal pace is one document per person. Without team_ui (artifact) everything is mine.
+const bkMine = (d) => typeof tmMine !== "function" || tmMine(d.owner);
+function paceDocPath() { return (typeof PACE_DOC_TEAM === "string" && PACE_DOC_TEAM) || "ajustes/ritmo"; }
 async function exportAll(msg) {
   const db = await caps.db, dl = await caps.downloads;
   if (!db || !dl) { msg.textContent = t("downloadNeeds"); return; }
   msg.textContent = t("bkWorking");
   try {
     const out = { app: "Script Desk", version: 1, exportedAt: new Date().toISOString(), collections: {}, docs: {} };
-    for (const c of BK_COLS) { const q = await db.collection(c).limit(1000).get(); out.collections[c] = q.docs.map((d) => ({ id: d.id, data: d.data() })); }
-    const r = await db.doc("ajustes/ritmo").get();
+    for (const c of BK_COLS) { const q = await db.collection(c).limit(1000).get(); out.collections[c] = q.docs.filter(bkMine).map((d) => ({ id: d.id, data: d.data() })); }
+    const r = await db.doc(paceDocPath()).get();
     if (r.exists) out.docs["ajustes/ritmo"] = r.data();
     await dl.save({ filename: `script-desk-${UI === "en" ? "backup" : "respaldo"}-${isoToday()}.json`, data: JSON.stringify(out, null, 1) });
     msg.textContent = t("bkSaved");
@@ -172,7 +176,7 @@ async function restoreAll(data, msg, box) {
   msg.textContent = t("bkWorking");
   try {
     for (const c of BK_COLS) for (const d of (data.collections && data.collections[c]) || []) { if (d && d.id && d.data) { await db.collection(c).doc(String(d.id)).set(d.data); n++; } }
-    for (const [path, body] of Object.entries(data.docs || {})) if (path === "ajustes/ritmo" && body) { await db.doc(path).set(body); n++; }
+    for (const [path, body] of Object.entries(data.docs || {})) if (path === "ajustes/ritmo" && body) { await db.doc(paceDocPath()).set(body); n++; }
     msg.textContent = t("bkDone")(n);
     box.innerHTML = "";
     await loadProds(); loadHistory();

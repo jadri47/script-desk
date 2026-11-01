@@ -46,6 +46,11 @@ Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/si
   (`rpRulesPartial`, pwai); the decision log's «a → b» is the pill's readiness (`rpNowScore`); the red cap and the sum live in
   `READY_RED_CAP` / `readyTotal`; one `err` table in base.html (every code has a sentence, pwerr); «Borrar todo» and history «Abrir»
   start a new episode after `flushProdSave` (`startNewProd`, `confirmSheet`; pwerr, pwep).
+- Team review (2026-11-01, B; `team_ui.js`, standalone only): every member reads every `sd_docs` row, only its owner writes or
+  deletes it (server trigger `sd_docs_stamp` sets `owner`/`owner_email`; migration in `supabase/migrations/`). «Mis episodios»
+  = own rows (`tmMine`), «Episodios del equipo» = the rest, «Ver» is read only and never goes through `applyProd`. Notes =
+  `notas` rows owned by their author; the episode's author ticks them in `teamNotesDone` (own row). Backups, history and the
+  pace (`paceDocPath`) are per person. Pinned by `pwteam` (two users on the mock).
 - AI status (`aistatus_ui.js`): every AI call goes through one wrapper on `caps.sample` (a getter/setter, so later assignments and test mocks are wrapped too). A new AI feature needs nothing to show the bubble; pass `aiLabel`/`aiRetry` only for a name or a retry button (they never reach the connection). While the report runs the verdict says «Esperando el informe del editor», never «Listo para grabar».
 - Old score v2 (`scoreOf`, internal now: «Más detalles» chips and coach ordering): 100 − weights of open checks − small penalty for dismissed ones; any red ⇒ ≤ 69. Counted checks (long, fillers, weak, regional, aitell, onscreen, jargon, pulpit, openers, cta) give partial credit: 1 point per instance over the limit, capped by `SCORE_CAP`. Weights live in one table (`SCORE_W`); ladders are pinned in `eval/score_test.js`.
 - Desktop (≥900 px wide and ≥560 px tall) is a split view: script left, review right. Phone: single column, stepBar fixed at the bottom; in step 2 the script docks at the top.
