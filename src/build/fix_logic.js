@@ -115,8 +115,15 @@ function aiTellPatch(text, hit) {
 const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "señal", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
 const FEMN = new Set([...FEM].map(norm));
 const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
+// (Adrian, 2026-11-01: B-053) a number in front ("cuarenta días", "7 iglesias") is not the noun: gender and number come from the word after it.
+const ES_NUMW = new Set(["dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa", "cien", "ciento", "mil"]);
+const ES_MASC_A = new Set(["dia", "planeta", "sofa", "cometa", "tranvia", "mapa"]); // masculine words ending in -a (norm() strips accents)
 function esArticle(kw) {
-  const k = norm(kw).trim(), first = k.split(/\s+/)[0];
+  const k = norm(kw).trim(), ws = k.split(/\s+/);
+  const num = ws.length > 1 && (ES_NUMW.has(ws[0]) || /^\d+$/.test(ws[0]));
+  if (num) { const sg = ws[1].replace(/es$/, "").replace(/s$/, ""); const fem = !ES_MASC_A.has(sg) && (FEMN.has(ws[1]) || FEMN.has(sg) || (/(a|ion|dad|tad|tud|ez|umbre)$/.test(sg) && !/(ma|pa)$/.test(sg))); return fem ? "las " : "los "; }
+  const first = ws[0];
+  if (ES_MASC_A.has(first.replace(/s$/, ""))) return /s$/.test(first) ? "los " : "el ";
   if (/^(el|la|los|las|un|una|lo|mi|tu|su)$/.test(first) || NOART.has(first) || /^[A-ZÁÉÍÓÚÑ]/.test(kw.trim()) && !/^[A-ZÁÉÍÓÚÑ]+$/.test(kw.trim())) return "";
   const plural = /s$/.test(first) && !/(is|us|sis)$/.test(first);
   const sing = plural ? first.replace(/es$/, "").replace(/s$/, "") : first;

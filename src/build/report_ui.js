@@ -317,8 +317,10 @@ function rpChip(info, cur) {
   const A = t("rpArea"), name = cur.type === "item" ? A[cur.it.area] : info.label, up = info.gain > 0;
   const dots = cur.type === "item" && up ? ` <span aria-hidden="true" class="rp-dots">${rpDots(info.from)} → ${rpDots(info.to)}</span>` : "";
   const html = up ? `<b>${h(t("rpChipUp")(info.gain, name))}</b>${dots}<span class="vh">${h(cur.type === "item" ? t("rpChipAria")(info.gain, name, info.from, info.to) : "")}</span>` : h(t("rpChipDone")(name));
+  // (Adrian, 2026-11-01: B-050) below the masthead, never over ES/EN/⋯: on desktop the pill is hidden and 12 px sat on the header.
   const pill = $("scorePill"), pr = pill && !pill.hidden ? pill.getBoundingClientRect() : null;
-  el.style.top = Math.max(8, pr ? pr.bottom + 8 : 12) + "px";
+  const mh = document.querySelector(".masthead"), mr = mh ? mh.getBoundingClientRect() : null;
+  el.style.top = Math.max(8, pr ? pr.bottom + 8 : 12, mr && mr.bottom > 0 ? mr.bottom + 8 : 0) + "px";
   const put = () => { el.innerHTML = html; el.classList.add("on"); };
   if (fresh) setTimeout(put, 30); else put(); // a live region must exist before its text changes
   clearTimeout(RP.chipTm); RP.chipTm = setTimeout(() => el.classList.remove("on"), 3200);

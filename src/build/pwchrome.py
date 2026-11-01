@@ -183,7 +183,9 @@ async def main():
                     ok(f"{n}: (c) three applies reach the end card", await pg.evaluate("!!document.querySelector('.rp-end')"))
                     await sticky_ok(pg, n, "(c) step 2 end card", "[data-rp=publish]")
                     await pg.evaluate("window.scrollTo(0, 100000)"); await pg.wait_for_timeout(200)
-                    ok(f"{n}: (c) at the bottom of the end card page «Siguiente» is reachable above the step bar", await pg.evaluate("(() => { const b = document.querySelector('.g-nav-steps .primary').getBoundingClientRect(); const a = document.querySelector('.rp-act').getBoundingClientRect(); return b.bottom <= a.top + 1 && b.top >= 0; })()"))
+                    # (Adrian, 2026-11-01: B-051, changed expectation) the end card is the only primary: no «Siguiente» under it; its own
+                    # «Ir a Publicar» stays reachable at the bottom of the page (the sticky check above covers it while scrolling)
+                    ok(f"{n}: (c) at the bottom of the end card page there is no second «Siguiente», and «Ir a Publicar» is on screen", await pg.evaluate("(() => { const s = [...document.querySelectorAll('.g-nav-steps .primary')].filter(e => e.offsetParent).length; const a = document.querySelector('[data-rp=publish]').getBoundingClientRect(); return s === 0 && a.top >= 0 && a.bottom <= innerHeight; })()"))
                     await pg.evaluate("window.scrollTo(0, 0)")
                     await pg.screenshot(path=OUT + f"chrome_s2_end_{ui}.png")
                     await pg.click("[data-rp=publish]"); await pg.wait_for_timeout(900)

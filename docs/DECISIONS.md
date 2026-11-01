@@ -13,6 +13,14 @@
   with its name written, so colour is never the only cue.
 - B-045 **A**: default tier "medium" effort and a 6,000-token cap (committed `42d82dc`; deploy waits for Adrian's approval).
 - The walkthrough's smaller findings (B-046..B-054): fix them all (recommended, accepted).
+- Marks in the text (Adrian, 2026-11-01: "I want every item in the text to be marked ... each paragraph should have a number and each
+  Bible quote or reference should be clearly highlighted and marked. Every recommended ad location, and everything that the app
+  references"; then "apply A"): **7A**: sections, ¶ number + minute per paragraph, Bible quotes (amber band) and references (book
+  tag), suggested ad breaks, re-hook points, chapters, CTAs, on-screen text cues, ad-risk words, fillers; each with its own shape
+  and written name; all visible on entry per the per-screen table in the mockup, each group switchable in a legend, choice
+  remembered. B (always on, no legend) and C (only sections/numbers/quotes) rejected.
+- B-052 **A** (Adrian, 2026-11-01: "go with A"): keep both «thinking» indicators while the report runs; hiding the bubble
+  would reverse the pinned AI-status rule (`pwai`), and the step-2 redesign replaces that card anyway.
 
 ## 2026-11-01: Juan joins; team review (Adrian: "the computer version is critical", "I would like to be able to see Juan's finished texts, but not mess with them", "the idea is to support Juan in the review of his episodes", "do B")
 - Priority: desktop first; the phone is a nice-to-have until Juan is using it (step 9 phone checklist parked).

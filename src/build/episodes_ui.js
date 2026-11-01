@@ -6,7 +6,7 @@ Object.assign(T.es, {
   epNow: "Episodio", epNew: "Episodio nuevo", epNoDate: "sin fecha de publicación", epOut: (d) => `sale el ${d}`,
   epBtn: "Mis episodios", epClose: "Cerrar", epOpenNow: "Abierto", epChange: "Cambiar fecha", epSave: "Guardar", epCancel: "Cancelar",
   epNoText: "Falta escribir", epLateM: "fecha pasada", epToday: "hoy", epTomorrow: "mañana", epIn: (n) => `en ${n} días`, epAgo: (n) => `hace ${n} días`,
-  epAdd: "+ Planear otro episodio", epAbout: "¿Sobre qué será?", epDay: "¿Qué día sale?", epAddBtn: "Añadir", epPast: (n) => `Ver los ${n} ya grabados`, epPastHide: "Ocultar los grabados",
+  epAdd: "+ Planear otro episodio", epNewEp: "+ Nuevo episodio", epNewEpFail: "No se pudo guardar el episodio abierto; no se empezó uno nuevo.", epAbout: "¿Sobre qué será?", epDay: "¿Qué día sale?", epAddBtn: "Añadir", epPast: (n) => `Ver los ${n} ya grabados`, epPastHide: "Ocultar los grabados",
   epEmpty: "Aún no hay episodios guardados. Cuando revises tu primer guion, aparecerá aquí.", epBackup: "Copia de seguridad",
   npTitle: "Planea el próximo episodio",
   npLeadNext: (x) => `Al final del guion anuncias «${x}». Déjalo apuntado para no empezar de cero la semana que viene.`,
@@ -19,7 +19,7 @@ Object.assign(T.en, {
   epNow: "Episode", epNew: "New episode", epNoDate: "no publish date", epOut: (d) => `goes out ${d}`,
   epBtn: "My episodes", epClose: "Close", epOpenNow: "Open", epChange: "Change date", epSave: "Save", epCancel: "Cancel",
   epNoText: "Not written yet", epLateM: "date passed", epToday: "today", epTomorrow: "tomorrow", epIn: (n) => `in ${n} days`, epAgo: (n) => `${n} days ago`,
-  epAdd: "+ Plan another episode", epAbout: "What will it be about?", epDay: "What day does it go out?", epAddBtn: "Add", epPast: (n) => `See the ${n} already recorded`, epPastHide: "Hide recorded ones",
+  epAdd: "+ Plan another episode", epNewEp: "+ New episode", epNewEpFail: "Couldn't save the open episode; a new one wasn't started.", epAbout: "What will it be about?", epDay: "What day does it go out?", epAddBtn: "Add", epPast: (n) => `See the ${n} already recorded`, epPastHide: "Hide recorded ones",
   epEmpty: "No saved episodes yet. Once you review your first script, it shows up here.", epBackup: "Backup",
   npTitle: "Plan the next episode",
   npLeadNext: (x) => `At the end of the script you announce “${x}”. Note it down so you don't start from zero next week.`,
@@ -71,7 +71,7 @@ renderSeries = function (cid) {
       ? `<div class="ep-add"><div class="field"><label for="${cid}-t">${h(t("epAbout"))}</label><input id="${cid}-t" placeholder="${h(t("srNewPh"))}" maxlength="100"></div>
           <div class="field"><label for="${cid}-d">${h(t("epDay"))}</label><input id="${cid}-d" type="date" value="${h(nextFreeDate())}"><span class="hint" id="${cid}-dh">${h(longDay(nextFreeDate()))}</span></div>
           <div class="actions"><button type="button" class="small primary" id="${cid}-p">${h(t("epAddBtn"))}</button><button type="button" class="small" id="${cid}-x">${h(t("epCancel"))}</button></div></div>`
-      : `<button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button>`;
+      : `<div class="ep-addrow"><button type="button" class="small primary" id="${cid}-new">${h(t("epNewEp"))}</button><button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button></div>`;
     const notice = G.loadErr.prods ? `<p class="status err" role="alert">${h(t("srLoadFail"))} <button type="button" class="small" data-retry="prods">${h(t("srRetry"))}</button></p>` : G.srMsg ? `<p class="status err" role="alert">${h(G.srMsg)}</p>` : "";
     el.innerHTML = `${head}${notice}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
       ${active.length ? `<ul class="ep-list">${active.map(row).join("")}</ul>` : ""}
@@ -84,7 +84,15 @@ renderSeries = function (cid) {
     const askDel = (box, msg, onYes) => { box.innerHTML = `<span class="sr-q">${h(msg)}</span><button type="button" class="small danger" data-y>${h(t("srDelYes"))}</button><button type="button" class="small" data-n>${h(t("srDelNo"))}</button>`; box.querySelector("[data-n]").addEventListener("click", () => renderSeriesAll()); box.querySelector("[data-y]").addEventListener("click", async (e) => { e.target.disabled = true; await onYes(); }); };
     el.querySelectorAll("[data-srdel]").forEach((b) => b.addEventListener("click", () => { const p = G.prods.find((x) => x.id === b.dataset.srdel); askDel(b.closest(".ep-tools"), t("srDelQ")(p ? p.title || "—" : "—"), () => deleteProds([b.dataset.srdel])); }));
     if (q(`#${cid}-delall`)) q(`#${cid}-delall`).addEventListener("click", () => askDel(q(`#${cid}-delall`).closest(".sr-clear"), t("srDelAllQ")(G.prods.length), () => deleteProds(G.prods.map((x) => x.id))));
-    if (q(`#${cid}-a`)) q(`#${cid}-a`).addEventListener("click", () => { G.epAdding = true; renderSeriesAll(); const i = $(`${cid}-t`); if (i) i.focus(); });
+    if (q(`#${cid}-a`)) q(`#${cid}-a`).addEventListener("click", () => { G.epAdding = true; G.epFocus = true; renderSeriesAll(); });
+    // (Adrian, 2026-11-01: B-048) the field exists only after this async render: focus it here, once
+    if (G.epFocus && q(`#${cid}-t`) && q(`#${cid}-t`).offsetParent) { G.epFocus = false; q(`#${cid}-t`).focus(); } // the visible list only (a hidden copy renders too)
+    // «Nuevo episodio»: the open episode is saved first (a refused save stops here and says so), then an empty one starts. No date asked.
+    if (q(`#${cid}-new`)) q(`#${cid}-new`).addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      if (typeof flushProdSave === "function" && !(await flushProdSave())) { G.srMsg = t("epNewEpFail"); renderSeriesAll(); return; }
+      closeEpSheet(); doClearScript(); if (V.guided) goStep(1); $("script").focus();
+    });
     if (q(`#${cid}-x`)) q(`#${cid}-x`).addEventListener("click", () => { G.epAdding = false; renderSeriesAll(); });
     if (q(`#${cid}-d`)) q(`#${cid}-d`).addEventListener("change", (e) => { q(`#${cid}-dh`).textContent = e.target.value ? longDay(e.target.value) : ""; });
     if (q(`#${cid}-p`)) q(`#${cid}-p`).addEventListener("click", async (e) => {

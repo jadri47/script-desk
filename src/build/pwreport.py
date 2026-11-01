@@ -145,7 +145,8 @@ async def main():
                     await pg.click("[data-rp=skip]"); await pg.wait_for_timeout(250)
                 done = {"es": "Revisaste los cambios, sin aplicar ninguno", "en": "You reviewed the changes and applied none"}[ui]  # the end of the walk is the end card now (was «Listo: no quedan decisiones»); here the first change was undone, so none is applied
                 ok(f"{n}: at the end it says there is nothing left", (await pg.inner_text(".rp-end h3")).strip() == done)
-                ok(f"{n}: the Next button to step 3 is there", await pg.locator(".g-nav-steps .primary[data-step='3']").count() == 1)
+                # (Adrian, 2026-11-01: B-051, changed expectation) on the end card the way to step 3 is its own «Ir a Publicar», the only primary
+                ok(f"{n}: the way to step 3 is the end card's «Ir a Publicar», with no second primary below", await pg.locator(".rp-end [data-rp=publish]").count() == 1 and await pg.locator(".g-nav-steps .primary[data-step='3']").count() == 0)
                 # ---- navigation never calls again; re-evaluate calls once more ----
                 await pg.evaluate("goStep(1)"); await pg.wait_for_timeout(300); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(500)
                 await pg.evaluate("goStep(3)"); await pg.wait_for_timeout(300); await pg.evaluate("goStep(2)"); await pg.wait_for_timeout(500)

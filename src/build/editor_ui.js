@@ -496,5 +496,5 @@ function confirmSheet(o) {
 function askClearScript() {
   const saved = !!G.prodId && !(typeof DEMO !== "undefined" && DEMO);
   // (B-016, pick A) the edit in flight is saved into the episode being left before the editor is emptied; a conflict stops here
-  confirmSheet({ title: t("clrTitle"), body: t("clrBody"), extra: saved ? t("clrSaved") : "", note: t("clrUndo"), no: t("clrNo"), yes: t("clrYes"), danger: true, onYes: async () => { if (typeof flushProdSave === "function" && !(await flushProdSave())) return; doClearScript(); } });
+  confirmSheet({ title: t("clrTitle"), body: t("clrBody"), extra: saved ? t("clrSaved") : "", note: saved ? "" : t("clrUndo"), /* (Adrian, 2026-11-01: B-046) the saved episode stays in history, so "can't be undone" was only true with nothing saved */ no: t("clrNo"), yes: t("clrYes"), danger: true, onYes: async () => { if (typeof flushProdSave === "function" && !(await flushProdSave())) return; doClearScript(); } });
 }

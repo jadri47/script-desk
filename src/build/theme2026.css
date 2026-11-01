@@ -224,6 +224,7 @@ dialog.ep-sheet::backdrop{background:rgba(10,12,30,.55)}
 .ep-add{border:1px dashed var(--rule);border-radius:14px;padding:12px;margin-top:10px}
 .ep-add .field .hint,.np-fields .hint{display:block;margin-top:4px;font-size:13px}
 .ep-addbtn{margin-top:8px}
+.ep-addrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.ep-addrow .ep-addbtn{margin-top:0}
 .ep-bk{margin-top:16px;border-top:1px solid var(--rule);padding-top:10px}
 .ep-bk>summary{cursor:pointer;font-weight:600;color:var(--ink-2);padding:6px 0}
 .ep-bk .g-h h2{font-size:16px}
@@ -606,6 +607,8 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
 .cost-toast.on{transform:translate(-50%,0);pointer-events:auto}
 .cost-toast button{flex:none;width:28px;height:28px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;font-size:18px;line-height:1;cursor:pointer}
 @media (max-width:620px){ .cost-toast{left:12px;right:12px;width:auto;max-width:none;transform:translateY(160%)} .cost-toast.on{transform:translateY(0)} html.guided .cost-toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))} }
+/* (Adrian, 2026-11-01: B-049) desktop split view: bottom-left, over the editor's lower edge, never over the review card and its buttons. */
+@media (min-width:900px){ .cost-toast{left:16px;transform:translateY(140%)} .cost-toast.on{transform:translateY(0)} }
 @media (prefers-reduced-motion:reduce){ .cost-toast{transition:none} }
 
 /* (jadri47, 2026-10-29: B-035/B-036) <small> defaults to .83em (11.67 px at 14 px, «×2 ×3», «/ 100»); 12 px is the floor for visible text. */

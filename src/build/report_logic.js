@@ -30,8 +30,13 @@ function reportPrompt(text, R, opts) {
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
+  // (Adrian, 2026-11-01: B-054) a replacement that adds a sentence must leave the next one readable (an inserted «Suscríbete…» left
+  // «Él mismo oró…» pointing nowhere). Prompt only: no code checks it.
+  const flow = en
+    ? "If a replacement adds a sentence, the sentence right after it in the script must still read naturally: never leave a pronoun (he, she, this, that) pointing at something other than before."
+    : "Si un reemplazo añade una frase, la frase que sigue en el guion tiene que seguir leyéndose bien: no dejes un pronombre (él, ella, esto, eso) apuntando a otra cosa que antes.";
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  return `${brief}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 // The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each

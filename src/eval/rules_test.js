@@ -78,5 +78,16 @@ const base = "Hoy vamos a hablar de la fe en medio de la tormenta y de cómo Dio
   ok("onscreen cue, English UI: [TEXT: …]", rep(en).length > 0 && rep(en).every((x) => x.startsWith("[TEXT: ")), rep(en));
   ok("onscreen cue, Spanish UI: [TEXTO: …]", rep(sp).length > 0 && rep(sp).every((x) => x.startsWith("[TEXTO: ")), rep(sp));
 }
+// (Adrian, 2026-11-01: B-053) the article agrees with the noun, not with a number in front of it: «sobre la cuarenta días» was wrong
+{
+  const A = L.esArticle;
+  ok("article: «cuarenta días» → los", A("cuarenta días") === "los ", JSON.stringify(A("cuarenta días")));
+  ok("article: «dos caminos» → los", A("dos caminos") === "los ", JSON.stringify(A("dos caminos")));
+  ok("article: «tres oraciones» → las", A("tres oraciones") === "las ", JSON.stringify(A("tres oraciones")));
+  ok("article: «7 iglesias» → las", A("7 iglesias") === "las ", JSON.stringify(A("7 iglesias")));
+  ok("article: «días» → los, «día» → el (masculine in -a)", A("días") === "los " && A("día del Señor") === "el ", JSON.stringify([A("días"), A("día del Señor")]));
+  ok("article: unchanged for «perdón» → el", A("perdón") === "el ", JSON.stringify(A("perdón")));
+  ok("article: unchanged for «ansiedad» → la", A("ansiedad") === "la ", JSON.stringify(A("ansiedad")));
+}
 console.log(fails ? `FAILS: ${fails}` : "ALL PASS");
 process.exit(fails ? 1 : 0);
