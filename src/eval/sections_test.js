@@ -45,6 +45,36 @@ ok("es.worst: no promise, no intro, no close", JSON.stringify(run("es", "worst")
   ok("re-hooks: none when the body is shorter than 8 minutes and a half", L.rehookPoints(t2, R2, w.list).length === 0);
   ok("re-hooks: none without a body", L.rehookPoints(text, R, m.list.filter((s) => s.k !== "body")).length === 0);
 }
+// the Opus call: what goes out and what comes back
+{
+  const { text, R, m } = run("es", "best");
+  const p = L.sectionsPrompt(text, R, m);
+  ok("prompt: the five section headings, script last", ["GANCHO", "PROMESA", "INTRODUCCIÓN", "DESARROLLO", "CIERRE"].every((h) => p.includes("### " + h)) && p.trim().endsWith('"""'));
+  ok("prompt: much shorter than the script (body as excerpts)", p.length < text.length / 2, [p.length, text.length]);
+  ok("prompt: no verse text goes out, only marks", L.verseSpans(text, R).filter((s) => s.kind !== "ref").every((s) => s.end - s.start < 25 || !p.includes(text.slice(s.start, s.end))));
+  const U = L.buildUnits(R, text), inSec = (k) => { const s = m.list.find((x) => x.k === k); return U.find((u) => u.start >= s.start && u.end <= s.end && u.text.split(/\s+/).length >= 4 && u.text.split(/\s+/).length <= 30 && !/[«»"“”]/.test(u.text) && text.indexOf(u.text) === text.lastIndexOf(u.text)); };
+  const h = inSec("hook"), b = inSec("body"), c = inSec("close");
+  const json = { areas: { hook: { rating: 4, why: "a" }, promise: { rating: 5 }, retention: { rating: 3 }, voice: { rating: 2 }, close: { rating: 4 }, return: { rating: 3 } },
+    items: [
+      { sec: "hook", area: "hook", original: h.text, replacement: h.text.replace(/[.?!]$/, "") + ", y hoy lo cambiamos.", why: "x", after: 5 },
+      { sec: "hook", area: "hook", original: b.text, replacement: b.text.replace(/[.?!]$/, "") + ", sin duda.", why: "lies: it is in the body", after: 5 },
+      { sec: "close", area: "return", original: c.text, replacement: c.text.replace(/[.?!]$/, "") + ", y nos vemos la próxima semana.", why: "y", after: 4 },
+      { sec: "intro", area: "promise", original: b.text, replacement: b.text + " Más.", why: "wrong area for an intro", after: 4 }] };
+  const v = L.vetSections(text, json, { uiLang: "es", lang: "es" }, R, m);
+  ok("vet: a change inside its own section is kept, with its section", v.items.some((x) => x.sec === "hook" && x.original === h.text) && v.items.some((x) => x.sec === "close"), JSON.stringify(v.items.map((x) => [x.sec, x.original.slice(0, 30)])));
+  ok("vet: a change that names the hook but sits in the body is dropped", !v.items.some((x) => x.original === b.text), JSON.stringify(v.items.map((x) => x.sec)));
+  ok("vet: an area that does not belong to the section is dropped", v.items.length === 2 && v.dropped === 2, [v.items.length, v.dropped]);
+  ok("vet: the five areas of 6A, spoken voice left for the detailed call", JSON.stringify(Object.keys(v.areas)) === JSON.stringify(["hook", "promise", "retention", "close", "return"]) && v.areas.hook.rating === 4);
+}
+{
+  // a missing promise is proposed as an insert after the hook
+  const { text, R, m } = run("es", "mid");
+  const U = L.buildUnits(R, text), hook = m.list.find((x) => x.k === "hook"), last = U.filter((u) => u.end <= hook.end).pop();
+  const json = { areas: {}, items: [{ sec: "promise", area: "promise", original: last.text, replacement: last.text + " Hoy vas a descubrir por qué esto importa.", why: "falta la promesa", after: 4 }] };
+  const v = L.vetSections(text, json, { uiLang: "es", lang: "es" }, R, m);
+  ok("vet: a missing promise comes back as an insert and is kept", m.missing.includes("promise") && v.items.length === 1 && v.items[0].sec === "promise", JSON.stringify([m.missing, v.items.length, last && last.text]));
+}
+
 // empty text
 ok("empty text: nothing found, all five missing", (() => { const R = L.analyze("", { uiLang: "es", lang: "es" }); const m = L.mainSections("", R); return m.list.length === 0 && m.missing.length === 5; })());
 

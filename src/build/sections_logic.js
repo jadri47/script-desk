@@ -70,3 +70,79 @@ function rehookPoints(text, R, sections) {
   }
   return out;
 }
+
+// ---------- The main-sections call (Opus 5.5, tier "sections") ----------
+// Only the five sections go out, the body as excerpts (its start, around each re-hook point, its end): the call judges the
+// opening, the retention points and the close, not every line. Verses are masked with the whole-script numbering (the same one
+// vetReport restores), so every excerpt is cut from the one masked text. Script text last, as in every prompt.
+const SEC_AREAS = ["hook", "promise", "retention", "close", "return"]; // 6A: Opus rates these; spoken voice comes from the detailed call
+const SEC_ITEM_AREA = { hook: ["hook"], promise: ["promise"], intro: ["hook", "retention"], body: ["retention"], close: ["close", "return"] };
+const SECTIONS_MAX_ITEMS = 7;
+
+function sectionsMasked(text, R) {
+  const spans = verseSpans(text, R), verse = spans.filter((s) => s.kind !== "ref");
+  const snap = (p) => { const v = verse.find((s) => p > s.start && p < s.end); return v ? v.end : p; };
+  const mpos = (p) => maskVerses(text, spans, 0, snap(p)).masked.length;
+  return { masked: maskVerses(text, spans, 0, text.length).masked, mpos };
+}
+
+function sectionsPrompt(text, R, sec) {
+  const en = R.lang === "en";
+  const list = sec.list, missing = sec.missing || [];
+  const { masked, mpos } = sectionsMasked(text, R);
+  const cut = (a, b) => masked.slice(mpos(a), mpos(b)).trim();
+  const U = buildUnits(R, text);
+  const rhs = rehookPoints(text, R, list);
+  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY (excerpts)", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO (extractos)", close: "CIERRE" };
+  const parts = [];
+  for (const s of list) {
+    let body = cut(s.start, s.end);
+    if (s.k === "body") {
+      const bu = U.filter((u) => u.start >= s.start && u.start < s.end);
+      const pick = new Set([0, 1, 2, bu.length - 2, bu.length - 1].filter((i) => i >= 0 && i < bu.length));
+      for (const p of rhs) { const i = bu.findIndex((u) => u.start === p.pos); for (const d of [-1, 0, 1, 2]) if (i >= 0 && i + d >= 0 && i + d < bu.length) pick.add(i + d); }
+      const out = [];
+      let prev = -2;
+      for (const i of [...pick].sort((a, b) => a - b)) { if (i > prev + 1 && out.length) out.push("[…]"); out.push(cut(bu[i].start, bu[i + 1] ? bu[i + 1].start : s.end)); prev = i; }
+      body = out.join("\n");
+    }
+    parts.push(`### ${NAME[s.k]} (${fmtTime(s.t0)}–${fmtTime(s.t1)})\n${body}`);
+  }
+  const rh = rhs.map((p) => `${fmtTime(p.t)}${p.gap ? (en ? " (no re-hook here)" : " (aquí no hay re-enganche)") : ""}`).join(", ") || "—";
+  const miss = missing.length ? missing.map((k) => NAME[k].split(" ")[0]).join(", ") : "—";
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "close": {...}, "return": {...}}, "items": [{"sec": "hook|promise|intro|body|close", "area": "hook|promise|retention|close|return", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}]}`;
+  const brief = en
+    ? `You are the editor of a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. Judge only the main sections below for someone watching alone on a phone who has never been to church: the hook (first 30 s), the promise, the introduction, retention through the body (re-hook points every 7–9 minutes) and the close with a reason to come back. Rate 1 to 5 and propose at most ${SECTIONS_MAX_ITEMS} changes, the ones that raise those ratings most.`
+    : `Eres el editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Juzga solo las secciones principales de abajo para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: el gancho (primeros 30 s), la promesa, la introducción, la retención a lo largo del desarrollo (re-enganches cada 7–9 minutos) y el cierre con una razón para volver. Valora del 1 al 5 y propón como máximo ${SECTIONS_MAX_ITEMS} cambios, los que más suben esa valoración.`;
+  const facts = en
+    ? `FACTS FROM THE APP: runtime ${Math.round((R.runtimeSec || 0) / 60)} min. Re-hook points in the body: ${rh}. Sections not found: ${miss}.`
+    : `DATOS DE LA APP: duración ${Math.round((R.runtimeSec || 0) / 60)} min. Puntos de re-enganche en el desarrollo: ${rh}. Secciones que no se encontraron: ${miss}.`;
+  const rules = en
+    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
+    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "MAIN SECTIONS" : "SECCIONES PRINCIPALES"}:\n"""\n${parts.join("\n\n")}\n"""`;
+}
+
+// json: the model's answer (untrusted). Every item goes through vetReport's checks, then must lie inside the section it names
+// (or, for a section that was missing, be an insert: the replacement starts with the original). Areas: the five of 6A.
+function vetSections(text, json, opts, R, sec) {
+  const raw = json && Array.isArray(json.items) ? json.items.slice(0, SECTIONS_MAX_ITEMS * 2) : [];
+  const v = vetReport(text, { areas: json && json.areas, items: raw, words: [] }, opts, R);
+  const where = (start) => (sec.list.find((s) => start >= s.start && start < s.end) || {}).k;
+  const items = [];
+  for (const it of v.items) {
+    const src = raw.find((x) => x && x.replacement === it.replacement && x.area === it.area);
+    const k = src && typeof src.sec === "string" ? src.sec : "";
+    if (!MAIN_SECS.includes(k) || !(SEC_ITEM_AREA[k] || []).includes(it.area)) continue;
+    const own = sec.list.find((s) => s.k === k);
+    const inside = !!own && where(it.start) === k && it.end <= own.end;
+    const insert = sec.missing.includes(k) && it.replacement.startsWith(it.original) && it.replacement.length > it.original.length;
+    if (!inside && !insert) continue;
+    items.push({ ...it, sec: k });
+    if (items.length >= SECTIONS_MAX_ITEMS) break;
+  }
+  const areas = {};
+  for (const k of SEC_AREAS) areas[k] = v.areas[k];
+  return { areas, items, dropped: raw.length - items.length };
+}
