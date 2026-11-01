@@ -1505,6 +1505,7 @@ dialog.ep-sheet::backdrop{background:rgba(10,12,30,.55)}
 .ep-add{border:1px dashed var(--rule);border-radius:14px;padding:12px;margin-top:10px}
 .ep-add .field .hint,.np-fields .hint{display:block;margin-top:4px;font-size:13px}
 .ep-addbtn{margin-top:8px}
+.ep-addrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.ep-addrow .ep-addbtn{margin-top:0}
 .ep-bk{margin-top:16px;border-top:1px solid var(--rule);padding-top:10px}
 .ep-bk>summary{cursor:pointer;font-weight:600;color:var(--ink-2);padding:6px 0}
 .ep-bk .g-h h2{font-size:16px}
@@ -1887,6 +1888,8 @@ details.mod.mod-ok>summary .mt{color:var(--ink-2)}
 .cost-toast.on{transform:translate(-50%,0);pointer-events:auto}
 .cost-toast button{flex:none;width:28px;height:28px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;font-size:18px;line-height:1;cursor:pointer}
 @media (max-width:620px){ .cost-toast{left:12px;right:12px;width:auto;max-width:none;transform:translateY(160%)} .cost-toast.on{transform:translateY(0)} html.guided .cost-toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))} }
+/* (Adrian, 2026-11-01: B-049) desktop split view: bottom-left, over the editor's lower edge, never over the review card and its buttons. */
+@media (min-width:900px){ .cost-toast{left:16px;transform:translateY(140%)} .cost-toast.on{transform:translateY(0)} }
 @media (prefers-reduced-motion:reduce){ .cost-toast{transition:none} }
 
 /* (jadri47, 2026-10-29: B-035/B-036) <small> defaults to .83em (11.67 px at 14 px, «×2 ×3», «/ 100»); 12 px is the floor for visible text. */
@@ -3361,8 +3364,15 @@ function aiTellPatch(text, hit) {
 const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "señal", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
 const FEMN = new Set([...FEM].map(norm));
 const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
+// (Adrian, 2026-11-01: B-053) a number in front ("cuarenta días", "7 iglesias") is not the noun: gender and number come from the word after it.
+const ES_NUMW = new Set(["dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa", "cien", "ciento", "mil"]);
+const ES_MASC_A = new Set(["dia", "planeta", "sofa", "cometa", "tranvia", "mapa"]); // masculine words ending in -a (norm() strips accents)
 function esArticle(kw) {
-  const k = norm(kw).trim(), first = k.split(/\s+/)[0];
+  const k = norm(kw).trim(), ws = k.split(/\s+/);
+  const num = ws.length > 1 && (ES_NUMW.has(ws[0]) || /^\d+$/.test(ws[0]));
+  if (num) { const sg = ws[1].replace(/es$/, "").replace(/s$/, ""); const fem = !ES_MASC_A.has(sg) && (FEMN.has(ws[1]) || FEMN.has(sg) || (/(a|ion|dad|tad|tud|ez|umbre)$/.test(sg) && !/(ma|pa)$/.test(sg))); return fem ? "las " : "los "; }
+  const first = ws[0];
+  if (ES_MASC_A.has(first.replace(/s$/, ""))) return /s$/.test(first) ? "los " : "el ";
   if (/^(el|la|los|las|un|una|lo|mi|tu|su)$/.test(first) || NOART.has(first) || /^[A-ZÁÉÍÓÚÑ]/.test(kw.trim()) && !/^[A-ZÁÉÍÓÚÑ]+$/.test(kw.trim())) return "";
   const plural = /s$/.test(first) && !/(is|us|sis)$/.test(first);
   const sing = plural ? first.replace(/es$/, "").replace(/s$/, "") : first;
@@ -4247,8 +4257,13 @@ function reportPrompt(text, R, opts) {
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
+  // (Adrian, 2026-11-01: B-054) a replacement that adds a sentence must leave the next one readable (an inserted «Suscríbete…» left
+  // «Él mismo oró…» pointing nowhere). Prompt only: no code checks it.
+  const flow = en
+    ? "If a replacement adds a sentence, the sentence right after it in the script must still read naturally: never leave a pronoun (he, she, this, that) pointing at something other than before."
+    : "Si un reemplazo añade una frase, la frase que sigue en el guion tiene que seguir leyéndose bien: no dejes un pronombre (él, ella, esto, eso) apuntando a otra cosa que antes.";
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  return `${brief}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 // The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
@@ -4497,7 +4512,155 @@ function repairJson(text, depth = 2) {
   try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+/* ===== Main sections: gancho, promesa, introducción, desarrollo (retención), cierre — pure, no DOM ===== */
+// (Adrian, 2026-11-01: "opus 5.5 to take care of the gancho, promesa, introduccion, retention and cierre"; picks 1A 2A 3A)
+// 1A: the app detects them (detectLayout / sectionsFrom) and the author may move a start («Ajustar límites», saved as secBounds).
+// 2A: retention is the whole body (intro end → close start), with re-hook points every 7–9 minutes.
+// 3A: the close holds the calls to action and the next-episode line at the end («que vuelvan»).
+const MAIN_SECS = ["hook", "promise", "intro", "body", "close"];
+const REHOOK_EVERY = 480; // seconds: the middle of 2A's 7–9 minutes
+const REHOOK_WIN = 60; // a point is "covered" when the text around it (± this) already re-hooks
+
+// Start offsets (chars) of each main section, from the detected layout. A section that isn't there is left out.
+function detectMainStarts(text, R) {
+  const U = buildUnits(R, text);
+  if (!U.length) return { U, starts: {} };
+  const secs = sectionsFrom(detectLayout(U, R), U, R.runtimeSec);
+  const startOf = (s) => U[s.first].start, endOf = (s) => (U[s.last + 1] ? U[s.last + 1].start : text.length);
+  const first = (ty) => secs.find((s) => s.type === ty);
+  const st = { hook: U[0].start };
+  const pr = first("promise"), it = first("intro");
+  if (pr && pr.first > 0) st.promise = startOf(pr);
+  if (it && startOf(it) > (st.promise ?? st.hook)) st.intro = startOf(it);
+  // the close: the last "close" section, pulled back over the calls to action right before it (3A)
+  let ci = -1;
+  for (let i = secs.length - 1; i >= 0; i--) if (secs[i].type === "close") { ci = i; break; }
+  if (ci < 0 && secs.length > 1 && secs[secs.length - 1].type === "cta") ci = secs.length - 1;
+  // walk back over calls to action and plain paragraphs in the final stretch (R.closeFrom, the last ~90 s); a teaching point stops it
+  const tail = Number.isFinite(R.closeFrom) ? R.closeFrom - 60 : Infinity;
+  if (ci > 0) { while (ci - 1 > 0 && (secs[ci - 1].type === "cta" || (secs[ci - 1].type === "body" && secs[ci - 1].t0 >= tail && secs[ci - 1].t1 - secs[ci - 1].t0 <= 45 /* a short line like «En el próximo episodio…», not a teaching passage */))) ci--; st.close = startOf(secs[ci]); }
+  // the body starts where the last opening section ends
+  const lastOpen = it || pr || secs[0];
+  const bodyStart = endOf(lastOpen);
+  if (bodyStart < (st.close ?? text.length) && bodyStart > (st.intro ?? st.promise ?? st.hook)) st.body = bodyStart;
+  return { U, starts: st };
+}
+
+// bounds: optional {k: startChar} the author set («Ajustar límites»). They replace the detected starts only when the result is
+// still in order (hook < promise < intro < body < close, all inside the text); otherwise they are ignored and `stale` says so.
+function mainSections(text, R, bounds) {
+  const { U, starts } = detectMainStarts(text, R);
+  if (!U.length) return { list: [], missing: MAIN_SECS.slice(), stale: false };
+  let st = { ...starts }, stale = false;
+  if (bounds && typeof bounds === "object" && Object.keys(bounds).length) {
+    const tryB = { ...starts };
+    for (const k of MAIN_SECS) if (Number.isInteger(bounds[k])) tryB[k] = bounds[k];
+    const order = MAIN_SECS.filter((k) => tryB[k] != null).map((k) => tryB[k]);
+    const okOrder = order.every((v, i) => v >= 0 && v < text.length && (i === 0 || v > order[i - 1]));
+    if (okOrder) st = tryB; else stale = true;
+  }
+  const ks = MAIN_SECS.filter((k) => st[k] != null);
+  const tAt = (pos) => { const u = U.find((x) => pos >= x.start && pos < x.end) || U.find((x) => x.start >= pos) || U[U.length - 1]; return u.t0; };
+  const list = ks.map((k, i) => {
+    const start = st[k], end = i + 1 < ks.length ? st[ks[i + 1]] : text.replace(/\s+$/, "").length;
+    return { k, start, end, t0: tAt(start), t1: i + 1 < ks.length ? tAt(end) : U[U.length - 1].t1 };
+  });
+  return { list, missing: MAIN_SECS.filter((k) => st[k] == null), stale };
+}
+
+// 2A: re-hook points in the body every REHOOK_EVERY seconds; `gap` = no re-hook in R.blocks around that time (the same reading
+// editMarks uses). Each point carries the char offset of the sentence it falls in.
+function rehookPoints(text, R, sections) {
+  const body = (sections || []).find((s) => s.k === "body");
+  if (!body) return [];
+  const U = buildUnits(R, text).filter((u) => u.start >= body.start && u.start < body.end);
+  if (!U.length) return [];
+  const out = [];
+  for (let tm = body.t0 + REHOOK_EVERY; tm < body.t1 - 30; tm += REHOOK_EVERY) {
+    const u = U.find((x) => tm >= x.t0 && tm < x.t1) || U.find((x) => x.t0 >= tm) || U[U.length - 1];
+    const gap = (R.blocks || []).some((b) => !b.has && tm + REHOOK_WIN >= b.from && tm - REHOOK_WIN <= b.to);
+    out.push({ t: tm, pos: u.start, gap });
+  }
+  return out;
+}
+
+// ---------- The main-sections call (Opus 5.5, tier "sections") ----------
+// Only the five sections go out, the body as excerpts (its start, around each re-hook point, its end): the call judges the
+// opening, the retention points and the close, not every line. Verses are masked with the whole-script numbering (the same one
+// vetReport restores), so every excerpt is cut from the one masked text. Script text last, as in every prompt.
+const SEC_AREAS = ["hook", "promise", "retention", "close", "return"]; // 6A: Opus rates these; spoken voice comes from the detailed call
+const SEC_ITEM_AREA = { hook: ["hook"], promise: ["promise"], intro: ["hook", "retention"], body: ["retention"], close: ["close", "return"] };
+const SECTIONS_MAX_ITEMS = 7;
+
+function sectionsMasked(text, R) {
+  const spans = verseSpans(text, R), verse = spans.filter((s) => s.kind !== "ref");
+  const snap = (p) => { const v = verse.find((s) => p > s.start && p < s.end); return v ? v.end : p; };
+  const mpos = (p) => maskVerses(text, spans, 0, snap(p)).masked.length;
+  return { masked: maskVerses(text, spans, 0, text.length).masked, mpos };
+}
+
+function sectionsPrompt(text, R, sec) {
+  const en = R.lang === "en";
+  const list = sec.list, missing = sec.missing || [];
+  const { masked, mpos } = sectionsMasked(text, R);
+  const cut = (a, b) => masked.slice(mpos(a), mpos(b)).trim();
+  const U = buildUnits(R, text);
+  const rhs = rehookPoints(text, R, list);
+  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY (excerpts)", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO (extractos)", close: "CIERRE" };
+  const parts = [];
+  for (const s of list) {
+    let body = cut(s.start, s.end);
+    if (s.k === "body") {
+      const bu = U.filter((u) => u.start >= s.start && u.start < s.end);
+      const pick = new Set([0, 1, 2, bu.length - 2, bu.length - 1].filter((i) => i >= 0 && i < bu.length));
+      for (const p of rhs) { const i = bu.findIndex((u) => u.start === p.pos); for (const d of [-1, 0, 1, 2]) if (i >= 0 && i + d >= 0 && i + d < bu.length) pick.add(i + d); }
+      const out = [];
+      let prev = -2;
+      for (const i of [...pick].sort((a, b) => a - b)) { if (i > prev + 1 && out.length) out.push("[…]"); out.push(cut(bu[i].start, bu[i + 1] ? bu[i + 1].start : s.end)); prev = i; }
+      body = out.join("\n");
+    }
+    parts.push(`### ${NAME[s.k]} (${fmtTime(s.t0)}–${fmtTime(s.t1)})\n${body}`);
+  }
+  const rh = rhs.map((p) => `${fmtTime(p.t)}${p.gap ? (en ? " (no re-hook here)" : " (aquí no hay re-enganche)") : ""}`).join(", ") || "—";
+  const miss = missing.length ? missing.map((k) => NAME[k].split(" ")[0]).join(", ") : "—";
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "close": {...}, "return": {...}}, "items": [{"sec": "hook|promise|intro|body|close", "area": "hook|promise|retention|close|return", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}]}`;
+  const brief = en
+    ? `You are the editor of a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. Judge only the main sections below for someone watching alone on a phone who has never been to church: the hook (first 30 s), the promise, the introduction, retention through the body (re-hook points every 7–9 minutes) and the close with a reason to come back. Rate 1 to 5 and propose at most ${SECTIONS_MAX_ITEMS} changes, the ones that raise those ratings most.`
+    : `Eres el editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Juzga solo las secciones principales de abajo para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: el gancho (primeros 30 s), la promesa, la introducción, la retención a lo largo del desarrollo (re-enganches cada 7–9 minutos) y el cierre con una razón para volver. Valora del 1 al 5 y propón como máximo ${SECTIONS_MAX_ITEMS} cambios, los que más suben esa valoración.`;
+  const facts = en
+    ? `FACTS FROM THE APP: runtime ${Math.round((R.runtimeSec || 0) / 60)} min. Re-hook points in the body: ${rh}. Sections not found: ${miss}.`
+    : `DATOS DE LA APP: duración ${Math.round((R.runtimeSec || 0) / 60)} min. Puntos de re-enganche en el desarrollo: ${rh}. Secciones que no se encontraron: ${miss}.`;
+  const rules = en
+    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
+    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "MAIN SECTIONS" : "SECCIONES PRINCIPALES"}:\n"""\n${parts.join("\n\n")}\n"""`;
+}
+
+// json: the model's answer (untrusted). Every item goes through vetReport's checks, then must lie inside the section it names
+// (or, for a section that was missing, be an insert: the replacement starts with the original). Areas: the five of 6A.
+function vetSections(text, json, opts, R, sec) {
+  const raw = json && Array.isArray(json.items) ? json.items.slice(0, SECTIONS_MAX_ITEMS * 2) : [];
+  const v = vetReport(text, { areas: json && json.areas, items: raw, words: [] }, opts, R);
+  const where = (start) => (sec.list.find((s) => start >= s.start && start < s.end) || {}).k;
+  const items = [];
+  for (const it of v.items) {
+    const src = raw.find((x) => x && x.replacement === it.replacement && x.area === it.area);
+    const k = src && typeof src.sec === "string" ? src.sec : "";
+    if (!MAIN_SECS.includes(k) || !(SEC_ITEM_AREA[k] || []).includes(it.area)) continue;
+    const own = sec.list.find((s) => s.k === k);
+    const inside = !!own && where(it.start) === k && it.end <= own.end;
+    const insert = sec.missing.includes(k) && it.replacement.startsWith(it.original) && it.replacement.length > it.original.length;
+    if (!inside && !insert) continue;
+    items.push({ ...it, sec: k });
+    if (items.length >= SECTIONS_MAX_ITEMS) break;
+  }
+  const areas = {};
+  for (const k of SEC_AREAS) areas[k] = v.areas[k];
+  return { areas, items, dropped: raw.length - items.length };
+}
+
+if (typeof module !== "undefined") module.exports = { esArticle, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -4569,7 +4732,7 @@ if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz
         r = await fetch(SB_URL + "/functions/v1/sd-ai", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token, apikey: SB_KEY },
-          body: JSON.stringify({ prompt, tier: opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible, auto: !!opts.auto }),
+          body: JSON.stringify({ prompt, tier: opts.modelTier === "sections" ? "sections" : opts.modelTier === "rewrite" ? "rewrite" : opts.modelTier === "complex" ? "complex" : "default", bible: opts.bible, noBible: !!opts.noBible, auto: !!opts.auto }),
           signal: opts.signal,
         });
       } catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
@@ -5938,8 +6101,15 @@ function aiTellPatch(text, hit) {
 const FEM = new Set(["fe", "mente", "muerte", "paz", "cruz", "luz", "ley", "sangre", "carne", "fuente", "gente", "noche", "tarde", "fuerza", "esperanza", "gracia", "iglesia", "oración", "salvación", "biblia", "palabra", "familia", "vida", "verdad", "señal", "duda", "ira", "envidia", "culpa", "vergüenza", "soledad", "tristeza", "fe cristiana"]);
 const FEMN = new Set([...FEM].map(norm));
 const NOART = new Set(["dios", "jesús", "jesus", "cristo", "david", "pablo", "pedro", "moisés", "abraham", "maría", "juan", "job", "noé"]);
+// (Adrian, 2026-11-01: B-053) a number in front ("cuarenta días", "7 iglesias") is not the noun: gender and number come from the word after it.
+const ES_NUMW = new Set(["dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa", "cien", "ciento", "mil"]);
+const ES_MASC_A = new Set(["dia", "planeta", "sofa", "cometa", "tranvia", "mapa"]); // masculine words ending in -a (norm() strips accents)
 function esArticle(kw) {
-  const k = norm(kw).trim(), first = k.split(/\s+/)[0];
+  const k = norm(kw).trim(), ws = k.split(/\s+/);
+  const num = ws.length > 1 && (ES_NUMW.has(ws[0]) || /^\d+$/.test(ws[0]));
+  if (num) { const sg = ws[1].replace(/es$/, "").replace(/s$/, ""); const fem = !ES_MASC_A.has(sg) && (FEMN.has(ws[1]) || FEMN.has(sg) || (/(a|ion|dad|tad|tud|ez|umbre)$/.test(sg) && !/(ma|pa)$/.test(sg))); return fem ? "las " : "los "; }
+  const first = ws[0];
+  if (ES_MASC_A.has(first.replace(/s$/, ""))) return /s$/.test(first) ? "los " : "el ";
   if (/^(el|la|los|las|un|una|lo|mi|tu|su)$/.test(first) || NOART.has(first) || /^[A-ZÁÉÍÓÚÑ]/.test(kw.trim()) && !/^[A-ZÁÉÍÓÚÑ]+$/.test(kw.trim())) return "";
   const plural = /s$/.test(first) && !/(is|us|sis)$/.test(first);
   const sing = plural ? first.replace(/es$/, "").replace(/s$/, "") : first;
@@ -6824,8 +6994,13 @@ function reportPrompt(text, R, opts) {
   const rules = en
     ? `RULES: "original" is copied EXACTLY from the script (same case, accents, punctuation, spaces), 3 to 40 words, and appears ONLY ONCE in the script. The verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put a mark in "replacement", never write or quote a verse, never add Bible references. "after" is the rating (1-5) the area would get with that change. "area" is one of hook, promise, retention, voice, close, return. "alts" are up to ${REPORT_MAX_ALTS} other ways to write "replacement" (same aim, a different tone: one calmer, one more direct), with the same rules.`
     : `REGLAS: "original" se copia EXACTO del guion (mismas mayúsculas, tildes, puntuación y espacios), de 3 a 40 palabras, y aparece UNA sola vez en el guion. Los versículos fueron reemplazados por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una marca en "replacement", no escribas ni cites ningún versículo y no añadas referencias bíblicas. "after" es la valoración (1-5) que tendría esa área con ese cambio. "area" es una de hook, promise, retention, voice, close, return. "alts" son hasta ${REPORT_MAX_ALTS} formas distintas de escribir "replacement" (el mismo fin, otro tono: una más tranquila, otra más directa), con las mismas reglas.`;
+  // (Adrian, 2026-11-01: B-054) a replacement that adds a sentence must leave the next one readable (an inserted «Suscríbete…» left
+  // «Él mismo oró…» pointing nowhere). Prompt only: no code checks it.
+  const flow = en
+    ? "If a replacement adds a sentence, the sentence right after it in the script must still read naturally: never leave a pronoun (he, she, this, that) pointing at something other than before."
+    : "Si un reemplazo añade una frase, la frase que sigue en el guion tiene que seguir leyéndose bien: no dejes un pronombre (él, ella, esto, eso) apuntando a otra cosa que antes.";
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  return `${brief}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 // The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
@@ -7074,7 +7249,155 @@ function repairJson(text, depth = 2) {
   try { return JSON.parse(s.slice(0, safe[0]) + safe[1]); } catch (e) { return null; }
 }
 
-if (typeof module !== "undefined") module.exports = { analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+/* ===== Main sections: gancho, promesa, introducción, desarrollo (retención), cierre — pure, no DOM ===== */
+// (Adrian, 2026-11-01: "opus 5.5 to take care of the gancho, promesa, introduccion, retention and cierre"; picks 1A 2A 3A)
+// 1A: the app detects them (detectLayout / sectionsFrom) and the author may move a start («Ajustar límites», saved as secBounds).
+// 2A: retention is the whole body (intro end → close start), with re-hook points every 7–9 minutes.
+// 3A: the close holds the calls to action and the next-episode line at the end («que vuelvan»).
+const MAIN_SECS = ["hook", "promise", "intro", "body", "close"];
+const REHOOK_EVERY = 480; // seconds: the middle of 2A's 7–9 minutes
+const REHOOK_WIN = 60; // a point is "covered" when the text around it (± this) already re-hooks
+
+// Start offsets (chars) of each main section, from the detected layout. A section that isn't there is left out.
+function detectMainStarts(text, R) {
+  const U = buildUnits(R, text);
+  if (!U.length) return { U, starts: {} };
+  const secs = sectionsFrom(detectLayout(U, R), U, R.runtimeSec);
+  const startOf = (s) => U[s.first].start, endOf = (s) => (U[s.last + 1] ? U[s.last + 1].start : text.length);
+  const first = (ty) => secs.find((s) => s.type === ty);
+  const st = { hook: U[0].start };
+  const pr = first("promise"), it = first("intro");
+  if (pr && pr.first > 0) st.promise = startOf(pr);
+  if (it && startOf(it) > (st.promise ?? st.hook)) st.intro = startOf(it);
+  // the close: the last "close" section, pulled back over the calls to action right before it (3A)
+  let ci = -1;
+  for (let i = secs.length - 1; i >= 0; i--) if (secs[i].type === "close") { ci = i; break; }
+  if (ci < 0 && secs.length > 1 && secs[secs.length - 1].type === "cta") ci = secs.length - 1;
+  // walk back over calls to action and plain paragraphs in the final stretch (R.closeFrom, the last ~90 s); a teaching point stops it
+  const tail = Number.isFinite(R.closeFrom) ? R.closeFrom - 60 : Infinity;
+  if (ci > 0) { while (ci - 1 > 0 && (secs[ci - 1].type === "cta" || (secs[ci - 1].type === "body" && secs[ci - 1].t0 >= tail && secs[ci - 1].t1 - secs[ci - 1].t0 <= 45 /* a short line like «En el próximo episodio…», not a teaching passage */))) ci--; st.close = startOf(secs[ci]); }
+  // the body starts where the last opening section ends
+  const lastOpen = it || pr || secs[0];
+  const bodyStart = endOf(lastOpen);
+  if (bodyStart < (st.close ?? text.length) && bodyStart > (st.intro ?? st.promise ?? st.hook)) st.body = bodyStart;
+  return { U, starts: st };
+}
+
+// bounds: optional {k: startChar} the author set («Ajustar límites»). They replace the detected starts only when the result is
+// still in order (hook < promise < intro < body < close, all inside the text); otherwise they are ignored and `stale` says so.
+function mainSections(text, R, bounds) {
+  const { U, starts } = detectMainStarts(text, R);
+  if (!U.length) return { list: [], missing: MAIN_SECS.slice(), stale: false };
+  let st = { ...starts }, stale = false;
+  if (bounds && typeof bounds === "object" && Object.keys(bounds).length) {
+    const tryB = { ...starts };
+    for (const k of MAIN_SECS) if (Number.isInteger(bounds[k])) tryB[k] = bounds[k];
+    const order = MAIN_SECS.filter((k) => tryB[k] != null).map((k) => tryB[k]);
+    const okOrder = order.every((v, i) => v >= 0 && v < text.length && (i === 0 || v > order[i - 1]));
+    if (okOrder) st = tryB; else stale = true;
+  }
+  const ks = MAIN_SECS.filter((k) => st[k] != null);
+  const tAt = (pos) => { const u = U.find((x) => pos >= x.start && pos < x.end) || U.find((x) => x.start >= pos) || U[U.length - 1]; return u.t0; };
+  const list = ks.map((k, i) => {
+    const start = st[k], end = i + 1 < ks.length ? st[ks[i + 1]] : text.replace(/\s+$/, "").length;
+    return { k, start, end, t0: tAt(start), t1: i + 1 < ks.length ? tAt(end) : U[U.length - 1].t1 };
+  });
+  return { list, missing: MAIN_SECS.filter((k) => st[k] == null), stale };
+}
+
+// 2A: re-hook points in the body every REHOOK_EVERY seconds; `gap` = no re-hook in R.blocks around that time (the same reading
+// editMarks uses). Each point carries the char offset of the sentence it falls in.
+function rehookPoints(text, R, sections) {
+  const body = (sections || []).find((s) => s.k === "body");
+  if (!body) return [];
+  const U = buildUnits(R, text).filter((u) => u.start >= body.start && u.start < body.end);
+  if (!U.length) return [];
+  const out = [];
+  for (let tm = body.t0 + REHOOK_EVERY; tm < body.t1 - 30; tm += REHOOK_EVERY) {
+    const u = U.find((x) => tm >= x.t0 && tm < x.t1) || U.find((x) => x.t0 >= tm) || U[U.length - 1];
+    const gap = (R.blocks || []).some((b) => !b.has && tm + REHOOK_WIN >= b.from && tm - REHOOK_WIN <= b.to);
+    out.push({ t: tm, pos: u.start, gap });
+  }
+  return out;
+}
+
+// ---------- The main-sections call (Opus 5.5, tier "sections") ----------
+// Only the five sections go out, the body as excerpts (its start, around each re-hook point, its end): the call judges the
+// opening, the retention points and the close, not every line. Verses are masked with the whole-script numbering (the same one
+// vetReport restores), so every excerpt is cut from the one masked text. Script text last, as in every prompt.
+const SEC_AREAS = ["hook", "promise", "retention", "close", "return"]; // 6A: Opus rates these; spoken voice comes from the detailed call
+const SEC_ITEM_AREA = { hook: ["hook"], promise: ["promise"], intro: ["hook", "retention"], body: ["retention"], close: ["close", "return"] };
+const SECTIONS_MAX_ITEMS = 7;
+
+function sectionsMasked(text, R) {
+  const spans = verseSpans(text, R), verse = spans.filter((s) => s.kind !== "ref");
+  const snap = (p) => { const v = verse.find((s) => p > s.start && p < s.end); return v ? v.end : p; };
+  const mpos = (p) => maskVerses(text, spans, 0, snap(p)).masked.length;
+  return { masked: maskVerses(text, spans, 0, text.length).masked, mpos };
+}
+
+function sectionsPrompt(text, R, sec) {
+  const en = R.lang === "en";
+  const list = sec.list, missing = sec.missing || [];
+  const { masked, mpos } = sectionsMasked(text, R);
+  const cut = (a, b) => masked.slice(mpos(a), mpos(b)).trim();
+  const U = buildUnits(R, text);
+  const rhs = rehookPoints(text, R, list);
+  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY (excerpts)", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO (extractos)", close: "CIERRE" };
+  const parts = [];
+  for (const s of list) {
+    let body = cut(s.start, s.end);
+    if (s.k === "body") {
+      const bu = U.filter((u) => u.start >= s.start && u.start < s.end);
+      const pick = new Set([0, 1, 2, bu.length - 2, bu.length - 1].filter((i) => i >= 0 && i < bu.length));
+      for (const p of rhs) { const i = bu.findIndex((u) => u.start === p.pos); for (const d of [-1, 0, 1, 2]) if (i >= 0 && i + d >= 0 && i + d < bu.length) pick.add(i + d); }
+      const out = [];
+      let prev = -2;
+      for (const i of [...pick].sort((a, b) => a - b)) { if (i > prev + 1 && out.length) out.push("[…]"); out.push(cut(bu[i].start, bu[i + 1] ? bu[i + 1].start : s.end)); prev = i; }
+      body = out.join("\n");
+    }
+    parts.push(`### ${NAME[s.k]} (${fmtTime(s.t0)}–${fmtTime(s.t1)})\n${body}`);
+  }
+  const rh = rhs.map((p) => `${fmtTime(p.t)}${p.gap ? (en ? " (no re-hook here)" : " (aquí no hay re-enganche)") : ""}`).join(", ") || "—";
+  const miss = missing.length ? missing.map((k) => NAME[k].split(" ")[0]).join(", ") : "—";
+  const shape = `{"areas": {"hook": {"rating": 1-5, "why": "..."}, "promise": {...}, "retention": {...}, "close": {...}, "return": {...}}, "items": [{"sec": "hook|promise|intro|body|close", "area": "hook|promise|retention|close|return", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}]}`;
+  const brief = en
+    ? `You are the editor of a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. Judge only the main sections below for someone watching alone on a phone who has never been to church: the hook (first 30 s), the promise, the introduction, retention through the body (re-hook points every 7–9 minutes) and the close with a reason to come back. Rate 1 to 5 and propose at most ${SECTIONS_MAX_ITEMS} changes, the ones that raise those ratings most.`
+    : `Eres el editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Juzga solo las secciones principales de abajo para alguien que lo ve solo en su teléfono y nunca ha ido a una iglesia: el gancho (primeros 30 s), la promesa, la introducción, la retención a lo largo del desarrollo (re-enganches cada 7–9 minutos) y el cierre con una razón para volver. Valora del 1 al 5 y propón como máximo ${SECTIONS_MAX_ITEMS} cambios, los que más suben esa valoración.`;
+  const facts = en
+    ? `FACTS FROM THE APP: runtime ${Math.round((R.runtimeSec || 0) / 60)} min. Re-hook points in the body: ${rh}. Sections not found: ${miss}.`
+    : `DATOS DE LA APP: duración ${Math.round((R.runtimeSec || 0) / 60)} min. Puntos de re-enganche en el desarrollo: ${rh}. Secciones que no se encontraron: ${miss}.`;
+  const rules = en
+    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
+    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
+  return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "MAIN SECTIONS" : "SECCIONES PRINCIPALES"}:\n"""\n${parts.join("\n\n")}\n"""`;
+}
+
+// json: the model's answer (untrusted). Every item goes through vetReport's checks, then must lie inside the section it names
+// (or, for a section that was missing, be an insert: the replacement starts with the original). Areas: the five of 6A.
+function vetSections(text, json, opts, R, sec) {
+  const raw = json && Array.isArray(json.items) ? json.items.slice(0, SECTIONS_MAX_ITEMS * 2) : [];
+  const v = vetReport(text, { areas: json && json.areas, items: raw, words: [] }, opts, R);
+  const where = (start) => (sec.list.find((s) => start >= s.start && start < s.end) || {}).k;
+  const items = [];
+  for (const it of v.items) {
+    const src = raw.find((x) => x && x.replacement === it.replacement && x.area === it.area);
+    const k = src && typeof src.sec === "string" ? src.sec : "";
+    if (!MAIN_SECS.includes(k) || !(SEC_ITEM_AREA[k] || []).includes(it.area)) continue;
+    const own = sec.list.find((s) => s.k === k);
+    const inside = !!own && where(it.start) === k && it.end <= own.end;
+    const insert = sec.missing.includes(k) && it.replacement.startsWith(it.original) && it.replacement.length > it.original.length;
+    if (!inside && !insert) continue;
+    items.push({ ...it, sec: k });
+    if (items.length >= SECTIONS_MAX_ITEMS) break;
+  }
+  const areas = {};
+  for (const k of SEC_AREAS) areas[k] = v.areas[k];
+  return { areas, items, dropped: raw.length - items.length };
+}
+
+if (typeof module !== "undefined") module.exports = { esArticle, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -9641,7 +9964,10 @@ function renderGuide() {
     const rep = typeof reportHTML === "function", more = rep ? rpMoreOpen() : true;
     const inner = more ? `${topFixHTML(R)}<p class="lead">${h(t("s2Lead"))}</p>
       <p class="g-more"><button type="button" class="linkish" id="gExpertGo">${h(t("toReview"))}</button></p>` : "";
-    body.innerHTML = `${rep ? reportHTML(R) : ""}${rep ? rpWrapMore(inner, more) : inner}${navHTML(1, t("next"), 'data-step="3"')}`;
+    const repHTML = rep ? reportHTML(R) : "";
+    // (Adrian, 2026-11-01: B-051) the end card has its own «Ir a Publicar»: no second primary below it for the same move
+    const endCard = repHTML.includes('data-rp="publish"');
+    body.innerHTML = `${repHTML}${rep ? rpWrapMore(inner, more) : inner}${endCard ? navHTML(1) : navHTML(1, t("next"), 'data-step="3"')}`;
     if (more) {
       wireFixes();
       $("gExpertGo").addEventListener("click", () => { V.guided = false; lsSet("sd-expert", "1"); applyView(); document.getElementById("results").scrollIntoView(); });
@@ -9743,7 +10069,7 @@ Object.assign(T.es, {
   tpTitle: "Tema y próximo episodio", tpLead: "El tema es la frase que alguien escribiría en YouTube. El próximo episodio se anuncia al final del guion y aparece en el calendario.",
   tpTopic: "¿De qué tema trata?", tpTopicPh: "la ansiedad", tpAuto: (k) => `Si lo dejas vacío, uso «${k}», la frase que más repites.`, tpNext: "¿Qué veremos el próximo episodio?", tpNextPh: "el Salmo 23", tpDate: "Fecha de publicación",
   srTitle: "Calendario de la serie", srLead: "Planea los episodios con su fecha. Toca «Abrir» para trabajar en uno.", srNewTitle: "Título del episodio", srNewPh: "Qué dice la Biblia sobre el perdón", srPlan: "Planear",
-  srDel: "Borrar", srDelQ: (x) => `¿Borrar «${x}»? No se puede deshacer.`, srDelYes: "Sí, borrar", srDelNo: "No", srDelAll: (n) => `Borrar los ${n} episodios`, srDelAllQ: (n) => `¿Borrar los ${n} episodios? No se puede deshacer.`,
+  srDel: "Borrar", srDelQ: (x) => `¿Borrar «${x}»? No se puede deshacer.`, srDelYes: "Sí, borrar", srDelNo: "No", srDelAll: (n) => (n === 1 ? "Borrar el episodio" : `Borrar los ${n} episodios`), srDelAllQ: (n) => (n === 1 ? "¿Borrar el episodio? No se puede deshacer." : `¿Borrar los ${n} episodios? No se puede deshacer.`),
   srNoDate: "Sin fecha", srToWrite: "Por escribir", srLate: "Atrasado", srNext: "Próximo", srOpen: "Abrir", srPlanNext: (x) => `Planear: ${x}`, srAll: (n) => `Ver los ${n}`, srLess: "Ver menos",
   srEmpty: "Aún no hay episodios. Escribe el título del primero y su fecha.", srNeedDb: "El calendario y los episodios se guardan al abrir esta página en Claude.", srCurrent: "abierto",
   bkTitle: "Copia de seguridad", bkLead: "Descarga un archivo con todos los episodios, versiones, notas y resultados. Guárdalo en tu computadora o en la nube.",
@@ -9754,7 +10080,7 @@ Object.assign(T.en, {
   tpTitle: "Topic and next episode", tpLead: "The topic is the phrase someone would type on YouTube. The next episode is announced at the end of the script and shows up in the calendar.",
   tpTopic: "What's the topic?", tpTopicPh: "anxiety", tpAuto: (k) => `If you leave it empty, I use "${k}", your most repeated phrase.`, tpNext: "What's next episode about?", tpNextPh: "Psalm 23", tpDate: "Publish date",
   srTitle: "Series calendar", srLead: "Plan episodes with their dates. Tap \"Open\" to work on one.", srNewTitle: "Episode title", srNewPh: "What the Bible says about forgiveness", srPlan: "Plan",
-  srDel: "Delete", srDelQ: (x) => `Delete “${x}”? This can't be undone.`, srDelYes: "Yes, delete", srDelNo: "No", srDelAll: (n) => `Delete all ${n} episodes`, srDelAllQ: (n) => `Delete all ${n} episodes? This can't be undone.`,
+  srDel: "Delete", srDelQ: (x) => `Delete “${x}”? This can't be undone.`, srDelYes: "Yes, delete", srDelNo: "No", srDelAll: (n) => (n === 1 ? "Delete the episode" : `Delete all ${n} episodes`), srDelAllQ: (n) => (n === 1 ? "Delete the episode? This can't be undone." : `Delete all ${n} episodes? This can't be undone.`),
   srNoDate: "No date", srToWrite: "To write", srLate: "Late", srNext: "Next up", srOpen: "Open", srPlanNext: (x) => `Plan: ${x}`, srAll: (n) => `See all ${n}`, srLess: "See less",
   srEmpty: "No episodes yet. Write the first one's title and date.", srNeedDb: "The calendar and episodes are saved when this page is opened in Claude.", srCurrent: "open",
   bkTitle: "Backup", bkLead: "Download one file with every episode, version, note and result. Keep it on your computer or in the cloud.",
@@ -11156,7 +11482,7 @@ Object.assign(T.es, {
   epNow: "Episodio", epNew: "Episodio nuevo", epNoDate: "sin fecha de publicación", epOut: (d) => `sale el ${d}`,
   epBtn: "Mis episodios", epClose: "Cerrar", epOpenNow: "Abierto", epChange: "Cambiar fecha", epSave: "Guardar", epCancel: "Cancelar",
   epNoText: "Falta escribir", epLateM: "fecha pasada", epToday: "hoy", epTomorrow: "mañana", epIn: (n) => `en ${n} días`, epAgo: (n) => `hace ${n} días`,
-  epAdd: "+ Planear otro episodio", epAbout: "¿Sobre qué será?", epDay: "¿Qué día sale?", epAddBtn: "Añadir", epPast: (n) => `Ver los ${n} ya grabados`, epPastHide: "Ocultar los grabados",
+  epAdd: "+ Planear otro episodio", epNewEp: "+ Nuevo episodio", epNewEpFail: "No se pudo guardar el episodio abierto; no se empezó uno nuevo.", epAbout: "¿Sobre qué será?", epDay: "¿Qué día sale?", epAddBtn: "Añadir", epPast: (n) => `Ver los ${n} ya grabados`, epPastHide: "Ocultar los grabados",
   epEmpty: "Aún no hay episodios guardados. Cuando revises tu primer guion, aparecerá aquí.", epBackup: "Copia de seguridad",
   npTitle: "Planea el próximo episodio",
   npLeadNext: (x) => `Al final del guion anuncias «${x}». Déjalo apuntado para no empezar de cero la semana que viene.`,
@@ -11169,7 +11495,7 @@ Object.assign(T.en, {
   epNow: "Episode", epNew: "New episode", epNoDate: "no publish date", epOut: (d) => `goes out ${d}`,
   epBtn: "My episodes", epClose: "Close", epOpenNow: "Open", epChange: "Change date", epSave: "Save", epCancel: "Cancel",
   epNoText: "Not written yet", epLateM: "date passed", epToday: "today", epTomorrow: "tomorrow", epIn: (n) => `in ${n} days`, epAgo: (n) => `${n} days ago`,
-  epAdd: "+ Plan another episode", epAbout: "What will it be about?", epDay: "What day does it go out?", epAddBtn: "Add", epPast: (n) => `See the ${n} already recorded`, epPastHide: "Hide recorded ones",
+  epAdd: "+ Plan another episode", epNewEp: "+ New episode", epNewEpFail: "Couldn't save the open episode; a new one wasn't started.", epAbout: "What will it be about?", epDay: "What day does it go out?", epAddBtn: "Add", epPast: (n) => `See the ${n} already recorded`, epPastHide: "Hide recorded ones",
   epEmpty: "No saved episodes yet. Once you review your first script, it shows up here.", epBackup: "Backup",
   npTitle: "Plan the next episode",
   npLeadNext: (x) => `At the end of the script you announce “${x}”. Note it down so you don't start from zero next week.`,
@@ -11221,7 +11547,7 @@ renderSeries = function (cid) {
       ? `<div class="ep-add"><div class="field"><label for="${cid}-t">${h(t("epAbout"))}</label><input id="${cid}-t" placeholder="${h(t("srNewPh"))}" maxlength="100"></div>
           <div class="field"><label for="${cid}-d">${h(t("epDay"))}</label><input id="${cid}-d" type="date" value="${h(nextFreeDate())}"><span class="hint" id="${cid}-dh">${h(longDay(nextFreeDate()))}</span></div>
           <div class="actions"><button type="button" class="small primary" id="${cid}-p">${h(t("epAddBtn"))}</button><button type="button" class="small" id="${cid}-x">${h(t("epCancel"))}</button></div></div>`
-      : `<button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button>`;
+      : `<div class="ep-addrow"><button type="button" class="small primary" id="${cid}-new">${h(t("epNewEp"))}</button><button type="button" class="small ep-addbtn" id="${cid}-a">${h(t("epAdd"))}</button></div>`;
     const notice = G.loadErr.prods ? `<p class="status err" role="alert">${h(t("srLoadFail"))} <button type="button" class="small" data-retry="prods">${h(t("srRetry"))}</button></p>` : G.srMsg ? `<p class="status err" role="alert">${h(G.srMsg)}</p>` : "";
     el.innerHTML = `${head}${notice}<p class="lead">${h(G.prods.length ? t("srLead") : t("epEmpty"))}</p>
       ${active.length ? `<ul class="ep-list">${active.map(row).join("")}</ul>` : ""}
@@ -11234,7 +11560,15 @@ renderSeries = function (cid) {
     const askDel = (box, msg, onYes) => { box.innerHTML = `<span class="sr-q">${h(msg)}</span><button type="button" class="small danger" data-y>${h(t("srDelYes"))}</button><button type="button" class="small" data-n>${h(t("srDelNo"))}</button>`; box.querySelector("[data-n]").addEventListener("click", () => renderSeriesAll()); box.querySelector("[data-y]").addEventListener("click", async (e) => { e.target.disabled = true; await onYes(); }); };
     el.querySelectorAll("[data-srdel]").forEach((b) => b.addEventListener("click", () => { const p = G.prods.find((x) => x.id === b.dataset.srdel); askDel(b.closest(".ep-tools"), t("srDelQ")(p ? p.title || "—" : "—"), () => deleteProds([b.dataset.srdel])); }));
     if (q(`#${cid}-delall`)) q(`#${cid}-delall`).addEventListener("click", () => askDel(q(`#${cid}-delall`).closest(".sr-clear"), t("srDelAllQ")(G.prods.length), () => deleteProds(G.prods.map((x) => x.id))));
-    if (q(`#${cid}-a`)) q(`#${cid}-a`).addEventListener("click", () => { G.epAdding = true; renderSeriesAll(); const i = $(`${cid}-t`); if (i) i.focus(); });
+    if (q(`#${cid}-a`)) q(`#${cid}-a`).addEventListener("click", () => { G.epAdding = true; G.epFocus = true; renderSeriesAll(); });
+    // (Adrian, 2026-11-01: B-048) the field exists only after this async render: focus it here, once
+    if (G.epFocus && q(`#${cid}-t`) && q(`#${cid}-t`).offsetParent) { G.epFocus = false; q(`#${cid}-t`).focus(); } // the visible list only (a hidden copy renders too)
+    // «Nuevo episodio»: the open episode is saved first (a refused save stops here and says so), then an empty one starts. No date asked.
+    if (q(`#${cid}-new`)) q(`#${cid}-new`).addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      if (typeof flushProdSave === "function" && !(await flushProdSave())) { G.srMsg = t("epNewEpFail"); renderSeriesAll(); return; }
+      closeEpSheet(); doClearScript(); if (V.guided) goStep(1); $("script").focus();
+    });
     if (q(`#${cid}-x`)) q(`#${cid}-x`).addEventListener("click", () => { G.epAdding = false; renderSeriesAll(); });
     if (q(`#${cid}-d`)) q(`#${cid}-d`).addEventListener("change", (e) => { q(`#${cid}-dh`).textContent = e.target.value ? longDay(e.target.value) : ""; });
     if (q(`#${cid}-p`)) q(`#${cid}-p`).addEventListener("click", async (e) => {
@@ -11839,7 +12173,7 @@ function confirmSheet(o) {
 function askClearScript() {
   const saved = !!G.prodId && !(typeof DEMO !== "undefined" && DEMO);
   // (B-016, pick A) the edit in flight is saved into the episode being left before the editor is emptied; a conflict stops here
-  confirmSheet({ title: t("clrTitle"), body: t("clrBody"), extra: saved ? t("clrSaved") : "", note: t("clrUndo"), no: t("clrNo"), yes: t("clrYes"), danger: true, onYes: async () => { if (typeof flushProdSave === "function" && !(await flushProdSave())) return; doClearScript(); } });
+  confirmSheet({ title: t("clrTitle"), body: t("clrBody"), extra: saved ? t("clrSaved") : "", note: saved ? "" : t("clrUndo"), /* (Adrian, 2026-11-01: B-046) the saved episode stays in history, so "can't be undone" was only true with nothing saved */ no: t("clrNo"), yes: t("clrYes"), danger: true, onYes: async () => { if (typeof flushProdSave === "function" && !(await flushProdSave())) return; doClearScript(); } });
 }
 /* ===== Escritorio: guion fijo a la izquierda, todo lo demás a la derecha con su propio scroll ===== */
 // Wide screens get a split view: the script never scrolls away, and the review, fixes, packaging and the
@@ -14687,8 +15021,10 @@ function rpChip(info, cur) {
   const A = t("rpArea"), name = cur.type === "item" ? A[cur.it.area] : info.label, up = info.gain > 0;
   const dots = cur.type === "item" && up ? ` <span aria-hidden="true" class="rp-dots">${rpDots(info.from)} → ${rpDots(info.to)}</span>` : "";
   const html = up ? `<b>${h(t("rpChipUp")(info.gain, name))}</b>${dots}<span class="vh">${h(cur.type === "item" ? t("rpChipAria")(info.gain, name, info.from, info.to) : "")}</span>` : h(t("rpChipDone")(name));
+  // (Adrian, 2026-11-01: B-050) below the masthead, never over ES/EN/⋯: on desktop the pill is hidden and 12 px sat on the header.
   const pill = $("scorePill"), pr = pill && !pill.hidden ? pill.getBoundingClientRect() : null;
-  el.style.top = Math.max(8, pr ? pr.bottom + 8 : 12) + "px";
+  const mh = document.querySelector(".masthead"), mr = mh ? mh.getBoundingClientRect() : null;
+  el.style.top = Math.max(8, pr ? pr.bottom + 8 : 12, mr && mr.bottom > 0 ? mr.bottom + 8 : 0) + "px";
   const put = () => { el.innerHTML = html; el.classList.add("on"); };
   if (fresh) setTimeout(put, 30); else put(); // a live region must exist before its text changes
   clearTimeout(RP.chipTm); RP.chipTm = setTimeout(() => el.classList.remove("on"), 3200);
