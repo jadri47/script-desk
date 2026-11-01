@@ -51,11 +51,12 @@ function bibleRule(v: string): string {
     "No cambies las citas que el autor ya tiene en el guion salvo que te lo pida. " +
     "Si no estás seguro del texto exacto en esa versión, escribe solo la referencia entre corchetes, por ejemplo [Mateo 6:34], para que el autor copie el versículo.";
 }
-const MAX_TOKENS: Record<string, number> = { complex: 16000, default: 2500 };
+// (Adrian, 2026-11-01: "A", B-045) default 2,500 → 6,000: «Sugerir títulos y miniatura» was cut at exactly 2,500 output tokens.
+const MAX_TOKENS: Record<string, number> = { complex: 16000, default: 6000 };
 // (Adrian, 2026-10-30: "A", B-044) Sonnet 5.5 thinks at effort "high" unless told otherwise and on a weak script spent the whole 16,000-token
-// cap thinking, writing nothing (112 s and 138 s, answer cut, $0.17). The report is an editor's judgement, not a proof: "medium" for the
-// complex tier only. The default tier keeps the model's own default.
-const EFFORT: Record<string, string> = { complex: "medium" };
+// cap thinking, writing nothing (112 s and 138 s, answer cut, $0.17). The report is an editor's judgement, not a proof: "medium".
+// (Adrian, 2026-11-01: "A", B-045) the default tier too: at "high" it spent its whole cap thinking on a 3,800-word script ($0.032, no answer).
+const EFFORT: Record<string, string> = { complex: "medium", default: "medium" };
 const SYSTEM =
   "Eres el asistente de Script Desk, una herramienta para revisar guiones de un pódcast cristiano de enseñanza bíblica en YouTube. " +
   "Quien escribe es un pastor que predica con regularidad y conoce bien la Biblia: no le enseñes teología ni evalúes su doctrina. " +
