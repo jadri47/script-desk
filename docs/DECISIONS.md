@@ -1,5 +1,19 @@
 # Decisions (newest first)
 
+## 2026-11-01 (later): review in two screens; Opus for the main sections (Adrian: "I want opus 5.5 to take care of the gancho, promesa, introduccion, retention and cierre, and sonnet for the rest"; "two separate sections ... in separate screens, to not mix everything up"; then "go with all your recommendations")
+- Mockup and flow: https://claude.ai/artifact/Ehhx4VaH8uszXgNTud7ysa (scratchpad `revision-en-dos-pantallas.html`).
+- Steps become 4: Escribir · Secciones principales (Opus 5.5) · Revisión detallada (Sonnet 5.5) · Publicar (Sonnet 5.5). **4A**.
+- **1A** the app detects the sections (today's `detectLayout`/`sectionsFrom`); «Ajustar límites» lets Juan move a boundary. B
+  (Juan marks them) rejected.
+- **2A** retention = the whole body in a dashed violet box with re-hook points every 7–9 min; Opus says where one is missing.
+- **3A** «que vuelvan» belongs to the close (Opus). **5A** a settled section is closed with a lock in the detailed review, no
+  marks inside; «Volver a abrir» takes it back to step 2. **6A** readiness keeps today's recipe (rules 40 + editor 60); Opus
+  rates hook, promise, retention, close, return; Sonnet rates spoken voice.
+- Boxes: gancho pink (j2), promesa amber (j3), introducción blue (j1), retención violet dashed (j5), cierre green (j4), each
+  with its name written, so colour is never the only cue.
+- B-045 **A**: default tier "medium" effort and a 6,000-token cap (committed `42d82dc`; deploy waits for Adrian's approval).
+- The walkthrough's smaller findings (B-046..B-054): fix them all (recommended, accepted).
+
 ## 2026-11-01: Juan joins; team review (Adrian: "the computer version is critical", "I would like to be able to see Juan's finished texts, but not mess with them", "the idea is to support Juan in the review of his episodes", "do B")
 - Priority: desktop first; the phone is a nice-to-have until Juan is using it (step 9 phone checklist parked).
 - Juan added to `sd_team` (`juannaffzigersanchez@gmail.com`, «Juan»), read back.

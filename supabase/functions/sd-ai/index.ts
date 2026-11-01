@@ -13,7 +13,10 @@ const json = (body: unknown, status = 200) =>
 const DAILY_LIMIT = Number(Deno.env.get("SD_DAILY_LIMIT") || "60");
 const AUTO_MONTH_USD = Number(Deno.env.get("SD_AUTO_MONTH_USD") || "5");
 // Sonnet for every AI feature. Override per tier with secrets (SD_MODEL_COMPLEX / SD_MODEL_DEFAULT) without redeploying.
+// (Adrian, 2026-11-01: "opus 5.5 to take care of the gancho, promesa, introduccion, retention and cierre, and sonnet for the rest")
+// tier `sections` = the main-sections review (screen 2); everything else stays on Sonnet.
 const MODELS: Record<string, string> = {
+  sections: Deno.env.get("SD_MODEL_SECTIONS") || "claude-opus-5-5",
   complex: Deno.env.get("SD_MODEL_COMPLEX") || "claude-sonnet-5-5",
   default: Deno.env.get("SD_MODEL_DEFAULT") || "claude-sonnet-5-5",
 };
@@ -52,11 +55,11 @@ function bibleRule(v: string): string {
     "Si no estás seguro del texto exacto en esa versión, escribe solo la referencia entre corchetes, por ejemplo [Mateo 6:34], para que el autor copie el versículo.";
 }
 // (Adrian, 2026-11-01: "A", B-045) default 2,500 → 6,000: «Sugerir títulos y miniatura» was cut at exactly 2,500 output tokens.
-const MAX_TOKENS: Record<string, number> = { complex: 16000, default: 6000 };
+const MAX_TOKENS: Record<string, number> = { sections: 16000, complex: 16000, default: 6000 };
 // (Adrian, 2026-10-30: "A", B-044) Sonnet 5.5 thinks at effort "high" unless told otherwise and on a weak script spent the whole 16,000-token
 // cap thinking, writing nothing (112 s and 138 s, answer cut, $0.17). The report is an editor's judgement, not a proof: "medium".
 // (Adrian, 2026-11-01: "A", B-045) the default tier too: at "high" it spent its whole cap thinking on a 3,800-word script ($0.032, no answer).
-const EFFORT: Record<string, string> = { complex: "medium", default: "medium" };
+const EFFORT: Record<string, string> = { sections: "medium", complex: "medium", default: "medium" };
 const SYSTEM =
   "Eres el asistente de Script Desk, una herramienta para revisar guiones de un pódcast cristiano de enseñanza bíblica en YouTube. " +
   "Quien escribe es un pastor que predica con regularidad y conoce bien la Biblia: no le enseñes teología ni evalúes su doctrina. " +
@@ -92,7 +95,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json({ code: "bad_request" }, 400); }
   const prompt = String(body.prompt || "");
   if (!prompt || prompt.length > 120000) return json({ code: "bad_request" }, 400);
-  const tier = body.tier === "complex" ? "complex" : "default";
+  const tier = body.tier === "sections" ? "sections" : body.tier === "complex" ? "complex" : "default";
 
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { count } = await sb.from("sd_ai_usage").select("id", { count: "exact", head: true }).eq("user_id", userData.user.id).gte("at", since);
