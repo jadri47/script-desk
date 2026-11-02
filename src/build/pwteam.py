@@ -56,6 +56,9 @@ async def main():
         await pg.click("[data-tmview='p-j']"); await pg.wait_for_timeout(600)
         view = await pg.evaluate("({ open: $('tmSheet') && $('tmSheet').open, paras: document.querySelectorAll('#tmSheet .tm-paras > li').length, ro: ($('tmSheet').querySelector('.tm-ro') || {}).textContent || '' })")
         ok("«Ver» opens Juan's episode read only", view["open"] and view["paras"] == 3 and "notas para Juan" in view["ro"], view)
+        plus = await pg.evaluate("(() => { const b = document.querySelector('#tmSheet .tm-plus'), cs = getComputedStyle(b), r = b.getBoundingClientRect(); return { w: r.width, h: r.height, border: cs.borderTopWidth, title: b.title, label: b.getAttribute('aria-label') }; })()")
+        # the note «+» read as a stray mark (2026-11-02): a 30 px outlined button whose hover name is its spoken name
+        ok("«Ver»: the note «+» is a round outlined button named on hover", plus["w"] >= 30 and plus["h"] >= 30 and plus["border"] != "0px" and plus["title"] == plus["label"] == "Añadir una nota al párrafo 1", plus)
         await pg.wait_for_timeout(2600)  # past the 2 s autosave
         ok("viewing changes no row", await pg.evaluate("JSON.stringify(window.__rows)") == before)
         ok("and the editor is not touched", await pg.evaluate("[$('script').value, G.prodId]") == editor)

@@ -626,6 +626,9 @@ dialog.tm-sheet{width:min(1040px,calc(100vw - 24px))}
 .tm-paras>li>p{margin:0;font-family:var(--serif);line-height:1.6}
 .tm-n{position:absolute;left:6px;top:10px;font:600 12px/1 var(--sans);color:var(--ink-2)}
 .tm-plus{position:absolute;right:4px;top:6px;min-width:28px;min-height:28px;font-size:18px}
+/* the «+» read as a stray mark (jadri47, 2026-11-02): a round outlined button, the same name as its aria-label on hover */
+.tm-paras .tm-plus{width:30px;height:30px;padding:0;border:1px solid var(--rule);border-radius:50%;background:var(--sheet);font:600 20px/1 var(--sans);color:var(--accent)}
+.tm-paras .tm-plus:hover,.tm-paras .tm-plus:focus-visible{border-color:var(--accent)}
 .tm-side{position:sticky;top:0;border:1px solid var(--rule);border-radius:14px;padding:12px;background:var(--sheet)}
 .tm-side h3{margin:0 0 8px;font:600 15px/1.3 var(--sans)}
 .tm-notes{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:10px}

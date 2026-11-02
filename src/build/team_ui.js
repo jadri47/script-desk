@@ -148,7 +148,7 @@ function renderTeamView() {
   const form = (p) => `<div class="tm-add"><label for="tmTxt">${h(p ? t("tmAddFor")(who, p) : t("tmAddGen")(who))}</label><textarea id="tmTxt" rows="3" maxlength="1000"></textarea>
     <div class="actions"><button type="button" class="small primary" id="tmSave">${h(t("tmSave"))}</button><button type="button" class="small" id="tmCancel">${h(t("tmCancel"))}</button></div></div>`;
   const body = paras.length
-    ? `<ol class="tm-paras">${paras.map((p, i) => `<li data-p="${i + 1}"><span class="tm-n" aria-hidden="true">${i + 1}</span><p>${h(p)}</p><button type="button" class="small linkish tm-plus" data-tmadd="${i + 1}" aria-label="${h(t("tmAddPara")(i + 1))}">+</button>${v.adding === i + 1 ? form(i + 1) : ""}</li>`).join("")}</ol>`
+    ? `<ol class="tm-paras">${paras.map((p, i) => `<li data-p="${i + 1}"><span class="tm-n" aria-hidden="true">${i + 1}</span><p>${h(p)}</p><button type="button" class="small linkish tm-plus" data-tmadd="${i + 1}" aria-label="${h(t("tmAddPara")(i + 1))}" title="${h(t("tmAddPara")(i + 1))}">+</button>${v.adding === i + 1 ? form(i + 1) : ""}</li>`).join("")}</ol>`
     : `<p class="hint">${h(t("tmNoText"))}</p>`;
   const done = Array.isArray(x.teamNotesDone) ? x.teamNotesDone : [];
   const notes = v.notes.length ? `<ul class="tm-notes">${v.notes.map((n) => tmNoteHTML(n, { done, del: true })).join("")}</ul>` : `<p class="hint">${h(t("tmNoNotes"))}</p>`;

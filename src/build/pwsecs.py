@@ -90,8 +90,10 @@ async def main():
           const boxes = [...document.querySelectorAll('.sx-lock')], ls = [...document.querySelectorAll('.sx-lock-l')].map(l => l.getBoundingClientRect());
           const b0 = boxes[0] && boxes[0].getBoundingClientRect(), y = b0 ? Math.min(b0.bottom, er.bottom) - 12 : 0, hit = b0 ? document.elementFromPoint(textLeft + 60, y) : null;
           return { clear: boxes.every(b => getComputedStyle(b).backgroundColor === 'rgba(0, 0, 0, 0)'), margin: ls.every(r => r.right <= textLeft + 0.5),
+            // the name with its lock fits its label (INTRODUCCIÓN ran into the text, 2026-11-02): content, not just the box
+            fits: [...document.querySelectorAll('.sx-lock-l')].every(l => l.scrollWidth <= l.clientWidth + 0.5),
             overlap: ls.some((a, i) => ls.slice(i + 1).some(b => a.bottom > b.top + 0.5 && b.bottom > a.top + 0.5)), textOnTop: !!(hit && ed.contains(hit)), n: ls.length }; })()""")
-        ok("B-057: a fixed section is an outline: its text shows and takes the click, labels in the margin, none on another", lk["n"] >= 1 and lk["clear"] and lk["margin"] and not lk["overlap"] and lk["textOnTop"], lk)
+        ok("B-057: a fixed section is an outline: its text shows and takes the click, labels in the margin, none on another", lk["n"] >= 1 and lk["clear"] and lk["margin"] and lk["fits"] and not lk["overlap"] and lk["textOnTop"], lk)
         await pg.click(".sx-lock [data-sx-unlock]"); await pg.wait_for_timeout(600)
         ok("step 5: «Volver a abrir» goes back to the main sections with it open", await pg.evaluate("!!document.querySelector('[data-sx-root]') && !G.secLocks.hook && Object.keys(G.secLocks).length === 4"), await pg.evaluate("JSON.stringify(G.secLocks)"))
         ok("step 6: back in the main sections the bar shows step 2", await pg.evaluate("document.querySelector('#stepBar .sb button.on .sb-l').textContent") == "Secciones principales")
