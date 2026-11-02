@@ -1281,6 +1281,46 @@ html:not(.sd-split) main.rp-focus{padding-bottom:calc(var(--sb-h,64px) + 190px)}
 .rp-act>.sd-tip{flex:1 0 100%;order:-1;margin:0 0 6px}
 @media (max-width:620px){ .sd-tip-ok{min-height:48px} }
 @media print{ .sd-tip{display:none !important} }
+
+/* ===== «Secciones principales» (sections_ui.js; Adrian, 2026-11-01): boxes over the editor + the panel ===== */
+.sx-layer{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.sx-box{position:absolute;border:2px solid var(--sx-c);border-radius:12px;background:color-mix(in srgb,var(--sx-c) 7%,transparent)}
+.sx-box.cur{box-shadow:0 0 0 3px color-mix(in srgb,var(--sx-c) 25%,transparent)}
+.sx-box.done{border-style:solid;opacity:.75}
+.sx-box.sx-body{border-style:dashed;background:transparent}
+/* labels live in a left margin the editor gets while this screen is on (html.sx-on), so a label never covers the text */
+html.sx-on #ed{padding-left:128px!important}
+.sx-lbl{position:absolute;top:4px;left:4px;max-width:108px;font:700 12px/1.25 var(--sans);letter-spacing:.03em;text-transform:uppercase;color:var(--j-on);background:var(--sx-c);padding:4px 6px;border-radius:7px;white-space:normal}
+.sx-hook{--sx-c:var(--j2)} .sx-promise{--sx-c:var(--j3t)} .sx-intro{--sx-c:var(--j1)} .sx-body{--sx-c:var(--j5)} .sx-close{--sx-c:var(--j4)}
+.sx-rh{position:absolute;height:0;border-top:2px solid var(--j5)}
+.sx-rh span{position:absolute;right:0;top:-10px;font:600 11px/1 var(--sans);color:var(--j5t);background:var(--sheet);padding:2px 6px;border-radius:6px}
+.sx-rh.gap{border-top-style:dashed} .sx-rh.gap span{color:var(--rojo)}
+.sx{display:grid;gap:12px}
+.sx-prog{display:flex;gap:6px}.sx-prog span{flex:1;height:6px;border-radius:3px;background:var(--rule)}.sx-prog span.d{background:var(--j4)}.sx-prog span.c{background:var(--j5)}
+.sx-rows{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sx-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--rule);border-radius:10px;background:var(--sheet)}
+.sx-row.cur{border-color:var(--sx-c);box-shadow:inset 3px 0 0 var(--sx-c)}
+.sx-row .sx-go{flex:1;display:flex;align-items:center;gap:8px;background:none;border:0;padding:4px 0;font:600 14px/1.3 var(--sans);color:var(--ink);text-align:left;min-height:32px;cursor:pointer}
+.sx-row .sx-go:disabled{cursor:default;opacity:.8}
+.sx-dot{width:10px;height:10px;border-radius:3px;background:var(--sx-c);flex:none}
+.sx-st{font:500 13px/1 var(--sans);color:var(--ink-2)} .sx-st.ok{color:var(--j4t)}
+.sx-card{border:1px solid var(--rule);border-radius:14px;padding:14px;background:var(--sheet);display:grid;gap:10px}
+.sx-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;font:600 15px/1.3 var(--sans)}
+.sx-rate{margin-left:auto;font:500 13px/1 var(--sans);color:var(--ink-2)}
+.sx-why{margin:0;color:var(--ink-2)}
+.sx-kv{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px}
+.sx-kv .k{font:600 11px/1.6 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.sx-kv .v{font-family:var(--serif)}
+.sx-old{text-decoration:line-through;color:var(--rojo)}
+.sx-opts{display:grid;gap:6px}
+.sx-opt{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1.5px solid var(--rule);border-radius:10px;font-family:var(--serif);cursor:pointer}
+.sx-opt.sel{border-color:var(--j5);background:var(--mul-bg)}
+.sx-opt input{margin-top:4px}
+.sx-card .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (max-width:760px){.sx-kv{grid-template-columns:1fr}}
+.sx-lock{position:absolute;display:flex;align-items:flex-start;padding:8px 12px;box-sizing:border-box;background:var(--sheet-2);border:1.5px solid var(--rule);border-radius:10px;pointer-events:auto;overflow:hidden}
+.sx-lock-l{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;font:500 13px/1.4 var(--sans);color:var(--ink-2)}
+.sx-lock-l b{color:var(--ink)} .sx-lock-l button{font:600 13px/1 var(--sans);min-height:28px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -4264,8 +4304,16 @@ function reportPrompt(text, R, opts) {
   const flow = en
     ? "If a replacement adds a sentence, the sentence right after it in the script must still read naturally: never leave a pronoun (he, she, this, that) pointing at something other than before."
     : "Si un reemplazo añade una frase, la frase que sigue en el guion tiene que seguir leyéndose bien: no dejes un pronombre (él, ella, esto, eso) apuntando a otra cosa que antes.";
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  // (Adrian, 2026-11-01: 6A, the detailed review) With opts.detail (the main sections already reviewed by Opus: [{name, start, end}])
+  // the call rates only spoken voice and proposes voice changes outside those sections; the ad-word alternatives stay.
+  const det = Array.isArray(opts.detail);
+  const detNames = det ? opts.detail.map((d) => d.name).join(", ") : "";
+  const briefX = !det ? brief : en
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most.`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan.`;
+  const shapeX = !det ? shape : `{"areas": {"voice": {"rating": 1-5, "why": "..."}}, "items": [{"area": "voice", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shapeX;
+  return `${briefX}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 // The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
@@ -4587,8 +4635,8 @@ function rehookPoints(text, R, sections) {
 }
 
 // ---------- The main-sections call (Opus 5.5, tier "sections") ----------
-// Only the five sections go out, the body as excerpts (its start, around each re-hook point, its end): the call judges the
-// opening, the retention points and the close, not every line. Verses are masked with the whole-script numbering (the same one
+// The five sections go out whole, labelled, with the re-hook points marked in the body (pick A, 2026-11-01: excerpts made Opus
+// mark retention down for what it could not see). Verses are masked with the whole-script numbering (the same one
 // vetReport restores), so every excerpt is cut from the one masked text. Script text last, as in every prompt.
 const SEC_AREAS = ["hook", "promise", "retention", "close", "return"]; // 6A: Opus rates these; spoken voice comes from the detailed call
 const SEC_ITEM_AREA = { hook: ["hook"], promise: ["promise"], intro: ["hook", "retention"], body: ["retention"], close: ["close", "return"] };
@@ -4608,18 +4656,18 @@ function sectionsPrompt(text, R, sec) {
   const cut = (a, b) => masked.slice(mpos(a), mpos(b)).trim();
   const U = buildUnits(R, text);
   const rhs = rehookPoints(text, R, list);
-  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY (excerpts)", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO (extractos)", close: "CIERRE" };
+  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO", close: "CIERRE" };
   const parts = [];
   for (const s of list) {
     let body = cut(s.start, s.end);
     if (s.k === "body") {
-      const bu = U.filter((u) => u.start >= s.start && u.start < s.end);
-      const pick = new Set([0, 1, 2, bu.length - 2, bu.length - 1].filter((i) => i >= 0 && i < bu.length));
-      for (const p of rhs) { const i = bu.findIndex((u) => u.start === p.pos); for (const d of [-1, 0, 1, 2]) if (i >= 0 && i + d >= 0 && i + d < bu.length) pick.add(i + d); }
-      const out = [];
-      let prev = -2;
-      for (const i of [...pick].sort((a, b) => a - b)) { if (i > prev + 1 && out.length) out.push("[…]"); out.push(cut(bu[i].start, bu[i + 1] ? bu[i + 1].start : s.end)); prev = i; }
-      body = out.join("\n");
+      // (Adrian, 2026-11-01: "go", pick A) the whole body, with the re-hook points marked where they fall: judged on excerpts,
+      // Opus marked retention down for what it was not shown ("en los extractos no hay re-enganches"); input is the cheap part (~+$0.02)
+      const cuts = rhs.map((p) => p.pos).filter((x) => x > s.start && x < s.end).sort((a, b) => a - b);
+      let from = s.start; const out = [];
+      cuts.forEach((c, j) => { out.push(cut(from, c)); const p = rhs.find((q) => q.pos === c); out.push(`[${en ? "RE-HOOK POINT" : "PUNTO DE RE-ENGANCHE"} ${fmtTime(p.t)}]`); from = c; });
+      out.push(cut(from, s.end));
+      body = out.filter(Boolean).join("\n");
     }
     parts.push(`### ${NAME[s.k]} (${fmtTime(s.t0)}–${fmtTime(s.t1)})\n${body}`);
   }
@@ -4633,8 +4681,8 @@ function sectionsPrompt(text, R, sec) {
     ? `FACTS FROM THE APP: runtime ${Math.round((R.runtimeSec || 0) / 60)} min. Re-hook points in the body: ${rh}. Sections not found: ${miss}.`
     : `DATOS DE LA APP: duración ${Math.round((R.runtimeSec || 0) / 60)} min. Puntos de re-enganche en el desarrollo: ${rh}. Secciones que no se encontraron: ${miss}.`;
   const rules = en
-    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
-    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
+    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. Lines like [RE-HOOK POINT 8:00] are marks from the app, not part of the script: never copy them into "original". "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
+    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. Las líneas como [PUNTO DE RE-ENGANCHE 8:00] son marcas de la app, no del guion: nunca las copies en "original". "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
   return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "MAIN SECTIONS" : "SECCIONES PRINCIPALES"}:\n"""\n${parts.join("\n\n")}\n"""`;
 }
@@ -4662,7 +4710,28 @@ function vetSections(text, json, opts, R, sec) {
   return { areas, items, dropped: raw.length - items.length };
 }
 
-if (typeof module !== "undefined") module.exports = { esArticle, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+// ---------- The detailed review (Sonnet) after the main sections (5A, 6A) ----------
+// The fixed main sections the detailed review must leave alone. The body is a main section for retention (Opus judged its re-hook
+// points) but its lines are what the detailed review is for, so it never counts here.
+function detailLocked(sec, locks) {
+  return (sec && sec.list ? sec.list : []).filter((s) => s.k !== "body" && locks && locks[s.k] === true).map((s) => ({ k: s.k, start: s.start, end: s.end }));
+}
+// vetted report → only spoken-voice changes outside the fixed sections, and only the voice rating (the other five are Opus's).
+function detailOnly(v, locked) {
+  const out = (v.items || []).filter((it) => it.area === "voice" && !locked.some((r) => it.start < r.end && it.end > r.start));
+  return { ...v, areas: { voice: v.areas && v.areas.voice ? v.areas.voice : { rating: null, why: "" } }, items: out, dropped: (v.dropped || 0) + ((v.items || []).length - out.length) };
+}
+// 6A: the score's editor part reads Opus's five ratings and Sonnet's spoken voice. Only when both answers exist; with one of them
+// alone the caller keeps today's behaviour (no invented rating for the missing part). Applied changes of both count (effectiveReport).
+function mergeReports(rep, secRep) {
+  if (!rep || !secRep) return rep;
+  const areas = { ...rep.areas };
+  for (const k of SEC_AREAS) if (secRep.areas && secRep.areas[k] && secRep.areas[k].rating != null) areas[k] = secRep.areas[k];
+  const extra = (secRep.items || []).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts || [], why: x.why, after: x.after }));
+  return { ...rep, areas, items: [...(rep.items || []), ...extra] };
+}
+
+if (typeof module !== "undefined") module.exports = { esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -7001,8 +7070,16 @@ function reportPrompt(text, R, opts) {
   const flow = en
     ? "If a replacement adds a sentence, the sentence right after it in the script must still read naturally: never leave a pronoun (he, she, this, that) pointing at something other than before."
     : "Si un reemplazo añade una frase, la frase que sigue en el guion tiene que seguir leyéndose bien: no dejes un pronombre (él, ella, esto, eso) apuntando a otra cosa que antes.";
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  // (Adrian, 2026-11-01: 6A, the detailed review) With opts.detail (the main sections already reviewed by Opus: [{name, start, end}])
+  // the call rates only spoken voice and proposes voice changes outside those sections; the ad-word alternatives stay.
+  const det = Array.isArray(opts.detail);
+  const detNames = det ? opts.detail.map((d) => d.name).join(", ") : "";
+  const briefX = !det ? brief : en
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most.`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan.`;
+  const shapeX = !det ? shape : `{"areas": {"voice": {"rating": 1-5, "why": "..."}}, "items": [{"area": "voice", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shapeX;
+  return `${briefX}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 // The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each
@@ -7324,8 +7401,8 @@ function rehookPoints(text, R, sections) {
 }
 
 // ---------- The main-sections call (Opus 5.5, tier "sections") ----------
-// Only the five sections go out, the body as excerpts (its start, around each re-hook point, its end): the call judges the
-// opening, the retention points and the close, not every line. Verses are masked with the whole-script numbering (the same one
+// The five sections go out whole, labelled, with the re-hook points marked in the body (pick A, 2026-11-01: excerpts made Opus
+// mark retention down for what it could not see). Verses are masked with the whole-script numbering (the same one
 // vetReport restores), so every excerpt is cut from the one masked text. Script text last, as in every prompt.
 const SEC_AREAS = ["hook", "promise", "retention", "close", "return"]; // 6A: Opus rates these; spoken voice comes from the detailed call
 const SEC_ITEM_AREA = { hook: ["hook"], promise: ["promise"], intro: ["hook", "retention"], body: ["retention"], close: ["close", "return"] };
@@ -7345,18 +7422,18 @@ function sectionsPrompt(text, R, sec) {
   const cut = (a, b) => masked.slice(mpos(a), mpos(b)).trim();
   const U = buildUnits(R, text);
   const rhs = rehookPoints(text, R, list);
-  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY (excerpts)", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO (extractos)", close: "CIERRE" };
+  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO", close: "CIERRE" };
   const parts = [];
   for (const s of list) {
     let body = cut(s.start, s.end);
     if (s.k === "body") {
-      const bu = U.filter((u) => u.start >= s.start && u.start < s.end);
-      const pick = new Set([0, 1, 2, bu.length - 2, bu.length - 1].filter((i) => i >= 0 && i < bu.length));
-      for (const p of rhs) { const i = bu.findIndex((u) => u.start === p.pos); for (const d of [-1, 0, 1, 2]) if (i >= 0 && i + d >= 0 && i + d < bu.length) pick.add(i + d); }
-      const out = [];
-      let prev = -2;
-      for (const i of [...pick].sort((a, b) => a - b)) { if (i > prev + 1 && out.length) out.push("[…]"); out.push(cut(bu[i].start, bu[i + 1] ? bu[i + 1].start : s.end)); prev = i; }
-      body = out.join("\n");
+      // (Adrian, 2026-11-01: "go", pick A) the whole body, with the re-hook points marked where they fall: judged on excerpts,
+      // Opus marked retention down for what it was not shown ("en los extractos no hay re-enganches"); input is the cheap part (~+$0.02)
+      const cuts = rhs.map((p) => p.pos).filter((x) => x > s.start && x < s.end).sort((a, b) => a - b);
+      let from = s.start; const out = [];
+      cuts.forEach((c, j) => { out.push(cut(from, c)); const p = rhs.find((q) => q.pos === c); out.push(`[${en ? "RE-HOOK POINT" : "PUNTO DE RE-ENGANCHE"} ${fmtTime(p.t)}]`); from = c; });
+      out.push(cut(from, s.end));
+      body = out.filter(Boolean).join("\n");
     }
     parts.push(`### ${NAME[s.k]} (${fmtTime(s.t0)}–${fmtTime(s.t1)})\n${body}`);
   }
@@ -7370,8 +7447,8 @@ function sectionsPrompt(text, R, sec) {
     ? `FACTS FROM THE APP: runtime ${Math.round((R.runtimeSec || 0) / 60)} min. Re-hook points in the body: ${rh}. Sections not found: ${miss}.`
     : `DATOS DE LA APP: duración ${Math.round((R.runtimeSec || 0) / 60)} min. Puntos de re-enganche en el desarrollo: ${rh}. Secciones que no se encontraron: ${miss}.`;
   const rules = en
-    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
-    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
+    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. Lines like [RE-HOOK POINT 8:00] are marks from the app, not part of the script: never copy them into "original". "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
+    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. Las líneas como [PUNTO DE RE-ENGANCHE 8:00] son marcas de la app, no del guion: nunca las copies en "original". "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
   return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "MAIN SECTIONS" : "SECCIONES PRINCIPALES"}:\n"""\n${parts.join("\n\n")}\n"""`;
 }
@@ -7399,7 +7476,28 @@ function vetSections(text, json, opts, R, sec) {
   return { areas, items, dropped: raw.length - items.length };
 }
 
-if (typeof module !== "undefined") module.exports = { esArticle, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+// ---------- The detailed review (Sonnet) after the main sections (5A, 6A) ----------
+// The fixed main sections the detailed review must leave alone. The body is a main section for retention (Opus judged its re-hook
+// points) but its lines are what the detailed review is for, so it never counts here.
+function detailLocked(sec, locks) {
+  return (sec && sec.list ? sec.list : []).filter((s) => s.k !== "body" && locks && locks[s.k] === true).map((s) => ({ k: s.k, start: s.start, end: s.end }));
+}
+// vetted report → only spoken-voice changes outside the fixed sections, and only the voice rating (the other five are Opus's).
+function detailOnly(v, locked) {
+  const out = (v.items || []).filter((it) => it.area === "voice" && !locked.some((r) => it.start < r.end && it.end > r.start));
+  return { ...v, areas: { voice: v.areas && v.areas.voice ? v.areas.voice : { rating: null, why: "" } }, items: out, dropped: (v.dropped || 0) + ((v.items || []).length - out.length) };
+}
+// 6A: the score's editor part reads Opus's five ratings and Sonnet's spoken voice. Only when both answers exist; with one of them
+// alone the caller keeps today's behaviour (no invented rating for the missing part). Applied changes of both count (effectiveReport).
+function mergeReports(rep, secRep) {
+  if (!rep || !secRep) return rep;
+  const areas = { ...rep.areas };
+  for (const k of SEC_AREAS) if (secRep.areas && secRep.areas[k] && secRep.areas[k].rating != null) areas[k] = secRep.areas[k];
+  const extra = (secRep.items || []).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts || [], why: x.why, after: x.after }));
+  return { ...rep, areas, items: [...(rep.items || []), ...extra] };
+}
+
+if (typeof module !== "undefined") module.exports = { esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -9959,6 +10057,15 @@ function renderGuide() {
   }
   if (!ensureReview()) { body.innerHTML = `<p class="lead">${h(t("needText"))}</p>${navHTML(1)}`; wireGuideNav(body); return; }
   const R = state.result;
+  if (V.step === 2 && typeof secScreenOn === "function" && secScreenOn()) {
+    // (Adrian, 2026-11-01) first the main sections (sections_ui.js), then «Seguir con la revisión detallada» shows the report walk below
+    top.innerHTML = head(2);
+    if (typeof secPrepare === "function") secPrepare();
+    body.innerHTML = `${secPanelHTML()}${navHTML(1)}`;
+    secWire(body); wireGuideNav(body);
+    secBoxesSched();
+    return;
+  }
   if (V.step === 2) {
     top.innerHTML = head(2);
     // The editor's report (report_ui.js) comes first; today's coach / walker / rail / legend / more checks / Ask Claude sit behind
@@ -14820,7 +14927,13 @@ async function rpRun(force) {
   // one recipe for a whole answer and for the repaired part of a cut one; null when there is not a single rating (not a report)
   const build = (res, partial) => {
     if (!res || typeof res !== "object") { if (partial) return null; throw { code: "invalid_json" }; }
-    const v = vetReport(text, res, opts, R);
+    let v = vetReport(text, res, opts, R);
+    // (Adrian, 2026-11-01: 5A 6A) after the main sections: voice only, outside the fixed sections; the stored report also carries
+    // Opus's five ratings so every place that reads G.report (bubble, end card, score) sees all six
+    if (typeof secDetailFilter === "function" && typeof secDetailOn === "function" && secDetailOn()) {
+      v = secDetailFilter(v);
+      for (const k of SEC_AREAS) if (G.secReport.areas[k] && G.secReport.areas[k].rating != null) v.areas[k] = { ...G.secReport.areas[k] };
+    }
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) { if (partial) return null; throw { code: "invalid_json" }; } // an answer without a single rating is not a report
     return { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped, fixes: [], ...(partial ? { partial: true } : {}) }; // fixes: filled batch by batch by rpFixPump
   };
@@ -14840,7 +14953,7 @@ async function rpRun(force) {
       const it = fixItem(d, "f" + (sent.length + 1), text, opts, spans);
       if (it) sent.push(it);
     }
-    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
+    const res = await sample.json(reportPrompt(text, R, typeof secReportOpts === "function" ? secReportOpts({ keyword: $("keyword").value }) : { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
     out = build(res);
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;
@@ -15842,6 +15955,348 @@ new MutationObserver((muts) => {
 document.addEventListener("toggle", (e) => { if (e.target.open) requestAnimationFrame(() => autoFitAll(e.target)); }, true);
 window.addEventListener("load", () => autoFitAll());
 document.querySelectorAll("textarea").forEach(autoWatch);
+/* ===== Step 2, first screen: «Secciones principales» (Opus 5.5, tier "sections") ===== */
+// (Adrian, 2026-11-01: "opus 5.5 to take care of the gancho, promesa, introduccion, retention and cierre"; "two separate sections
+// ... in separate screens"; picks 1A 2A 3A 5A.) The five main sections are boxed over the editor (overlay, the editor DOM is not
+// touched), one card at a time on the right; a section is fixed («fijada») once reviewed and the detailed review leaves it alone.
+// Saved with the episode (optional fields, old episodes load unchanged): secReport (the vetted answer, keyed to the text it read),
+// secLocks {k: true} and secBounds {k: startChar} («Ajustar límites»).
+// Until step 6 splits the bar, this is the first screen of step 2; «Seguir con la revisión detallada» shows today's report walk, and
+// the full report call waits until then (no Sonnet call is paid while the person is still on the main sections).
+Object.assign(T.es, {
+  secTitle: "Secciones principales", secLead: "Las cinco partes que deciden si alguien se queda. Revísalas primero; después viene la revisión detallada del resto.",
+  secName: { hook: "Gancho", promise: "Promesa", intro: "Introducción", body: "Retención", close: "Cierre" },
+  secBox: { hook: "Gancho", promise: "Promesa", intro: "Introducción", body: "Desarrollo · retención", close: "Cierre" },
+  secReading: "La IA está leyendo las secciones principales como lo haría un editor", secMissing: "No encontrada", secLocked: "Fijada", secReopen: "Volver a abrir",
+  secApply: "Aplicar y fijar", secWrite: "Lo escribo yo", secFine: "Está bien así", secAdjust: "Ajustar límites", secCancel: "Cancelar",
+  secAdjustHint: (k) => `Toca en el guion el párrafo donde empieza ${k}.`, secAdjustBad: "Ese párrafo no puede ser ese inicio: el orden es gancho, promesa, introducción, desarrollo y cierre.",
+  secWriteHint: "Edita esta sección en el guion. Cuando termines, fíjala.", secWriteDone: "Listo, fijar", secNoItem: "La IA no propone cambios en esta sección.",
+  secMissingCard: (k) => `No encontré ${k} en el guion. Ajusta los límites si está, o fíjala para seguir sin ella.`, secAllDone: "Secciones principales listas",
+  secAllDoneLead: "Las cinco secciones están fijadas. La revisión detallada se ocupa del resto del guion.", secToDetail: "Seguir con la revisión detallada",
+  secStale: "Los límites guardados ya no encajan con el guion; uso los detectados.", secProg: (i, n) => `Sección ${i} de ${n}`, secBefore: "Antes", secPick: "Elige", secWhy: "Por qué",
+  secRating: "Valoración", secPerOpus: "según el editor", secRetry: "Volver a intentar", secRehooks: (n) => `${n} puntos de enganche`, secRehookGap: "falta uno aquí",
+});
+Object.assign(T.en, {
+  secTitle: "Main sections", secLead: "The five parts that decide whether someone stays. Review them first; the detailed review of the rest comes after.",
+  secName: { hook: "Hook", promise: "Promise", intro: "Introduction", body: "Retention", close: "Close" },
+  secBox: { hook: "Hook", promise: "Promise", intro: "Introduction", body: "Body · retention", close: "Close" },
+  secReading: "The AI is reading the main sections the way an editor would", secMissing: "Not found", secLocked: "Fixed", secReopen: "Reopen",
+  secApply: "Apply and fix", secWrite: "I'll write it", secFine: "It's fine as is", secAdjust: "Adjust boundaries", secCancel: "Cancel",
+  secAdjustHint: (k) => `Tap the paragraph in the script where the ${k.toLowerCase()} starts.`, secAdjustBad: "That paragraph can't be that start: the order is hook, promise, introduction, body and close.",
+  secWriteHint: "Edit this section in the script. When you're done, fix it.", secWriteDone: "Done, fix it", secNoItem: "The AI proposes no changes in this section.",
+  secMissingCard: (k) => `I didn't find the ${k.toLowerCase()} in the script. Adjust the boundaries if it's there, or fix it to go on without it.`, secAllDone: "Main sections done",
+  secAllDoneLead: "All five sections are fixed. The detailed review takes care of the rest of the script.", secToDetail: "Go on to the detailed review",
+  secStale: "The saved boundaries no longer fit the script; using the detected ones.", secProg: (i, n) => `Section ${i} of ${n}`, secBefore: "Before", secPick: "Choose", secWhy: "Why",
+  secRating: "Rating", secPerOpus: "per the editor", secRetry: "Try again", secRehooks: (n) => `${n} re-hook points`, secRehookGap: "one missing here",
+});
+
+const SX = { busy: false, err: "", epoch: 0, pick: null, writing: null, adjust: null, msg: "", detail: false, skip: new Set(), sel: {} };
+Object.assign(G, { secReport: null, secLocks: {}, secBounds: {} });
+const secKeyOf = (text) => coHash(text || "");
+
+// ---- saved shape (optional; anything malformed is dropped, never coerced into something else) ----
+function secClean(r) {
+  if (!r || typeof r !== "object" || typeof r.key !== "string") return null;
+  const areas = {};
+  for (const k of SEC_AREAS) { const a = r.areas && r.areas[k]; const v = a && Number.isInteger(a.rating) && a.rating >= 1 && a.rating <= 5 ? a.rating : null; areas[k] = { rating: v, why: String((a && a.why) || "").slice(0, 300) }; }
+  const items = (Array.isArray(r.items) ? r.items : []).filter((x) => x && MAIN_SECS.includes(x.sec) && typeof x.original === "string" && typeof x.replacement === "string").slice(0, 14)
+    .map((x) => ({ sec: x.sec, area: String(x.area || ""), original: x.original, replacement: x.replacement, alts: (Array.isArray(x.alts) ? x.alts : []).filter((a) => typeof a === "string").slice(0, 2), why: String(x.why || "").slice(0, 400), after: Number.isInteger(x.after) ? x.after : null }));
+  const out = { at: String(r.at || ""), key: r.key, areas, items };
+  if (Number.isFinite(r.costUsd) && r.costUsd >= 0) out.costUsd = r.costUsd;
+  return out;
+}
+const secCleanLocks = (o) => { const out = {}; if (o && typeof o === "object") for (const k of MAIN_SECS) if (o[k] === true) out[k] = true; return out; };
+const secCleanBounds = (o) => { const out = {}; if (o && typeof o === "object") for (const k of MAIN_SECS) if (Number.isInteger(o[k]) && o[k] >= 0) out[k] = o[k]; return out; };
+const _prodBodySx = prodBody;
+prodBody = function (now) {
+  const b = _prodBodySx(now);
+  if (G.secReport) b.secReport = G.secReport;
+  if (Object.keys(G.secLocks).length) b.secLocks = { ...G.secLocks };
+  if (Object.keys(G.secBounds).length) b.secBounds = { ...G.secBounds };
+  return b;
+};
+const _applyProdSx = applyProd;
+applyProd = function (id, d) {
+  _applyProdSx(id, d);
+  G.secReport = secClean(d && d.secReport); G.secLocks = secCleanLocks(d && d.secLocks); G.secBounds = secCleanBounds(d && d.secBounds);
+  SX.epoch++; SX.busy = false; SX.err = ""; SX.pick = null; SX.writing = null; SX.adjust = null; SX.msg = ""; SX.detail = false; SX.skip = new Set(); SX.sel = {};
+};
+
+// ---- the sections of the text now ----
+function secNow() {
+  const text = state.text || "", R = state.result;
+  if (!R || !text.trim()) return { list: [], missing: MAIN_SECS.slice(), stale: false, text };
+  const m = mainSections(text, R, G.secBounds);
+  return { ...m, text };
+}
+// an item is pending while its original is still in the text exactly once and nobody skipped it
+function secItems(k) {
+  if (!G.secReport) return [];
+  const text = state.text || "";
+  return G.secReport.items.map((it, i) => ({ ...it, i })).filter((it) => it.sec === k && !SX.skip.has(it.i) && text.indexOf(it.original) >= 0 && text.indexOf(it.original) === text.lastIndexOf(it.original));
+}
+function secCurrent(sec) {
+  if (SX.pick && !G.secLocks[SX.pick]) return SX.pick;
+  return MAIN_SECS.find((k) => !G.secLocks[k] && (sec.list.some((s) => s.k === k) || secItems(k).length)) || null;
+}
+
+// ---- the AI call ----
+async function secRun() {
+  if (SX.busy || !hasScript() || !ensureReview()) return;
+  const epoch = ++SX.epoch, text = state.text, R = state.result, opts = state.opts, sec = mainSections(text, R, G.secBounds);
+  if (!sec.list.length) return;
+  SX.busy = true; SX.err = ""; let cost = null;
+  const onCost = (e) => { const u = e && e.detail; if (u && u.cost_usd != null) cost = Number(u.cost_usd); };
+  window.addEventListener("sd-ai-cost", onCost);
+  renderGuide();
+  try {
+    const sample = await caps.sample;
+    if (!sample) throw { code: "no_ai" };
+    const res = await sample.json(sectionsPrompt(text, R, sec), { modelTier: "sections", aiLabel: t("secTitle"), aiRetry: () => secRun() });
+    if (epoch !== SX.epoch) return;
+    const v = vetSections(text, res, opts, R, sec);
+    if (!SEC_AREAS.some((k) => v.areas[k].rating != null)) throw { code: "invalid_json" };
+    G.secReport = secClean({ at: new Date().toISOString(), key: secKeyOf(text), areas: v.areas, items: v.items, costUsd: cost });
+    markDirty();
+  } catch (e) {
+    if (epoch === SX.epoch) SX.err = typeof errText === "function" ? errText(e) : String((e && e.code) || e);
+  } finally {
+    window.removeEventListener("sd-ai-cost", onCost);
+    if (epoch === SX.epoch) { SX.busy = false; renderGuide(); }
+  }
+}
+function secPrepare() {
+  if (!hasScript() || !ensureReview()) return;
+  // once per episode, like the report: applying its own changes moves the text, which must not buy a second answer (pwsecs)
+  if (G.secReport || SX.busy || SX.err) return;
+  secRun();
+}
+// «Borrar todo» / «+ Nuevo episodio» start a new episode: the old answer, locks and boundaries belong to the one left
+const _startNewProdSx = startNewProd;
+startNewProd = function () { _startNewProdSx(); G.secReport = null; G.secLocks = {}; G.secBounds = {}; SX.epoch++; SX.busy = false; SX.err = ""; SX.pick = null; SX.writing = null; SX.adjust = null; SX.msg = ""; SX.detail = false; SX.skip = new Set(); SX.sel = {}; };
+// today's full report waits while the main sections are on screen (it starts on «Seguir con la revisión detallada»)
+const _rpPrepareSx = rpPrepare;
+rpPrepare = function () { if (secScreenOn()) { secPrepare(); return; } _rpPrepareSx(); };
+// sd-secs-off=1 skips this screen (mock_sb.js sets it so the older step-2 suites keep testing the report walk; pwsecs turns it on)
+function secScreenOn() { let off = false; try { off = localStorage.getItem("sd-secs-off") === "1"; } catch (e) { /* no storage: the screen stays on */ } return !!(V.guided && V.step === 2 && !SX.detail && !off && hasScript()); }
+
+// ---- the panel ----
+function secRowHTML(k, sec, cur) {
+  const s = sec.list.find((x) => x.k === k), a = G.secReport && G.secReport.areas[k === "intro" ? "hook" : k === "body" ? "retention" : k];
+  const st = G.secLocks[k] ? `<span class="sx-st ok">✓ ${h(t("secLocked"))}</span> <button type="button" class="small linkish" data-sx-reopen="${k}">${h(t("secReopen"))}</button>`
+    : !s ? `<span class="sx-st">${h(t("secMissing"))}</span>` : `<span class="sx-st">${a && a.rating != null && k !== "intro" ? `<span aria-label="${a.rating} / 5">${rpDots(a.rating)}</span>` : ""}</span>`;
+  return `<li class="sx-row sx-${k}${k === cur ? " cur" : ""}${G.secLocks[k] ? " done" : ""}"><button type="button" class="sx-go" data-sx-pick="${k}"${G.secLocks[k] ? " disabled" : ""}><span class="sx-dot" aria-hidden="true"></span>${h(t("secName")[k])}${s ? `<small> · ${h(fmtTime(s.t0))}</small>` : ""}</button>${st}</li>`;
+}
+function secCardHTML(k, sec) {
+  const s = sec.list.find((x) => x.k === k), name = t("secName")[k];
+  const area = k === "intro" ? null : k === "body" ? "retention" : k;
+  const a = area && G.secReport ? G.secReport.areas[area] : null;
+  const head = `<div class="sx-head"><b>${h(name)}</b>${s ? `<span class="hint"> · ${h(fmtTime(s.t0))}–${h(fmtTime(s.t1))}</span>` : ""}${a && a.rating != null ? `<span class="sx-rate">${h(t("secRating"))} <span aria-label="${a.rating} / 5">${rpDots(a.rating)}</span></span>` : ""}</div>${a && a.why ? `<p class="sx-why">${h(a.why)}</p>` : ""}`;
+  const adjust = SX.adjust === k ? `<p class="status" role="status">${h(t("secAdjustHint")(name.toLowerCase()))} <button type="button" class="small" data-sx="adjust-x">${h(t("secCancel"))}</button></p>` : "";
+  if (SX.writing === k) return `<div class="sx-card">${head}<p>${h(t("secWriteHint"))}</p><div class="actions"><button type="button" class="primary sx-primary" data-sx="lock">${h(t("secWriteDone"))}</button><button type="button" class="small" data-sx="write-x">${h(t("secCancel"))}</button></div></div>`;
+  if (!s && !secItems(k).length) return `<div class="sx-card">${head}<p>${h(t("secMissingCard")(name))}</p>${adjust}<div class="actions"><button type="button" class="primary sx-primary" data-sx="lock">${h(t("secFine"))}</button><button type="button" class="small linkish" data-sx="adjust">${h(t("secAdjust"))}</button></div></div>`;
+  const it = secItems(k)[0];
+  let body = `<p class="hint">${h(t("secNoItem"))}</p>`;
+  if (it) {
+    const opts = [it.replacement, ...it.alts], pick = Math.min(SX.sel[it.i] || 0, opts.length - 1);
+    body = `<div class="sx-kv"><span class="k">${h(t("secBefore"))}</span><span class="v sx-old">${h(it.original)}</span></div>
+      <div class="sx-kv"><span class="k">${h(t("secPick"))}</span><div class="sx-opts" role="radiogroup" aria-label="${h(t("secPick"))}">${opts.map((o, j) => `<label class="sx-opt${j === pick ? " sel" : ""}"><input type="radio" name="sxPick" value="${j}"${j === pick ? " checked" : ""}> <span>${h(o)}</span></label>`).join("")}</div></div>
+      <div class="sx-kv"><span class="k">${h(t("secWhy"))}</span><span class="v">${h(it.why)}${it.after ? ` <span class="hint">· ${rpDots(it.after)} ${h(t("secPerOpus"))}</span>` : ""}</span></div>`;
+  }
+  return `<div class="sx-card">${head}${body}${adjust}<div class="actions">${it ? `<button type="button" class="primary sx-primary" data-sx="apply" data-sx-i="${it.i}">${h(t("secApply"))} →</button>` : ""}<button type="button" class="${it ? "small" : "primary sx-primary"}" data-sx="${it ? "write" : "lock"}">${h(it ? t("secWrite") : t("secFine"))}</button>${it ? `<button type="button" class="small" data-sx="fine">${h(t("secFine"))}</button>` : ""}<button type="button" class="small linkish" data-sx="adjust">${h(t("secAdjust"))}</button></div></div>`;
+}
+function secPanelHTML() {
+  const sec = secNow();
+  const head = `<header class="g-h sx-h"><h2>${h(t("secTitle"))}</h2></header><p class="lead">${h(t("secLead"))}</p>`;
+  if (SX.busy) return `<section class="sx" data-sx-root>${head}<div class="rp-wait" role="status"><div class="rp-wait-h"><span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>${h(t("secReading"))}</b></div><p>${h(t("rpNoAnswer"))} <span aria-hidden="true">${h(t("rpSoFar"))} <b class="rp-el" data-ai-el>0:00</b></span></p></div></section>`;
+  const err = SX.err ? `<p class="status err" role="alert">${h(SX.err)}</p><div class="actions"><button type="button" class="small primary" data-sx="retry">${h(t("secRetry"))}</button></div>` : "";
+  const cur = secCurrent(sec);
+  const done = MAIN_SECS.filter((k) => G.secLocks[k]).length;
+  const prog = `<div class="sx-prog" aria-label="${h(t("secProg")(Math.min(done + 1, 5), 5))}">${MAIN_SECS.map((k) => `<span class="${G.secLocks[k] ? "d" : k === cur ? "c" : ""}"></span>`).join("")}</div>`;
+  const rows = `<ul class="sx-rows">${MAIN_SECS.map((k) => secRowHTML(k, sec, cur)).join("")}</ul>`;
+  const stale = sec.stale ? `<p class="status warn" role="status">${h(t("secStale"))}</p>` : "";
+  const msg = SX.msg ? `<p class="status" role="status">${h(SX.msg)}</p>` : "";
+  const card = cur ? secCardHTML(cur, sec) : `<div class="sx-card sx-end"><b>${h(t("secAllDone"))}</b><p>${h(t("secAllDoneLead"))}</p><div class="actions"><button type="button" class="primary sx-primary" data-sx="detail">${h(t("secToDetail"))} →</button></div></div>`;
+  return `<section class="sx" data-sx-root>${head}${err}${stale}${msg}${prog}${rows}${card}</section>`;
+}
+function secAct(act, el) {
+  const sec = secNow(), cur = secCurrent(sec);
+  SX.msg = "";
+  if (act === "retry") { SX.err = ""; secRun(); return; }
+  if (act === "detail") { SX.detail = true; secBoxesOff(); renderGuide(); return; }
+  if (act === "write") { SX.writing = cur; const s = sec.list.find((x) => x.k === cur); if (s) edScrollToText(state.text.slice(s.start, s.start + 60)); renderGuide(); return; }
+  if (act === "write-x") { SX.writing = null; renderGuide(); return; }
+  if (act === "adjust") { SX.adjust = cur || "hook"; renderGuide(); return; }
+  if (act === "adjust-x") { SX.adjust = null; renderGuide(); return; }
+  if (act === "fine" || act === "lock") { if (cur) { G.secLocks[cur] = true; for (const it of secItems(cur)) SX.skip.add(it.i); } SX.writing = null; SX.pick = null; markDirty(); renderGuide(); return; }
+  if (act === "apply") {
+    const i = Number(el.dataset.sxI), it = G.secReport && G.secReport.items[i];
+    if (!it) return;
+    const opts = [it.replacement, ...it.alts], rep = opts[Math.min(SX.sel[i] || 0, opts.length - 1)];
+    const at = state.text.indexOf(it.original);
+    if (at < 0) { renderGuide(); return; }
+    const v0 = $("script").value;
+    applyProposal({ kind: "patch", label: t("secName")[it.sec], patches: [{ start: at, end: at + it.original.length, rep }] }, { id: "sx-" + i, ids: ["sx-" + i], label: t("secName")[it.sec], fix: it.why });
+    if ($("script").value === v0) return; // the stale guard refused and re-ran the review; nothing to lock
+    SX.skip.add(i);
+    if (!secItems(it.sec).length) G.secLocks[it.sec] = true;
+    markDirty();
+    renderGuide();
+  }
+}
+function secWire(root) {
+  root.querySelectorAll("[data-sx]").forEach((b) => b.addEventListener("click", () => secAct(b.dataset.sx, b)));
+  root.querySelectorAll("[data-sx-pick]").forEach((b) => b.addEventListener("click", () => { SX.pick = b.dataset.sxPick; SX.writing = null; SX.adjust = null; renderGuide(); }));
+  root.querySelectorAll("[data-sx-reopen]").forEach((b) => b.addEventListener("click", () => { delete G.secLocks[b.dataset.sxReopen]; SX.pick = b.dataset.sxReopen; markDirty(); renderGuide(); }));
+  root.querySelectorAll("input[name=sxPick]").forEach((r) => r.addEventListener("change", () => { const b = root.querySelector("[data-sx=apply]"); if (b) { SX.sel[Number(b.dataset.sxI)] = Number(r.value); root.querySelectorAll(".sx-opt").forEach((l) => l.classList.toggle("sel", l.contains(r))); } }));
+}
+
+// ---- «Ajustar límites»: the next tap in the script sets where the section starts (its paragraph's start) ----
+function secTap(e) {
+  if (!SX.adjust || !secScreenOn() || !ED.el || !ED.el.contains(e.target)) return;
+  if (typeof wkBuild === "function") wkBuild();
+  const sel = getSelection(), node = sel && sel.anchorNode, off = sel ? sel.anchorOffset : 0;
+  const pos = node && typeof wkOffsetOf === "function" ? wkOffsetOf(node, off) : -1;
+  const bi = pos >= 0 && typeof wkBlockAt === "function" && WK.blocks.length ? wkBlockAt(WK.blocks, pos) : -1, blk = bi >= 0 ? WK.blocks[bi] : null;
+  if (!blk) return;
+  const k = SX.adjust, next = { ...G.secBounds, [k]: blk.s };
+  const m = mainSections(state.text, state.result, next);
+  if (m.stale) { SX.msg = t("secAdjustBad"); renderGuide(); return; }
+  G.secBounds = next; SX.adjust = null; markDirty(); renderGuide();
+}
+document.addEventListener("pointerup", (e) => setTimeout(() => secTap(e), 0), true);
+
+// ---- the boxes over the editor ----
+const SXB = { layer: null, raf: 0 };
+function secBoxesOff() { if (SXB.layer) SXB.layer.innerHTML = ""; document.documentElement.classList.remove("sx-on"); }
+function secBoxes() {
+  if (!secScreenOn() || !ED.el || !ED.wrap) { secBoxesOff(); return; }
+  if (typeof wkBuild === "function") wkBuild();
+  if (typeof wkRange !== "function") return;
+  document.documentElement.classList.add("sx-on"); // the editor gets a left margin for the labels (guide.css): they never cover a word
+  if (!SXB.layer || !SXB.layer.isConnected) { SXB.layer = document.createElement("div"); SXB.layer.className = "sx-layer"; SXB.layer.setAttribute("aria-hidden", "true"); ED.wrap.appendChild(SXB.layer); }
+  const sec = secNow(), wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), cur = secCurrent(sec);
+  const out = [];
+  for (const s of sec.list) {
+    let r;
+    try { r = wkRange(s.start, Math.max(s.start + 1, s.end)); } catch (e) { r = null; }
+    const rs = r ? [...r.getClientRects()].filter((x) => x.height > 0) : [];
+    if (!rs.length) continue;
+    const top = Math.max(rs[0].top, er.top) - wr.top - 6, bot = Math.min(rs[rs.length - 1].bottom, er.bottom) - wr.top + 6;
+    if (bot <= top + 8) continue;
+    const left = er.left - wr.left + 6, width = er.width - 12;
+    out.push(`<div class="sx-box sx-${s.k}${s.k === cur ? " cur" : ""}${G.secLocks[s.k] ? " done" : ""}" style="top:${Math.round(top)}px;height:${Math.round(bot - top)}px;left:${Math.round(left)}px;width:${Math.round(width)}px"><span class="sx-lbl">${h(t("secBox")[s.k])}${G.secLocks[s.k] ? " ✓" : ""}</span></div>`);
+  }
+  for (const p of rehookPoints(state.text, state.result, sec.list)) {
+    let r;
+    try { r = wkRange(p.pos, p.pos + 1); } catch (e) { r = null; }
+    const rr = r && r.getClientRects()[0];
+    if (!rr || rr.top < er.top || rr.top > er.bottom) continue;
+    out.push(`<div class="sx-rh${p.gap ? " gap" : ""}" style="top:${Math.round(rr.top - wr.top - 2)}px;left:${Math.round(er.left - wr.left + 6)}px;width:${Math.round(er.width - 12)}px"><span>${h(fmtTime(p.t))}${p.gap ? " · " + h(t("secRehookGap")) : ""}</span></div>`);
+  }
+  SXB.layer.innerHTML = out.join("");
+}
+function secBoxesSched() { if (SXB.raf) return; SXB.raf = requestAnimationFrame(() => { SXB.raf = 0; secBoxes(); }); }
+window.addEventListener("resize", secBoxesSched);
+document.addEventListener("scroll", secBoxesSched, true);
+
+// ===== Step 5: the detailed review leaves the main sections alone (5A) and the score reads both answers (6A) =====
+// Active once the main sections have an answer (G.secReport): before that (old episodes, the artifact, sd-secs-off) everything is
+// as it was. Red ad risks stay even inside a fixed section: a script that loses its ads can't wait for «Volver a abrir».
+const SEC_CARD_IDS = new Set(["hook", "promise", "greeting", "content", "kwopen", "cta", "ending", "recap", "application", "bigidea", "rehook"]);
+const secDetailOn = () => !!G.secReport && Object.keys(G.secLocks).length > 0;
+function secLockedRanges() {
+  if (!secDetailOn() || !state.result || !state.text) return [];
+  return detailLocked(mainSections(state.text, state.result, G.secBounds), G.secLocks);
+}
+const secHitsLocked = (a, b, L) => L.some((r) => a < r.end && b > r.start);
+const _buildFixCardsSx = buildFixCards;
+buildFixCards = function () {
+  const cards = _buildFixCardsSx.apply(this, arguments);
+  if (!secDetailOn()) return cards;
+  const L = secLockedRanges();
+  const out = [];
+  for (const c of cards) {
+    if (SEC_CARD_IDS.has(c.id)) continue;
+    const ev = Array.isArray(c.evidence) ? c.evidence.filter((e) => !secHitsLocked(e.start, e.end, L)) : c.evidence;
+    if (Array.isArray(c.evidence) && c.evidence.length && !ev.length) continue;
+    const props = Array.isArray(c.proposals) ? c.proposals.filter((p) => !(p.patches || []).some((x) => secHitsLocked(x.start, x.end, L))) : c.proposals;
+    out.push({ ...c, evidence: ev, proposals: props });
+  }
+  return out;
+};
+// 6A: the editor part of the score reads Opus's five ratings and Sonnet's voice (only when both answers exist)
+const _readinessOfSx = readinessOf;
+readinessOf = function (R, report) { const a = [...arguments]; if (report && report === G.report) a[1] = mergeReports(report, G.secReport); return _readinessOfSx.apply(this, a); };
+// the report call in detailed mode: voice only, outside the fixed sections
+function secReportOpts(base) {
+  const L = secLockedRanges();
+  return L.length ? { ...base, detail: L.map((r) => ({ name: t("secName")[r.k], start: r.start, end: r.end })) } : base;
+}
+function secDetailFilter(v) { const L = secLockedRanges(); return L.length ? detailOnly(v, L) : v; }
+
+// the fixed sections drawn closed in the detailed review, with «Volver a abrir» (the screen goes back to them)
+function secLockBoxes() {
+  if (!(V.guided && V.step === 2 && SX.detail && secDetailOn()) || !ED.el || !ED.wrap) return false;
+  if (typeof wkBuild === "function") wkBuild();
+  if (!SXB.layer || !SXB.layer.isConnected) { SXB.layer = document.createElement("div"); SXB.layer.className = "sx-layer"; ED.wrap.appendChild(SXB.layer); }
+  SXB.layer.removeAttribute("aria-hidden");
+  const wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), out = [];
+  for (const r of secLockedRanges()) {
+    let rg; try { rg = wkRange(r.start, Math.max(r.start + 1, r.end)); } catch (e) { rg = null; }
+    const rs = rg ? [...rg.getClientRects()].filter((x) => x.height > 0) : [];
+    if (!rs.length) continue;
+    const top = Math.max(rs[0].top, er.top) - wr.top - 4, bot = Math.min(rs[rs.length - 1].bottom, er.bottom) - wr.top + 4;
+    if (bot <= top + 8) continue;
+    out.push(`<div class="sx-lock" style="top:${Math.round(top)}px;height:${Math.round(bot - top)}px;left:${Math.round(er.left - wr.left + 6)}px;width:${Math.round(er.width - 12)}px"><span class="sx-lock-l"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><b>${h(t("secName")[r.k])}</b> · ${h(t("secLockedIn"))} · <button type="button" class="linkish" data-sx-unlock="${r.k}">${h(t("secReopen"))}</button></span></div>`);
+  }
+  SXB.layer.innerHTML = out.join("");
+  SXB.layer.querySelectorAll("[data-sx-unlock]").forEach((b) => b.addEventListener("click", () => { delete G.secLocks[b.dataset.sxUnlock]; SX.pick = b.dataset.sxUnlock; SX.detail = false; markDirty(); renderGuide(); }));
+  return true;
+}
+const _secBoxesBase = secBoxes;
+secBoxes = function () { if (secLockBoxes()) { document.documentElement.classList.remove("sx-on"); return; } _secBoxesBase(); };
+Object.assign(T.es, { secLockedIn: "fijada en Secciones principales" });
+Object.assign(T.en, { secLockedIn: "fixed in Main sections" });
+const _renderGuideSx = renderGuide;
+renderGuide = function () { _renderGuideSx.apply(this, arguments); secBoxesSched(); }; // boxes or locks follow every redraw, and leave with step 2
+
+// ===== Step 6: the 4-step bar (4A) =====
+// Escribir · Secciones principales · Revisión detallada · Publicar. Inside, the app keeps its three steps (step 2 holds both review
+// screens, SX.detail says which): every «step 3 = Publicar» in the code stays true. Off only with the test switch sd-secs-off=1.
+function secBarOn() { try { return localStorage.getItem("sd-secs-off") !== "1"; } catch (e) { return true; } }
+const SX_STEPS = { es: ["Escribir", "Secciones principales", "Revisión detallada", "Publicar"], en: ["Write", "Main sections", "Detailed review", "Publish"] };
+for (const [lang, four] of Object.entries(SX_STEPS)) {
+  const T0 = T[lang], three = T0.steps, end3 = T0.rpEndStep, prog3 = T0.pubProg, rec3 = T0.pubRecStep;
+  const en = lang === "en";
+  Object.defineProperty(T0, "steps", { configurable: true, get: () => (secBarOn() ? four : three) });
+  Object.defineProperty(T0, "rpEndStep", { configurable: true, get: () => (secBarOn() ? (en ? "Step 3 of 4 · Detailed review" : "Paso 3 de 4 · Revisión detallada") : end3) });
+  Object.defineProperty(T0, "pubProg", { configurable: true, get: () => (secBarOn() ? (i, n) => (en ? `Step 4 of 4 · Publish · ${i} of ${n}` : `Paso 4 de 4 · Publicar · ${i} de ${n}`) : prog3) });
+  Object.defineProperty(T0, "pubRecStep", { configurable: true, get: () => (secBarOn() ? (en ? "Step 4 of 4 · Record" : "Paso 4 de 4 · Grabar") : rec3) });
+}
+const _stepBarHTMLSx = stepBarHTML;
+stepBarHTML = function () {
+  if (!secBarOn()) return _stepBarHTMLSx();
+  const names = t("steps"), have = hasScript();
+  const cur = V.step === 1 ? 1 : V.step === 2 ? (SX.detail ? 3 : 2) : 4;
+  const target = (n) => (n === 1 ? 1 : n === 4 ? 3 : 2);
+  const items = names.map((nm, i) => {
+    const n = i + 1, on = n === cur, done = n < cur, dis = n > 1 && !have;
+    const sx = n === 2 ? ' data-sx-detail="0"' : n === 3 ? ' data-sx-detail="1"' : "";
+    return `<li><button type="button" data-step="${target(n)}"${sx} class="${on ? "on" : done ? "done" : ""}"${on ? ' aria-current="step"' : ""}${dis ? " disabled" : ""}><span class="sb-n">${done ? "✓" : n}</span><span class="sb-l">${h(nm)}</span></button></li>`;
+  }).join("");
+  return `<ol class="sb sb4">${items}</ol>${G.prodId ? `<span class="sb-status">${h(t("statusLbl"))}: <b>${h(t("status")[G.status])}</b></span>` : ""}`;
+};
+// items 2 and 3 both open internal step 2: say which screen before goStep runs (capture comes first)
+document.addEventListener("click", (e) => {
+  // «← Atrás» in the detailed review goes back to the main sections, the step before it on the bar
+  const back = e.target.closest && e.target.closest("#guide .g-nav-steps [data-step='1']");
+  if (back && secBarOn() && V.step === 2 && SX.detail) { SX.detail = false; e.stopPropagation(); renderGuide(); return; }
+  const b = e.target.closest && e.target.closest("#stepBar [data-sx-detail]");
+  if (!b) return;
+  SX.detail = b.dataset.sxDetail === "1";
+  if (V.step === 2) { e.stopPropagation(); renderGuide(); }
+}, true);
 /* ===== Standalone: sign-in bar, wording without Claude, reopen last episode, save on leave ===== */
 Object.assign(T.es, {
   aiOnlyClaude: "La IA funciona al entrar con Google con una cuenta del equipo.",
