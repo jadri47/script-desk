@@ -108,5 +108,18 @@ ok("es.worst: no promise, no intro, no close", JSON.stringify(run("es", "worst")
 // empty text
 ok("empty text: nothing found, all five missing", (() => { const R = L.analyze("", { uiLang: "es", lang: "es" }); const m = L.mainSections("", R); return m.list.length === 0 && m.missing.length === 5; })());
 
+// B-059 (2026-11-01, Adrian's live episode, opening as shown on screen): «Quédense hasta el final … saldrán con cinco pasos» is the
+// promise; the panel said «Promesa · No encontrada» while Opus found it near minute 1
+{
+  const text = [
+    "Esta historia la conoce hasta quien nunca ha abierto una Biblia. Y casi todos la hemos entendido a medias. Un muchacho pequeño, un gigante enorme, una honda y una piedra. Es probablemente la historia bíblica más repetida en escuelas dominicales, en películas y en el lenguaje cotidiano. Cuando alguien enfrenta a un rival mucho más poderoso, decimos que es \"un David contra Goliat\". Pero precisamente porque la hemos escuchado tantas veces, muchas veces la hemos reducido a una moraleja simple: \"Si tienes fe, puedes vencer a cualquiera\". Y creo que esa lectura se queda corta. La historia real es mucho más profunda, mucho más incómoda y mucho más útil de lo que solemos creer.",
+    "Quédense hasta el final: leeremos 1 Samuel capítulo 17 con otros ojos y saldrán con cinco pasos para esta semana. Y quiero empezar con una pregunta: ¿cuál es tu Goliat? Tenla presente, porque más adelante volveremos a ella.",
+    "Si hoy estás frente a uno de esos gigantes, esta historia es para ti.",
+    "Vamos a situarnos. Israel y los filisteos están en guerra. Los dos ejércitos están acampados en lados opuestos de un valle, el valle de Ela, con una distancia entre ellos que bien podría llamarse tierra de nadie. Y durante cuarenta días, cada mañana y cada tarde, del campamento filisteo sale un hombre enorme llamado Goliat.",
+  ].join("\n\n");
+  const R = L.analyze(text, { uiLang: "es", lang: "es" }), m = L.mainSections(text, R), p = m.list.find((s) => s.k === "promise");
+  ok("B-059: «Quédense hasta el final … saldrán con cinco pasos» is found as the promise", !!p && text.slice(p.start, p.start + 25) === "Quédense hasta el final: ", p ? text.slice(p.start, p.start + 40) : m.missing);
+}
+
 console.log(fails ? `FAILS: ${fails}` : "ALL PASS");
 process.exit(fails ? 1 : 0);
