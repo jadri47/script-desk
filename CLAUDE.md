@@ -30,7 +30,7 @@ Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/si
 ## Deploy
 1. Build, run tests.
 2. Copy `src/standalone/site/*` over the repo root (at least `index.html`), commit, push (GitHub Pages updates; it caches ~10 min and the service worker bypasses the HTTP cache, so phones may need two reloads).
-3. Only when working from claude.ai (it has the Artifact tool): publish `src/build/work.html` to https://claude.ai/artifact/3btmB6r1H19211fjhNwo2Z (same file path keeps the URL). From Claude Code, skip this and tell Adrian the artifact is behind.
+3. The claude.ai artifact (https://claude.ai/artifact/3btmB6r1H19211fjhNwo2Z, from `work.html`) is paused since 2026-11-02 (Adrian: "I don't need the artifact now, move forward with the web version"): don't publish it, don't report it as behind. The web version is the product.
 4. Tell Adrian it is live (in claude.ai: push notification).
 
 ## Design rules that matter

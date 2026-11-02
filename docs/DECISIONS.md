@@ -1,5 +1,10 @@
 # Decisions (newest first)
 
+## 2026-11-02 (later): the claude.ai artifact is paused (Adrian: "I don't need the artifact now, move forward with the web version")
+- https://jadri47.github.io/script-desk/ is the only version we ship. `work.html` still builds (nothing removed), but deploys no
+  longer publish it to https://claude.ai/artifact/3btmB6r1H19211fjhNwo2Z and reports no longer list it as behind. It stays
+  frozen at an older build until Adrian asks for it again.
+
 ## 2026-11-02: marks in the text built (7A; Adrian: "go with recommendation")
 - What shows on entry is the mockup's table, row by row (`MARK_DEFAULT`, pinned in `eval/marks_test.js`). A switch in the legend
   is remembered per screen in localStorage `sd-marks` (`{screen: {group: bool}}`); the plan said `sd-marks-off`, but a set of
