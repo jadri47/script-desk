@@ -1323,6 +1323,45 @@ html.sx-on #ed{padding-left:128px!important}
 .sx-lock-l{position:absolute;left:4px;max-width:108px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;pointer-events:auto;font:500 12px/1.3 var(--sans);color:var(--ink-2);background:var(--sheet-2);border-radius:7px;padding:3px 6px}
 .sx-lock-n{display:inline-flex;align-items:center;gap:4px} .sx-lock-l b{color:var(--ink);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .sx-lock-l button{font:600 12px/1.2 var(--sans);min-height:24px;padding:0;text-align:left}
+
+/* ===== Marks in the text (7A, 2026-11-01; marks_ui.js). Each group has its own shape and written name: colour is never the only cue ===== */
+html.mk-on #ed{padding-left:128px!important}
+html.mk-on .sx-rh{display:none} /* the marks layer draws the re-hook points on every screen */
+html.mk-off-secs .sx-layer{display:none}
+.mk-layer{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.mk-tag{position:absolute;max-width:112px;height:18px;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;padding:0 5px;border-radius:6px;font:500 12px/18px var(--sans);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;font-variant-numeric:tabular-nums}
+.mk-tag b{color:var(--ink);font-weight:700} .mk-tag small{font-size:12px;color:var(--ink-2)} .mk-tag i{font-style:normal}
+.mk-t-ad{color:var(--j2)} .mk-t-rehook{color:var(--j5)} .mk-t-rehook small,.mk-t-ad small,.mk-t-chap small{color:inherit}
+.mk-t-chap{color:var(--ink)} .mk-t-cta{color:var(--j4);border:1.5px solid var(--j4)} .mk-t-cue{color:var(--j1);border:1.5px dashed var(--j1);text-transform:uppercase;letter-spacing:.03em}
+.mk-box{position:absolute;border-radius:6px;box-sizing:border-box}
+.mk-ref{border:1.5px solid var(--m-ref)} .mk-cta{border:1.5px solid var(--j4)}
+.mk-qbar{position:absolute;width:3px;border-radius:2px;background:var(--j3)}
+.mk-line{position:absolute;height:0;border-top:2px dotted var(--j2)}
+.mk-line.mk-rehook{border-top:2px solid var(--j5)} .mk-line.mk-rehook.gap{border-top-style:dashed}
+.mk-line.mk-chap{border-top:1px solid var(--ink-2)}
+.mk-leg{margin:14px 0 6px;padding:12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+.mk-leg h3{margin:0 0 2px;font:700 14px/1.3 var(--sans)} .mk-leg .hint{margin:0 0 8px}
+.mk-chips{display:flex;flex-wrap:wrap;gap:6px}
+.mk-chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border:1.5px solid var(--rule);border-radius:999px;background:var(--sheet);font:500 13px/1.2 var(--sans);color:var(--ink);cursor:pointer}
+.mk-chip .n{font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.mk-chip.off{opacity:.55;text-decoration:line-through;text-decoration-thickness:1px}
+.mk-sw{width:16px;height:12px;border-radius:3px;box-sizing:border-box;flex:none}
+.mk-c-secs .mk-sw{border:2px solid var(--j2)} .mk-c-para .mk-sw{background:none;border-left:3px solid var(--ink-2)}
+.mk-c-quote .mk-sw{background:color-mix(in srgb,var(--j3) 25%,transparent);border-left:3px solid var(--j3)} .mk-c-ref .mk-sw{border:1.5px solid var(--m-ref);border-radius:6px}
+.mk-c-ad .mk-sw{height:0;border-top:2px dotted var(--j2)} .mk-c-rehook .mk-sw{height:0;border-top:2px solid var(--j5)} .mk-c-chap .mk-sw{height:0;border-top:1px solid var(--ink-2)}
+.mk-c-cta .mk-sw{border:1.5px solid var(--j4)} .mk-c-cue .mk-sw{border:1.5px dashed var(--j1)}
+.mk-c-risk .mk-sw{height:6px;border-top:2px solid var(--c-hi);border-bottom:2px solid var(--c-hi)} .mk-c-fill .mk-sw{height:4px;border-bottom:2px dotted var(--c-fill)}
+:root ::highlight(sd-mk-quote){background-color:rgba(200,150,20,.16)}
+:root ::highlight(sd-mk-risk){text-decoration:underline double #B4234A;text-decoration-thickness:2px;text-underline-offset:3px}
+:root ::highlight(sd-mk-fill){text-decoration:underline wavy #6E45C4;text-decoration-thickness:1.5px;text-underline-offset:4px}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme="light"]) ::highlight(sd-mk-quote){background-color:rgba(255,197,102,.16)}
+:root:not([data-theme="light"]) ::highlight(sd-mk-risk){text-decoration:underline double #FF7D9C;text-decoration-thickness:2px;text-underline-offset:3px}
+:root:not([data-theme="light"]) ::highlight(sd-mk-fill){text-decoration:underline wavy #C7B5FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+}
+:root[data-theme="dark"] ::highlight(sd-mk-quote){background-color:rgba(255,197,102,.16)}
+:root[data-theme="dark"] ::highlight(sd-mk-risk){text-decoration:underline double #FF7D9C;text-decoration-thickness:2px;text-underline-offset:3px}
+:root[data-theme="dark"] ::highlight(sd-mk-fill){text-decoration:underline wavy #C7B5FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -2120,7 +2159,7 @@ const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten
 
 // F.6 structure, promise, open-loop
 const TRANSITIONS = ["primero", "segundo", "tercero", "en primer lugar", "en segundo lugar", "ahora bien", "por otro lado", "luego", "después", "finalmente", "por último", "en resumen", "para terminar", "first", "second", "next", "finally", "in summary"];
-const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "vas a descubrir", "vas a aprender", "vas a entender", "vamos a descubrir", "vamos a aprender", "vamos a estudiar", "te voy a mostrar", "les voy a mostrar", "you'll see", "you'll learn", "by the end of this", "you're going to learn", "you're going to see", "we'll look at"];
+const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "vas a descubrir", "vas a aprender", "vas a entender", "vamos a descubrir", "vamos a aprender", "vamos a estudiar", "te voy a mostrar", "les voy a mostrar", "quédense hasta el final", "quédate hasta el final", "saldrás con", "saldrán con", "te llevarás", "se llevarán", "te vas a llevar", "se van a llevar", "you'll see", "you'll learn", "by the end of this", "you're going to learn", "you're going to see", "we'll look at", "stay until the end", "stay to the end", "you'll walk away with", "you'll leave with"]; // B-059 (2026-11-01): «Quédense hasta el final … saldrán con cinco pasos» was no promise
 const OPEN_LOOPS = ["imaginad", "dejadme contaros", "os voy a contar", "here's what almost nobody notices", "más adelante", "en un momento", "quédate hasta el final", "pero antes", "hay algo más", "la clave está en", "lo que casi nadie nota", "imagínate", "imagina", "déjame contarte", "les voy a contar", "later in this", "stay until the end", "here's the thing", "imagine"];
 const PRAYER_OPEN = ["oremos", "vamos a orar", "quiero orar", "antes de empezar oremos", "padre celestial", "padre amado", "señor te damos gracias", "señor, te damos gracias", "señor te pedimos", "señor, te pedimos", "en el nombre de jesús", "en el nombre de cristo", "en tu nombre", "amén", "let's pray", "heavenly father", "father god", "in jesus' name", "in jesus name", "amen"];
 // A bare "amén" counts as prayer only when it isn't the rhetorical "¿amén?" asked of the audience mid-teaching.
@@ -4732,8 +4771,74 @@ function mergeReports(rep, secRep) {
   const extra = (secRep.items || []).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts || [], why: x.why, after: x.after }));
   return { ...rep, areas, items: [...(rep.items || []), ...extra] };
 }
+// ---------- Marks in the text (pure; Adrian, 2026-11-01: "every item in the text to be marked", then "apply A" = 7A) ----------
+// One list per group, keyed by text position, from what the analysis already found. The UI (marks_ui.js) draws them over the
+// editor without touching its DOM. Which groups show on entry depends on the screen (the table in the mockup); the author's own
+// choice per screen wins and is remembered.
+const MARK_GROUPS = ["secs", "para", "quote", "ref", "ad", "rehook", "chap", "cta", "cue", "risk", "fill"];
+const MARK_SCREENS = ["write", "secs", "detail", "pub"];
+// «Qué marcas se ven en cada pantalla» (mockup https://claude.ai/artifact/Ehhx4VaH8uszXgNTud7ysa)
+const MARK_DEFAULT = {
+  secs: ["secs", "detail"], para: MARK_SCREENS, quote: MARK_SCREENS, ref: MARK_SCREENS,
+  ad: ["detail", "pub"], chap: ["detail", "pub"], rehook: ["secs", "detail"],
+  cta: ["secs", "detail", "pub"], cue: ["secs", "detail", "pub"], risk: ["detail"], fill: ["detail"],
+};
+const MARK_VISUAL_CUE = /^(TEXTO|TEXT|CITA|QUOTE|GR[AÁ]FICO|GRAPHIC|IMAGEN|IMAGE|B-?ROLL)/i;
+// choices = { [screen]: { [group]: true|false } }, only what the author switched; anything else falls back to the table
+function markOn(g, screen, choices) {
+  const c = choices && choices[screen];
+  if (c && typeof c[g] === "boolean") return c[g];
+  return !!(MARK_DEFAULT[g] && MARK_DEFAULT[g].includes(screen));
+}
+// A stored choice is untrusted (old builds, hand edits): keep only known screens and groups with a boolean.
+function markChoicesClean(o) {
+  const out = {};
+  if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+  for (const s of MARK_SCREENS) {
+    const c = o[s];
+    if (!c || typeof c !== "object") continue;
+    for (const g of MARK_GROUPS) if (typeof c[g] === "boolean") (out[s] = out[s] || {})[g] = c[g];
+  }
+  return out;
+}
+// R: analyze() result. x: what the UI computes with the page's state: blocks [{s, e}] (paragraphs), ads [{pos}] (adBreaks via
+// editMarks), rehooks [{pos, gap}] (rehookPoints), chaps [{pos, label}] (the chapters of the description).
+function marksOf(text, R, x) {
+  x = x || {};
+  const T = (p) => (R && R.timeAt ? R.timeAt(p) : 0);
+  const n = (text || "").length, inText = (a, b) => Number.isInteger(a) && Number.isInteger(b) && a >= 0 && b <= n && b > a;
+  const lvl = (cat) => ((R && R.preflight) || []).find((p) => p.id === cat) || {};
+  const out = {};
+  let k = 0;
+  out.para = (x.blocks || []).filter((b) => /\S/.test(text.slice(b.s, b.e))).map((b) => ({ n: ++k, pos: b.s, t: T(b.s) }));
+  out.quote = ((R && R.quoteSpans) || []).filter((q) => inText(q.start, q.end)).map((q) => ({ start: q.start, end: q.end }));
+  out.ref = ((R && R.refs) || []).filter((r) => inText(r.start, r.end)).map((r) => ({ start: r.start, end: r.end, label: r.canonical || r.text }));
+  out.ad = (x.ads || []).filter((a) => Number.isInteger(a.pos)).map((a) => ({ pos: a.pos, t: T(a.pos) }));
+  out.rehook = (x.rehooks || []).filter((a) => Number.isInteger(a.pos)).map((a) => ({ pos: a.pos, t: T(a.pos), gap: !!a.gap }));
+  out.chap = (x.chaps || []).filter((a) => Number.isInteger(a.pos)).map((a, i) => ({ pos: a.pos, t: T(a.pos), n: i + 1, label: String(a.label || "") }));
+  out.cta = [];
+  for (const c of (R && R.clusters) || []) for (const it of c.items || []) if (inText(it.start, it.end)) out.cta.push({ start: it.start, end: it.end, t: T(it.start), label: it.text });
+  out.cue = ((R && R.cues) || []).filter((c) => !c.heading && !c.pause && MARK_VISUAL_CUE.test(c.kind || "") && inText(c.start, c.end))
+    .map((c) => ({ start: c.start, end: c.end, t: T(c.start), label: String(c.kind).toUpperCase() }));
+  // a word the rules mark green («mencionado») is not a risk: same reading as the rail
+  out.risk = ((R && R.riskHits) || []).filter((r) => inText(r.start, r.end) && (lvl(r.cat).level || "amarillo") !== "verde")
+    .map((r) => ({ start: r.start, end: r.end, level: lvl(r.cat).level || "amarillo", label: r.text }));
+  out.fill = ((R && R.mulHits) || []).filter((r) => inText(r.start, r.end)).map((r) => ({ start: r.start, end: r.end, label: r.text }));
+  for (const g of ["ad", "rehook", "chap", "cta", "cue", "risk", "fill"]) out[g].sort((a, b) => (a.pos ?? a.start) - (b.pos ?? b.start));
+  return out;
+}
+// 5A: a section fixed in «Secciones principales» gets no new marks in the detailed review. Kept inside it: paragraph numbers,
+// quotes and references (they describe the text, they ask nothing) and red ad risks (a script that loses its ads can't wait).
+function marksOutside(m, locked) {
+  if (!locked || !locked.length) return m;
+  const inL = (a, b) => locked.some((r) => a < r.end && b > r.start);
+  const out = { ...m };
+  for (const g of ["ad", "rehook", "chap", "cta", "cue", "fill"]) out[g] = m[g].filter((x) => !inL(x.pos ?? x.start, (x.end ?? x.pos) + (x.end ? 0 : 1)));
+  out.risk = m.risk.filter((x) => x.level === "rojo" || !inL(x.start, x.end));
+  return out;
+}
 
-if (typeof module !== "undefined") module.exports = { esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -4886,7 +4991,7 @@ const CTAS = ["suscríbete", "suscríbanse", "suscribirte", "comenta", "comenten
 
 // F.6 structure, promise, open-loop
 const TRANSITIONS = ["primero", "segundo", "tercero", "en primer lugar", "en segundo lugar", "ahora bien", "por otro lado", "luego", "después", "finalmente", "por último", "en resumen", "para terminar", "first", "second", "next", "finally", "in summary"];
-const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "vas a descubrir", "vas a aprender", "vas a entender", "vamos a descubrir", "vamos a aprender", "vamos a estudiar", "te voy a mostrar", "les voy a mostrar", "you'll see", "you'll learn", "by the end of this", "you're going to learn", "you're going to see", "we'll look at"];
+const PROMISES = ["today we'll look at", "we're going to look at", "you'll discover", "vais a ver", "veréis", "descubriréis", "aprenderéis", "os mostraré", "os enseñaré", "vas a ver", "vamos a ver", "verás", "descubrirás", "descubriremos", "aprenderás", "aprenderemos", "te mostraré", "les mostraré", "vamos a entender", "al final de este episodio", "hoy veremos", "hoy vamos a ver", "hoy aprenderemos", "vas a descubrir", "vas a aprender", "vas a entender", "vamos a descubrir", "vamos a aprender", "vamos a estudiar", "te voy a mostrar", "les voy a mostrar", "quédense hasta el final", "quédate hasta el final", "saldrás con", "saldrán con", "te llevarás", "se llevarán", "te vas a llevar", "se van a llevar", "you'll see", "you'll learn", "by the end of this", "you're going to learn", "you're going to see", "we'll look at", "stay until the end", "stay to the end", "you'll walk away with", "you'll leave with"]; // B-059 (2026-11-01): «Quédense hasta el final … saldrán con cinco pasos» was no promise
 const OPEN_LOOPS = ["imaginad", "dejadme contaros", "os voy a contar", "here's what almost nobody notices", "más adelante", "en un momento", "quédate hasta el final", "pero antes", "hay algo más", "la clave está en", "lo que casi nadie nota", "imagínate", "imagina", "déjame contarte", "les voy a contar", "later in this", "stay until the end", "here's the thing", "imagine"];
 const PRAYER_OPEN = ["oremos", "vamos a orar", "quiero orar", "antes de empezar oremos", "padre celestial", "padre amado", "señor te damos gracias", "señor, te damos gracias", "señor te pedimos", "señor, te pedimos", "en el nombre de jesús", "en el nombre de cristo", "en tu nombre", "amén", "let's pray", "heavenly father", "father god", "in jesus' name", "in jesus name", "amen"];
 // A bare "amén" counts as prayer only when it isn't the rhetorical "¿amén?" asked of the audience mid-teaching.
@@ -7498,8 +7603,74 @@ function mergeReports(rep, secRep) {
   const extra = (secRep.items || []).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts || [], why: x.why, after: x.after }));
   return { ...rep, areas, items: [...(rep.items || []), ...extra] };
 }
+// ---------- Marks in the text (pure; Adrian, 2026-11-01: "every item in the text to be marked", then "apply A" = 7A) ----------
+// One list per group, keyed by text position, from what the analysis already found. The UI (marks_ui.js) draws them over the
+// editor without touching its DOM. Which groups show on entry depends on the screen (the table in the mockup); the author's own
+// choice per screen wins and is remembered.
+const MARK_GROUPS = ["secs", "para", "quote", "ref", "ad", "rehook", "chap", "cta", "cue", "risk", "fill"];
+const MARK_SCREENS = ["write", "secs", "detail", "pub"];
+// «Qué marcas se ven en cada pantalla» (mockup https://claude.ai/artifact/Ehhx4VaH8uszXgNTud7ysa)
+const MARK_DEFAULT = {
+  secs: ["secs", "detail"], para: MARK_SCREENS, quote: MARK_SCREENS, ref: MARK_SCREENS,
+  ad: ["detail", "pub"], chap: ["detail", "pub"], rehook: ["secs", "detail"],
+  cta: ["secs", "detail", "pub"], cue: ["secs", "detail", "pub"], risk: ["detail"], fill: ["detail"],
+};
+const MARK_VISUAL_CUE = /^(TEXTO|TEXT|CITA|QUOTE|GR[AÁ]FICO|GRAPHIC|IMAGEN|IMAGE|B-?ROLL)/i;
+// choices = { [screen]: { [group]: true|false } }, only what the author switched; anything else falls back to the table
+function markOn(g, screen, choices) {
+  const c = choices && choices[screen];
+  if (c && typeof c[g] === "boolean") return c[g];
+  return !!(MARK_DEFAULT[g] && MARK_DEFAULT[g].includes(screen));
+}
+// A stored choice is untrusted (old builds, hand edits): keep only known screens and groups with a boolean.
+function markChoicesClean(o) {
+  const out = {};
+  if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+  for (const s of MARK_SCREENS) {
+    const c = o[s];
+    if (!c || typeof c !== "object") continue;
+    for (const g of MARK_GROUPS) if (typeof c[g] === "boolean") (out[s] = out[s] || {})[g] = c[g];
+  }
+  return out;
+}
+// R: analyze() result. x: what the UI computes with the page's state: blocks [{s, e}] (paragraphs), ads [{pos}] (adBreaks via
+// editMarks), rehooks [{pos, gap}] (rehookPoints), chaps [{pos, label}] (the chapters of the description).
+function marksOf(text, R, x) {
+  x = x || {};
+  const T = (p) => (R && R.timeAt ? R.timeAt(p) : 0);
+  const n = (text || "").length, inText = (a, b) => Number.isInteger(a) && Number.isInteger(b) && a >= 0 && b <= n && b > a;
+  const lvl = (cat) => ((R && R.preflight) || []).find((p) => p.id === cat) || {};
+  const out = {};
+  let k = 0;
+  out.para = (x.blocks || []).filter((b) => /\S/.test(text.slice(b.s, b.e))).map((b) => ({ n: ++k, pos: b.s, t: T(b.s) }));
+  out.quote = ((R && R.quoteSpans) || []).filter((q) => inText(q.start, q.end)).map((q) => ({ start: q.start, end: q.end }));
+  out.ref = ((R && R.refs) || []).filter((r) => inText(r.start, r.end)).map((r) => ({ start: r.start, end: r.end, label: r.canonical || r.text }));
+  out.ad = (x.ads || []).filter((a) => Number.isInteger(a.pos)).map((a) => ({ pos: a.pos, t: T(a.pos) }));
+  out.rehook = (x.rehooks || []).filter((a) => Number.isInteger(a.pos)).map((a) => ({ pos: a.pos, t: T(a.pos), gap: !!a.gap }));
+  out.chap = (x.chaps || []).filter((a) => Number.isInteger(a.pos)).map((a, i) => ({ pos: a.pos, t: T(a.pos), n: i + 1, label: String(a.label || "") }));
+  out.cta = [];
+  for (const c of (R && R.clusters) || []) for (const it of c.items || []) if (inText(it.start, it.end)) out.cta.push({ start: it.start, end: it.end, t: T(it.start), label: it.text });
+  out.cue = ((R && R.cues) || []).filter((c) => !c.heading && !c.pause && MARK_VISUAL_CUE.test(c.kind || "") && inText(c.start, c.end))
+    .map((c) => ({ start: c.start, end: c.end, t: T(c.start), label: String(c.kind).toUpperCase() }));
+  // a word the rules mark green («mencionado») is not a risk: same reading as the rail
+  out.risk = ((R && R.riskHits) || []).filter((r) => inText(r.start, r.end) && (lvl(r.cat).level || "amarillo") !== "verde")
+    .map((r) => ({ start: r.start, end: r.end, level: lvl(r.cat).level || "amarillo", label: r.text }));
+  out.fill = ((R && R.mulHits) || []).filter((r) => inText(r.start, r.end)).map((r) => ({ start: r.start, end: r.end, label: r.text }));
+  for (const g of ["ad", "rehook", "chap", "cta", "cue", "risk", "fill"]) out[g].sort((a, b) => (a.pos ?? a.start) - (b.pos ?? b.start));
+  return out;
+}
+// 5A: a section fixed in «Secciones principales» gets no new marks in the detailed review. Kept inside it: paragraph numbers,
+// quotes and references (they describe the text, they ask nothing) and red ad risks (a script that loses its ads can't wait).
+function marksOutside(m, locked) {
+  if (!locked || !locked.length) return m;
+  const inL = (a, b) => locked.some((r) => a < r.end && b > r.start);
+  const out = { ...m };
+  for (const g of ["ad", "rehook", "chap", "cta", "cue", "fill"]) out[g] = m[g].filter((x) => !inL(x.pos ?? x.start, (x.end ?? x.pos) + (x.end ? 0 : 1)));
+  out.risk = m.risk.filter((x) => x.level === "rojo" || !inL(x.start, x.end));
+  return out;
+}
 
-if (typeof module !== "undefined") module.exports = { esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -16315,6 +16486,174 @@ document.addEventListener("click", (e) => {
   SX.detail = b.dataset.sxDetail === "1";
   if (V.step === 2) { e.stopPropagation(); renderGuide(); }
 }, true);
+/* ===== Marks in the text (7A; Adrian, 2026-11-01: "every item in the text to be marked ... make a mockup", then "apply A") ===== */
+// One overlay over the editor (the editor DOM is never changed, like the rail and the section boxes): in the left margin the
+// paragraph number and its minute, the ad breaks, re-hook points, chapters, calls to action and on-screen text cues; on the text,
+// an outline around each Bible reference and call to action, a bar beside each quote; through the Highlight API (text only) the
+// quote background, a double underline on ad-risk words and a wavy one on fillers. A legend in the review panel switches each
+// group; the choice is remembered per screen (localStorage `sd-marks`); what shows on entry is the mockup's table (marks_logic.js).
+// Desktop only (the margin needs the width; the phone is a nice-to-have, Adrian 2026-11-01); only with the 4-step flow on
+// (`secBarOn`), so `sd-secs-off=1` keeps the older suites on the screens they test.
+Object.assign(T.es, {
+  mkLeg: "Leyenda", mkLegCap: "Toca un grupo para ocultarlo o mostrarlo. La app recuerda tu elección.",
+  mkG: { secs: "Secciones principales", para: "Números y minutos", quote: "Citas bíblicas", ref: "Referencias", ad: "Pausas para anuncios", rehook: "Puntos de enganche", chap: "Capítulos", cta: "Llamadas a la acción", cue: "Textos en pantalla", risk: "Riesgo de anuncios", fill: "Muletillas" },
+  mkAd: "Anuncio", mkRehook: "Enganche", mkGap: "falta", mkChap: (n) => `Capítulo ${n}`, mkCta: "CTA", mkPara: (n, m) => `Párrafo ${n}, minuto ${m}`,
+  mkAdT: (m) => `Pausa para anuncio sugerida hacia ${m}: termina una idea y no cae en un versículo.`,
+  mkRehookT: (m, gap) => `Punto de enganche hacia ${m}${gap ? ": aquí no hay nada que tire hacia adelante" : ""}.`,
+  mkShown: "visible", mkHidden: "oculto",
+});
+Object.assign(T.en, {
+  mkLeg: "Legend", mkLegCap: "Tap a group to hide or show it. The app remembers your choice.",
+  mkG: { secs: "Main sections", para: "Numbers and minutes", quote: "Bible quotes", ref: "References", ad: "Ad breaks", rehook: "Re-hook points", chap: "Chapters", cta: "Calls to action", cue: "On-screen text", risk: "Ad risk", fill: "Fillers" },
+  mkAd: "Ad", mkRehook: "Re-hook", mkGap: "missing", mkChap: (n) => `Chapter ${n}`, mkCta: "CTA", mkPara: (n, m) => `Paragraph ${n}, minute ${m}`,
+  mkAdT: (m) => `Suggested ad break around ${m}: an idea ends and it isn't inside a verse.`,
+  mkRehookT: (m, gap) => `Re-hook point around ${m}${gap ? ": nothing here pulls the viewer forward" : ""}.`,
+  mkShown: "shown", mkHidden: "hidden",
+});
+const MK = { layer: null, raf: 0, key: "", data: null, screen: null };
+const MK_HL = ["sd-mk-quote", "sd-mk-risk", "sd-mk-fill"];
+function mkChoices() { try { return markChoicesClean(JSON.parse(localStorage.getItem("sd-marks") || "{}")); } catch (e) { /* best effort: unreadable or blocked storage: the table's defaults */ return {}; } }
+function mkSave(c) { try { localStorage.setItem("sd-marks", JSON.stringify(c)); } catch (e) { /* best effort: blocked storage: the switch works until reload */ } }
+function mkScreen() {
+  if (!V.guided || (typeof secBarOn === "function" && !secBarOn())) return null;
+  if (V.step === 1) return "write";
+  if (V.step === 3) return "pub";
+  if (V.step === 2) return typeof secScreenOn === "function" && secScreenOn() ? "secs" : "detail";
+  return null;
+}
+const mkOn = (g) => !!MK.screen && markOn(g, MK.screen, mkChoices());
+// the text under review is the text in the box (typing removes the marks until the next review, like the rail)
+function mkReady() {
+  return !!(SPLIT.on && ED.el && ED.wrap && state.result && state.text === $("script").value && !(typeof RL !== "undefined" && RL.on) && mkScreen() && typeof wkBuild === "function" && wkBuild());
+}
+function mkLocked() { return MK.screen === "detail" && typeof secLockedRanges === "function" ? secLockedRanges() : []; }
+function mkData() {
+  const text = state.text, R = state.result, locked = mkLocked();
+  const key = text.length + "|" + MK.screen + "|" + JSON.stringify(locked) + "|" + WK.blocks.length;
+  if (MK.data && MK.key === key && MK.R === R && MK.text === text) return MK.data;
+  let ads = [], chaps = [], rehooks = [];
+  try { ads = (typeof editMarks === "function" ? editMarks(R, text) : []).filter((e) => e.kind === "ad"); } catch (e) { /* marks are optional: no ad breaks drawn */ }
+  try {
+    if (!G.R || G.text !== text) gCompute();
+    chaps = (G.secs || []).map((s) => ({ pos: G.U[s.first] ? G.U[s.first].start : null, label: typeof chapterLabel === "function" ? chapterLabel(s) : "" }));
+  } catch (e) { /* marks are optional: no chapters drawn */ }
+  try { rehooks = typeof rehookPoints === "function" ? rehookPoints(text, R, mainSections(text, R, G.secBounds).list) : []; } catch (e) { /* marks are optional: no re-hooks drawn */ }
+  MK.data = marksOutside(marksOf(text, R, { blocks: WK.blocks.map((b) => ({ s: b.s, e: b.e })), ads, chaps, rehooks }), locked);
+  MK.key = key; MK.R = R; MK.text = text;
+  return MK.data;
+}
+function mkClear() {
+  if (MK.layer) MK.layer.innerHTML = "";
+  document.documentElement.classList.remove("mk-on");
+  for (const g of MARK_GROUPS) document.documentElement.classList.remove("mk-off-" + g);
+  const hl = typeof wkHL === "function" ? wkHL() : null;
+  if (hl) MK_HL.forEach((n) => hl.delete(n));
+  document.querySelectorAll(".mk-leg").forEach((x) => x.remove());
+}
+// text-only marks: one Highlight per group over the whole script (cheap; redrawn when the text or a switch changes)
+function mkPaint(d) {
+  const hl = typeof wkHL === "function" ? wkHL() : null;
+  if (!hl) return;
+  MK_HL.forEach((n) => hl.delete(n));
+  const put = (name, list, pri) => { const rs = []; for (const x of list) { const r = wkRange(x.start, x.end); if (r) rs.push(r); } if (rs.length) { const H = new Highlight(...rs); H.priority = pri; hl.set(name, H); } };
+  if (mkOn("quote")) put("sd-mk-quote", d.quote, 0);
+  if (mkOn("risk")) put("sd-mk-risk", d.risk, 3);
+  if (mkOn("fill")) put("sd-mk-fill", d.fill, 2);
+}
+const MK_SHAPE = { ad: "◆", rehook: "●", chap: "■" };
+function mkLayout() {
+  const d = MK.data;
+  if (!d || !MK.layer) return;
+  const wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), cs = getComputedStyle(ED.el);
+  const textL = er.left + parseFloat(cs.paddingLeft), textR = er.right - parseFloat(cs.paddingRight);
+  const X = (x) => Math.round(x - wr.left), Y = (y) => Math.round(y - wr.top);
+  const vis = (y) => y >= er.top - 4 && y <= er.bottom - 8;
+  const out = [], tags = [];
+  const rectsOf = (a, b) => { const r = wkRange(a, b); return r ? [...r.getClientRects()].filter((x) => x.width > 0 && x.height > 0) : []; };
+  const topOf = (p) => { const rs = rectsOf(p, p + 1); return rs.length ? rs[0].top : null; };
+  // in the text: outlines (references, calls to action), bars (quotes), lines (ad breaks, re-hooks, chapters)
+  const box = (g, a, b, title) => { for (const r of rectsOf(a, b)) if (vis(r.top)) out.push(`<span class="mk-box mk-${g}" style="left:${X(r.left) - 2}px;top:${Y(r.top) - 1}px;width:${Math.round(r.width) + 4}px;height:${Math.round(r.height) + 2}px" title="${h(title)}"></span>`); };
+  if (mkOn("ref")) for (const x of d.ref) box("ref", x.start, x.end, x.label);
+  if (mkOn("cta")) for (const x of d.cta) { box("cta", x.start, x.end, t("mkG").cta); const y = topOf(x.start); if (y !== null && vis(y)) tags.push({ y, g: "cta", html: h(t("mkCta")) + ` <small>${h(fmtTime(x.t))}</small>`, title: t("mkG").cta + " · " + x.label }); }
+  if (mkOn("quote")) for (const x of d.quote) {
+    const rs = rectsOf(x.start, x.end); if (!rs.length) continue;
+    const a = Math.max(rs[0].top, er.top), z = Math.min(rs[rs.length - 1].bottom, er.bottom);
+    if (z > a) out.push(`<span class="mk-qbar" style="left:${X(textL) - 9}px;top:${Y(a)}px;height:${Math.round(z - a)}px"></span>`);
+  }
+  if (mkOn("cue")) for (const x of d.cue) { const y = topOf(x.start); if (y !== null && vis(y)) tags.push({ y, g: "cue", html: h(x.label), title: t("mkG").cue }); }
+  for (const g of ["chap", "ad", "rehook"]) {
+    if (!mkOn(g)) continue;
+    for (const x of d[g]) {
+      const y = topOf(x.pos); if (y === null || !vis(y)) continue;
+      const m = fmtTime(x.t), name = g === "ad" ? t("mkAd") : g === "rehook" ? t("mkRehook") + (x.gap ? " · " + t("mkGap") : "") : t("mkChap")(x.n);
+      const title = g === "ad" ? t("mkAdT")(m) : g === "rehook" ? t("mkRehookT")(m, x.gap) : t("mkChap")(x.n) + " · " + x.label;
+      out.push(`<span class="mk-line mk-${g}${x.gap ? " gap" : ""}" style="left:${X(textL) - 4}px;top:${Y(y) - 4}px;width:${Math.round(textR - textL) + 8}px" title="${h(title)}"></span>`);
+      tags.push({ y, g, html: `<i aria-hidden="true">${MK_SHAPE[g]}</i> ${h(name)} <small>${h(m)}</small>`, title });
+    }
+  }
+  // paragraph numbers first in the margin; the other margin tags stack under them
+  if (mkOn("para")) for (const p of d.para) { const b = WK.blocks.find((x) => x.s === p.pos); if (!b) continue; const y = b.el.getBoundingClientRect().top; if (vis(y)) tags.push({ y, g: "para", html: `<b>¶${p.n}</b> ${h(fmtTime(p.t))}`, title: t("mkPara")(p.n, fmtTime(p.t)), first: true }); }
+  // the margin is shared with the section labels: a tag never sits on one of them nor on another tag
+  const taken = [...ED.wrap.querySelectorAll(".sx-lbl, .sx-lock-l")].map((e) => e.getBoundingClientRect()).filter((r) => r.height > 0).map((r) => [r.top - 2, r.bottom + 2]);
+  tags.sort((a, b) => a.y - b.y || (a.first ? -1 : b.first ? 1 : 0));
+  let free = -1e9;
+  const H = 20;
+  for (const tg of tags) {
+    let y = Math.max(tg.y, free);
+    for (let k = 0; k < 8; k++) { const hit = taken.find(([a, z]) => y < z && y + H > a); if (!hit) break; y = hit[1]; }
+    if (y + H > er.bottom) continue;
+    free = y + H + 2;
+    out.push(`<span class="mk-tag mk-t-${tg.g}" style="left:${X(er.left) + 8}px;top:${Y(y)}px" title="${h(tg.title)}">${tg.html}</span>`);
+  }
+  MK.layer.innerHTML = out.join("");
+}
+function mkLegendHTML() {
+  const d = MK.data, sec = typeof secNow === "function" ? secNow().list.length : 0;
+  const count = (g) => g === "secs" ? sec : (d[g] || []).length;
+  const groups = MARK_GROUPS.filter((g) => g !== "secs" || (MK.screen === "secs" || MK.screen === "detail"));
+  const chips = groups.map((g) => { const on = mkOn(g); return `<button type="button" class="mk-chip mk-c-${g}${on ? "" : " off"}" data-mk-g="${g}" aria-pressed="${on}"><span class="mk-sw" aria-hidden="true"></span>${h(t("mkG")[g])} <span class="n">${count(g)}</span><span class="vh"> · ${h(on ? t("mkShown") : t("mkHidden"))}</span></button>`; }).join("");
+  return `<section class="mk-leg" aria-labelledby="mkLegH"><h3 id="mkLegH">${h(t("mkLeg"))}</h3><p class="hint">${h(t("mkLegCap"))}</p><div class="mk-chips">${chips}</div></section>`;
+}
+function mkLegend() {
+  const g = $("guide");
+  document.querySelectorAll(".mk-leg").forEach((x) => x.remove());
+  if (!g) return;
+  const host = g.querySelector(".g-nav-steps") || null;
+  const div = document.createElement("div"); div.innerHTML = mkLegendHTML();
+  const el = div.firstElementChild;
+  if (host && host.parentNode) host.parentNode.insertBefore(el, host); else g.appendChild(el);
+}
+function mkUpdate() {
+  MK.screen = mkScreen();
+  if (!mkReady()) { mkClear(); return; }
+  try {
+    const d = mkData();
+    if (!MK.layer || !MK.layer.isConnected) { MK.layer = document.createElement("div"); MK.layer.className = "mk-layer"; MK.layer.setAttribute("aria-hidden", "true"); ED.wrap.appendChild(MK.layer); }
+    document.documentElement.classList.add("mk-on"); // the editor gets the left margin (guide.css), shared with the section labels
+    for (const g of MARK_GROUPS) document.documentElement.classList.toggle("mk-off-" + g, !mkOn(g));
+    mkPaint(d);
+    mkLayout();
+    if (!document.querySelector(".mk-leg")) mkLegend();
+  } catch (e) { /* (2026-11-01) an overlay: if it cannot be laid out, show none rather than a broken one */ mkClear(); }
+}
+function mkSched() { if (MK.raf) return; MK.raf = requestAnimationFrame(() => { MK.raf = 0; mkUpdate(); }); }
+// after the section boxes (their labels take the margin first): renderGuide → secBoxesSched → this
+const _renderGuideMk = renderGuide;
+renderGuide = function () { _renderGuideMk.apply(this, arguments); document.querySelectorAll(".mk-leg").forEach((x) => x.remove()); mkSched(); };
+document.addEventListener("scroll", () => { if (MK.layer && MK.layer.innerHTML) { if (MK.raf) return; MK.raf = requestAnimationFrame(() => { MK.raf = 0; if (mkReady()) mkLayout(); else mkClear(); }); } }, true);
+window.addEventListener("resize", mkSched);
+// a keystroke moves every position after it: the marks leave at once and come back with the next review (renderGuide)
+if (ED.el) ED.el.addEventListener("input", () => { MK.data = null; mkClear(); });
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-mk-g]");
+  if (!b || !MK.screen) return;
+  const g = b.dataset.mkG, c = mkChoices();
+  (c[MK.screen] = c[MK.screen] || {})[g] = !markOn(g, MK.screen, c);
+  mkSave(c);
+  document.querySelectorAll(".mk-leg").forEach((x) => x.remove());
+  mkUpdate();
+  const nb = document.querySelector(`[data-mk-g="${g}"]`); if (nb) nb.focus({ preventScroll: true });
+});
 /* ===== Standalone: sign-in bar, wording without Claude, reopen last episode, save on leave ===== */
 Object.assign(T.es, {
   aiOnlyClaude: "La IA funciona al entrar con Google con una cuenta del equipo.",
