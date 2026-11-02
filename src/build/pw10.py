@@ -6,7 +6,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); errs=[]
         for w,hh,n in [(1100,900,"d"),(390,844,"m")]:
-            pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); await pg.add_init_script("localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-more-open','1')"); pg.on("pageerror", lambda e: errs.append(str(e)))
+            pg = await b.new_page(viewport={"width":w,"height":hh}); await pg.add_init_script(MOCK); await pg.add_init_script("localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-more-open','1'); localStorage.setItem('sd-secs-off','1'); localStorage.setItem('sd-tips-off','1')")  # B-055: the one-screen step 2 holds «Más detalles»; the same settings mock_sb.js gives the older suites; pg.on("pageerror", lambda e: errs.append(str(e)))
             await pg.goto(SDU+"build/work.html"); await pg.wait_for_timeout(300)
             await pg.evaluate("v=>{$('script').value=v;$('script').dispatchEvent(new Event('input'))}", TEXT); await pg.click("#runBtn"); await pg.wait_for_timeout(700)
             print(n, "more blocks:", await pg.evaluate("[...document.querySelectorAll('.g-more-d')].map(d=>d.dataset.more).join(',')"))
