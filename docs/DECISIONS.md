@@ -1,5 +1,13 @@
 # Decisions (newest first)
 
+## 2026-11-01 (night): live check of the two screens (Adrian: "a", then "go with all your recommendations")
+- Real Opus run on Adrian's episode (the tab reopened on it, not on the «Excelente» example): ~75 s, $0.23, not cut, 7 items.
+- **1A** (B-056): on the detailed screen a report made before the two screens counts as missing; one Sonnet call in detailed
+  mode; the old report is kept as `reportOld`, the applied-changes log untouched. B (filter the old report's items) rejected:
+  its voice rating was given together with the main sections, so it is not the detailed review.
+- **2A** (B-057): a fixed section is an outline, its text readable, labels in the margin. **3A**: already the behaviour (B-058).
+- B-059 logged, not fixed yet.
+
 ## 2026-11-01 (later): review in two screens; Opus for the main sections (Adrian: "I want opus 5.5 to take care of the gancho, promesa, introduccion, retention and cierre, and sonnet for the rest"; "two separate sections ... in separate screens, to not mix everything up"; then "go with all your recommendations")
 - Mockup and flow: https://claude.ai/artifact/Ehhx4VaH8uszXgNTud7ysa (scratchpad `revision-en-dos-pantallas.html`).
 - Steps become 4: Escribir · Secciones principales (Opus 5.5) · Revisión detallada (Sonnet 5.5) · Publicar (Sonnet 5.5). **4A**.

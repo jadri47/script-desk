@@ -86,6 +86,12 @@ async def main():
         await pg.evaluate("window.scrollTo(0, 0); document.getElementById('ed').scrollTop = 0"); await pg.wait_for_timeout(400)
         locks = await pg.evaluate("[...document.querySelectorAll('.sx-lock')].map(x => x.innerText.replace(/\s+/g, ' ').trim())")
         ok("step 5: fixed sections show closed with a lock and «Volver a abrir»", len(locks) >= 1 and all("Volver a abrir" in x for x in locks), locks)
+        lk = await pg.evaluate("""(() => { const ed = document.getElementById('ed'), er = ed.getBoundingClientRect(), textLeft = er.left + parseFloat(getComputedStyle(ed).paddingLeft);
+          const boxes = [...document.querySelectorAll('.sx-lock')], ls = [...document.querySelectorAll('.sx-lock-l')].map(l => l.getBoundingClientRect());
+          const b0 = boxes[0] && boxes[0].getBoundingClientRect(), y = b0 ? Math.min(b0.bottom, er.bottom) - 12 : 0, hit = b0 ? document.elementFromPoint(textLeft + 60, y) : null;
+          return { clear: boxes.every(b => getComputedStyle(b).backgroundColor === 'rgba(0, 0, 0, 0)'), margin: ls.every(r => r.right <= textLeft + 0.5),
+            overlap: ls.some((a, i) => ls.slice(i + 1).some(b => a.bottom > b.top + 0.5 && b.bottom > a.top + 0.5)), textOnTop: !!(hit && ed.contains(hit)), n: ls.length }; })()""")
+        ok("B-057: a fixed section is an outline: its text shows and takes the click, labels in the margin, none on another", lk["n"] >= 1 and lk["clear"] and lk["margin"] and not lk["overlap"] and lk["textOnTop"], lk)
         await pg.click(".sx-lock [data-sx-unlock]"); await pg.wait_for_timeout(600)
         ok("step 5: «Volver a abrir» goes back to the main sections with it open", await pg.evaluate("!!document.querySelector('[data-sx-root]') && !G.secLocks.hook && Object.keys(G.secLocks).length === 4"), await pg.evaluate("JSON.stringify(G.secLocks)"))
         ok("step 6: back in the main sections the bar shows step 2", await pg.evaluate("document.querySelector('#stepBar .sb button.on .sb-l').textContent") == "Secciones principales")
@@ -93,6 +99,18 @@ async def main():
         ok("step 6: «Revisión detallada» on the bar opens the detailed review", await pg.evaluate("!document.querySelector('[data-sx-root]') && !!document.querySelector('[data-rp-root]')"))
         await pg.click("#guide .g-nav-steps [data-step='1']"); await pg.wait_for_timeout(600)
         ok("step 6: «← Atrás» in the detailed review goes back to the main sections", await pg.evaluate("V.step === 2 && !!document.querySelector('[data-sx-root]')"))
+        ok("B-056 (setup): the detailed call's report is marked detail", await pg.evaluate("G.report && G.report.detail === true"))
+        # a report saved by the old one-screen flow (no `detail`, a hook item): the detailed screen runs its own call once, keeps the old
+        await pg.evaluate("(() => { const r = JSON.parse(JSON.stringify(G.report)); delete r.detail; r.items = [{ area: 'hook', original: 'x', replacement: 'y', alts: [], why: 'viejo', after: 4 }]; G.report = rpClean(r); G.reportOld = null; window.__n0 = window.__tiers.length; })()")
+        await pg.click("#stepBar [data-sx-detail='1']"); await pg.wait_for_timeout(1500)
+        st = await pg.evaluate("""(() => { const b = JSON.parse(JSON.stringify(prodBody(Date.now()))), o = rpClean(b.reportOld);
+          return { calls: window.__tiers.slice(window.__n0), detail: !!G.report && G.report.detail === true, hookItems: (G.report && G.report.items || []).filter(i => i.area === 'hook').length,
+            old: o && o.items[0] && o.items[0].why, card: (document.querySelector('[data-rp-root]') || {}).innerText || '' }; })()""")
+        ok("B-056: an old one-screen report on the detailed screen gets one detailed call; the old one is saved as reportOld", st["calls"] == ["complex"] and st["detail"] and st["hookItems"] == 0 and st["old"] == "viejo", {k: st[k] for k in ("calls", "detail", "hookItems", "old")})
+        await pg.click("#guide .g-nav-steps [data-step='1']"); await pg.wait_for_timeout(600)
+        await pg.click("#stepBar [data-sx-detail='1']"); await pg.wait_for_timeout(1200)
+        ok("B-056: coming back to the detailed screen asks nothing more", await pg.evaluate("window.__tiers.slice(window.__n0)") == ["complex"], await pg.evaluate("window.__tiers.slice(window.__n0)"))
+        await pg.click("#guide .g-nav-steps [data-step='1']"); await pg.wait_for_timeout(600)
         wraps = []
         for w in (900, 1100, 1280, 1440, 1920):
             await pg.set_viewport_size({"width": w, "height": 900}); await pg.wait_for_timeout(300)

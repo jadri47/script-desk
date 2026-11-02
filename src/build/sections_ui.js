@@ -34,7 +34,7 @@ Object.assign(T.en, {
 });
 
 const SX = { busy: false, err: "", epoch: 0, pick: null, writing: null, adjust: null, msg: "", detail: false, skip: new Set(), sel: {} };
-Object.assign(G, { secReport: null, secLocks: {}, secBounds: {} });
+Object.assign(G, { secReport: null, secLocks: {}, secBounds: {}, reportOld: null });
 const secKeyOf = (text) => coHash(text || "");
 
 // ---- saved shape (optional; anything malformed is dropped, never coerced into something else) ----
@@ -56,12 +56,13 @@ prodBody = function (now) {
   if (G.secReport) b.secReport = G.secReport;
   if (Object.keys(G.secLocks).length) b.secLocks = { ...G.secLocks };
   if (Object.keys(G.secBounds).length) b.secBounds = { ...G.secBounds };
+  if (G.reportOld) b.reportOld = G.reportOld;
   return b;
 };
 const _applyProdSx = applyProd;
 applyProd = function (id, d) {
   _applyProdSx(id, d);
-  G.secReport = secClean(d && d.secReport); G.secLocks = secCleanLocks(d && d.secLocks); G.secBounds = secCleanBounds(d && d.secBounds);
+  G.secReport = secClean(d && d.secReport); G.secLocks = secCleanLocks(d && d.secLocks); G.secBounds = secCleanBounds(d && d.secBounds); G.reportOld = rpClean(d && d.reportOld);
   SX.epoch++; SX.busy = false; SX.err = ""; SX.pick = null; SX.writing = null; SX.adjust = null; SX.msg = ""; SX.detail = false; SX.skip = new Set(); SX.sel = {};
 };
 
@@ -116,10 +117,21 @@ function secPrepare() {
 }
 // «Borrar todo» / «+ Nuevo episodio» start a new episode: the old answer, locks and boundaries belong to the one left
 const _startNewProdSx = startNewProd;
-startNewProd = function () { _startNewProdSx(); G.secReport = null; G.secLocks = {}; G.secBounds = {}; SX.epoch++; SX.busy = false; SX.err = ""; SX.pick = null; SX.writing = null; SX.adjust = null; SX.msg = ""; SX.detail = false; SX.skip = new Set(); SX.sel = {}; };
+startNewProd = function () { _startNewProdSx(); G.reportOld = null; G.secReport = null; G.secLocks = {}; G.secBounds = {}; SX.epoch++; SX.busy = false; SX.err = ""; SX.pick = null; SX.writing = null; SX.adjust = null; SX.msg = ""; SX.detail = false; SX.skip = new Set(); SX.sel = {}; };
 // today's full report waits while the main sections are on screen (it starts on «Seguir con la revisión detallada»)
 const _rpPrepareSx = rpPrepare;
-rpPrepare = function () { if (secScreenOn()) { secPrepare(); return; } _rpPrepareSx(); };
+rpPrepare = function () {
+  if (secScreenOn()) { secPrepare(); return; }
+  if (RP.noAI && !G.report && G.reportOld) { G.report = G.reportOld; G.reportOld = null; } // no AI here (guest, not a member): the old report is better than none
+  if (secDetailRedo()) { G.reportOld = G.report; G.report = null; }
+  _rpPrepareSx();
+};
+// B-056 (Adrian, 2026-11-01, 1A): a report made before the two screens (no `detail`) re-raises the main sections on the detailed
+// screen. There it counts as missing: one detailed call runs. The old report is kept whole as `reportOld` (never shown, never
+// deleted); the applied-changes log (state.fixLog) is not touched. A failed call shows its Reintentar; no AI at all puts it back.
+function secDetailRedo() {
+  return !!(V.guided && V.step === 2 && SX.detail && secDetailOn() && G.report && G.report.detail !== true && hasScript() && !RP.busy && !RP.failed && !RP.noAI);
+}
 // sd-secs-off=1 skips this screen (mock_sb.js sets it so the older step-2 suites keep testing the report walk; pwsecs turns it on)
 function secScreenOn() { let off = false; try { off = localStorage.getItem("sd-secs-off") === "1"; } catch (e) { /* no storage: the screen stays on */ } return !!(V.guided && V.step === 2 && !SX.detail && !off && hasScript()); }
 
@@ -284,21 +296,24 @@ function secLockBoxes() {
   if (typeof wkBuild === "function") wkBuild();
   if (!SXB.layer || !SXB.layer.isConnected) { SXB.layer = document.createElement("div"); SXB.layer.className = "sx-layer"; ED.wrap.appendChild(SXB.layer); }
   SXB.layer.removeAttribute("aria-hidden");
+  document.documentElement.classList.add("sx-on"); // B-057: labels in the left margin, the text inside stays readable
   const wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), out = [];
+  let free = -1e9; // a short section's label must not sit on the next one's: each label starts below the previous
   for (const r of secLockedRanges()) {
     let rg; try { rg = wkRange(r.start, Math.max(r.start + 1, r.end)); } catch (e) { rg = null; }
     const rs = rg ? [...rg.getClientRects()].filter((x) => x.height > 0) : [];
     if (!rs.length) continue;
     const top = Math.max(rs[0].top, er.top) - wr.top - 4, bot = Math.min(rs[rs.length - 1].bottom, er.bottom) - wr.top + 4;
     if (bot <= top + 8) continue;
-    out.push(`<div class="sx-lock" style="top:${Math.round(top)}px;height:${Math.round(bot - top)}px;left:${Math.round(er.left - wr.left + 6)}px;width:${Math.round(er.width - 12)}px"><span class="sx-lock-l"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><b>${h(t("secName")[r.k])}</b> · ${h(t("secLockedIn"))} · <button type="button" class="linkish" data-sx-unlock="${r.k}">${h(t("secReopen"))}</button></span></div>`);
+    const lt = Math.max(0, free - top); free = top + lt + 52;
+    out.push(`<div class="sx-lock sx-${r.k}" style="top:${Math.round(top)}px;height:${Math.round(bot - top)}px;left:${Math.round(er.left - wr.left + 6)}px;width:${Math.round(er.width - 12)}px"><span class="sx-lock-l" style="top:${Math.round(4 + lt)}px" title="${h(t("secLockedIn"))}"><span class="sx-lock-n"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><b>${h(t("secName")[r.k])}</b></span><span class="vh"> · ${h(t("secLockedIn"))} · </span><button type="button" class="linkish" data-sx-unlock="${r.k}">${h(t("secReopen"))}</button></span></div>`);
   }
   SXB.layer.innerHTML = out.join("");
   SXB.layer.querySelectorAll("[data-sx-unlock]").forEach((b) => b.addEventListener("click", () => { delete G.secLocks[b.dataset.sxUnlock]; SX.pick = b.dataset.sxUnlock; SX.detail = false; markDirty(); renderGuide(); }));
   return true;
 }
 const _secBoxesBase = secBoxes;
-secBoxes = function () { if (secLockBoxes()) { document.documentElement.classList.remove("sx-on"); return; } _secBoxesBase(); };
+secBoxes = function () { if (secLockBoxes()) return; _secBoxesBase(); };
 Object.assign(T.es, { secLockedIn: "fijada en Secciones principales" });
 Object.assign(T.en, { secLockedIn: "fixed in Main sections" });
 const _renderGuideSx = renderGuide;

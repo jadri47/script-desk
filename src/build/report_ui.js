@@ -81,7 +81,7 @@ function rpClean(r) {
     .filter((f) => f.options.length);
   const baseline = cleanBaseline(r.baseline); // ratings of the first measurement; old reports have none
   const before = cleanBefore(r.before), costUsd = cleanCost(r.costUsd); // old reports have neither
-  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}), ...(r.partial === true ? { partial: true } : {}) };
+  return { at: typeof r.at === "string" ? r.at : "", key: String(r.key || ""), areas, items, words, fixes, dropped: Number(r.dropped) || 0, ...(baseline ? { baseline } : {}), ...(before != null ? { before } : {}), ...(costUsd != null ? { costUsd } : {}), ...(r.detail === true ? { detail: true } : {}), ...(r.partial === true ? { partial: true } : {}) };
 }
 // The report's answers for the problems with no rule-made fix wait in the coach's cache (COAI), where «Proponer con IA» and the coach
 // already look first: no second read of the script. coachAiOptions re-locates each one by its fragment text, so an answer for text
@@ -117,12 +117,13 @@ async function rpRun(force) {
     let v = vetReport(text, res, opts, R);
     // (Adrian, 2026-11-01: 5A 6A) after the main sections: voice only, outside the fixed sections; the stored report also carries
     // Opus's five ratings so every place that reads G.report (bubble, end card, score) sees all six
-    if (typeof secDetailFilter === "function" && typeof secDetailOn === "function" && secDetailOn()) {
+    const detail = typeof secDetailFilter === "function" && typeof secDetailOn === "function" && secDetailOn();
+    if (detail) {
       v = secDetailFilter(v);
       for (const k of SEC_AREAS) if (G.secReport.areas[k] && G.secReport.areas[k].rating != null) v.areas[k] = { ...G.secReport.areas[k] };
     }
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) { if (partial) return null; throw { code: "invalid_json" }; } // an answer without a single rating is not a report
-    return { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped, fixes: [], ...(partial ? { partial: true } : {}) }; // fixes: filled batch by batch by rpFixPump
+    return { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped, fixes: [], ...(detail ? { detail: true } : {}), ...(partial ? { partial: true } : {}) }; // fixes: filled batch by batch by rpFixPump
   };
   try {
     const sample = await caps.sample;

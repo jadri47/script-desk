@@ -59,7 +59,8 @@ Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/si
   Screen 2: today's report call in detailed mode (`reportPrompt` opts.detail: spoken voice only, outside the fixed sections;
   `detailOnly`), screen-2 card kinds and evidence in fixed sections dropped from `buildFixCards`; red ad risks stay. Score (6A):
   Opus's five ratings + Sonnet's voice (`mergeReports`, `readinessOf` wrapper). Saved optional: `secReport`, `secLocks`,
-  `secBounds` (cleaned, never coerced). `sd-secs-off=1` (set by mock_sb.js) hides it for the older step-2 suites; `pwsecs` on.
+  `secBounds` (cleaned, never coerced). A report from the detailed call carries `detail: true`; one without it is redone there once, the old kept as
+  `reportOld` (B-056). Fixed sections are outlines, text readable (B-057). `sd-secs-off=1` (set by mock_sb.js) hides it for the older step-2 suites; `pwsecs` on.
 - AI status (`aistatus_ui.js`): every AI call goes through one wrapper on `caps.sample` (a getter/setter, so later assignments and test mocks are wrapped too). A new AI feature needs nothing to show the bubble; pass `aiLabel`/`aiRetry` only for a name or a retry button (they never reach the connection). While the report runs the verdict says «Esperando el informe del editor», never «Listo para grabar».
 - Old score v2 (`scoreOf`, internal now: «Más detalles» chips and coach ordering): 100 − weights of open checks − small penalty for dismissed ones; any red ⇒ ≤ 69. Counted checks (long, fillers, weak, regional, aitell, onscreen, jargon, pulpit, openers, cta) give partial credit: 1 point per instance over the limit, capped by `SCORE_CAP`. Weights live in one table (`SCORE_W`); ladders are pinned in `eval/score_test.js`.
 - Desktop (≥900 px wide and ≥560 px tall) is a split view: script left, review right. Phone: single column, stepBar fixed at the bottom; in step 2 the script docks at the top.
