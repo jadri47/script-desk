@@ -353,6 +353,8 @@ html.sd-split .masthead .mast-tools{order:2;flex:0 0 auto;flex-wrap:nowrap;gap:8
 html.sd-split .masthead .mast-tools #exPick summary{min-height:40px}
 html.sd-split .masthead .mast-tools .auth-bar{order:0;flex:0 0 auto;margin:0;padding:0}
 html.sd-split .masthead .mast-tools .auth-bar p{display:none}
+.auth-who{display:none;align-items:center;gap:5px;font:600 13px/1 var(--sans);color:var(--ink);white-space:nowrap}
+html.sd-split .masthead .mast-tools .auth-bar .auth-who{display:inline-flex}
 html.sd-split .masthead .mast-tools .demo-bar{position:static}
 html.sd-split .masthead .mast-tools:has(.demo-bar:not([hidden])){display:contents}
 html.sd-split .masthead .mast-tools:has(.demo-bar:not([hidden])) #exPick{order:2}

@@ -44,6 +44,7 @@ let PACE_DOC_TEAM = null; // per-person rehearsal pace (two people no longer ove
     if (window.__sb) { const r = await window.__sb.from("sd_team").select("email,name"); for (const x of (r && r.data) || []) TEAM.names[String(x.email).toLowerCase()] = x.name || x.email; }
   } catch (e) { /* best effort: names fall back to the email's first part; ownership still comes from the rows */ }
   if (typeof loadProds === "function") loadProds();
+  if (typeof renderAuthBar === "function") renderAuthBar(); // the header shows the team name once it is known
 })();
 
 // ---------- the lists: mine vs the team's ----------

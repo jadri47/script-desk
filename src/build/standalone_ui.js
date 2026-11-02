@@ -45,6 +45,15 @@ Object.assign(T.en, {
 });
 
 let AUTH = { session: null, member: false };
+// (Adrian, 2026-11-01: "show who has logged in") The split header hides the «Conectado como…» line so it never wraps (pwhw):
+// a short name there instead, the team name from sd_team (team_ui.js) or the email's first part; the full email on hover and for
+// screen readers.
+function authWhoHTML() {
+  const e = (AUTH.email || "").toLowerCase();
+  if (!e) return "";
+  const name = (typeof TEAM !== "undefined" && TEAM.names[e]) || e.split("@")[0];
+  return `<span class="auth-who" title="${h(t("authAs")(e))}"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="5" r="3" fill="currentColor"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5" fill="currentColor"/></svg>${h(name)}<span class="vh"> · ${h(t("authAs")(e))}</span></span>`;
+}
 function renderAuthBar() {
   const el = $("authBar");
   if (!el) return;
@@ -63,7 +72,7 @@ function renderAuthBar() {
     el.innerHTML = `<p>${h(t("authNotMember")(AUTH.email || ""))}</p><button type="button" class="small" id="authOut">${h(t("authOut"))}</button>`;
   } else {
     el.hidden = false; el.className = "auth-bar ok";
-    el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p><button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
+    el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p>${authWhoHTML()}<button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
   }
   $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) { /* best effort: sign-out failing still reloads signed out locally */ } lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
 }
