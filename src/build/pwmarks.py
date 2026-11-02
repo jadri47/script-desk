@@ -60,6 +60,9 @@ async def main():
         await pg.evaluate("(() => { const ed = document.getElementById('ed'); const x = MK.data.ad[0] || MK.data.chap[1]; const r = wkRange(x.pos, x.pos + 1); ed.scrollTop += r.getBoundingClientRect().top - ed.getBoundingClientRect().top - 200; })()"); await pg.wait_for_timeout(500)
         s = await pg.evaluate(STATE)
         ok("detailed review: ad breaks and chapters drawn as lines with their margin tag", s["lines"]["ad"] + s["lines"]["chap"] >= 1 and s["tags"].get("ad", 0) + s["tags"].get("chap", 0) >= 1, s["lines"])
+        # one recipe (jadri47, 2026-11-02): the chapter marks are the description's chapters, same count, same titles
+        cc = await pg.evaluate("(() => { const d = chaptersText(); return { marks: MK.data.chap.map((c) => c.label), desc: d.map((c) => c.label), secs: G.secs.length }; })()")
+        ok("chapters: the marks are exactly the description's chapter list", cc["marks"] == cc["desc"] and len(cc["desc"]) >= 3, cc)
         g = await pg.evaluate(GEOM)
         ok("detailed review: margin tags still never overlap, nothing wider", g["inMargin"] and not g["overTag"] and not g["overLabel"] and g["wide"] == 0, g)
         # a switch hides only its group, and is remembered for this screen only

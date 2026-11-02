@@ -47,7 +47,8 @@ function mkData() {
   try { ads = (typeof editMarks === "function" ? editMarks(R, text) : []).filter((e) => e.kind === "ad"); } catch (e) { /* marks are optional: no ad breaks drawn */ }
   try {
     if (!G.R || G.text !== text) gCompute();
-    chaps = (G.secs || []).map((s) => ({ pos: G.U[s.first] ? G.U[s.first].start : null, label: typeof chapterLabel === "function" ? chapterLabel(s) : "" }));
+    // the same list the description gets (one recipe; jadri47, 2026-11-02: 21 sections were drawn, the description had 16)
+    chaps = chaptersText().map((c) => ({ pos: c.t === 0 ? 0 : c.at, label: c.label }));
   } catch (e) { /* marks are optional: no chapters drawn */ }
   try { rehooks = typeof rehookPoints === "function" ? rehookPoints(text, R, mainSections(text, R, G.secBounds).list) : []; } catch (e) { /* marks are optional: no re-hooks drawn */ }
   MK.data = marksOutside(marksOf(text, R, { blocks: WK.blocks.map((b) => ({ s: b.s, e: b.e })), ads, chaps, rehooks }), locked);

@@ -361,16 +361,25 @@ function packagingChecks(o, R, promiseText) {
 
 // ---------- YouTube chapters from the rundown ----------
 // sections: [{t (video seconds), type, label}] → at least 3 chapters, first at 0:00, each ≥ 10 s.
-function buildChapters(items, total, introLabel) {
-  const ch = [{ t: 0, label: introLabel }];
-  for (const s of items) {
-    if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
-    const last = ch[ch.length - 1];
-    if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
-    ch.push({ t: s.t, label: s.label });
-  }
-  while (ch.length > 1 && total - ch[ch.length - 1].t < 10) ch.pop();
-  return ch;
+// YouTube's own rules: first at 0:00, at least 3, ascending, each ≥ 10 s. CHAPTER_MIN_SEC is ours, not YouTube's
+// (jadri47, 2026-11-02: "Go with A" = 90 s): a chapter shorter than it joins the one before, which keeps its title; the last one
+// too. If that would leave fewer than 3 (YouTube then shows none), the 10-second list is used instead.
+const CHAPTER_MIN_SEC = 90;
+function buildChapters(items, total, introLabel, minSec = CHAPTER_MIN_SEC) {
+  const pass = (min) => {
+    const ch = [{ t: 0, label: introLabel }];
+    for (const s of items) {
+      if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
+      const last = ch[ch.length - 1];
+      if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
+      if (s.t - last.t < min) continue;
+      ch.push({ t: s.t, label: s.label, ...(Number.isInteger(s.at) ? { at: s.at } : {}) });
+    }
+    while (ch.length > 1 && total - ch[ch.length - 1].t < Math.max(10, min)) ch.pop();
+    return ch;
+  };
+  const ch = pass(minSec);
+  return ch.length >= 3 || minSec <= 10 ? ch : pass(10);
 }
 
 // ---------- Shorts: self-contained 20–180 s passages ----------

@@ -1,5 +1,17 @@
 # Decisions (newest first)
 
+## 2026-11-02 (later): chapters at least 90 s (Adrian: "Go with A")
+- Seen on Adrian's 32-min episode: the description had 16 chapters, four of them 30–40 s apart (13:36–15:21), the last («Cierre»)
+  11 s; the marks drew 21 (every detected section, not the description's list: a second recipe, my bug).
+- YouTube's own rules (support.google.com/youtube/answer/9884579): first at 0:00, at least 3, ascending, each ≥ 10 s; it gives no
+  recommended count or length. Our minimum is labelled as ours in the card («Nosotros juntamos los de menos de 90 segundos con el
+  anterior.»).
+- Options shown with the real list: A 90 s (11 chapters), B 2 min (10, recommended), C 3 min (7). Picked A.
+- A shorter chapter joins the one before, which keeps its title; the last one too. If that leaves fewer than 3, the 10 s list is
+  kept (YouTube shows none below 3). The marks now take `chaptersText()`, the same list.
+- Not changed: starts under 10 s apart still take the later title (the 27:36 «Correr hacia ellos…»); titles are still the
+  paragraph's first words (weak ones like «Es que nombrar…»: a possible next change).
+
 ## 2026-11-02 (later): the claude.ai artifact is paused (Adrian: "I don't need the artifact now, move forward with the web version")
 - https://jadri47.github.io/script-desk/ is the only version we ship. `work.html` still builds (nothing removed), but deploys no
   longer publish it to https://claude.ai/artifact/3btmB6r1H19211fjhNwo2Z and reports no longer list it as behind. It stays
