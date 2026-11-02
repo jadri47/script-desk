@@ -5,6 +5,8 @@
 (function () {
   // first-use tips (tips_ui.js) would sit over the controls the suites click: off unless a suite sets sd-tips-off itself (pwchrome sets "0")
   try { if (localStorage.getItem("sd-tips-off") === null) localStorage.setItem("sd-tips-off", "1"); } catch (e) { /* best effort: no storage, no tips state to keep */ }
+  // the main-sections screen (sections_ui.js) would stand before the report walk the older step-2 suites test: off unless a suite sets "0" (pwsecs)
+  try { if (localStorage.getItem("sd-secs-off") === null) localStorage.setItem("sd-secs-off", "1"); } catch (e) { /* best effort */ }
   const rows = (window.__rows = window.__rows || {});
   const key = (c, id) => c + "/" + id;
   const me = () => window.__SB_UID || "u-juan";

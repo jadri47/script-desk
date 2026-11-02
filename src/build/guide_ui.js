@@ -137,6 +137,15 @@ function renderGuide() {
   }
   if (!ensureReview()) { body.innerHTML = `<p class="lead">${h(t("needText"))}</p>${navHTML(1)}`; wireGuideNav(body); return; }
   const R = state.result;
+  if (V.step === 2 && typeof secScreenOn === "function" && secScreenOn()) {
+    // (Adrian, 2026-11-01) first the main sections (sections_ui.js), then «Seguir con la revisión detallada» shows the report walk below
+    top.innerHTML = head(2);
+    if (typeof secPrepare === "function") secPrepare();
+    body.innerHTML = `${secPanelHTML()}${navHTML(1)}`;
+    secWire(body); wireGuideNav(body);
+    secBoxesSched();
+    return;
+  }
   if (V.step === 2) {
     top.innerHTML = head(2);
     // The editor's report (report_ui.js) comes first; today's coach / walker / rail / legend / more checks / Ask Claude sit behind

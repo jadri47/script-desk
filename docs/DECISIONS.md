@@ -19,6 +19,9 @@
   tag), suggested ad breaks, re-hook points, chapters, CTAs, on-screen text cues, ad-risk words, fillers; each with its own shape
   and written name; all visible on entry per the per-screen table in the mockup, each group switchable in a legend, choice
   remembered. B (always on, no legend) and C (only sections/numbers/quotes) rejected.
+- Opus answer on «Excelente», real run 2026-11-01: 63 s, $0.138 (2,151 in / 6,485 out), 7 changes, all kept. Judged on excerpts it
+  marked retention down for what it was not shown ("en los extractos no hay re-enganches"). Adrian: "go" → **A**: the body goes
+  whole with the re-hook points marked (input +~$0.02); B (excerpts + "don't judge what you can't see") rejected.
 - B-052 **A** (Adrian, 2026-11-01: "go with A"): keep both «thinking» indicators while the report runs; hiding the bubble
   would reverse the pinned AI-status rule (`pwai`), and the step-2 redesign replaces that card anyway.
 

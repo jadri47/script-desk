@@ -72,8 +72,8 @@ function rehookPoints(text, R, sections) {
 }
 
 // ---------- The main-sections call (Opus 5.5, tier "sections") ----------
-// Only the five sections go out, the body as excerpts (its start, around each re-hook point, its end): the call judges the
-// opening, the retention points and the close, not every line. Verses are masked with the whole-script numbering (the same one
+// The five sections go out whole, labelled, with the re-hook points marked in the body (pick A, 2026-11-01: excerpts made Opus
+// mark retention down for what it could not see). Verses are masked with the whole-script numbering (the same one
 // vetReport restores), so every excerpt is cut from the one masked text. Script text last, as in every prompt.
 const SEC_AREAS = ["hook", "promise", "retention", "close", "return"]; // 6A: Opus rates these; spoken voice comes from the detailed call
 const SEC_ITEM_AREA = { hook: ["hook"], promise: ["promise"], intro: ["hook", "retention"], body: ["retention"], close: ["close", "return"] };
@@ -93,18 +93,18 @@ function sectionsPrompt(text, R, sec) {
   const cut = (a, b) => masked.slice(mpos(a), mpos(b)).trim();
   const U = buildUnits(R, text);
   const rhs = rehookPoints(text, R, list);
-  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY (excerpts)", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO (extractos)", close: "CIERRE" };
+  const NAME = en ? { hook: "HOOK", promise: "PROMISE", intro: "INTRODUCTION", body: "BODY", close: "CLOSE" } : { hook: "GANCHO", promise: "PROMESA", intro: "INTRODUCCIÓN", body: "DESARROLLO", close: "CIERRE" };
   const parts = [];
   for (const s of list) {
     let body = cut(s.start, s.end);
     if (s.k === "body") {
-      const bu = U.filter((u) => u.start >= s.start && u.start < s.end);
-      const pick = new Set([0, 1, 2, bu.length - 2, bu.length - 1].filter((i) => i >= 0 && i < bu.length));
-      for (const p of rhs) { const i = bu.findIndex((u) => u.start === p.pos); for (const d of [-1, 0, 1, 2]) if (i >= 0 && i + d >= 0 && i + d < bu.length) pick.add(i + d); }
-      const out = [];
-      let prev = -2;
-      for (const i of [...pick].sort((a, b) => a - b)) { if (i > prev + 1 && out.length) out.push("[…]"); out.push(cut(bu[i].start, bu[i + 1] ? bu[i + 1].start : s.end)); prev = i; }
-      body = out.join("\n");
+      // (Adrian, 2026-11-01: "go", pick A) the whole body, with the re-hook points marked where they fall: judged on excerpts,
+      // Opus marked retention down for what it was not shown ("en los extractos no hay re-enganches"); input is the cheap part (~+$0.02)
+      const cuts = rhs.map((p) => p.pos).filter((x) => x > s.start && x < s.end).sort((a, b) => a - b);
+      let from = s.start; const out = [];
+      cuts.forEach((c, j) => { out.push(cut(from, c)); const p = rhs.find((q) => q.pos === c); out.push(`[${en ? "RE-HOOK POINT" : "PUNTO DE RE-ENGANCHE"} ${fmtTime(p.t)}]`); from = c; });
+      out.push(cut(from, s.end));
+      body = out.filter(Boolean).join("\n");
     }
     parts.push(`### ${NAME[s.k]} (${fmtTime(s.t0)}–${fmtTime(s.t1)})\n${body}`);
   }
@@ -118,8 +118,8 @@ function sectionsPrompt(text, R, sec) {
     ? `FACTS FROM THE APP: runtime ${Math.round((R.runtimeSec || 0) / 60)} min. Re-hook points in the body: ${rh}. Sections not found: ${miss}.`
     : `DATOS DE LA APP: duración ${Math.round((R.runtimeSec || 0) / 60)} min. Puntos de re-enganche en el desarrollo: ${rh}. Secciones que no se encontraron: ${miss}.`;
   const rules = en
-    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
-    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
+    ? `RULES: "sec" names the section the change belongs to and "original" is copied EXACTLY from that section (same case, accents, punctuation), 3 to 40 words, and appears only once. To add something that is missing (a promise, a re-hook), "original" is the last sentence before where it goes and "replacement" is that same sentence followed by the new text; "sec" is the missing section's name. Verses were replaced by marks like ⟦V1⟧: leave every mark unchanged, never put one in "replacement", never write a verse or add a Bible reference. Lines like [RE-HOOK POINT 8:00] are marks from the app, not part of the script: never copy them into "original". "after" is the rating the area would get with the change. If a replacement adds a sentence, the next sentence must still read naturally (no pronoun left pointing elsewhere).`
+    : `REGLAS: "sec" nombra la sección a la que pertenece el cambio y "original" se copia EXACTO de esa sección (mismas mayúsculas, tildes y puntuación), de 3 a 40 palabras, y aparece una sola vez. Para añadir algo que falta (una promesa, un re-enganche), "original" es la última frase antes de donde va y "replacement" es esa misma frase seguida del texto nuevo; "sec" es el nombre de la sección que falta. Los versículos se reemplazaron por marcas como ⟦V1⟧: déjalas tal cual, nunca pongas una en "replacement", no escribas versículos ni añadas referencias bíblicas. Las líneas como [PUNTO DE RE-ENGANCHE 8:00] son marcas de la app, no del guion: nunca las copies en "original". "after" es la valoración que tendría el área con el cambio. Si un reemplazo añade una frase, la siguiente tiene que seguir leyéndose bien (ningún pronombre apuntando a otra cosa).`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
   return `${brief}\n\n${facts}\n\n${rules}\n\n${json}\n\n${en ? "MAIN SECTIONS" : "SECCIONES PRINCIPALES"}:\n"""\n${parts.join("\n\n")}\n"""`;
 }
@@ -145,4 +145,25 @@ function vetSections(text, json, opts, R, sec) {
   const areas = {};
   for (const k of SEC_AREAS) areas[k] = v.areas[k];
   return { areas, items, dropped: raw.length - items.length };
+}
+
+// ---------- The detailed review (Sonnet) after the main sections (5A, 6A) ----------
+// The fixed main sections the detailed review must leave alone. The body is a main section for retention (Opus judged its re-hook
+// points) but its lines are what the detailed review is for, so it never counts here.
+function detailLocked(sec, locks) {
+  return (sec && sec.list ? sec.list : []).filter((s) => s.k !== "body" && locks && locks[s.k] === true).map((s) => ({ k: s.k, start: s.start, end: s.end }));
+}
+// vetted report → only spoken-voice changes outside the fixed sections, and only the voice rating (the other five are Opus's).
+function detailOnly(v, locked) {
+  const out = (v.items || []).filter((it) => it.area === "voice" && !locked.some((r) => it.start < r.end && it.end > r.start));
+  return { ...v, areas: { voice: v.areas && v.areas.voice ? v.areas.voice : { rating: null, why: "" } }, items: out, dropped: (v.dropped || 0) + ((v.items || []).length - out.length) };
+}
+// 6A: the score's editor part reads Opus's five ratings and Sonnet's spoken voice. Only when both answers exist; with one of them
+// alone the caller keeps today's behaviour (no invented rating for the missing part). Applied changes of both count (effectiveReport).
+function mergeReports(rep, secRep) {
+  if (!rep || !secRep) return rep;
+  const areas = { ...rep.areas };
+  for (const k of SEC_AREAS) if (secRep.areas && secRep.areas[k] && secRep.areas[k].rating != null) areas[k] = secRep.areas[k];
+  const extra = (secRep.items || []).map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts || [], why: x.why, after: x.after }));
+  return { ...rep, areas, items: [...(rep.items || []), ...extra] };
 }

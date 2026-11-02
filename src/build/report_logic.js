@@ -35,8 +35,16 @@ function reportPrompt(text, R, opts) {
   const flow = en
     ? "If a replacement adds a sentence, the sentence right after it in the script must still read naturally: never leave a pronoun (he, she, this, that) pointing at something other than before."
     : "Si un reemplazo añade una frase, la frase que sigue en el guion tiene que seguir leyéndose bien: no dejes un pronombre (él, ella, esto, eso) apuntando a otra cosa que antes.";
-  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape;
-  return `${brief}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
+  // (Adrian, 2026-11-01: 6A, the detailed review) With opts.detail (the main sections already reviewed by Opus: [{name, start, end}])
+  // the call rates only spoken voice and proposes voice changes outside those sections; the ad-word alternatives stay.
+  const det = Array.isArray(opts.detail);
+  const detNames = det ? opts.detail.map((d) => d.name).join(", ") : "";
+  const briefX = !det ? brief : en
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most.`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan.`;
+  const shapeX = !det ? shape : `{"areas": {"voice": {"rating": 1-5, "why": "..."}}, "items": [{"area": "voice", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
+  const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shapeX;
+  return `${briefX}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
 }
 
 // The fragments of one batch (items: { id, problem, frag, ctx }, already masked: verses are ⟦Vn⟧ marks). No script goes with them: each

@@ -114,7 +114,13 @@ async function rpRun(force) {
   // one recipe for a whole answer and for the repaired part of a cut one; null when there is not a single rating (not a report)
   const build = (res, partial) => {
     if (!res || typeof res !== "object") { if (partial) return null; throw { code: "invalid_json" }; }
-    const v = vetReport(text, res, opts, R);
+    let v = vetReport(text, res, opts, R);
+    // (Adrian, 2026-11-01: 5A 6A) after the main sections: voice only, outside the fixed sections; the stored report also carries
+    // Opus's five ratings so every place that reads G.report (bubble, end card, score) sees all six
+    if (typeof secDetailFilter === "function" && typeof secDetailOn === "function" && secDetailOn()) {
+      v = secDetailFilter(v);
+      for (const k of SEC_AREAS) if (G.secReport.areas[k] && G.secReport.areas[k].rating != null) v.areas[k] = { ...G.secReport.areas[k] };
+    }
     if (!REPORT_AREAS.some((k) => v.areas[k].rating != null)) { if (partial) return null; throw { code: "invalid_json" }; } // an answer without a single rating is not a report
     return { at: new Date().toISOString(), key, areas: v.areas, items: v.items.map((x) => ({ area: x.area, original: x.original, replacement: x.replacement, alts: x.alts, why: x.why, after: x.after })), words: v.words, dropped: v.dropped, fixes: [], ...(partial ? { partial: true } : {}) }; // fixes: filled batch by batch by rpFixPump
   };
@@ -134,7 +140,7 @@ async function rpRun(force) {
       const it = fixItem(d, "f" + (sent.length + 1), text, opts, spans);
       if (it) sent.push(it);
     }
-    const res = await sample.json(reportPrompt(text, R, { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
+    const res = await sample.json(reportPrompt(text, R, typeof secReportOpts === "function" ? secReportOpts({ keyword: $("keyword").value }) : { keyword: $("keyword").value }), { modelTier: "complex", aiLabel: t("aiLblReport"), aiRetry: () => rpAct("re") }); // not auto: the $5 automatic pause must not block the core feature
     out = build(res);
   } catch (e) {
     if (e && (e.code === "daily_limit" || e.code === "not_member")) RP.noAI = true;

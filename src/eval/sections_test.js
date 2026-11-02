@@ -50,7 +50,11 @@ ok("es.worst: no promise, no intro, no close", JSON.stringify(run("es", "worst")
   const { text, R, m } = run("es", "best");
   const p = L.sectionsPrompt(text, R, m);
   ok("prompt: the five section headings, script last", ["GANCHO", "PROMESA", "INTRODUCCIÓN", "DESARROLLO", "CIERRE"].every((h) => p.includes("### " + h)) && p.trim().endsWith('"""'));
-  ok("prompt: much shorter than the script (body as excerpts)", p.length < text.length / 2, [p.length, text.length]);
+  // (Adrian, 2026-11-01: "go", pick A; changed expectation) the body goes whole, with one mark per re-hook point, not as excerpts
+  const body = m.list.find((s) => s.k === "body"), lastSentence = L.buildUnits(R, text).filter((u) => u.start >= body.start && u.end <= body.end && !/[«»"“”]/.test(u.text)).pop();
+  ok("prompt: the whole body goes out (its last sentence too)", !!lastSentence && p.includes(lastSentence.text), lastSentence && lastSentence.text);
+  const secPart = p.slice(p.indexOf("SECCIONES PRINCIPALES:")); // the rules text shows one mark as an example; count only the script part
+  ok("prompt: one mark per re-hook point", (secPart.match(/\[PUNTO DE RE-ENGANCHE \d+:\d\d\]/g) || []).length === L.rehookPoints(text, R, m.list).length, (secPart.match(/\[PUNTO DE RE-ENGANCHE[^\]]*\]/g) || []));
   ok("prompt: no verse text goes out, only marks", L.verseSpans(text, R).filter((s) => s.kind !== "ref").every((s) => s.end - s.start < 25 || !p.includes(text.slice(s.start, s.end))));
   const U = L.buildUnits(R, text), inSec = (k) => { const s = m.list.find((x) => x.k === k); return U.find((u) => u.start >= s.start && u.end <= s.end && u.text.split(/\s+/).length >= 4 && u.text.split(/\s+/).length <= 30 && !/[«»"“”]/.test(u.text) && text.indexOf(u.text) === text.lastIndexOf(u.text)); };
   const h = inSec("hook"), b = inSec("body"), c = inSec("close");
@@ -73,6 +77,32 @@ ok("es.worst: no promise, no intro, no close", JSON.stringify(run("es", "worst")
   const json = { areas: {}, items: [{ sec: "promise", area: "promise", original: last.text, replacement: last.text + " Hoy vas a descubrir por qué esto importa.", why: "falta la promesa", after: 4 }] };
   const v = L.vetSections(text, json, { uiLang: "es", lang: "es" }, R, m);
   ok("vet: a missing promise comes back as an insert and is kept", m.missing.includes("promise") && v.items.length === 1 && v.items[0].sec === "promise", JSON.stringify([m.missing, v.items.length, last && last.text]));
+}
+
+// the detailed review after the main sections (5A, 6A)
+{
+  const { text, R, m } = run("es", "best");
+  const locks = { hook: true, promise: true, intro: true, body: true, close: true };
+  const locked = L.detailLocked(m, locks);
+  ok("detail: the fixed sections are left alone, the body is not", locked.map((x) => x.k).join() === "hook,promise,intro,close", locked.map((x) => x.k));
+  ok("detail: nothing is fixed when nothing was locked", L.detailLocked(m, {}).length === 0);
+  const pd = L.reportPrompt(text, R, { keyword: "", detail: locked.map((x) => ({ name: x.k, start: x.start, end: x.end })) });
+  ok("detail prompt: asks only spoken voice and names the reviewed sections", /"areas": \{"voice"/.test(pd) && !/"hook": \{"rating"/.test(pd) && pd.includes("hook, promise, intro, close"), pd.slice(0, 200));
+  ok("normal prompt unchanged without detail", /"hook": \{"rating"/.test(L.reportPrompt(text, R, { keyword: "" })));
+  const hook = m.list.find((s) => s.k === "hook"), body = m.list.find((s) => s.k === "body");
+  const v = { areas: { voice: { rating: 3, why: "v" }, hook: { rating: 5 } }, items: [
+    { area: "voice", start: hook.start, end: hook.start + 10 }, { area: "voice", start: body.start + 5, end: body.start + 20 }, { area: "hook", start: body.start + 30, end: body.start + 40 }], dropped: 0 };
+  const d = L.detailOnly(v, locked);
+  ok("detail: keeps only voice changes outside the fixed sections, and only the voice rating", d.items.length === 1 && d.items[0].start === body.start + 5 && Object.keys(d.areas).join() === "voice" && d.dropped === 2, JSON.stringify(d));
+  // 6A merge: Opus's five ratings + Sonnet's voice; only with both
+  const rep = { areas: { hook: { rating: 2 }, promise: { rating: 2 }, retention: { rating: 2 }, voice: { rating: 4 }, close: { rating: 2 }, return: { rating: 2 } }, items: [{ area: "voice", original: "a", replacement: "b" }] };
+  const secRep = { areas: { hook: { rating: 5 }, promise: { rating: 4 }, retention: { rating: 3 }, close: { rating: 4 }, return: { rating: 3 } }, items: [{ sec: "hook", area: "hook", original: "c", replacement: "d", after: 5 }] };
+  const mg = L.mergeReports(rep, secRep);
+  ok("merge: Opus's five ratings, Sonnet's voice", ["hook", "promise", "retention", "close", "return"].every((k) => mg.areas[k].rating === secRep.areas[k].rating) && mg.areas.voice.rating === 4);
+  ok("merge: both sets of changes count", mg.items.length === 2 && mg.items[1].area === "hook");
+  ok("merge: with only one answer nothing is invented", L.mergeReports(rep, null) === rep && L.mergeReports(null, secRep) === null);
+  const rd = L.readinessOf(R, mg, new Set(), text);
+  ok("merge: readiness reads the merged ratings (editor part = 10+9+7+9+9+7 = 51)", rd.editorBase === 51 || rd.editor === 51, JSON.stringify({ e: rd.editor, b: rd.editorBase }));
 }
 
 // empty text
