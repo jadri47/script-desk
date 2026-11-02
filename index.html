@@ -3245,16 +3245,25 @@ function packagingChecks(o, R, promiseText) {
 
 // ---------- YouTube chapters from the rundown ----------
 // sections: [{t (video seconds), type, label}] → at least 3 chapters, first at 0:00, each ≥ 10 s.
-function buildChapters(items, total, introLabel) {
-  const ch = [{ t: 0, label: introLabel }];
-  for (const s of items) {
-    if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
-    const last = ch[ch.length - 1];
-    if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
-    ch.push({ t: s.t, label: s.label });
-  }
-  while (ch.length > 1 && total - ch[ch.length - 1].t < 10) ch.pop();
-  return ch;
+// YouTube's own rules: first at 0:00, at least 3, ascending, each ≥ 10 s. CHAPTER_MIN_SEC is ours, not YouTube's
+// (jadri47, 2026-11-02: "Go with A" = 90 s): a chapter shorter than it joins the one before, which keeps its title; the last one
+// too. If that would leave fewer than 3 (YouTube then shows none), the 10-second list is used instead.
+const CHAPTER_MIN_SEC = 90;
+function buildChapters(items, total, introLabel, minSec = CHAPTER_MIN_SEC) {
+  const pass = (min) => {
+    const ch = [{ t: 0, label: introLabel }];
+    for (const s of items) {
+      if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
+      const last = ch[ch.length - 1];
+      if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
+      if (s.t - last.t < min) continue;
+      ch.push({ t: s.t, label: s.label, ...(Number.isInteger(s.at) ? { at: s.at } : {}) });
+    }
+    while (ch.length > 1 && total - ch[ch.length - 1].t < Math.max(10, min)) ch.pop();
+    return ch;
+  };
+  const ch = pass(minSec);
+  return ch.length >= 3 || minSec <= 10 ? ch : pass(10);
 }
 
 // ---------- Shorts: self-contained 20–180 s passages ----------
@@ -4838,7 +4847,7 @@ function marksOutside(m, locked) {
   return out;
 }
 
-if (typeof module !== "undefined") module.exports = { markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -6077,16 +6086,25 @@ function packagingChecks(o, R, promiseText) {
 
 // ---------- YouTube chapters from the rundown ----------
 // sections: [{t (video seconds), type, label}] → at least 3 chapters, first at 0:00, each ≥ 10 s.
-function buildChapters(items, total, introLabel) {
-  const ch = [{ t: 0, label: introLabel }];
-  for (const s of items) {
-    if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
-    const last = ch[ch.length - 1];
-    if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
-    ch.push({ t: s.t, label: s.label });
-  }
-  while (ch.length > 1 && total - ch[ch.length - 1].t < 10) ch.pop();
-  return ch;
+// YouTube's own rules: first at 0:00, at least 3, ascending, each ≥ 10 s. CHAPTER_MIN_SEC is ours, not YouTube's
+// (jadri47, 2026-11-02: "Go with A" = 90 s): a chapter shorter than it joins the one before, which keeps its title; the last one
+// too. If that would leave fewer than 3 (YouTube then shows none), the 10-second list is used instead.
+const CHAPTER_MIN_SEC = 90;
+function buildChapters(items, total, introLabel, minSec = CHAPTER_MIN_SEC) {
+  const pass = (min) => {
+    const ch = [{ t: 0, label: introLabel }];
+    for (const s of items) {
+      if (!["point", "body", "close", "intro"].includes(s.type) || s.t < 1) continue;
+      const last = ch[ch.length - 1];
+      if (s.t - last.t < 10) { if (last.t > 0) last.label = s.label; continue; }
+      if (s.t - last.t < min) continue;
+      ch.push({ t: s.t, label: s.label, ...(Number.isInteger(s.at) ? { at: s.at } : {}) });
+    }
+    while (ch.length > 1 && total - ch[ch.length - 1].t < Math.max(10, min)) ch.pop();
+    return ch;
+  };
+  const ch = pass(minSec);
+  return ch.length >= 3 || minSec <= 10 ? ch : pass(10);
 }
 
 // ---------- Shorts: self-contained 20–180 s passages ----------
@@ -7670,7 +7688,7 @@ function marksOutside(m, locked) {
   return out;
 }
 
-if (typeof module !== "undefined") module.exports = { markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -9462,7 +9480,7 @@ Object.assign(T.es, {
   pkFix: { title: "Escribe el título de trabajo.", titleLen: "Acórtalo: en el celular se corta cerca de 60 caracteres.", titleRisk: "Quita esos términos del título.", thumb: "Escribe de 2 a 4 palabras grandes para la miniatura.", thumbRisk: "Quita esos términos de la miniatura.", titleKw: "Pon la palabra clave al inicio del título.", thumbRepeat: "La miniatura complementa al título: añade la emoción o la tensión, no repitas las palabras.", promiseMatch: "Si el título promete algo que la apertura no menciona, la gente se va en los primeros segundos.", descKw: "Empieza la descripción con la promesa y la palabra clave." },
   pkGate: (x) => `Para aprobar falta: ${x}.`, pkPrevLbl: "Así se verá en YouTube", pkChannel: "Tu canal", pkNow: "ahora", pkThumbPh2: "Texto de la miniatura", pkTitlePh2: "Aquí va el título del video", pkWords: (n) => `${n} ${n === 1 ? "palabra" : "palabras"}`, pkPending: "pendiente", pkGoFix: "Ver Empaque", pkAi: "Sugerir títulos y miniatura con IA", pkUse: "Usar", pkSugTitles: "Títulos sugeridos", pkSugThumbs: "Miniatura sugerida",
   abTitle: "Pausas sugeridas para anuncios", abLead: "Al final de un punto de enseñanza, lejos de versículos, oraciones y llamadas a la acción. La separación (4 min o más, la primera hacia el 40 % del video) es consejo de guías de creadores, no una regla de YouTube. YouTube coloca los anuncios solo, a menos que los pongas a mano en YouTube Studio.", abNone: "Sin pausas sugeridas: el episodio es corto o los puntos no dejan un corte limpio.", abCopy: "Copiar tiempos", abAt: (m, s) => `${m} · tras «${s}»`,
-  chTitle: "Capítulos para la descripción", chLead: "Salen de la escaleta. YouTube pide al menos tres, el primero en 0:00, cada uno de 10 segundos o más.", chIntro: "Introducción", chCopy: "Copiar", chToDesc: "Añadir a la descripción", chAdded: "Añadidos a la descripción.", chFew: "Hacen falta al menos tres capítulos: marca más puntos en «Guion por secciones».", chScaled: (a) => `Ajustados a la duración real del video (${a}).`, chEst: "Tiempos estimados: confírmalos en el video editado o escribe la duración real en Resultados.",
+  chTitle: "Capítulos para la descripción", chLead: "Salen de la escaleta. YouTube pide al menos tres, el primero en 0:00, cada uno de 10 segundos o más. Nosotros juntamos los de menos de 90 segundos con el anterior.", chIntro: "Introducción", chCopy: "Copiar", chToDesc: "Añadir a la descripción", chAdded: "Añadidos a la descripción.", chFew: "Hacen falta al menos tres capítulos: marca más puntos en «Guion por secciones».", chScaled: (a) => `Ajustados a la duración real del video (${a}).`, chEst: "Tiempos estimados: confírmalos en el video editado o escribe la duración real en Resultados.",
   shTitle: "Clips para Shorts", shLead: "Pasajes de 20 segundos a 3 minutos (los Shorts admiten hasta 3 minutos) que se entienden solos: empiezan con una pregunta o una tensión y terminan en una idea cerrada. Los que marques aparecen en la hoja del editor.", shMark: "Marcar para el editor", shMarked: "Marcado", shNone: "No encontré pasajes que funcionen solos. Suelen salir de una pregunta al oyente seguida de su respuesta.", shEnds: "termina en",
   rsTitle: "Resultados del episodio", rsLead: "Después de publicar, exporta la retención de público desde YouTube Studio (modo avanzado → Exportar, CSV) y pégala o súbela aquí. Acepta dos columnas: posición del video (% o mm:ss) y retención (%).",
   rsDur: "Duración real del video", rsPaste: "Datos de retención", rsPh: "Pega el CSV, o dos columnas por línea: 0:30 72", rsFile: "Subir CSV", rsImport: "Importar", rsClear: "Quitar datos",
@@ -9481,7 +9499,7 @@ Object.assign(T.en, {
   pkFix: { title: "Write the working title.", titleLen: "Shorten it: mobile cuts it near 60 characters.", titleRisk: "Remove those terms from the title.", thumb: "Write 2 to 4 big words for the thumbnail.", thumbRisk: "Remove those terms from the thumbnail.", titleKw: "Put the keyword near the start of the title.", thumbRepeat: "The thumbnail complements the title: add the emotion or tension, don't repeat the words.", promiseMatch: "If the title promises something the opening never mentions, people leave in the first seconds.", descKw: "Start the description with the promise and the keyword." },
   pkGate: (x) => `To approve, still needed: ${x}.`, pkPrevLbl: "How it will look on YouTube", pkChannel: "Your channel", pkNow: "just now", pkThumbPh2: "Thumbnail text", pkTitlePh2: "The video title goes here", pkWords: (n) => `${n} ${n === 1 ? "word" : "words"}`, pkPending: "pending", pkGoFix: "Go to Packaging", pkAi: "Suggest titles and thumbnail with AI", pkUse: "Use", pkSugTitles: "Suggested titles", pkSugThumbs: "Suggested thumbnail",
   abTitle: "Suggested ad-break points", abLead: "At the end of a teaching point, away from verses, prayers and calls to action. The spacing (4 min or more, the first around 40% of the video) is advice from creator guides, not a YouTube rule. YouTube places ads on its own unless you set them by hand in YouTube Studio.", abNone: "No suggested breaks: the episode is short or the points leave no clean cut.", abCopy: "Copy times", abAt: (m, s) => `${m} · after "${s}"`,
-  chTitle: "Chapters for the description", chLead: "Built from the rundown. YouTube needs at least three, the first at 0:00, each 10 seconds or longer.", chIntro: "Introduction", chCopy: "Copy", chToDesc: "Add to description", chAdded: "Added to the description.", chFew: "At least three chapters are needed: mark more points in \"Script by section\".", chScaled: (a) => `Adjusted to the video's real length (${a}).`, chEst: "Estimated times: confirm them in the edited video or enter the real length in Results.",
+  chTitle: "Chapters for the description", chLead: "Built from the rundown. YouTube needs at least three, the first at 0:00, each 10 seconds or longer. We join any shorter than 90 seconds to the one before.", chIntro: "Introduction", chCopy: "Copy", chToDesc: "Add to description", chAdded: "Added to the description.", chFew: "At least three chapters are needed: mark more points in \"Script by section\".", chScaled: (a) => `Adjusted to the video's real length (${a}).`, chEst: "Estimated times: confirm them in the edited video or enter the real length in Results.",
   shTitle: "Clips for Shorts", shLead: "Passages from 20 seconds to 3 minutes (Shorts allow up to 3 minutes) that stand on their own: they open with a question or tension and end on a finished thought. The ones you mark go on the editor sheet.", shMark: "Mark for the editor", shMarked: "Marked", shNone: "No passages stand on their own. They usually come from a question to the viewer followed by its answer.", shEnds: "ends on",
   rsTitle: "Episode results", rsLead: "After publishing, export audience retention from YouTube Studio (advanced mode → Export, CSV) and paste or upload it here. Two columns work: video position (% or mm:ss) and retention (%).",
   rsDur: "Real video length", rsPaste: "Retention data", rsPh: "Paste the CSV, or two columns per line: 0:30 72", rsFile: "Upload CSV", rsImport: "Import", rsClear: "Remove data",
@@ -9519,7 +9537,7 @@ function chapterLabel(s) {
 }
 function chaptersText() {
   const sc = videoScale(), total = totalVideo() * sc;
-  const items = G.secs.map((s) => ({ t: finalT(s.t0) * sc, type: s.type, label: chapterLabel(s) }));
+  const items = G.secs.map((s) => ({ t: finalT(s.t0) * sc, type: s.type, label: chapterLabel(s), at: G.U[s.first] ? G.U[s.first].start : undefined }));
   return buildChapters(items, total, t("chIntro"));
 }
 
@@ -16535,7 +16553,8 @@ function mkData() {
   try { ads = (typeof editMarks === "function" ? editMarks(R, text) : []).filter((e) => e.kind === "ad"); } catch (e) { /* marks are optional: no ad breaks drawn */ }
   try {
     if (!G.R || G.text !== text) gCompute();
-    chaps = (G.secs || []).map((s) => ({ pos: G.U[s.first] ? G.U[s.first].start : null, label: typeof chapterLabel === "function" ? chapterLabel(s) : "" }));
+    // the same list the description gets (one recipe; jadri47, 2026-11-02: 21 sections were drawn, the description had 16)
+    chaps = chaptersText().map((c) => ({ pos: c.t === 0 ? 0 : c.at, label: c.label }));
   } catch (e) { /* marks are optional: no chapters drawn */ }
   try { rehooks = typeof rehookPoints === "function" ? rehookPoints(text, R, mainSections(text, R, G.secBounds).list) : []; } catch (e) { /* marks are optional: no re-hooks drawn */ }
   MK.data = marksOutside(marksOf(text, R, { blocks: WK.blocks.map((b) => ({ s: b.s, e: b.e })), ads, chaps, rehooks }), locked);
