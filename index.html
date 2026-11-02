@@ -783,6 +783,8 @@ html.sd-split .masthead .mast-tools{order:2;flex:0 0 auto;flex-wrap:nowrap;gap:8
 html.sd-split .masthead .mast-tools #exPick summary{min-height:40px}
 html.sd-split .masthead .mast-tools .auth-bar{order:0;flex:0 0 auto;margin:0;padding:0}
 html.sd-split .masthead .mast-tools .auth-bar p{display:none}
+.auth-who{display:none;align-items:center;gap:5px;font:600 13px/1 var(--sans);color:var(--ink);white-space:nowrap}
+html.sd-split .masthead .mast-tools .auth-bar .auth-who{display:inline-flex}
 html.sd-split .masthead .mast-tools .demo-bar{position:static}
 html.sd-split .masthead .mast-tools:has(.demo-bar:not([hidden])){display:contents}
 html.sd-split .masthead .mast-tools:has(.demo-bar:not([hidden])) #exPick{order:2}
@@ -15887,6 +15889,15 @@ Object.assign(T.en, {
 });
 
 let AUTH = { session: null, member: false };
+// (Adrian, 2026-11-01: "show who has logged in") The split header hides the «Conectado como…» line so it never wraps (pwhw):
+// a short name there instead, the team name from sd_team (team_ui.js) or the email's first part; the full email on hover and for
+// screen readers.
+function authWhoHTML() {
+  const e = (AUTH.email || "").toLowerCase();
+  if (!e) return "";
+  const name = (typeof TEAM !== "undefined" && TEAM.names[e]) || e.split("@")[0];
+  return `<span class="auth-who" title="${h(t("authAs")(e))}"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="5" r="3" fill="currentColor"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5" fill="currentColor"/></svg>${h(name)}<span class="vh"> · ${h(t("authAs")(e))}</span></span>`;
+}
 function renderAuthBar() {
   const el = $("authBar");
   if (!el) return;
@@ -15905,7 +15916,7 @@ function renderAuthBar() {
     el.innerHTML = `<p>${h(t("authNotMember")(AUTH.email || ""))}</p><button type="button" class="small" id="authOut">${h(t("authOut"))}</button>`;
   } else {
     el.hidden = false; el.className = "auth-bar ok";
-    el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p><button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
+    el.innerHTML = `<p>${h(t("authAs")(AUTH.email || ""))}${MONTH_COST != null ? `<span class="auth-cost"> · <span id="costMonth">${h(t("costMonth")(fmtUsd(MONTH_COST)))}</span></span>` : ""}</p>${authWhoHTML()}<button type="button" class="small linkish" id="authOut">${h(t("authOut"))}</button>`;
   }
   $("authOut").addEventListener("click", async () => { try { await window.__sb.auth.signOut(); } catch (e) { /* best effort: sign-out failing still reloads signed out locally */ } lsSet("sd-last", ""); location.replace(location.origin + location.pathname); });
 }
@@ -16016,6 +16027,7 @@ let PACE_DOC_TEAM = null; // per-person rehearsal pace (two people no longer ove
     if (window.__sb) { const r = await window.__sb.from("sd_team").select("email,name"); for (const x of (r && r.data) || []) TEAM.names[String(x.email).toLowerCase()] = x.name || x.email; }
   } catch (e) { /* best effort: names fall back to the email's first part; ownership still comes from the rows */ }
   if (typeof loadProds === "function") loadProds();
+  if (typeof renderAuthBar === "function") renderAuthBar(); // the header shows the team name once it is known
 })();
 
 // ---------- the lists: mine vs the team's ----------
