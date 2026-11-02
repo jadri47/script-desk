@@ -1,5 +1,19 @@
 # Decisions (newest first)
 
+## 2026-11-02: marks in the text built (7A; Adrian: "go with recommendation")
+- What shows on entry is the mockup's table, row by row (`MARK_DEFAULT`, pinned in `eval/marks_test.js`). A switch in the legend
+  is remembered per screen in localStorage `sd-marks` (`{screen: {group: bool}}`); the plan said `sd-marks-off`, but a set of
+  groups turned off cannot hold "fillers turned on in the main sections" where the table has them off.
+- Desktop only (the margin needs the width; phone is a nice-to-have) and only with the 4-step flow (`secBarOn`), so the older
+  suites (`sd-secs-off=1`) see the screens they test. Off while «Ver por párrafos» shows its rail (it has its own minutes).
+- Layout: the editor's left margin (128 px, shared with the section labels) holds ¶n + minute, ad breaks, re-hooks, chapters,
+  CTA and on-screen cue tags, stacked so none covers another or a section label; on the text: outlines around references and
+  calls to action, a bar beside quotes, lines for ads/re-hooks/chapters; Highlight API for the quote background, ad-risk words
+  (double underline) and fillers (wavy). Typing removes them until the next review.
+- 5A with 2A: inside a fixed section the detailed review adds no ad, re-hook, chapter, CTA, cue or filler mark; paragraph
+  numbers, quotes, references and red ad risks stay.
+- B-059 fixed by widening the shared `PROMISES` list (one list, so the rule check agrees with the section detection).
+
 ## 2026-11-01 (night): live check of the two screens (Adrian: "a", then "go with all your recommendations")
 - Real Opus run on Adrian's episode (the tab reopened on it, not on the «Excelente» example): ~75 s, $0.23, not cut, 7 items.
 - **1A** (B-056): on the detailed screen a report made before the two screens counts as missing; one Sonnet call in detailed

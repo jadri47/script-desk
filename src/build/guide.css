@@ -893,3 +893,42 @@ html.sx-on #ed{padding-left:128px!important}
 .sx-lock-l{position:absolute;left:4px;max-width:108px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;pointer-events:auto;font:500 12px/1.3 var(--sans);color:var(--ink-2);background:var(--sheet-2);border-radius:7px;padding:3px 6px}
 .sx-lock-n{display:inline-flex;align-items:center;gap:4px} .sx-lock-l b{color:var(--ink);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .sx-lock-l button{font:600 12px/1.2 var(--sans);min-height:24px;padding:0;text-align:left}
+
+/* ===== Marks in the text (7A, 2026-11-01; marks_ui.js). Each group has its own shape and written name: colour is never the only cue ===== */
+html.mk-on #ed{padding-left:128px!important}
+html.mk-on .sx-rh{display:none} /* the marks layer draws the re-hook points on every screen */
+html.mk-off-secs .sx-layer{display:none}
+.mk-layer{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.mk-tag{position:absolute;max-width:112px;height:18px;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;padding:0 5px;border-radius:6px;font:500 12px/18px var(--sans);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;font-variant-numeric:tabular-nums}
+.mk-tag b{color:var(--ink);font-weight:700} .mk-tag small{font-size:12px;color:var(--ink-2)} .mk-tag i{font-style:normal}
+.mk-t-ad{color:var(--j2)} .mk-t-rehook{color:var(--j5)} .mk-t-rehook small,.mk-t-ad small,.mk-t-chap small{color:inherit}
+.mk-t-chap{color:var(--ink)} .mk-t-cta{color:var(--j4);border:1.5px solid var(--j4)} .mk-t-cue{color:var(--j1);border:1.5px dashed var(--j1);text-transform:uppercase;letter-spacing:.03em}
+.mk-box{position:absolute;border-radius:6px;box-sizing:border-box}
+.mk-ref{border:1.5px solid var(--m-ref)} .mk-cta{border:1.5px solid var(--j4)}
+.mk-qbar{position:absolute;width:3px;border-radius:2px;background:var(--j3)}
+.mk-line{position:absolute;height:0;border-top:2px dotted var(--j2)}
+.mk-line.mk-rehook{border-top:2px solid var(--j5)} .mk-line.mk-rehook.gap{border-top-style:dashed}
+.mk-line.mk-chap{border-top:1px solid var(--ink-2)}
+.mk-leg{margin:14px 0 6px;padding:12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+.mk-leg h3{margin:0 0 2px;font:700 14px/1.3 var(--sans)} .mk-leg .hint{margin:0 0 8px}
+.mk-chips{display:flex;flex-wrap:wrap;gap:6px}
+.mk-chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border:1.5px solid var(--rule);border-radius:999px;background:var(--sheet);font:500 13px/1.2 var(--sans);color:var(--ink);cursor:pointer}
+.mk-chip .n{font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.mk-chip.off{opacity:.55;text-decoration:line-through;text-decoration-thickness:1px}
+.mk-sw{width:16px;height:12px;border-radius:3px;box-sizing:border-box;flex:none}
+.mk-c-secs .mk-sw{border:2px solid var(--j2)} .mk-c-para .mk-sw{background:none;border-left:3px solid var(--ink-2)}
+.mk-c-quote .mk-sw{background:color-mix(in srgb,var(--j3) 25%,transparent);border-left:3px solid var(--j3)} .mk-c-ref .mk-sw{border:1.5px solid var(--m-ref);border-radius:6px}
+.mk-c-ad .mk-sw{height:0;border-top:2px dotted var(--j2)} .mk-c-rehook .mk-sw{height:0;border-top:2px solid var(--j5)} .mk-c-chap .mk-sw{height:0;border-top:1px solid var(--ink-2)}
+.mk-c-cta .mk-sw{border:1.5px solid var(--j4)} .mk-c-cue .mk-sw{border:1.5px dashed var(--j1)}
+.mk-c-risk .mk-sw{height:6px;border-top:2px solid var(--c-hi);border-bottom:2px solid var(--c-hi)} .mk-c-fill .mk-sw{height:4px;border-bottom:2px dotted var(--c-fill)}
+:root ::highlight(sd-mk-quote){background-color:rgba(200,150,20,.16)}
+:root ::highlight(sd-mk-risk){text-decoration:underline double #B4234A;text-decoration-thickness:2px;text-underline-offset:3px}
+:root ::highlight(sd-mk-fill){text-decoration:underline wavy #6E45C4;text-decoration-thickness:1.5px;text-underline-offset:4px}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme="light"]) ::highlight(sd-mk-quote){background-color:rgba(255,197,102,.16)}
+:root:not([data-theme="light"]) ::highlight(sd-mk-risk){text-decoration:underline double #FF7D9C;text-decoration-thickness:2px;text-underline-offset:3px}
+:root:not([data-theme="light"]) ::highlight(sd-mk-fill){text-decoration:underline wavy #C7B5FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+}
+:root[data-theme="dark"] ::highlight(sd-mk-quote){background-color:rgba(255,197,102,.16)}
+:root[data-theme="dark"] ::highlight(sd-mk-risk){text-decoration:underline double #FF7D9C;text-decoration-thickness:2px;text-underline-offset:3px}
+:root[data-theme="dark"] ::highlight(sd-mk-fill){text-decoration:underline wavy #C7B5FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
