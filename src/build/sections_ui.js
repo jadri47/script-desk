@@ -221,6 +221,34 @@ function secTap(e) {
 }
 document.addEventListener("pointerup", (e) => setTimeout(() => secTap(e), 0), true);
 
+// ---- overlays that move with the text (jadri47, 2026-11-02: the boxes were "wobbly" while scrolling) ----
+// They were re-measured on every scroll frame (~11 ms on a 5,000-word script) while the browser scrolls the text on its own, so they
+// trailed it. Now a layer is laid out once in the editor's content coordinates and a scroll only slides its track: with
+// scroll-driven animations (Chrome 115+, Safari 26) the slide runs with the scroll itself; elsewhere the scroll handler sets it.
+const ED_TL = typeof CSS !== "undefined" && !!CSS.supports && CSS.supports("animation-timeline: --sd-ed");
+const ED_LAYERS = new Set();
+function edLayer(layer, relayout) {
+  const el = ED.el, wr = ED.wrap.getBoundingClientRect(), er = el.getBoundingClientRect(), st = el.scrollTop;
+  Object.assign(layer.style, { inset: "auto", left: Math.round(er.left - wr.left) + "px", top: Math.round(er.top - wr.top) + "px", width: Math.round(er.width) + "px", height: Math.round(er.height) + "px" });
+  let tr = layer.firstElementChild;
+  if (!tr || !tr.classList.contains("ed-track")) { layer.innerHTML = '<div class="ed-track"></div>'; tr = layer.firstElementChild; }
+  tr.style.height = el.scrollHeight + "px";
+  tr.style.setProperty("--ed-max", String(Math.max(0, el.scrollHeight - el.clientHeight)));
+  if (!ED_TL) tr.style.transform = `translateY(${-st}px)`;
+  layer._sh = el.scrollHeight; layer._relayout = relayout; ED_LAYERS.add(layer);
+  return { tr, X: (x) => Math.round(x - er.left), Y: (y) => Math.round(y - er.top + st), er };
+}
+document.addEventListener("scroll", (e) => {
+  if (!ED.el || e.target !== ED.el) return; // a page scroll moves the editor and its layers together
+  for (const ly of ED_LAYERS) {
+    if (!ly.isConnected) { ED_LAYERS.delete(ly); continue; }
+    const tr = ly.firstElementChild;
+    if (!tr) continue;
+    if (!ED_TL) tr.style.transform = `translateY(${-ED.el.scrollTop}px)`;
+    if (ED.el.scrollHeight !== ly._sh && ly._relayout) ly._relayout(); // the text changed height since the layout
+  }
+}, true);
+
 // ---- the boxes over the editor ----
 const SXB = { layer: null, raf: 0 };
 function secBoxesOff() { if (SXB.layer) SXB.layer.innerHTML = ""; document.documentElement.classList.remove("sx-on"); }
@@ -230,30 +258,28 @@ function secBoxes() {
   if (typeof wkRange !== "function") return;
   document.documentElement.classList.add("sx-on"); // the editor gets a left margin for the labels (guide.css): they never cover a word
   if (!SXB.layer || !SXB.layer.isConnected) { SXB.layer = document.createElement("div"); SXB.layer.className = "sx-layer"; SXB.layer.setAttribute("aria-hidden", "true"); ED.wrap.appendChild(SXB.layer); }
-  const sec = secNow(), wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), cur = secCurrent(sec);
+  const sec = secNow(), cur = secCurrent(sec), L = edLayer(SXB.layer, secBoxesSched), er = L.er;
   const out = [];
+  // the whole script is laid out (content coordinates); the layer clips to the editor and slides with its scroll
   for (const s of sec.list) {
     let r;
     try { r = wkRange(s.start, Math.max(s.start + 1, s.end)); } catch (e) { r = null; }
     const rs = r ? [...r.getClientRects()].filter((x) => x.height > 0) : [];
     if (!rs.length) continue;
-    const top = Math.max(rs[0].top, er.top) - wr.top - 6, bot = Math.min(rs[rs.length - 1].bottom, er.bottom) - wr.top + 6;
-    if (bot <= top + 8) continue;
-    const left = er.left - wr.left + 6, width = er.width - 12;
-    out.push(`<div class="sx-box sx-${s.k}${s.k === cur ? " cur" : ""}${G.secLocks[s.k] ? " done" : ""}" style="top:${Math.round(top)}px;height:${Math.round(bot - top)}px;left:${Math.round(left)}px;width:${Math.round(width)}px"><span class="sx-lbl">${h(t("secBox")[s.k])}${G.secLocks[s.k] ? " ✓" : ""}</span></div>`);
+    const top = L.Y(rs[0].top) - 6, bot = L.Y(rs[rs.length - 1].bottom) + 6;
+    out.push(`<div class="sx-box sx-${s.k}${s.k === cur ? " cur" : ""}${G.secLocks[s.k] ? " done" : ""}" style="top:${top}px;height:${bot - top}px;left:6px;width:${Math.round(er.width - 12)}px"><span class="sx-lbl">${h(t("secBox")[s.k])}${G.secLocks[s.k] ? " ✓" : ""}</span></div>`);
   }
   for (const p of rehookPoints(state.text, state.result, sec.list)) {
     let r;
     try { r = wkRange(p.pos, p.pos + 1); } catch (e) { r = null; }
     const rr = r && r.getClientRects()[0];
-    if (!rr || rr.top < er.top || rr.top > er.bottom) continue;
-    out.push(`<div class="sx-rh${p.gap ? " gap" : ""}" style="top:${Math.round(rr.top - wr.top - 2)}px;left:${Math.round(er.left - wr.left + 6)}px;width:${Math.round(er.width - 12)}px"><span>${h(fmtTime(p.t))}${p.gap ? " · " + h(t("secRehookGap")) : ""}</span></div>`);
+    if (!rr) continue;
+    out.push(`<div class="sx-rh${p.gap ? " gap" : ""}" style="top:${L.Y(rr.top) - 2}px;left:6px;width:${Math.round(er.width - 12)}px"><span>${h(fmtTime(p.t))}${p.gap ? " · " + h(t("secRehookGap")) : ""}</span></div>`);
   }
-  SXB.layer.innerHTML = out.join("");
+  L.tr.innerHTML = out.join("");
 }
 function secBoxesSched() { if (SXB.raf) return; SXB.raf = requestAnimationFrame(() => { SXB.raf = 0; secBoxes(); }); }
 window.addEventListener("resize", secBoxesSched);
-document.addEventListener("scroll", secBoxesSched, true);
 
 // ===== Step 5: the detailed review leaves the main sections alone (5A) and the score reads both answers (6A) =====
 // Active once the main sections have an answer (G.secReport): before that (old episodes, the artifact, sd-secs-off) everything is
@@ -297,18 +323,17 @@ function secLockBoxes() {
   if (!SXB.layer || !SXB.layer.isConnected) { SXB.layer = document.createElement("div"); SXB.layer.className = "sx-layer"; ED.wrap.appendChild(SXB.layer); }
   SXB.layer.removeAttribute("aria-hidden");
   document.documentElement.classList.add("sx-on"); // B-057: labels in the left margin, the text inside stays readable
-  const wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), out = [];
+  const L = edLayer(SXB.layer, secBoxesSched), er = L.er, out = [];
   let free = -1e9; // a short section's label must not sit on the next one's: each label starts below the previous
   for (const r of secLockedRanges()) {
     let rg; try { rg = wkRange(r.start, Math.max(r.start + 1, r.end)); } catch (e) { rg = null; }
     const rs = rg ? [...rg.getClientRects()].filter((x) => x.height > 0) : [];
     if (!rs.length) continue;
-    const top = Math.max(rs[0].top, er.top) - wr.top - 4, bot = Math.min(rs[rs.length - 1].bottom, er.bottom) - wr.top + 4;
-    if (bot <= top + 8) continue;
+    const top = L.Y(rs[0].top) - 4, bot = L.Y(rs[rs.length - 1].bottom) + 4;
     const lt = Math.max(0, free - top); free = top + lt + 52;
-    out.push(`<div class="sx-lock sx-${r.k}" style="top:${Math.round(top)}px;height:${Math.round(bot - top)}px;left:${Math.round(er.left - wr.left + 6)}px;width:${Math.round(er.width - 12)}px"><span class="sx-lock-l" style="top:${Math.round(4 + lt)}px" title="${h(t("secLockedIn"))}"><span class="sx-lock-n"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><b>${h(t("secName")[r.k])}</b></span><span class="vh"> · ${h(t("secLockedIn"))} · </span><button type="button" class="linkish" data-sx-unlock="${r.k}">${h(t("secReopen"))}</button></span></div>`);
+    out.push(`<div class="sx-lock sx-${r.k}" style="top:${top}px;height:${bot - top}px;left:6px;width:${Math.round(er.width - 12)}px"><span class="sx-lock-l" style="top:${Math.round(4 + lt)}px" title="${h(t("secLockedIn"))}"><span class="sx-lock-n"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><b>${h(t("secName")[r.k])}</b></span><span class="vh"> · ${h(t("secLockedIn"))} · </span><button type="button" class="linkish" data-sx-unlock="${r.k}">${h(t("secReopen"))}</button></span></div>`);
   }
-  SXB.layer.innerHTML = out.join("");
+  L.tr.innerHTML = out.join("");
   SXB.layer.querySelectorAll("[data-sx-unlock]").forEach((b) => b.addEventListener("click", () => { delete G.secLocks[b.dataset.sxUnlock]; SX.pick = b.dataset.sxUnlock; SX.detail = false; markDirty(); renderGuide(); }));
   return true;
 }

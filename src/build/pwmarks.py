@@ -39,6 +39,29 @@ COVER = """(() => { const d = MK.data, out = []; for (const [g, list] of [['ref'
   for (const q of r.getClientRects()) { if (q.width === 0 || q.top < er.top - 4 || q.top > er.bottom - 8) continue;
     const box = [...document.querySelectorAll('.mk-box.mk-' + g)].map(b => b.getBoundingClientRect()).find(b => b.left <= q.left + 0.5 && b.right >= q.right - 0.5 && b.top <= q.top + 0.5 && b.bottom >= q.bottom - 0.5 && b.width <= q.width + 8);
     out.push(!!box); } } return out; })()"""
+SCROLL = """(async () => {
+  const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
+  const ed = ED.el, top = (a) => { const r = wkRange(a, a + 1); const q = r && r.getClientRects()[0]; return q ? q.top : null; };
+  const where = () => {
+    const o = {};
+    for (const s of secNow().list) { const b = document.querySelector('.sx-box.sx-' + s.k), y = top(s.start); if (b && y !== null) o['box-' + s.k] = Math.round(b.getBoundingClientRect().top - y); }
+    document.querySelectorAll('.mk-t-para').forEach((t) => { const n = +t.querySelector('b').textContent.slice(1), bl = WK.blocks[n - 1]; if (bl) o['p' + n] = Math.round(t.getBoundingClientRect().top - bl.el.getBoundingClientRect().top); });
+    return o;
+  };
+  ed.scrollTop = 0; await frame(); await frame();
+  const base = where(), moved = [];
+  let muts = 0; const mo = new MutationObserver((l) => { muts += l.length; });
+  document.querySelectorAll('.sx-layer, .mk-layer').forEach((l) => mo.observe(l, { childList: true, subtree: true, characterData: true, attributes: true }));
+  for (let i = 0; i < 4; i++) {
+    ed.scrollTop += 90; await frame();
+    const now = where();
+    for (const k in base) if (k in now && Math.abs(now[k] - base[k]) > 1) moved.push(k + ' ' + base[k] + '→' + now[k]);
+  }
+  mo.disconnect();
+  const scrolled = ed.scrollTop; ed.scrollTop = 0; await frame(); await frame();
+  return { n: Object.keys(base).filter((k) => k.startsWith('box-')).length, tags: Object.keys(base).filter((k) => k.startsWith('p')).length, moved, muts, scrolled };
+})()"""
+
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -53,6 +76,10 @@ async def main():
         ok("outlines sit on their words (references, calls to action on screen)", len(cv) >= 1 and all(cv), cv)
         g = await pg.evaluate(GEOM)
         ok("margin: tags in the margin, none on another or on a section label, nothing wider than the editor", g["n"] >= 3 and g["inMargin"] and not g["overTag"] and not g["overLabel"] and g["wide"] == 0 and not g["page"], g)
+        # scrolling (jadri47, 2026-11-02: the boxes were "wobbly"): on the next frame every box and ¶ tag keeps its place on its
+        # text, and a scroll redraws nothing (the layers slide with the editor instead of being re-measured a frame late)
+        sc = await pg.evaluate(SCROLL)
+        ok("scrolling: boxes and ¶ tags stay on their text on every frame; a scroll redraws nothing", sc["n"] >= 2 and sc["tags"] >= 3 and sc["moved"] == [] and sc["muts"] == 0 and sc["scrolled"] > 300, sc)
         # the detailed review: ads, chapters, risk and fillers join
         await pg.evaluate("SX.detail = true; renderGuide()"); await pg.wait_for_timeout(1200)
         s = await pg.evaluate(STATE)

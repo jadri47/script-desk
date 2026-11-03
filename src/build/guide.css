@@ -854,6 +854,12 @@ html:not(.sd-split) main.rp-focus{padding-bottom:calc(var(--sb-h,64px) + 190px)}
 
 /* ===== «Secciones principales» (sections_ui.js; Adrian, 2026-11-01): boxes over the editor + the panel ===== */
 .sx-layer{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+/* overlays slide with the editor's scroll on the browser's own scroll timeline, never a frame behind (edLayer; jadri47, 2026-11-02) */
+.ed-wrap{timeline-scope:--sd-ed}
+#ed{scroll-timeline:--sd-ed block}
+.ed-track{position:absolute;left:0;top:0;width:100%}
+@keyframes sd-ed-slide{from{transform:translateY(0)}to{transform:translateY(calc(var(--ed-max,0) * -1px))}}
+@supports (animation-timeline:--sd-ed){.ed-track{animation:sd-ed-slide linear both;animation-timeline:--sd-ed}}
 .sx-box{position:absolute;border:2px solid var(--sx-c);border-radius:12px;background:color-mix(in srgb,var(--sx-c) 7%,transparent)}
 .sx-box.cur{box-shadow:0 0 0 3px color-mix(in srgb,var(--sx-c) 25%,transparent)}
 .sx-box.done{border-style:solid;opacity:.75}

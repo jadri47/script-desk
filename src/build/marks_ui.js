@@ -77,10 +77,11 @@ const MK_SHAPE = { ad: "◆", rehook: "●", chap: "■" };
 function mkLayout() {
   const d = MK.data;
   if (!d || !MK.layer) return;
-  const wr = ED.wrap.getBoundingClientRect(), er = ED.el.getBoundingClientRect(), cs = getComputedStyle(ED.el);
+  // laid out once for the whole script in content coordinates; the layer slides with the editor's scroll (edLayer, sections_ui.js)
+  const L = edLayer(MK.layer, mkSched), er = L.er, cs = getComputedStyle(ED.el);
   const textL = er.left + parseFloat(cs.paddingLeft), textR = er.right - parseFloat(cs.paddingRight);
-  const X = (x) => Math.round(x - wr.left), Y = (y) => Math.round(y - wr.top);
-  const vis = (y) => y >= er.top - 4 && y <= er.bottom - 8;
+  const X = L.X, Y = L.Y;
+  const vis = () => true;
   const out = [], tags = [];
   const rectsOf = (a, b) => { const r = wkRange(a, b); return r ? [...r.getClientRects()].filter((x) => x.width > 0 && x.height > 0) : []; };
   const topOf = (p) => { const rs = rectsOf(p, p + 1); return rs.length ? rs[0].top : null; };
@@ -90,7 +91,7 @@ function mkLayout() {
   if (mkOn("cta")) for (const x of d.cta) { box("cta", x.start, x.end, t("mkG").cta); const y = topOf(x.start); if (y !== null && vis(y)) tags.push({ y, g: "cta", html: h(t("mkCta")) + ` <small>${h(fmtTime(x.t))}</small>`, title: t("mkG").cta + " · " + x.label }); }
   if (mkOn("quote")) for (const x of d.quote) {
     const rs = rectsOf(x.start, x.end); if (!rs.length) continue;
-    const a = Math.max(rs[0].top, er.top), z = Math.min(rs[rs.length - 1].bottom, er.bottom);
+    const a = rs[0].top, z = rs[rs.length - 1].bottom;
     if (z > a) out.push(`<span class="mk-qbar" style="left:${X(textL) - 9}px;top:${Y(a)}px;height:${Math.round(z - a)}px"></span>`);
   }
   if (mkOn("cue")) for (const x of d.cue) { const y = topOf(x.start); if (y !== null && vis(y)) tags.push({ y, g: "cue", html: h(x.label), title: t("mkG").cue }); }
@@ -114,11 +115,10 @@ function mkLayout() {
   for (const tg of tags) {
     let y = Math.max(tg.y, free);
     for (let k = 0; k < 8; k++) { const hit = taken.find(([a, z]) => y < z && y + H > a); if (!hit) break; y = hit[1]; }
-    if (y + H > er.bottom) continue;
     free = y + H + 2;
-    out.push(`<span class="mk-tag mk-t-${tg.g}" style="left:${X(er.left) + 8}px;top:${Y(y)}px" title="${h(tg.title)}">${tg.html}</span>`);
+    out.push(`<span class="mk-tag mk-t-${tg.g}" style="left:8px;top:${Y(y)}px" title="${h(tg.title)}">${tg.html}</span>`);
   }
-  MK.layer.innerHTML = out.join("");
+  L.tr.innerHTML = out.join("");
 }
 function mkLegendHTML() {
   const d = MK.data, sec = typeof secNow === "function" ? secNow().list.length : 0;
@@ -153,7 +153,6 @@ function mkSched() { if (MK.raf) return; MK.raf = requestAnimationFrame(() => { 
 // after the section boxes (their labels take the margin first): renderGuide → secBoxesSched → this
 const _renderGuideMk = renderGuide;
 renderGuide = function () { _renderGuideMk.apply(this, arguments); document.querySelectorAll(".mk-leg").forEach((x) => x.remove()); mkSched(); };
-document.addEventListener("scroll", () => { if (MK.layer && MK.layer.innerHTML) { if (MK.raf) return; MK.raf = requestAnimationFrame(() => { MK.raf = 0; if (mkReady()) mkLayout(); else mkClear(); }); } }, true);
 window.addEventListener("resize", mkSched);
 // a keystroke moves every position after it: the marks leave at once and come back with the next review (renderGuide)
 if (ED.el) ED.el.addEventListener("input", () => { MK.data = null; mkClear(); });
