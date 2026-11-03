@@ -5,7 +5,7 @@
 Object.assign(T.es, {
   edBold: "Negrita (Ctrl+B)", edItalic: "Cursiva (Ctrl+I)", edUnder: "Subrayado (Ctrl+U)", edHi: "Resaltar",
   edHead: "Título de sección", edUl: "Lista con viñetas", edOl: "Lista numerada", edCue: "Texto en pantalla para el editor",
-  edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
+  edFind: "Buscar en el guion (Ctrl+F)", edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
   edGrip: "Arrastra para cambiar la altura del guion",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
   edCueTag: "TEXTO", edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edLocalFail: "No se pudo guardar en este dispositivo: el navegador bloquea el almacenamiento.", edAuto: "Se guarda solo mientras escribes.",
@@ -13,7 +13,7 @@ Object.assign(T.es, {
 Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
   edHead: "Section title", edUl: "Bulleted list", edOl: "Numbered list", edCue: "On-screen text for the editor",
-  edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
+  edFind: "Search the script (Ctrl+F)", edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
   edGrip: "Drag to change the script box height",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
   edCueTag: "TEXT", edCueText: "verse or phrase", edLocal: "Saved on this device", edLocalFail: "Couldn't save on this device: the browser blocks storage.", edAuto: "It saves itself as you write.",
@@ -185,10 +185,11 @@ const ICON = {
   cue: '<span class="ed-ic-t ed-ic-cue">[T]</span>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
   redo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
+  find: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none"/><path d="m15 15 5 5"/></svg>',
   full: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
   exitFull: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
 };
-const TOOLS = [["b", "edBold"], ["i", "edItalic"], ["u", "edUnder"], ["h", "edHi"], "|", ["head", "edHead"], ["ul", "edUl"], ["ol", "edOl"], ["cue", "edCue"], "|", ["undo", "edUndo"], ["redo", "edRedo"], "~", ["full", "edFocus"]];
+const TOOLS = [["b", "edBold"], ["i", "edItalic"], ["u", "edUnder"], ["h", "edHi"], "|", ["head", "edHead"], ["ul", "edUl"], ["ol", "edOl"], ["cue", "edCue"], "|", ["undo", "edUndo"], ["redo", "edRedo"], "|", ["find", "edFind"], "~", ["full", "edFocus"]];
 
 function toolbarHTML() {
   return TOOLS.map((x) => (x === "|" ? '<span class="ed-sep"></span>' : x === "~" ? '<span class="ed-gap"></span>'
@@ -249,6 +250,7 @@ function blockOfSelection() {
   return null;
 }
 function edCmd(k) {
+  if (k === "find") { if (typeof findOpen === "function") findOpen(); return; } // find_ui.js: the search bar, not a text command
   ED.el.focus();
   if (k === "b") document.execCommand("bold");
   else if (k === "i") document.execCommand("italic");
