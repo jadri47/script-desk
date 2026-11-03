@@ -64,7 +64,10 @@ main[data-view="guide"] .co-act button,main[data-view="guide"] .fx-act button{mi
   .xswitch{font-size:12.5px}
 }
 /* Tema, calendario, copia */
-.tp-fields{display:grid;grid-template-columns:1.2fr 1.2fr .8fr;gap:12px;margin-top:12px}
+/* topic and next episode get the full width: a phrase like «la fe en medio de la prueba según Santiago» didn't fit
+   (jadri47, 2026-11-03: "should be longer to enter a longer string"); the date keeps its own short row */
+.tp-fields{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+.tp-fields input[type=date]{max-width:14em}
 @media (max-width:700px){.tp-fields{grid-template-columns:1fr}}
 .tp-fields .hint{margin-top:2px}
 .sr-new{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}

@@ -2,7 +2,7 @@
 /* ===== Tema y próximo episodio · Calendario de la serie · Copia de seguridad ===== */
 Object.assign(T.es, {
   tpTitle: "Tema y próximo episodio", tpLead: "El tema es la frase que alguien escribiría en YouTube. El próximo episodio se anuncia al final del guion y aparece en el calendario.",
-  tpTopic: "¿De qué tema trata?", tpTopicPh: "la ansiedad", tpAuto: (k) => `Si lo dejas vacío, uso «${k}», la frase que más repites.`, tpNext: "¿Qué veremos el próximo episodio?", tpNextPh: "el Salmo 23", tpDate: "Fecha de publicación",
+  tpTopic: "¿De qué tema trata?", tpTopicPh: "la ansiedad", tpAuto: (k) => `Si lo dejas vacío, uso «${k}», la frase que más repites.`, tpNext: "¿Qué veremos en el próximo episodio?", tpNextPh: "el Salmo 23", tpDate: "Fecha de publicación",
   srTitle: "Calendario de la serie", srLead: "Planea los episodios con su fecha. Toca «Abrir» para trabajar en uno.", srNewTitle: "Título del episodio", srNewPh: "Qué dice la Biblia sobre el perdón", srPlan: "Planear",
   srDel: "Borrar", srDelQ: (x) => `¿Borrar «${x}»? No se puede deshacer.`, srDelYes: "Sí, borrar", srDelNo: "No", srDelAll: (n) => (n === 1 ? "Borrar el episodio" : `Borrar los ${n} episodios`), srDelAllQ: (n) => (n === 1 ? "¿Borrar el episodio? No se puede deshacer." : `¿Borrar los ${n} episodios? No se puede deshacer.`),
   srNoDate: "Sin fecha", srToWrite: "Por escribir", srLate: "Atrasado", srNext: "Próximo", srOpen: "Abrir", srPlanNext: (x) => `Planear: ${x}`, srAll: (n) => `Ver los ${n}`, srLess: "Ver menos",
