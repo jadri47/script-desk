@@ -66,6 +66,8 @@ Playwright checks: `cd src/build; python3 pwXX.py`. They open `src/standalone/si
   only. On-entry table `MARK_DEFAULT`; legend switches remembered per screen (`sd-marks`). Pinned by `pwmarks`, `eval/marks_test.js`. `sd-secs-off=1` (set by mock_sb.js) hides it for the older step-2 suites; `pwsecs` on.
   Overlays (section boxes, locks, marks) go through `edLayer`: laid out once in content coordinates, a scroll only slides the track
   (scroll timeline; JS fallback); never re-measure on scroll (B-063, "wobbly"; `pwmarks` «scrolling»).
+- Mid-paragraph sections (2026-11-02, B): `ensureReview` in the 4-step flow splits a main section that starts mid-paragraph onto its
+  own paragraph (`secSplitText`: one break, no word changes, `secBounds` moved). Pinned by `eval/sections_test.js`, `pwsecs` «B-062».
 - Chapters (2026-11-02, A): one list, `chaptersText` → `buildChapters`, used by the description, the editor sheet and the marks.
   YouTube needs 0:00, ≥ 3, ascending, each ≥ 10 s; ours: each ≥ `CHAPTER_MIN_SEC` = 90 s (shorter joins the one before, which keeps
   its title), never below 3 (falls back to the 10 s list). Pinned by `eval/chapters_test.js`, `pwmarks`.

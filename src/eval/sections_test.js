@@ -119,6 +119,17 @@ ok("empty text: nothing found, all five missing", (() => { const R = L.analyze("
   ].join("\n\n");
   const R = L.analyze(text, { uiLang: "es", lang: "es" }), m = L.mainSections(text, R), p = m.list.find((s) => s.k === "promise");
   ok("B-059: «Quédense hasta el final … saldrán con cinco pasos» is found as the promise", !!p && text.slice(p.start, p.start + 25) === "Quédense hasta el final: ", p ? text.slice(p.start, p.start + 40) : m.missing);
+  // B-062 (jadri47, 2026-11-02, pick B): «Y quiero empezar…» (introduction) started mid-paragraph and its box overlapped the promise's
+  const intro = m.list.find((s) => s.k === "intro");
+  ok("B-062 (setup): the introduction starts mid-paragraph at «Y quiero empezar»", !!intro && text.slice(intro.start, intro.start + 16) === "Y quiero empezar" && text[intro.start - 1] !== "\n", intro && text.slice(intro.start - 5, intro.start + 16));
+  const sp = L.secSplitText(text, m.list);
+  ok("B-062: it gets its own paragraph", !!sp && sp.text.includes("cinco pasos para esta semana.\n\nY quiero empezar con una pregunta"), sp && sp.text.slice(0, 0));
+  ok("B-062: not a word changes, only a paragraph break is added", !!sp && sp.text.replace(/\s+/g, " ") === text.replace(/\s+/g, " ") && sp.text.length === text.length + 1, sp && [text.length, sp.text.length]);
+  ok("B-062: offsets move with the text (an author's boundary still points at its word)", !!sp && sp.text.slice(sp.map(intro.start), sp.map(intro.start) + 16) === "Y quiero empezar" && sp.map(5) === 5 && sp.text.slice(sp.map(text.length - 10)) === text.slice(-10));
+  const R2 = L.analyze(sp.text, { uiLang: "es", lang: "es" }), m2 = L.mainSections(sp.text, R2);
+  ok("B-062: after the split nothing starts mid-paragraph (nothing to split again)", L.secSplitText(sp.text, m2.list) === null, m2.list.map((s) => s.k + "@" + JSON.stringify(sp.text.slice(s.start - 3, s.start + 10))));
+  ok("B-062: a script whose sections start at paragraph starts is left alone", L.secSplitText("Uno.\n\nDos.", [{ k: "hook", start: 0 }, { k: "promise", start: 6 }]) === null);
+  ok("B-062: a script with single-line paragraphs gets a single line break", (L.secSplitText("Uno. Dos.\nTres.", [{ k: "hook", start: 0 }, { k: "promise", start: 5 }]) || {}).text === "Uno.\nDos.\nTres.");
 }
 
 console.log(fails ? `FAILS: ${fails}` : "ALL PASS");

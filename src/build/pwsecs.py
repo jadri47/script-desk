@@ -151,6 +151,27 @@ async def main():
         await pg.mouse.click(first["x"], first["y"]); await pg.wait_for_timeout(500)
         ok("a close start before everything else is refused and said", "no puede ser ese inicio" in await pg.evaluate("document.querySelector('[data-sx-root]').innerText") and await pg.evaluate("G.secBounds.close === undefined"))
         ok("adjust: no page error", not errs, errs)
+        await pg.close()
+        # B-062 (jadri47, 2026-11-02, pick B): the opening of Adrian's episode (the same text as eval/sections_test.js «B-059»), where
+        # «Y quiero empezar…» (introduction) started mid-paragraph and its box overlapped the promise's: the review splits it off
+        import re as _re, json as _json
+        paras = _json.loads("[" + _re.search(r"// B-059.*?const text = \[(.*?)\]\.join", open("../eval/sections_test.js", encoding="utf-8").read(), _re.S).group(1).strip().rstrip(",") + "]")
+        pg = await b.new_page(viewport={"width": 1400, "height": 900}); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:300]))
+        await pg.add_init_script("window.__SB_MODE='guest'; localStorage.setItem('sd-intro','1'); localStorage.setItem('sd-ui','es'); localStorage.setItem('sd-secs-off','0');")
+        await pg.route("**/supabase.min.js", lambda r: r.fulfill(body=SB, content_type="application/javascript"))
+        await pg.goto(SDU + "standalone/site/index.html"); await pg.wait_for_timeout(800)
+        await pg.evaluate("(t) => { caps.sample = Promise.resolve(null); $('script').value = t; }", "\n\n".join(paras)); await pg.wait_for_timeout(200)
+        await pg.click("#runBtn"); await pg.wait_for_timeout(2200)
+        sp = await pg.evaluate("""(() => { const v = $('script').value, m = mainSections(state.text, state.result, G.secBounds).list, b = (k) => { const e = document.querySelector('.sx-box.sx-' + k); return e ? e.getBoundingClientRect() : null; };
+          const p = b('promise'), i = b('intro');
+          return { split: v.includes('para esta semana.\\n\\nY quiero empezar'), editor: ED.el.innerText.includes('para esta semana.\\n\\nY quiero empezar') || [...ED.el.children].some(c => c.textContent.startsWith('Y quiero empezar')),
+            same: state.text === v, mid: m.filter(s => s.start > 0 && v[s.start - 1] !== '\\n').map(s => s.k),
+            boxes: !!(p && i), overlap: p && i ? Math.round(p.bottom - i.top) : null }; })()""")
+        ok("B-062: a main section starting mid-paragraph gets its own paragraph, in the editor too", sp["split"] and sp["editor"] and sp["same"] and sp["mid"] == [], sp)
+        ok("B-062: the promise and introduction boxes no longer overlap", sp["boxes"] and sp["overlap"] is not None and sp["overlap"] <= 12, sp)
+        same_words = await pg.evaluate("(t) => $('script').value.replace(/\\s+/g, ' ') === t.replace(/\\s+/g, ' ')", "\n\n".join(paras))
+        ok("B-062: not a word of the script changes", same_words)
+        ok("B-062: no page error", not errs, errs)
         await b.close()
     print("FAILS:", fails or "none")
 asyncio.run(main())

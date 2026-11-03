@@ -55,6 +55,23 @@ function mainSections(text, R, bounds) {
   return { list, missing: MAIN_SECS.filter((k) => st[k] == null), stale };
 }
 
+// B-062 (jadri47, 2026-11-02, pick B: "promesa and introduccion shouldn't overlap, it can split onto a new line"): a main section
+// that starts mid-paragraph gets its own paragraph. Only a paragraph break is added (spaces before it dropped), never a word.
+// Returns null when nothing starts mid-paragraph; else the new text, the split points and `map` (old offset → new offset).
+function secSplitText(text, list) {
+  const at = [...new Set((list || []).map((s) => s.start))]
+    .filter((p) => Number.isInteger(p) && p > 0 && p < text.length && /\S/.test(text.slice(text.lastIndexOf("\n", p - 1) + 1, p)))
+    .sort((a, b) => a - b);
+  if (!at.length) return null;
+  const br = /\n[ \t]*\n/.test(text) ? "\n\n" : "\n"; // the script's own paragraph break
+  let out = "", last = 0;
+  const shifts = [];
+  for (const p of at) { out += text.slice(last, p).replace(/[ \t]+$/, "") + br; shifts.push([p, out.length - p]); last = p; }
+  out += text.slice(last);
+  const map = (pos) => { let d = 0; for (const [p, s] of shifts) if (pos >= p) d = s; return pos + d; };
+  return { text: out, at, map };
+}
+
 // 2A: re-hook points in the body every REHOOK_EVERY seconds; `gap` = no re-hook in R.blocks around that time (the same reading
 // editMarks uses). Each point carries the char offset of the sentence it falls in.
 function rehookPoints(text, R, sections) {

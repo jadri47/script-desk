@@ -73,6 +73,21 @@ function secNow() {
   const m = mainSections(text, R, G.secBounds);
   return { ...m, text };
 }
+// B-062 (jadri47, 2026-11-02, pick B): before the review is read, a main section that starts mid-paragraph is moved to its own
+// paragraph (secSplitText: one paragraph break, no word changes), so its box never shares a line with the one before. Runs on
+// every review of the 4-step flow, ahead of the first report call (rpPrepare → ensureReview), so that call reads the split text.
+const _ensureReviewSx = ensureReview;
+ensureReview = function () {
+  const ok = _ensureReviewSx.apply(this, arguments);
+  if (!ok || !V.guided || !secBarOn() || !state.result || !state.text) return ok;
+  const sp = secSplitText(state.text, mainSections(state.text, state.result, G.secBounds).list);
+  if (!sp) return ok;
+  for (const k of Object.keys(G.secBounds || {})) if (Number.isInteger(G.secBounds[k])) G.secBounds[k] = sp.map(G.secBounds[k]);
+  $("script").value = sp.text; // the editor follows the textarea (editor_ui.js)
+  state.text = sp.text; state.opts = readOpts(); state.result = analyze(state.text, state.opts);
+  if (G.prodId) markDirty();
+  return ok;
+};
 // an item is pending while its original is still in the text exactly once and nobody skipped it
 function secItems(k) {
   if (!G.secReport) return [];

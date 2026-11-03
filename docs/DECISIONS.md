@@ -1,5 +1,15 @@
 # Decisions (newest first)
 
+## 2026-11-02 (evening): a main section that starts mid-paragraph gets its own paragraph (Adrian: B)
+- Seen in Adrian's recording: «Y quiero empezar…» (introducción) starts mid-paragraph after the promise, so the two boxes overlap.
+- Adrian: "promesa and introduccion shouldn't overlap, it can split onto a new line". Options shown: A one tap on the box
+  («Empezar en párrafo nuevo», recommended), B split automatically, C don't touch the text (shared line goes to the earlier box).
+  Picked B. Said with the options: the script changes without anyone asking, and the ¶ numbers after it shift by one.
+- How: `secSplitText` (sections_logic.js) adds one paragraph break before each main-section start that is mid-paragraph (spaces
+  before it dropped, no word changes); the 4-step flow runs it inside `ensureReview`, before the first report call, and moves the
+  author's `secBounds` with the text. An existing report is not re-run: it shows as out of date («Medir de nuevo»).
+- Pinned by `eval/sections_test.js` «B-062» (Adrian's opening), `pwsecs` «B-062» (seen red: boxes overlapped 31 px).
+
 ## 2026-11-02 (later): chapters at least 90 s (Adrian: "Go with A")
 - Seen on Adrian's 32-min episode: the description had 16 chapters, four of them 30–40 s apart (13:36–15:21), the last («Cierre»)
   11 s; the marks drew 21 (every detected section, not the description's list: a second recipe, my bug).
