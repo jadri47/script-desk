@@ -494,7 +494,10 @@ main[data-view="guide"] .co-act button,main[data-view="guide"] .fx-act button{mi
   .xswitch{font-size:12.5px}
 }
 /* Tema, calendario, copia */
-.tp-fields{display:grid;grid-template-columns:1.2fr 1.2fr .8fr;gap:12px;margin-top:12px}
+/* topic and next episode get the full width: a phrase like «la fe en medio de la prueba según Santiago» didn't fit
+   (jadri47, 2026-11-03: "should be longer to enter a longer string"); the date keeps its own short row */
+.tp-fields{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+.tp-fields input[type=date]{max-width:14em}
 @media (max-width:700px){.tp-fields{grid-template-columns:1fr}}
 .tp-fields .hint{margin-top:2px}
 .sr-new{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
@@ -827,6 +830,8 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 :root ::highlight(sd-del){background-color:rgba(107,42,60,.10);text-decoration:line-through #6B2A3C;text-decoration-thickness:2px}
 :root ::highlight(sd-quote){background-color:rgba(200,150,20,.16)}
 :root ::highlight(sd-flash){background-color:rgba(50,71,201,.38)}
+:root ::highlight(sd-find){background-color:rgba(255,214,0,.45)}
+:root ::highlight(sd-find-cur){background-color:rgba(255,140,0,.75);text-decoration:underline solid #8A3B00;text-decoration-thickness:2px;text-underline-offset:3px}
 @media (prefers-color-scheme:dark){
 :root:not([data-theme="light"]) ::highlight(sd-w-hi){background-color:rgba(255,125,156,.26);text-decoration:underline solid #FF7D9C;text-decoration-thickness:3px;text-underline-offset:4px}
 :root:not([data-theme="light"]) ::highlight(sd-u-hi){text-decoration:underline dotted #FF7D9C;text-decoration-thickness:2px;text-underline-offset:4px}
@@ -839,6 +844,8 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 :root:not([data-theme="light"]) ::highlight(sd-del){background-color:rgba(231,163,181,.14);text-decoration:line-through #E7A3B5;text-decoration-thickness:2px}
 :root:not([data-theme="light"]) ::highlight(sd-quote){background-color:rgba(255,197,102,.16)}
 :root:not([data-theme="light"]) ::highlight(sd-flash){background-color:rgba(140,158,255,.5)}
+:root:not([data-theme="light"]) ::highlight(sd-find){background-color:rgba(255,214,0,.30);color:inherit}
+:root:not([data-theme="light"]) ::highlight(sd-find-cur){background-color:rgba(255,150,40,.60);text-decoration:underline solid #FFD199;text-decoration-thickness:2px;text-underline-offset:3px}
 }
 :root[data-theme="dark"] ::highlight(sd-w-hi){background-color:rgba(255,125,156,.26);text-decoration:underline solid #FF7D9C;text-decoration-thickness:3px;text-underline-offset:4px}
 :root[data-theme="dark"] ::highlight(sd-u-hi){text-decoration:underline dotted #FF7D9C;text-decoration-thickness:2px;text-underline-offset:4px}
@@ -851,6 +858,8 @@ html.sd-split .masthead #stepBar .sb button{padding:8px 8px}
 :root[data-theme="dark"] ::highlight(sd-del){background-color:rgba(231,163,181,.14);text-decoration:line-through #E7A3B5;text-decoration-thickness:2px}
 :root[data-theme="dark"] ::highlight(sd-quote){background-color:rgba(255,197,102,.16)}
 :root[data-theme="dark"] ::highlight(sd-flash){background-color:rgba(140,158,255,.5)}
+:root[data-theme="dark"] ::highlight(sd-find){background-color:rgba(255,214,0,.30);color:inherit}
+:root[data-theme="dark"] ::highlight(sd-find-cur){background-color:rgba(255,150,40,.60);text-decoration:underline solid #FFD199;text-decoration-thickness:2px;text-underline-offset:3px}
 .ed .walk-on{position:relative;background:color-mix(in srgb,var(--j2,#B4234A) 7%,transparent);box-shadow:-10px 0 0 color-mix(in srgb,var(--j2,#B4234A) 7%,transparent),10px 0 0 color-mix(in srgb,var(--j2,#B4234A) 7%,transparent);border-radius:4px}
 .ed .walk-on::before{content:"";position:absolute;left:-14px;top:0;bottom:0;width:3px;border-radius:2px;background:var(--j2,#B4234A)}
 .topfix.walk .wk-strip{display:flex;gap:3px;margin:2px 0 8px;align-items:stretch}
@@ -1368,6 +1377,30 @@ html.mk-off-secs .sx-layer{display:none}
 :root[data-theme="dark"] ::highlight(sd-mk-quote){background-color:rgba(255,197,102,.16)}
 :root[data-theme="dark"] ::highlight(sd-mk-risk){text-decoration:underline double #FF7D9C;text-decoration-thickness:2px;text-underline-offset:3px}
 :root[data-theme="dark"] ::highlight(sd-mk-fill){text-decoration:underline wavy #C7B5FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+/* search bar (find_ui.js): floats over the editor's top-right corner so opening it never moves the text or the overlays */
+.ed-find{position:absolute;top:58px;right:14px;z-index:8;display:flex;align-items:center;gap:2px;padding:4px 4px 4px 10px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);box-shadow:var(--lift);max-width:calc(100% - 28px)}
+.ed-find[hidden]{display:none}
+.ed-find .fd-ic svg{width:18px;height:18px;stroke:var(--ink-2);stroke-width:2;fill:none;display:block}
+.ed-find .fd-q{width:15em;min-width:6em;flex:1 1 auto;border:0;background:transparent;color:var(--ink);font:500 15px/1.3 var(--sans);padding:6px 6px;outline:none;box-shadow:none}
+.ed-find:focus-within{border-color:var(--j1)}
+.ed-find .fd-n{flex:0 0 auto;min-width:4.5em;text-align:right;color:var(--ink-2);font:500 13px/1 var(--sans);white-space:nowrap;padding-right:4px}
+.ed-find.fd-miss .fd-n{color:var(--c-hi)}
+.ed-find .fd-b{min-width:34px;height:34px}
+.ed-find .fd-b svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none}
+.ed-find .fd-b:disabled{opacity:.4;cursor:default}
+/* three AI descriptions (desc_ui.js) */
+.ds-box{margin:6px 0 10px}
+.ds-list{border:0;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.ds-opt{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);cursor:pointer}
+.ds-opt.on{border-color:var(--j1);box-shadow:0 0 0 1px var(--j1) inset;background:var(--sheet-2)}
+.ds-opt input{margin-top:3px}
+.ds-n{font:600 13px/1.3 var(--sans);color:var(--ink-2)}
+.ds-t{grid-column:2;white-space:pre-line;color:var(--ink);font-size:15px;line-height:1.45}
+/* «Cómo empieza el video» filled from the fixed main sections (sections_ui.js coldAuto) */
+.co-auto{margin:8px 0 14px;padding:12px 14px;border:1px solid var(--rule);border-left:4px solid var(--j4);border-radius:12px;background:var(--sheet-2)}
+.co-auto h3{margin:0 0 6px;font-size:16px}
+.co-auto-t{margin:4px 0;line-height:1.45}
+.co-auto .co-k{font-weight:600;color:var(--ink-2);margin-right:4px}
 /* ===== Script Desk 2026 — "Vitral": jewel tones from stained glass, one per step ===== */
 :root{
   --paper:#F2F4FA; --sheet:#FFFFFF; --sheet-2:#F7F8FC; --ink:#1A1E3D; --ink-2:#565C80; --rule:#DADFEE; --rule-2:#E9ECF5;
@@ -4872,8 +4905,100 @@ function marksOutside(m, locked) {
   out.risk = m.risk.filter((x) => x.level === "rojo" || !inL(x.start, x.end));
   return out;
 }
+// ===== Search in the script (find_ui.js; Adrian, 2026-11-03: A "a searchbox ... so the user can find things quickly") =====
+// Accents and capitals are ignored («dios» finds «Dios», «senor» finds «Señor»). Folding is one character for one character, so a
+// match's start/end are positions in the original text. Text is never changed here.
+function findFold(s) {
+  let out = "";
+  for (const ch of String(s)) {
+    const f = ch.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    // one char in, one char out («İ» lowercases to two): positions must stay the original's. An emoji (two UTF-16 units) as is.
+    out += ch.length === 1 && f.length ? f[0] : ch;
+  }
+  return out;
+}
+// All matches of q in text, left to right, not overlapping: [{start, end}]. An empty or blank query finds nothing.
+// Spaces in the query match any run of spaces/line breaks in the text (a phrase split over two lines is still found).
+function findAll(text, q, max = 2000) {
+  const needle = String(q || "").trim();
+  if (!needle || !text) return [];
+  const hay = findFold(text);
+  const parts = findFold(needle).split(/\s+/).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const re = new RegExp(parts.join("\\s+"), "g");
+  const out = [];
+  let m;
+  while ((m = re.exec(hay)) && out.length < max) {
+    if (!m[0].length) { re.lastIndex++; continue; }
+    out.push({ start: m.index, end: m.index + m[0].length });
+  }
+  return out;
+}
+// Which match to show first: the first one at or after the caret, else the first one (wraps).
+function findNearest(list, pos) {
+  if (!list.length) return -1;
+  const i = list.findIndex((m) => m.start >= (pos || 0));
+  return i < 0 ? 0 : i;
+}
+// ===== Three descriptions from the AI («Descripción y capítulos»; Adrian, 2026-11-03: A, on request) =====
+// One call returns DESC_N candidates; each is vetted here before it is shown (the AI's words never reach the box unchecked):
+// the keyword in its first 150 characters, no ad-risk words (the same packaging scan the title gets), no Bible reference the
+// script doesn't have, no quoted text the script doesn't have, no chapter list (the app adds its own below), a sane length.
+const DESC_N = 3, DESC_MIN = 80, DESC_MAX = 1200;
 
-if (typeof module !== "undefined") module.exports = { secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+function descPrompt(text, R, o) {
+  o = o || {};
+  const en = R.lang === "en";
+  const mk = maskVerses(text, verseSpans(text, R), 0, text.length);
+  const kw = (o.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "";
+  const meta = [o.title && (en ? `Title: ${o.title}` : `Título: ${o.title}`), kw && (en ? `Keyword: ${kw}` : `Palabra clave: ${kw}`), o.nextEp && (en ? `Next episode: ${o.nextEp}` : `Próximo episodio: ${o.nextEp}`)].filter(Boolean).join("\n");
+  const ask = en
+    ? `Write ${DESC_N} different YouTube descriptions for this Bible-teaching episode. Each: 2 or 3 short paragraphs, ${DESC_MIN}-${DESC_MAX - 300} characters, in the host's voice; ${kw ? `the keyword «${kw}» word for word in the first sentence (within the first 150 characters); ` : ""}what the viewer will understand or take away, said plainly; no chapter list or timestamps (the app adds them); no hashtags; no Bible reference or quotation that is not in the script; no facts, names or numbers that are not in the script; no words YouTube restricts for ads (violence, drugs, sex, profanity). Make the three really different: one leads with the question, one with the promise, one with the story.`
+    : `Escribe ${DESC_N} descripciones de YouTube distintas para este episodio de enseñanza bíblica. Cada una: 2 o 3 párrafos cortos, de ${DESC_MIN} a ${DESC_MAX - 300} caracteres, con la voz del presentador; ${kw ? `la palabra clave «${kw}» tal cual en la primera frase (dentro de los primeros 150 caracteres); ` : ""}qué va a entender o llevarse quien lo vea, dicho llano; sin lista de capítulos ni minutos (la app los añade); sin hashtags; sin ninguna referencia ni cita bíblica que no esté en el guion; sin datos, nombres ni cifras que no estén en el guion; sin palabras que YouTube limita para anuncios (violencia, drogas, sexo, groserías). Que las tres sean de verdad distintas: una abre con la pregunta, otra con la promesa, otra con la historia.`;
+  const shape = `{"descs": ["...", "...", "..."]}`;
+  const tail = en ? `Answer only with JSON: ${shape}\nThe ⟦V1⟧, ⟦V2⟧… marks are verses: never copy them.` : `Responde solo con JSON: ${shape}\nLas marcas ⟦V1⟧, ⟦V2⟧… son versículos: nunca las copies.`;
+  return `${ask}\n${tail}\n\n${meta ? meta + "\n\n" : ""}${en ? "SCRIPT" : "GUION"}:\n${mk.masked || text}`; // the script last (house rule)
+}
+
+// risk(desc) → the list of risky words found (the packaging scan); injected so this stays pure and testable.
+function vetDescs(list, text, kw, risk) {
+  const fold = (s) => findFold(s).replace(/\s+/g, " ");
+  // a chapter the script cites («1 Samuel 17» for its «1 Samuel 17:45») is allowed; a verse only if the script has that verse
+  const sr = findReferences(text);
+  const known = (r) => sr.some((x) => x.code === r.code && x.chapter === r.chapter && (r.verse == null || (x.verse === r.verse && (r.verseEnd == null || x.verseEnd === r.verseEnd))));
+  const T = fold(text), K = fold((kw || "").trim());
+  const out = [], why = [];
+  for (const raw of Array.isArray(list) ? list : []) {
+    if (typeof raw !== "string") { why.push("type"); continue; }
+    const d = raw.replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (d.length < DESC_MIN || d.length > DESC_MAX) { why.push("length"); continue; }
+    if (/[⟦⟧]/.test(d)) { why.push("token"); continue; }
+    if (/^\s*\d{1,2}:\d{2}/m.test(d)) { why.push("chapters"); continue; }
+    if (K && !fold(d.slice(0, 150)).includes(K)) { why.push("keyword"); continue; }
+    if (findReferences(d).some((r) => !known(r))) { why.push("ref"); continue; }
+    const quoted = (d.match(/«[^»]{12,}»|"[^"]{12,}"|“[^”]{12,}”/g) || []).map((q) => fold(q.slice(1, -1)));
+    if (quoted.some((q) => !T.includes(q))) { why.push("quote"); continue; }
+    if (risk && risk(d).length) { why.push("risk"); continue; }
+    if (out.some((x) => fold(x) === fold(d))) { why.push("dup"); continue; }
+    out.push(d);
+  }
+  return { list: out.slice(0, DESC_N), why };
+}
+
+// Put a chosen description above the chapter block, keeping the block and anything typed after it (hashtags, links): the same
+// block the «Añadir a la descripción» button writes (B-014). No block yet: the chapters given are appended.
+function descWithChapters(current, chosen, chapters) {
+  const cur = String(current || ""), m = /^0:00[ \t].*(?:\n\d{1,2}(?::\d{2}){1,2}[ \t].*)*/m.exec(cur);
+  if (m) return chosen.trim() + "\n\n" + cur.slice(m.index).trim();
+  const ch = String(chapters || "").trim();
+  return chosen.trim() + (ch ? "\n\n" + ch : "");
+}
+// The packaging scan the title and thumbnail get (analyze's scanPack), run on the description alone.
+function descRisk(d) {
+  const p = (analyze("x", { description: d }).packaging || []).find((x) => x.key === "desc");
+  return p && p.level !== "verde" ? p.issues : [];
+}
+
+if (typeof module !== "undefined") module.exports = { descPrompt, vetDescs, descRisk, descWithChapters, DESC_N, DESC_MIN, DESC_MAX, findAll, findFold, findNearest, secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -7730,8 +7855,100 @@ function marksOutside(m, locked) {
   out.risk = m.risk.filter((x) => x.level === "rojo" || !inL(x.start, x.end));
   return out;
 }
+// ===== Search in the script (find_ui.js; Adrian, 2026-11-03: A "a searchbox ... so the user can find things quickly") =====
+// Accents and capitals are ignored («dios» finds «Dios», «senor» finds «Señor»). Folding is one character for one character, so a
+// match's start/end are positions in the original text. Text is never changed here.
+function findFold(s) {
+  let out = "";
+  for (const ch of String(s)) {
+    const f = ch.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    // one char in, one char out («İ» lowercases to two): positions must stay the original's. An emoji (two UTF-16 units) as is.
+    out += ch.length === 1 && f.length ? f[0] : ch;
+  }
+  return out;
+}
+// All matches of q in text, left to right, not overlapping: [{start, end}]. An empty or blank query finds nothing.
+// Spaces in the query match any run of spaces/line breaks in the text (a phrase split over two lines is still found).
+function findAll(text, q, max = 2000) {
+  const needle = String(q || "").trim();
+  if (!needle || !text) return [];
+  const hay = findFold(text);
+  const parts = findFold(needle).split(/\s+/).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const re = new RegExp(parts.join("\\s+"), "g");
+  const out = [];
+  let m;
+  while ((m = re.exec(hay)) && out.length < max) {
+    if (!m[0].length) { re.lastIndex++; continue; }
+    out.push({ start: m.index, end: m.index + m[0].length });
+  }
+  return out;
+}
+// Which match to show first: the first one at or after the caret, else the first one (wraps).
+function findNearest(list, pos) {
+  if (!list.length) return -1;
+  const i = list.findIndex((m) => m.start >= (pos || 0));
+  return i < 0 ? 0 : i;
+}
+// ===== Three descriptions from the AI («Descripción y capítulos»; Adrian, 2026-11-03: A, on request) =====
+// One call returns DESC_N candidates; each is vetted here before it is shown (the AI's words never reach the box unchecked):
+// the keyword in its first 150 characters, no ad-risk words (the same packaging scan the title gets), no Bible reference the
+// script doesn't have, no quoted text the script doesn't have, no chapter list (the app adds its own below), a sane length.
+const DESC_N = 3, DESC_MIN = 80, DESC_MAX = 1200;
 
-if (typeof module !== "undefined") module.exports = { secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+function descPrompt(text, R, o) {
+  o = o || {};
+  const en = R.lang === "en";
+  const mk = maskVerses(text, verseSpans(text, R), 0, text.length);
+  const kw = (o.keyword || "").trim() || (typeof R.keyword === "string" && R.keyword) || "";
+  const meta = [o.title && (en ? `Title: ${o.title}` : `Título: ${o.title}`), kw && (en ? `Keyword: ${kw}` : `Palabra clave: ${kw}`), o.nextEp && (en ? `Next episode: ${o.nextEp}` : `Próximo episodio: ${o.nextEp}`)].filter(Boolean).join("\n");
+  const ask = en
+    ? `Write ${DESC_N} different YouTube descriptions for this Bible-teaching episode. Each: 2 or 3 short paragraphs, ${DESC_MIN}-${DESC_MAX - 300} characters, in the host's voice; ${kw ? `the keyword «${kw}» word for word in the first sentence (within the first 150 characters); ` : ""}what the viewer will understand or take away, said plainly; no chapter list or timestamps (the app adds them); no hashtags; no Bible reference or quotation that is not in the script; no facts, names or numbers that are not in the script; no words YouTube restricts for ads (violence, drugs, sex, profanity). Make the three really different: one leads with the question, one with the promise, one with the story.`
+    : `Escribe ${DESC_N} descripciones de YouTube distintas para este episodio de enseñanza bíblica. Cada una: 2 o 3 párrafos cortos, de ${DESC_MIN} a ${DESC_MAX - 300} caracteres, con la voz del presentador; ${kw ? `la palabra clave «${kw}» tal cual en la primera frase (dentro de los primeros 150 caracteres); ` : ""}qué va a entender o llevarse quien lo vea, dicho llano; sin lista de capítulos ni minutos (la app los añade); sin hashtags; sin ninguna referencia ni cita bíblica que no esté en el guion; sin datos, nombres ni cifras que no estén en el guion; sin palabras que YouTube limita para anuncios (violencia, drogas, sexo, groserías). Que las tres sean de verdad distintas: una abre con la pregunta, otra con la promesa, otra con la historia.`;
+  const shape = `{"descs": ["...", "...", "..."]}`;
+  const tail = en ? `Answer only with JSON: ${shape}\nThe ⟦V1⟧, ⟦V2⟧… marks are verses: never copy them.` : `Responde solo con JSON: ${shape}\nLas marcas ⟦V1⟧, ⟦V2⟧… son versículos: nunca las copies.`;
+  return `${ask}\n${tail}\n\n${meta ? meta + "\n\n" : ""}${en ? "SCRIPT" : "GUION"}:\n${mk.masked || text}`; // the script last (house rule)
+}
+
+// risk(desc) → the list of risky words found (the packaging scan); injected so this stays pure and testable.
+function vetDescs(list, text, kw, risk) {
+  const fold = (s) => findFold(s).replace(/\s+/g, " ");
+  // a chapter the script cites («1 Samuel 17» for its «1 Samuel 17:45») is allowed; a verse only if the script has that verse
+  const sr = findReferences(text);
+  const known = (r) => sr.some((x) => x.code === r.code && x.chapter === r.chapter && (r.verse == null || (x.verse === r.verse && (r.verseEnd == null || x.verseEnd === r.verseEnd))));
+  const T = fold(text), K = fold((kw || "").trim());
+  const out = [], why = [];
+  for (const raw of Array.isArray(list) ? list : []) {
+    if (typeof raw !== "string") { why.push("type"); continue; }
+    const d = raw.replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (d.length < DESC_MIN || d.length > DESC_MAX) { why.push("length"); continue; }
+    if (/[⟦⟧]/.test(d)) { why.push("token"); continue; }
+    if (/^\s*\d{1,2}:\d{2}/m.test(d)) { why.push("chapters"); continue; }
+    if (K && !fold(d.slice(0, 150)).includes(K)) { why.push("keyword"); continue; }
+    if (findReferences(d).some((r) => !known(r))) { why.push("ref"); continue; }
+    const quoted = (d.match(/«[^»]{12,}»|"[^"]{12,}"|“[^”]{12,}”/g) || []).map((q) => fold(q.slice(1, -1)));
+    if (quoted.some((q) => !T.includes(q))) { why.push("quote"); continue; }
+    if (risk && risk(d).length) { why.push("risk"); continue; }
+    if (out.some((x) => fold(x) === fold(d))) { why.push("dup"); continue; }
+    out.push(d);
+  }
+  return { list: out.slice(0, DESC_N), why };
+}
+
+// Put a chosen description above the chapter block, keeping the block and anything typed after it (hashtags, links): the same
+// block the «Añadir a la descripción» button writes (B-014). No block yet: the chapters given are appended.
+function descWithChapters(current, chosen, chapters) {
+  const cur = String(current || ""), m = /^0:00[ \t].*(?:\n\d{1,2}(?::\d{2}){1,2}[ \t].*)*/m.exec(cur);
+  if (m) return chosen.trim() + "\n\n" + cur.slice(m.index).trim();
+  const ch = String(chapters || "").trim();
+  return chosen.trim() + (ch ? "\n\n" + ch : "");
+}
+// The packaging scan the title and thumbnail get (analyze's scanPack), run on the description alone.
+function descRisk(d) {
+  const p = (analyze("x", { description: d }).packaging || []).find((x) => x.key === "desc");
+  return p && p.level !== "verde" ? p.issues : [];
+}
+
+if (typeof module !== "undefined") module.exports = { descPrompt, vetDescs, descRisk, descWithChapters, DESC_N, DESC_MIN, DESC_MAX, findAll, findFold, findNearest, secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -10410,7 +10627,7 @@ renderPackChecks = function () {
 /* ===== Tema y próximo episodio · Calendario de la serie · Copia de seguridad ===== */
 Object.assign(T.es, {
   tpTitle: "Tema y próximo episodio", tpLead: "El tema es la frase que alguien escribiría en YouTube. El próximo episodio se anuncia al final del guion y aparece en el calendario.",
-  tpTopic: "¿De qué tema trata?", tpTopicPh: "la ansiedad", tpAuto: (k) => `Si lo dejas vacío, uso «${k}», la frase que más repites.`, tpNext: "¿Qué veremos el próximo episodio?", tpNextPh: "el Salmo 23", tpDate: "Fecha de publicación",
+  tpTopic: "¿De qué tema trata?", tpTopicPh: "la ansiedad", tpAuto: (k) => `Si lo dejas vacío, uso «${k}», la frase que más repites.`, tpNext: "¿Qué veremos en el próximo episodio?", tpNextPh: "el Salmo 23", tpDate: "Fecha de publicación",
   srTitle: "Calendario de la serie", srLead: "Planea los episodios con su fecha. Toca «Abrir» para trabajar en uno.", srNewTitle: "Título del episodio", srNewPh: "Qué dice la Biblia sobre el perdón", srPlan: "Planear",
   srDel: "Borrar", srDelQ: (x) => `¿Borrar «${x}»? No se puede deshacer.`, srDelYes: "Sí, borrar", srDelNo: "No", srDelAll: (n) => (n === 1 ? "Borrar el episodio" : `Borrar los ${n} episodios`), srDelAllQ: (n) => (n === 1 ? "¿Borrar el episodio? No se puede deshacer." : `¿Borrar los ${n} episodios? No se puede deshacer.`),
   srNoDate: "Sin fecha", srToWrite: "Por escribir", srLate: "Atrasado", srNext: "Próximo", srOpen: "Abrir", srPlanNext: (x) => `Planear: ${x}`, srAll: (n) => `Ver los ${n}`, srLess: "Ver menos",
@@ -12025,7 +12242,7 @@ gOnLang = function () { _gOnLangE.apply(this, arguments); if ($("epSheet") && $(
 Object.assign(T.es, {
   edBold: "Negrita (Ctrl+B)", edItalic: "Cursiva (Ctrl+I)", edUnder: "Subrayado (Ctrl+U)", edHi: "Resaltar",
   edHead: "Título de sección", edUl: "Lista con viñetas", edOl: "Lista numerada", edCue: "Texto en pantalla para el editor",
-  edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
+  edFind: "Buscar en el guion (Ctrl+F)", edUndo: "Deshacer (Ctrl+Z)", edRedo: "Rehacer (Ctrl+Y)", edFocus: "Escribir a pantalla completa", edFocusOff: "Salir de pantalla completa", edExit: "Listo", edOpen: "Toca para escribir",
   edGrip: "Arrastra para cambiar la altura del guion",
   edPh: "Escribe aquí tu guion, o pégalo desde Word o Google Docs: la negrita, la cursiva, las listas y los títulos se conservan.",
   edCueTag: "TEXTO", edCueText: "versículo o frase", edLocal: "Guardado en este dispositivo", edLocalFail: "No se pudo guardar en este dispositivo: el navegador bloquea el almacenamiento.", edAuto: "Se guarda solo mientras escribes.",
@@ -12033,7 +12250,7 @@ Object.assign(T.es, {
 Object.assign(T.en, {
   edBold: "Bold (Ctrl+B)", edItalic: "Italic (Ctrl+I)", edUnder: "Underline (Ctrl+U)", edHi: "Highlight",
   edHead: "Section title", edUl: "Bulleted list", edOl: "Numbered list", edCue: "On-screen text for the editor",
-  edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
+  edFind: "Search the script (Ctrl+F)", edUndo: "Undo (Ctrl+Z)", edRedo: "Redo (Ctrl+Y)", edFocus: "Write full screen", edFocusOff: "Leave full screen", edExit: "Done", edOpen: "Tap to write",
   edGrip: "Drag to change the script box height",
   edPh: "Write your script here, or paste it from Word or Google Docs: bold, italics, lists and headings are kept.",
   edCueTag: "TEXT", edCueText: "verse or phrase", edLocal: "Saved on this device", edLocalFail: "Couldn't save on this device: the browser blocks storage.", edAuto: "It saves itself as you write.",
@@ -12205,10 +12422,11 @@ const ICON = {
   cue: '<span class="ed-ic-t ed-ic-cue">[T]</span>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>',
   redo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>',
+  find: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none"/><path d="m15 15 5 5"/></svg>',
   full: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
   exitFull: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
 };
-const TOOLS = [["b", "edBold"], ["i", "edItalic"], ["u", "edUnder"], ["h", "edHi"], "|", ["head", "edHead"], ["ul", "edUl"], ["ol", "edOl"], ["cue", "edCue"], "|", ["undo", "edUndo"], ["redo", "edRedo"], "~", ["full", "edFocus"]];
+const TOOLS = [["b", "edBold"], ["i", "edItalic"], ["u", "edUnder"], ["h", "edHi"], "|", ["head", "edHead"], ["ul", "edUl"], ["ol", "edOl"], ["cue", "edCue"], "|", ["undo", "edUndo"], ["redo", "edRedo"], "|", ["find", "edFind"], "~", ["full", "edFocus"]];
 
 function toolbarHTML() {
   return TOOLS.map((x) => (x === "|" ? '<span class="ed-sep"></span>' : x === "~" ? '<span class="ed-gap"></span>'
@@ -12269,6 +12487,7 @@ function blockOfSelection() {
   return null;
 }
 function edCmd(k) {
+  if (k === "find") { if (typeof findOpen === "function") findOpen(); return; } // find_ui.js: the search bar, not a text command
   ED.el.focus();
   if (k === "b") document.execCommand("bold");
   else if (k === "i") document.execCommand("italic");
@@ -16509,7 +16728,10 @@ buildFixCards = function () {
     const ev = Array.isArray(c.evidence) ? c.evidence.filter((e) => !secHitsLocked(e.start, e.end, L)) : c.evidence;
     if (Array.isArray(c.evidence) && c.evidence.length && !ev.length) continue;
     const props = Array.isArray(c.proposals) ? c.proposals.filter((p) => !(p.patches || []).some((x) => secHitsLocked(x.start, x.end, L))) : c.proposals;
-    out.push({ ...c, evidence: ev, proposals: props });
+    // B-064 (jadri47, 2026-11-03: "the suggestion is a different text"): the AI rewrites c.ai, set to the first hit before the
+    // fixed sections were dropped; move it to the first sentence still shown, or none when nothing is left to point at
+    const a = c.ai && c.ai.start != null && secHitsLocked(c.ai.start, c.ai.end, L) ? (ev && ev[0] ? { ...c.ai, start: ev[0].start, end: ev[0].end } : null) : c.ai;
+    out.push({ ...c, evidence: ev, proposals: props, ai: a });
   }
   return out;
 };
@@ -16587,6 +16809,38 @@ document.addEventListener("click", (e) => {
   SX.detail = b.dataset.sxDetail === "1";
   if (V.step === 2) { e.stopPropagation(); renderGuide(); }
 }, true);
+
+// ===== «Cómo empieza el video» after the main sections (Adrian, 2026-11-03: A "prefill from fixed sections") =====
+// With the hook and the promise fixed and no clip picked, the video simply starts as written: that card counts as done and says
+// so. Nothing is written to G.cold (no cold-open clip, the timings and the editor sheet stay as they are); picking a clip below
+// overrides it, removing that clip comes back to this.
+Object.assign(T.es, { coAutoH: "Empieza con tu gancho y tu promesa", coAutoL: "Tal como quedaron fijados en «Secciones principales». Si quieres abrir con otra frase del guion, elígela abajo." });
+Object.assign(T.en, { coAutoH: "It starts with your hook and your promise", coAutoL: "As you fixed them in «Main sections». To open with another line from the script, pick it below." });
+function coldAuto() {
+  if (!G.secLocks || !G.secLocks.hook || !G.secLocks.promise || (G.cold && (G.cold.hook || G.cold.promise))) return null;
+  if (!state.result || !state.text) return null;
+  const L = mainSections(state.text, state.result, G.secBounds).list, s = (k) => L.find((x) => x.k === k);
+  const hk = s("hook"), pr = s("promise");
+  if (!hk || !pr) return null;
+  const cut = (x) => { const v = state.text.slice(x.start, x.end).replace(/\s+/g, " ").trim(); return v.length > 140 ? v.slice(0, 140) + "…" : v; };
+  return { hook: cut(hk), promise: cut(pr) };
+}
+const _pubItemsSx = pubItems;
+pubItems = function () {
+  const its = _pubItemsSx.apply(this, arguments), a = coldAuto();
+  if (a && its[4] && !its[4].done) its[4] = { done: true, val: "«" + (a.hook.length > 60 ? a.hook.slice(0, 60) + "…" : a.hook) + "»" };
+  return its;
+};
+const _renderColdSx = renderCold;
+renderCold = function () {
+  const r = _renderColdSx.apply(this, arguments), a = coldAuto(), el = $("gCold");
+  if (a && el) {
+    const hd = el.querySelector(".g-h");
+    const box = `<div class="co-auto" role="note"><h3>${h(t("coAutoH"))}</h3><p class="co-auto-t"><span class="co-k">${h(t("coHooks"))}</span> «${h(a.hook)}»</p><p class="co-auto-t"><span class="co-k">${h(t("coProms"))}</span> «${h(a.promise)}»</p><p class="hint">${h(t("coAutoL"))}</p></div>`;
+    if (hd) hd.insertAdjacentHTML("afterend", box); else el.insertAdjacentHTML("afterbegin", box);
+  }
+  return r;
+};
 /* ===== Marks in the text (7A; Adrian, 2026-11-01: "every item in the text to be marked ... make a mockup", then "apply A") ===== */
 // One overlay over the editor (the editor DOM is never changed, like the rail and the section boxes): in the left margin the
 // paragraph number and its minute, the ad breaks, re-hook points, chapters, calls to action and on-screen text cues; on the text,
@@ -16755,6 +17009,217 @@ document.addEventListener("click", (e) => {
   mkUpdate();
   const nb = document.querySelector(`[data-mk-g="${g}"]`); if (nb) nb.focus({ preventScroll: true });
 });
+/* ===== Search in the script (Adrian, 2026-11-03: A "a searchbox in the message field so the user can find things quickly") ===== */
+// A small bar over the top-right of the editor (🔍 on the toolbar, or Ctrl+F while in the editor): every match highlighted, the
+// current one stronger, «3 de 12», Enter / ↓ next, Shift+Enter / ↑ previous, Esc closes and leaves the caret on the match.
+// It floats (position:absolute) so opening it never moves the editor: the overlays laid out by edLayer stay where they are.
+// Highlights go through the Highlight API, so the editor DOM and the text are never changed. Matching: findAll (find_logic.js).
+Object.assign(T.es, {
+  fdLbl: "Buscar en el guion", fdN: (i, n) => `${i} de ${n}`, fdNone: "Sin resultados", fdPrev: "Anterior (Mayús+Enter)", fdNext: "Siguiente (Enter)", fdClose: "Cerrar la búsqueda (Esc)",
+});
+Object.assign(T.en, {
+  fdLbl: "Search the script", fdN: (i, n) => `${i} of ${n}`, fdNone: "No results", fdPrev: "Previous (Shift+Enter)", fdNext: "Next (Enter)", fdClose: "Close search (Esc)",
+});
+const FD = { open: false, q: "", list: [], cur: -1, map: [], timer: null };
+const fdHL = () => (typeof CSS !== "undefined" && CSS.highlights && typeof Highlight === "function" ? CSS.highlights : null);
+
+// The editor's text as the search sees it: its text nodes in order, a line break between blocks (so a phrase never runs from one
+// paragraph into the next without the break the person sees). FD.map ties each piece back to its node.
+function fdText() {
+  const map = [];
+  let s = "", lastBlock = null;
+  const blockOf = (n) => { let e = n.parentNode; while (e && e !== ED.el && !/^(P|DIV|H\d|LI|BLOCKQUOTE)$/.test(e.tagName)) e = e.parentNode; return e; };
+  const w = document.createTreeWalker(ED.el, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    const b = blockOf(n);
+    if (lastBlock && b !== lastBlock) s += "\n";
+    lastBlock = b;
+    map.push({ n, s: s.length, e: s.length + n.data.length });
+    s += n.data;
+  }
+  FD.map = map;
+  return s;
+}
+function fdRange(a, b) {
+  let sN = null, sO = 0, eN = null, eO = 0;
+  for (const m of FD.map) {
+    if (sN === null && a < m.e && a >= m.s) { sN = m.n; sO = a - m.s; }
+    if (b > m.s && b <= m.e) { eN = m.n; eO = b - m.s; }
+  }
+  if (!sN || !eN) return null;
+  const r = document.createRange();
+  try { r.setStart(sN, sO); r.setEnd(eN, eO); } catch (e) { return null; }
+  return r.collapsed ? null : r;
+}
+function fdPaint() {
+  const hl = fdHL();
+  if (!hl) return;
+  hl.delete("sd-find"); hl.delete("sd-find-cur");
+  if (!FD.open || !FD.list.length) return;
+  const all = FD.list.map((m) => fdRange(m.start, m.end)).filter(Boolean);
+  if (all.length) { const x = new Highlight(...all); x.priority = 20; hl.set("sd-find", x); }
+  const c = FD.list[FD.cur] && fdRange(FD.list[FD.cur].start, FD.list[FD.cur].end);
+  if (c) { const x = new Highlight(c); x.priority = 21; hl.set("sd-find-cur", x); }
+}
+function fdCount() {
+  const n = FD.wrap && FD.wrap.querySelector(".fd-n");
+  if (!n) return;
+  n.textContent = !FD.q.trim() ? "" : FD.list.length ? t("fdN")(FD.cur + 1, FD.list.length) : t("fdNone");
+  FD.wrap.classList.toggle("fd-miss", !!FD.q.trim() && !FD.list.length);
+  FD.wrap.querySelectorAll("[data-fd=prev],[data-fd=next]").forEach((b) => (b.disabled = FD.list.length < 2));
+}
+// Bring the current match into view a third of the way down, clear of the bar.
+function fdShow() {
+  const m = FD.list[FD.cur], r = m && fdRange(m.start, m.end);
+  if (!r) return;
+  const er = ED.el.getBoundingClientRect(), rr = r.getBoundingClientRect();
+  if (rr.top < er.top + 56 || rr.bottom > er.bottom - 16) ED.el.scrollTop += rr.top - er.top - Math.round(ED.el.clientHeight / 3);
+  if (ED.el.scrollHeight <= ED.el.clientHeight + 2) r.startContainer.parentElement.scrollIntoView({ block: "center", behavior: "auto" }); // the page scrolls, not the box
+}
+function fdRun(keepCur) {
+  const text = fdText(), was = FD.list[FD.cur];
+  FD.list = findAll(text, FD.q);
+  if (keepCur && was) { const i = FD.list.findIndex((m) => m.start >= was.start); FD.cur = FD.list.length ? (i < 0 ? 0 : i) : -1; }
+  else {
+    const sel = window.getSelection();
+    let pos = 0;
+    if (sel && sel.rangeCount && ED.el.contains(sel.anchorNode)) { const k = FD.map.find((m) => m.n === sel.anchorNode); if (k) pos = k.s + sel.anchorOffset; }
+    FD.cur = findNearest(FD.list, pos);
+  }
+  fdPaint(); fdCount();
+  if (!keepCur) fdShow();
+}
+function fdStep(d) {
+  if (!FD.list.length) return;
+  FD.cur = (FD.cur + d + FD.list.length) % FD.list.length;
+  fdPaint(); fdCount(); fdShow();
+}
+function findOpen() {
+  if (!ED.wrap) return;
+  if (!FD.wrap) {
+    const w = document.createElement("div");
+    w.className = "ed-find"; w.setAttribute("role", "search");
+    ED.wrap.appendChild(w);
+    FD.wrap = w;
+    w.addEventListener("input", (e) => { if (!e.target.matches(".fd-q")) return; FD.q = e.target.value; clearTimeout(FD.timer); FD.timer = setTimeout(() => { FD.timer = null; fdRun(false); }, 120); });
+    w.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.preventDefault(); findClose(true); }
+      else if (e.target.matches(".fd-q") && (e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp")) {
+        e.preventDefault();
+        // typed and pressed Enter before the pause ran: show the first match instead of skipping past it
+        if (FD.timer) { clearTimeout(FD.timer); FD.timer = null; fdRun(false); return; }
+        fdStep(e.key === "ArrowUp" || (e.key === "Enter" && e.shiftKey) ? -1 : 1);
+      }
+      else if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "F")) { e.preventDefault(); w.querySelector(".fd-q").select(); }
+    });
+    w.addEventListener("click", (e) => { const b = e.target.closest("[data-fd]"); if (!b) return; const k = b.dataset.fd; if (k === "close") findClose(true); else fdStep(k === "prev" ? -1 : 1); });
+  }
+  FD.wrap.innerHTML = `<span class="fd-ic" aria-hidden="true">${ICON.find}</span><input type="search" class="fd-q" aria-label="${h(t("fdLbl"))}" placeholder="${h(t("fdLbl"))}" autocomplete="off" spellcheck="false">
+    <span class="fd-n" role="status" aria-live="polite"></span>
+    <button type="button" class="ed-btn fd-b" data-fd="prev" title="${h(t("fdPrev"))}" aria-label="${h(t("fdPrev"))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" fill="none"/></svg></button>
+    <button type="button" class="ed-btn fd-b" data-fd="next" title="${h(t("fdNext"))}" aria-label="${h(t("fdNext"))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none"/></svg></button>
+    <button type="button" class="ed-btn fd-b" data-fd="close" title="${h(t("fdClose"))}" aria-label="${h(t("fdClose"))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+  FD.open = true; FD.wrap.hidden = false;
+  const q = FD.wrap.querySelector(".fd-q");
+  // a word selected in the script becomes the search, like in any editor
+  const sel = window.getSelection(), picked = sel && sel.rangeCount && ED.el.contains(sel.anchorNode) ? String(sel).trim() : "";
+  if (picked && picked.length <= 80 && !/\n/.test(picked)) FD.q = picked;
+  q.value = FD.q;
+  q.focus(); q.select();
+  if (FD.q.trim()) fdRun(false); else fdCount();
+  const b = ED.wrap.querySelector('[data-ed="find"]'); if (b) b.setAttribute("aria-pressed", "true");
+}
+// toEditor: the caret goes to the match Juan was looking at, so he can start typing there
+function findClose(toEditor) {
+  if (!FD.open) return;
+  const m = FD.list[FD.cur], r = toEditor && m ? fdRange(m.start, m.end) : null;
+  FD.open = false; FD.list = []; FD.cur = -1;
+  fdPaint();
+  if (FD.wrap) FD.wrap.hidden = true;
+  const b = ED.wrap && ED.wrap.querySelector('[data-ed="find"]'); if (b) b.setAttribute("aria-pressed", "false");
+  if (toEditor && ED.el) {
+    ED.el.focus({ preventScroll: true });
+    if (r) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  }
+}
+// Ctrl+F inside the editor opens our bar (elsewhere the browser's own search still works). Typing in the script while the bar is
+// open recounts after a pause: the keystroke itself never waits for it.
+if (ED.el) {
+  ED.el.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === "f" || e.key === "F")) { e.preventDefault(); findOpen(); } });
+  ED.el.addEventListener("input", () => { if (!FD.open || !FD.q.trim()) return; clearTimeout(FD.timer); FD.timer = setTimeout(() => { FD.timer = null; fdRun(true); }, 300); });
+}
+// The whole text can be replaced without a keystroke (an example, an applied change, another episode): recount then too.
+const _renderEdFd = renderEd;
+renderEd = function () { const r = _renderEdFd.apply(this, arguments); if (FD.open && FD.q.trim()) fdRun(true); return r; };
+const _gOnLangFd = gOnLang;
+gOnLang = function () { _gOnLangFd.apply(this, arguments); if (FD.open) { const q = FD.q; findOpen(); FD.q = q; } };
+/* ===== Three AI descriptions under «Descripción» (Adrian, 2026-11-03: A "AI should be able to propose three descriptions to choose
+   from in descripcion y capitulos"; on request, one paid call per press) ===== */
+// The candidates are vetted by vetDescs (desc_logic.js) before they are shown; they live for the session only (nothing new is
+// saved with the episode: the chosen one is just the description text). «Usar esta» writes it above the chapter block.
+Object.assign(T.es, {
+  dsAi: "Proponer 3 con IA", dsAgain: "Otras 3 con IA", dsUse: "Usar esta", dsLbl: "Elige una descripción", dsOpt: (n) => `Opción ${n}`,
+  dsUsed: "Descripción puesta, con los capítulos debajo. Puedes editarla.", dsNone: "Ninguna propuesta pasó las comprobaciones (palabra clave al inicio, referencias del guion, términos de riesgo). Prueba otra vez.",
+  dsSome: (n) => `Solo ${n} de 3 pasaron las comprobaciones.`, dsAiLbl: "Descripciones", dsStale: "El guion cambió después de estas propuestas: pide otras.",
+});
+Object.assign(T.en, {
+  dsAi: "Suggest 3 with AI", dsAgain: "3 more with AI", dsUse: "Use this one", dsLbl: "Pick a description", dsOpt: (n) => `Option ${n}`,
+  dsUsed: "Description set, with the chapters below. You can edit it.", dsNone: "No suggestion passed the checks (keyword first, the script's references, risk terms). Try again.",
+  dsSome: (n) => `Only ${n} of 3 passed the checks.`, dsAiLbl: "Descriptions", dsStale: "The script changed after these suggestions: ask for new ones.",
+});
+const DS = { list: [], sel: 0, key: "", busy: false, msg: "", err: false };
+
+function dsHTML() {
+  const stale = DS.list.length && DS.key !== state.text;
+  const opts = DS.list.length && !stale ? `<fieldset class="ds-list"><legend class="vh">${h(t("dsLbl"))}</legend>${DS.list.map((d, k) => `<label class="ds-opt${k === DS.sel ? " on" : ""}"><input type="radio" name="dsPick" value="${k}"${k === DS.sel ? " checked" : ""}><span class="ds-n">${h(t("dsOpt")(k + 1))}</span><span class="ds-t">${h(d)}</span></label>`).join("")}</fieldset>
+    <div class="actions"><button type="button" class="small primary" data-ds="use">${h(t("dsUse"))}</button></div>` : "";
+  const msg = stale ? t("dsStale") : DS.msg;
+  return `<div class="actions"><button type="button" class="small" data-ds="ai"${DS.busy ? " disabled" : ""}>${h(DS.list.length ? t("dsAgain") : t("dsAi"))}</button></div>
+    <p class="status${DS.err ? " err" : ""}" id="dsSt" role="status">${h(msg)}</p>${opts}`;
+}
+function renderDs() {
+  const box = $("dsBox");
+  if (box) box.innerHTML = dsHTML();
+}
+async function dsAsk() {
+  const sample = await caps.sample;
+  if (!sample) { DS.msg = t("aiPickNeed"); DS.err = true; renderDs(); return; }
+  const text = state.text || $("script").value, R = state.result && state.text === text ? state.result : analyze(text, readOpts());
+  const kw = $("keyword").value.trim() || (typeof R.keyword === "string" ? R.keyword : "");
+  DS.busy = true; DS.msg = t("thinking"); DS.err = false; renderDs();
+  try {
+    const res = await sample.json(descPrompt(text, R, { keyword: kw, title: $("title").value.trim(), nextEp: (G.nextEp || "").trim() }), { modelTier: "default", aiLabel: t("dsAiLbl"), aiRetry: dsAsk });
+    if (!res || !Array.isArray(res.descs)) throw { code: "invalid_json" };
+    const v = vetDescs(res.descs, text, kw, descRisk);
+    DS.list = v.list; DS.sel = 0; DS.key = text;
+    DS.msg = !v.list.length ? t("dsNone") : v.list.length < DESC_N ? t("dsSome")(v.list.length) : ""; DS.err = !v.list.length;
+  } catch (e) { DS.msg = errText(e); DS.err = true; }
+  DS.busy = false; renderDs();
+}
+function dsUse() {
+  const d = DS.list[DS.sel];
+  if (!d || DS.key !== state.text) { renderDs(); return; }
+  const ch = chaptersText().map((c) => `${fmtTime(c.t)} ${c.label}`).join("\n");
+  $("description").value = descWithChapters($("description").value, d, chaptersText().length >= 3 ? ch : "");
+  const pd = $("pkDescIn"); if (pd) pd.value = $("description").value;
+  DS.msg = t("dsUsed"); DS.err = false;
+  markDirty(); gCompute(); renderPackChecks();
+  renderDs();
+}
+const _renderPackDs = renderPack;
+renderPack = function () {
+  const r = _renderPackDs.apply(this, arguments);
+  const f = $("pkDescIn") && $("pkDescIn").closest(".field");
+  if (f && !$("dsBox")) {
+    f.insertAdjacentHTML("afterend", '<div class="ds-box" id="dsBox"></div>');
+    const box = $("dsBox");
+    box.addEventListener("click", (e) => { const b = e.target.closest("[data-ds]"); if (!b) return; if (b.dataset.ds === "ai") dsAsk(); else dsUse(); });
+    // no re-render on change: arrow keys through the radios keep their focus
+    box.addEventListener("change", (e) => { if (e.target.name !== "dsPick") return; DS.sel = +e.target.value; box.querySelectorAll(".ds-opt").forEach((l, k) => l.classList.toggle("on", k === DS.sel)); });
+    renderDs();
+  }
+  return r;
+};
 /* ===== Standalone: sign-in bar, wording without Claude, reopen last episode, save on leave ===== */
 Object.assign(T.es, {
   aiOnlyClaude: "La IA funciona al entrar con Google con una cuenta del equipo.",
