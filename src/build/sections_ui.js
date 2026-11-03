@@ -317,7 +317,10 @@ buildFixCards = function () {
     const ev = Array.isArray(c.evidence) ? c.evidence.filter((e) => !secHitsLocked(e.start, e.end, L)) : c.evidence;
     if (Array.isArray(c.evidence) && c.evidence.length && !ev.length) continue;
     const props = Array.isArray(c.proposals) ? c.proposals.filter((p) => !(p.patches || []).some((x) => secHitsLocked(x.start, x.end, L))) : c.proposals;
-    out.push({ ...c, evidence: ev, proposals: props });
+    // B-064 (jadri47, 2026-11-03: "the suggestion is a different text"): the AI rewrites c.ai, set to the first hit before the
+    // fixed sections were dropped; move it to the first sentence still shown, or none when nothing is left to point at
+    const a = c.ai && c.ai.start != null && secHitsLocked(c.ai.start, c.ai.end, L) ? (ev && ev[0] ? { ...c.ai, start: ev[0].start, end: ev[0].end } : null) : c.ai;
+    out.push({ ...c, evidence: ev, proposals: props, ai: a });
   }
   return out;
 };
@@ -395,3 +398,4 @@ document.addEventListener("click", (e) => {
   SX.detail = b.dataset.sxDetail === "1";
   if (V.step === 2) { e.stopPropagation(); renderGuide(); }
 }, true);
+

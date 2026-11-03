@@ -78,11 +78,15 @@ async def main():
           state.text = tx; state.result = analyze(tx, state.opts); G.secLocks = { hook: true, promise: true, intro: true, body: true, close: true };
           const R = state.result, failed = Object.values(R.sections).flat().filter((r) => !r.passed || r.warn);
           const L = secLockedRanges(), c = buildFixCards(tx, R, state.opts, failed, 99, Infinity), raw = _buildFixCardsSx(tx, R, state.opts, failed, 99, Infinity);
-          const out = { ids: c.map((x) => x.id), rawIds: raw.map((x) => x.id), inLocked: c.some((x) => (x.evidence || []).some((e) => L.some((r) => e.start < r.end && e.end > r.start))), rawInLocked: raw.some((x) => (x.evidence || []).some((e) => L.some((r) => e.start < r.end && e.end > r.start))), locked: L.map((r) => r.k) };
+          const out = { ids: c.map((x) => x.id), rawIds: raw.map((x) => x.id), inLocked: c.some((x) => (x.evidence || []).some((e) => L.some((r) => e.start < r.end && e.end > r.start))), rawInLocked: raw.some((x) => (x.evidence || []).some((e) => L.some((r) => e.start < r.end && e.end > r.start))), locked: L.map((r) => r.k), aiInLocked: c.filter((x) => x.ai && x.ai.start != null && L.some((r) => x.ai.start < r.end && x.ai.end > r.start)).map((x) => x.id), rawAiInLocked: raw.filter((x) => x.ai && x.ai.start != null && L.some((r) => x.ai.start < r.end && x.ai.end > r.start)).map((x) => x.id), aiOffEv: c.filter((x) => x.ai && x.ai.start != null && !(x.evidence || []).some((e) => x.ai.start < e.end && x.ai.end > e.start)).map((x) => x.id) };
           state.text = keep[0]; state.result = keep[1]; G.secLocks = JSON.parse(keep[2]); return out; })()""")
         main_ids = {"hook", "cta", "ending", "kwopen", "bigidea", "rehook", "application"}
         ok("step 5 (setup): «Regular» has main-section cards and evidence in its fixed sections", bool(set(cards["rawIds"]) & main_ids) and cards["rawInLocked"], cards)
         ok("step 5: no card for the main sections, no evidence inside a fixed section", not (set(cards["ids"]) & main_ids) and not cards["inLocked"] and len(cards["locked"]) >= 2, cards)
+        # B-064 (Adrian, 2026-11-03: "several paragraphs suggested here for change, but the suggestion is a different text"): the AI
+        # rewrite of a card works on one of the sentences the card shows, never on one inside a fixed section
+        ok("B-064 (setup): «Regular» has a card whose AI fragment lies in a fixed section", bool(cards["rawAiInLocked"]), cards["rawAiInLocked"])
+        ok("B-064: the AI fragment of every card is one of its shown sentences, none inside a fixed section", not cards["aiInLocked"] and not cards["aiOffEv"], (cards["aiInLocked"], cards["aiOffEv"]))
         await pg.evaluate("window.scrollTo(0, 0); document.getElementById('ed').scrollTop = 0"); await pg.wait_for_timeout(400)
         locks = await pg.evaluate("[...document.querySelectorAll('.sx-lock')].map(x => x.innerText.replace(/\s+/g, ' ').trim())")
         ok("step 5: fixed sections show closed with a lock and «Volver a abrir»", len(locks) >= 1 and all("Volver a abrir" in x for x in locks), locks)
