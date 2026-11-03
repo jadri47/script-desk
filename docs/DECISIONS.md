@@ -1,5 +1,18 @@
 # Decisions (newest first)
 
+## 2026-11-03: search in the editor, three AI descriptions, the cold open after the main sections (Adrian: A, A, A)
+- Adrian: "a searchbox in the message field so the user can find things quickly". Options: A a bar above the text (🔍 button and
+  Ctrl+F; all matches highlighted, «3 de 12», Enter/↑↓, Esc; accents and capitals ignored; text never changed), B search and
+  replace, C Ctrl+F only. Picked A.
+- Adrian: "AI should be able to propose three descriptions to choose from in descripcion y capitulos". Options: A a button
+  «Proponer 3 con IA», on request (one paid call per press, likely ≈ $0.02–0.04), B automatic on entering the card. Picked A.
+  Each proposal is vetted: keyword in the first 150 characters, no ad-risk words, no reference or quote absent from the script;
+  the chapter block stays below the one picked.
+- Adrian asked whether «Cómo empieza el video» duplicates the main sections. Answer: overlaps, not the same job (it picks the
+  cold-open clips; the main sections fix the text in place). Options: A prefill it from the fixed hook and promise (done, still
+  changeable), B remove the card, C keep. Picked A.
+- Also that day, no options: «¿Qué veremos en el próximo episodio?» (missing «en»); topic and next-episode fields full width.
+
 ## 2026-11-02 (evening): a main section that starts mid-paragraph gets its own paragraph (Adrian: B)
 - Seen in Adrian's recording: «Y quiero empezar…» (introducción) starts mid-paragraph after the promise, so the two boxes overlap.
 - Adrian: "promesa and introduccion shouldn't overlap, it can split onto a new line". Options shown: A one tap on the box

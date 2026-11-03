@@ -399,3 +399,34 @@ document.addEventListener("click", (e) => {
   if (V.step === 2) { e.stopPropagation(); renderGuide(); }
 }, true);
 
+// ===== «Cómo empieza el video» after the main sections (Adrian, 2026-11-03: A "prefill from fixed sections") =====
+// With the hook and the promise fixed and no clip picked, the video simply starts as written: that card counts as done and says
+// so. Nothing is written to G.cold (no cold-open clip, the timings and the editor sheet stay as they are); picking a clip below
+// overrides it, removing that clip comes back to this.
+Object.assign(T.es, { coAutoH: "Empieza con tu gancho y tu promesa", coAutoL: "Tal como quedaron fijados en «Secciones principales». Si quieres abrir con otra frase del guion, elígela abajo." });
+Object.assign(T.en, { coAutoH: "It starts with your hook and your promise", coAutoL: "As you fixed them in «Main sections». To open with another line from the script, pick it below." });
+function coldAuto() {
+  if (!G.secLocks || !G.secLocks.hook || !G.secLocks.promise || (G.cold && (G.cold.hook || G.cold.promise))) return null;
+  if (!state.result || !state.text) return null;
+  const L = mainSections(state.text, state.result, G.secBounds).list, s = (k) => L.find((x) => x.k === k);
+  const hk = s("hook"), pr = s("promise");
+  if (!hk || !pr) return null;
+  const cut = (x) => { const v = state.text.slice(x.start, x.end).replace(/\s+/g, " ").trim(); return v.length > 140 ? v.slice(0, 140) + "…" : v; };
+  return { hook: cut(hk), promise: cut(pr) };
+}
+const _pubItemsSx = pubItems;
+pubItems = function () {
+  const its = _pubItemsSx.apply(this, arguments), a = coldAuto();
+  if (a && its[4] && !its[4].done) its[4] = { done: true, val: "«" + (a.hook.length > 60 ? a.hook.slice(0, 60) + "…" : a.hook) + "»" };
+  return its;
+};
+const _renderColdSx = renderCold;
+renderCold = function () {
+  const r = _renderColdSx.apply(this, arguments), a = coldAuto(), el = $("gCold");
+  if (a && el) {
+    const hd = el.querySelector(".g-h");
+    const box = `<div class="co-auto" role="note"><h3>${h(t("coAutoH"))}</h3><p class="co-auto-t"><span class="co-k">${h(t("coHooks"))}</span> «${h(a.hook)}»</p><p class="co-auto-t"><span class="co-k">${h(t("coProms"))}</span> «${h(a.promise)}»</p><p class="hint">${h(t("coAutoL"))}</p></div>`;
+    if (hd) hd.insertAdjacentHTML("afterend", box); else el.insertAdjacentHTML("afterbegin", box);
+  }
+  return r;
+};

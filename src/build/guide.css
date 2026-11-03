@@ -958,3 +958,16 @@ html.mk-off-secs .sx-layer{display:none}
 .ed-find .fd-b{min-width:34px;height:34px}
 .ed-find .fd-b svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none}
 .ed-find .fd-b:disabled{opacity:.4;cursor:default}
+/* three AI descriptions (desc_ui.js) */
+.ds-box{margin:6px 0 10px}
+.ds-list{border:0;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.ds-opt{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);cursor:pointer}
+.ds-opt.on{border-color:var(--j1);box-shadow:0 0 0 1px var(--j1) inset;background:var(--sheet-2)}
+.ds-opt input{margin-top:3px}
+.ds-n{font:600 13px/1.3 var(--sans);color:var(--ink-2)}
+.ds-t{grid-column:2;white-space:pre-line;color:var(--ink);font-size:15px;line-height:1.45}
+/* «Cómo empieza el video» filled from the fixed main sections (sections_ui.js coldAuto) */
+.co-auto{margin:8px 0 14px;padding:12px 14px;border:1px solid var(--rule);border-left:4px solid var(--j4);border-radius:12px;background:var(--sheet-2)}
+.co-auto h3{margin:0 0 6px;font-size:16px}
+.co-auto-t{margin:4px 0;line-height:1.45}
+.co-auto .co-k{font-weight:600;color:var(--ink-2);margin-right:4px}
