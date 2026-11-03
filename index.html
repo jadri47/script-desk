@@ -4677,6 +4677,23 @@ function mainSections(text, R, bounds) {
   return { list, missing: MAIN_SECS.filter((k) => st[k] == null), stale };
 }
 
+// B-062 (jadri47, 2026-11-02, pick B: "promesa and introduccion shouldn't overlap, it can split onto a new line"): a main section
+// that starts mid-paragraph gets its own paragraph. Only a paragraph break is added (spaces before it dropped), never a word.
+// Returns null when nothing starts mid-paragraph; else the new text, the split points and `map` (old offset → new offset).
+function secSplitText(text, list) {
+  const at = [...new Set((list || []).map((s) => s.start))]
+    .filter((p) => Number.isInteger(p) && p > 0 && p < text.length && /\S/.test(text.slice(text.lastIndexOf("\n", p - 1) + 1, p)))
+    .sort((a, b) => a - b);
+  if (!at.length) return null;
+  const br = /\n[ \t]*\n/.test(text) ? "\n\n" : "\n"; // the script's own paragraph break
+  let out = "", last = 0;
+  const shifts = [];
+  for (const p of at) { out += text.slice(last, p).replace(/[ \t]+$/, "") + br; shifts.push([p, out.length - p]); last = p; }
+  out += text.slice(last);
+  const map = (pos) => { let d = 0; for (const [p, s] of shifts) if (pos >= p) d = s; return pos + d; };
+  return { text: out, at, map };
+}
+
 // 2A: re-hook points in the body every REHOOK_EVERY seconds; `gap` = no re-hook in R.blocks around that time (the same reading
 // editMarks uses). Each point carries the char offset of the sentence it falls in.
 function rehookPoints(text, R, sections) {
@@ -4856,7 +4873,7 @@ function marksOutside(m, locked) {
   return out;
 }
 
-if (typeof module !== "undefined") module.exports = { buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -7518,6 +7535,23 @@ function mainSections(text, R, bounds) {
   return { list, missing: MAIN_SECS.filter((k) => st[k] == null), stale };
 }
 
+// B-062 (jadri47, 2026-11-02, pick B: "promesa and introduccion shouldn't overlap, it can split onto a new line"): a main section
+// that starts mid-paragraph gets its own paragraph. Only a paragraph break is added (spaces before it dropped), never a word.
+// Returns null when nothing starts mid-paragraph; else the new text, the split points and `map` (old offset → new offset).
+function secSplitText(text, list) {
+  const at = [...new Set((list || []).map((s) => s.start))]
+    .filter((p) => Number.isInteger(p) && p > 0 && p < text.length && /\S/.test(text.slice(text.lastIndexOf("\n", p - 1) + 1, p)))
+    .sort((a, b) => a - b);
+  if (!at.length) return null;
+  const br = /\n[ \t]*\n/.test(text) ? "\n\n" : "\n"; // the script's own paragraph break
+  let out = "", last = 0;
+  const shifts = [];
+  for (const p of at) { out += text.slice(last, p).replace(/[ \t]+$/, "") + br; shifts.push([p, out.length - p]); last = p; }
+  out += text.slice(last);
+  const map = (pos) => { let d = 0; for (const [p, s] of shifts) if (pos >= p) d = s; return pos + d; };
+  return { text: out, at, map };
+}
+
 // 2A: re-hook points in the body every REHOOK_EVERY seconds; `gap` = no re-hook in R.blocks around that time (the same reading
 // editMarks uses). Each point carries the char offset of the sentence it falls in.
 function rehookPoints(text, R, sections) {
@@ -7697,7 +7731,7 @@ function marksOutside(m, locked) {
   return out;
 }
 
-if (typeof module !== "undefined") module.exports = { buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -16231,6 +16265,21 @@ function secNow() {
   const m = mainSections(text, R, G.secBounds);
   return { ...m, text };
 }
+// B-062 (jadri47, 2026-11-02, pick B): before the review is read, a main section that starts mid-paragraph is moved to its own
+// paragraph (secSplitText: one paragraph break, no word changes), so its box never shares a line with the one before. Runs on
+// every review of the 4-step flow, ahead of the first report call (rpPrepare → ensureReview), so that call reads the split text.
+const _ensureReviewSx = ensureReview;
+ensureReview = function () {
+  const ok = _ensureReviewSx.apply(this, arguments);
+  if (!ok || !V.guided || !secBarOn() || !state.result || !state.text) return ok;
+  const sp = secSplitText(state.text, mainSections(state.text, state.result, G.secBounds).list);
+  if (!sp) return ok;
+  for (const k of Object.keys(G.secBounds || {})) if (Number.isInteger(G.secBounds[k])) G.secBounds[k] = sp.map(G.secBounds[k]);
+  $("script").value = sp.text; // the editor follows the textarea (editor_ui.js)
+  state.text = sp.text; state.opts = readOpts(); state.result = analyze(state.text, state.opts);
+  if (G.prodId) markDirty();
+  return ok;
+};
 // an item is pending while its original is still in the text exactly once and nobody skipped it
 function secItems(k) {
   if (!G.secReport) return [];
