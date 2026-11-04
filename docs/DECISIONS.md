@@ -1,5 +1,19 @@
 # Decisions (newest first)
 
+## 2026-11-03: «Voz hablada» optional when the voice is already good; AI waits say two minutes (Adrian: A, wording A)
+- Adrian: "where it says that the AI can take up to a minute, you better say two minutes, because sometimes it goes over a full
+  minute". The thinking line, the bubble's wait line and the translation line now say «hasta dos minutos» (es + en).
+- Adrian: "I want to challenge the usefulness of the voz hablada section". Evidence from his two episodes: voice rated 4/5 on
+  both (9 of the area's 10 points already), 5 and 6 proposals; on Goliat applying all of them moves readiness 80 → 80; two of
+  the five removed the «punto de vista humano» contrast the passage rests on, the rest were sideways rewordings. Cost per call
+  ≈ $0.04 and up to two minutes.
+- Options: A voice rated 4–5 → step 3 shows the ad risks, then «Tu guion ya suena hablado» with «Ir a Publicar →» (main) and
+  «Ver las n sugerencias»; rated 3 or less unchanged; plus a prompt rule: never remove a contrast or qualifier. B drop the voice
+  proposals (the call stays, it rates the voice). C keep it, only the prompt rule. Picked A; wording A (short, no score line).
+- The call still runs (the voice rating is part of readiness). Opening the suggestions is per report, in memory (`RP.voiceOpen`),
+  nothing stored. Pinned by `pwvoice`, `eval/report_test.js` ("voice gate", "voice rule"). The prompt rule's effect on real
+  answers is unverified until a paid run.
+
 ## 2026-11-03: search in the editor, three AI descriptions, the cold open after the main sections (Adrian: A, A, A)
 - Adrian: "a searchbox in the message field so the user can find things quickly". Options: A a bar above the text (🔍 button and
   Ctrl+F; all matches highlighted, «3 de 12», Enter/↑↓, Esc; accents and capitals ignored; text never changed), B search and

@@ -317,5 +317,17 @@ ${mk.masked}
   ok("refs: a replacement that removes the reference is dropped", v4.items.length === 0);
 }
 
+// (Adrian, 2026-11-03: A) a good spoken voice makes the voice proposals optional: voiceGate decides when step 3 asks first
+{
+  const rep = (r, detail = true) => ({ detail, areas: { voice: { rating: r } }, items: [] });
+  ok("voice gate: rating 4 with pending changes asks first", JSON.stringify(L.voiceGate(rep(4), 5)) === '{"rating":4,"n":5}');
+  ok("voice gate: rating 5 too", !!L.voiceGate(rep(5), 1) && L.voiceGate(rep(5), 1).rating === 5);
+  ok("voice gate: rating 3 walks the cards as before", L.voiceGate(rep(3), 5) === null);
+  ok("voice gate: nothing pending, no rating, or an old non-detailed report: no gate", L.voiceGate(rep(4), 0) === null && L.voiceGate({ detail: true, areas: {} }, 3) === null && L.voiceGate(rep(4, false), 3) === null && L.voiceGate(null, 3) === null);
+  const es = "Hola a todos. Desde un punto de vista humano, era ridículo.", en = "Hi everyone. From a human point of view, it was absurd.";
+  ok("voice rule: the detailed prompt (es and en) keeps contrasts and qualifiers", L.reportPrompt(es, L.analyze(es, {}), { detail: [] }).includes(L.VOICE_KEEP_ES)
+    && L.reportPrompt(en, L.analyze(en, { lang: "en" }), { detail: [] }).includes(L.VOICE_KEEP_EN) && !L.reportPrompt(es, L.analyze(es, {}), {}).includes(L.VOICE_KEEP_ES));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);

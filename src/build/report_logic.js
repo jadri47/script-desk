@@ -40,8 +40,8 @@ function reportPrompt(text, R, opts) {
   const det = Array.isArray(opts.detail);
   const detNames = det ? opts.detail.map((d) => d.name).join(", ") : "";
   const briefX = !det ? brief : en
-    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most.`
-    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan.`;
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most. ${VOICE_KEEP_EN}`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan. ${VOICE_KEEP_ES}`;
   const shapeX = !det ? shape : `{"areas": {"voice": {"rating": 1-5, "why": "..."}}, "items": [{"area": "voice", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shapeX;
   return `${briefX}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
@@ -59,6 +59,20 @@ function fixesPrompt(items, opts) {
   const list = fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n");
   const shape = `{"fixes": [{"id": "f1", "options": [{"text": "...", "why": "..."}]}]}`;
   return `${head}\n\n${list}\n\n${(en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape}`;
+}
+
+// (Adrian, 2026-11-03: A) The voice proposals on Goliat turned «Desde el punto de vista humano…» into «Mirándolo así…», losing the
+// human-view / God's-view contrast the passage turns on. A voice change keeps every contrast and qualifier.
+const VOICE_KEEP_ES = "Nunca quites un contraste o un matiz que sostiene la idea (por ejemplo «desde un punto de vista humano», «sin embargo», «en cambio», «a los ojos de Dios»): un cambio de voz conserva el sentido exacto de la frase.";
+const VOICE_KEEP_EN = "Never remove a contrast or qualifier the idea rests on (for example \"from a human point of view\", \"however\", \"instead\", \"in God's eyes\"): a voice change keeps the sentence's exact meaning.";
+// A spoken-voice rating from this value up means the voice proposals are optional: step 3 asks before showing them.
+const VOICE_GOOD = 4;
+// Gate of the detailed review (pure): a detailed report whose voice rating is VOICE_GOOD or more, with pending items, is offered as
+// optional instead of walked card by card. Returns { rating, n } to show the gate, or null.
+function voiceGate(report, pending) {
+  if (!report || report.detail !== true || !(pending > 0)) return null;
+  const r = report.areas && report.areas.voice ? reportRating(report.areas.voice.rating) : null;
+  return r != null && r >= VOICE_GOOD ? { rating: r, n: pending } : null;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };

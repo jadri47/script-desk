@@ -28,6 +28,8 @@ Object.assign(T.es, {
   // the walk: one card at a time (2026-10-26, plan "Walk Juan through it", step 3)
   rpGainTo: (n) => `+${n} a la nota`, rpApplyGo: "Aplicar y seguir →", rpDetail: "Revisión detallada",
   rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} puntos · ${a}: de ${x == null ? "sin valorar" : x + " de 5"} a ${y == null ? "sin valorar" : y + " de 5"}`,
+  // (Adrian, 2026-11-03: A, wording A) a good spoken voice: the voice proposals are optional
+  rpVgH: "Tu guion ya suena hablado", rpVgRate: (r) => `El editor le da ${r} de 5 a la voz hablada.`, rpVgLeft: (n) => n === 1 ? "Queda 1 sugerencia de una frase suelta; es opcional." : `Quedan ${n} sugerencias de frases sueltas; son opcionales.`, rpVgSee: (n) => n === 1 ? "Ver la sugerencia" : `Ver las ${n} sugerencias`,
   rpEndStep: "Paso 2 de 3 · Mejorar", rpEndH: "Terminaste los cambios", rpEndNoneH: "Revisaste los cambios, sin aplicar ninguno", rpEndNow: (a) => `Nota ahora: ${a}`,
   rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
@@ -54,6 +56,7 @@ Object.assign(T.en, {
   rpRe2: "Measure again with the AI", rpBubNote: "\"Now\" adds what the editor said each accepted change is worth. \"Measure again\" reads the script once more.",
   rpGainTo: (n) => `+${n} to your score`, rpApplyGo: "Apply and continue →", rpDetail: "Detailed review",
   rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} points · ${a}: from ${x == null ? "not rated" : x + " of 5"} to ${y == null ? "not rated" : y + " of 5"}`,
+  rpVgH: "Your script already sounds spoken", rpVgRate: (r) => `The editor gives the spoken voice ${r} of 5.`, rpVgLeft: (n) => n === 1 ? "1 single-sentence suggestion is left; it is optional." : `${n} single-sentence suggestions are left; they are optional.`, rpVgSee: (n) => n === 1 ? "See the suggestion" : `See the ${n} suggestions`,
   rpEndStep: "Step 2 of 3 · Improve", rpEndH: "You finished the changes", rpEndNoneH: "You reviewed the changes and applied none", rpEndNow: (a) => `Score now: ${a}`,
   rpEndCount: (a, s) => `${a} applied · ${s} skipped`, rpEndList: "Changes applied", rpEndPub: "Go to Publish →",
 });
@@ -255,8 +258,11 @@ function rpCurrent() {
   if (RP.busy) return null;
   const d = rpRiskList()[0];
   if (d) return { type: "risk", id: "risk:" + d.id, d, start: d.at ? d.at.start : null, end: d.at ? d.at.end : null };
-  const s = rpStates().find((x) => x.st === "pending" || x.st === "lost");
+  const sts = rpStates(), s = sts.find((x) => x.st === "pending" || x.st === "lost");
   if (!s) return null;
+  // (Adrian, 2026-11-03: A) a voice rated 4-5 is already good: ask before walking its proposals (RP.voiceOpen = this report, opened)
+  const vg = G.report && RP.voiceOpen === G.report.at ? null : voiceGate(G.report, sts.filter((x) => x.st === "pending" || x.st === "lost").length);
+  if (vg) return { type: "gate", id: "gate", ...vg, start: null, end: null };
   const it = G.report.items[s.i];
   return { type: "item", id: "item:" + s.i, i: s.i, it, st: s.st, start: s.start, end: s.end };
 }
@@ -392,7 +398,13 @@ function rpWriteHTML(cur) {
   return `<div class="rp-write"><label for="rpW">${h(t("rpWriteHere"))}</label><textarea id="rpW" rows="3">${h(w.value)}</textarea>${w.err ? `<p class="status err" role="alert">${h(w.err)}</p>` : ""}
     <div class="actions"><button type="button" class="small primary" data-rp="wapply" data-rp-primary>${h(t("coWriteApply"))}</button><button type="button" class="small linkish" data-rp="wcancel">${h(t("coCancel"))}</button></div></div>`;
 }
+function rpGateHTML(cur) {
+  return `<section class="rp-dec rp-gate" role="region" aria-labelledby="rpD" tabindex="-1"><h3 id="rpD">${h(t("rpVgH"))}</h3>
+    <p>${h(t("rpVgRate")(cur.rating))} ${h(t("rpVgLeft")(cur.n))}</p>
+    <div class="actions rp-act"><button type="button" class="small primary rp-go" data-rp="publish" data-rp-primary>${h(t("rpEndPub"))}</button><button type="button" class="small" data-rp="voice">${h(t("rpVgSee")(cur.n))}</button></div></section>`;
+}
 function rpDecisionHTML(R, cur, states) {
+  if (cur.type === "gate") return rpGateHTML(cur);
   const w = RP.write && RP.write.id === cur.id;
   const prevOk = RP.hist.some((e) => (e.t === "item" ? RP.skip.has(e.i) : e.ids.some((id) => state.fixDismissed.has(id))));
   const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
@@ -518,7 +530,8 @@ function rpAct(act) {
   if (act === "re") { if (!RP.busy) RP.epoch++; RP.fix = null; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
   if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
-  if (!cur) return;
+  if (act === "voice") { RP.voiceOpen = G.report && G.report.at; RP.shown = ""; renderGuide(); return; }
+  if (!cur || cur.type === "gate") return;
   if (act === "skip") return rpSkip(cur);
   if (act === "prev") return rpPrev();
   if (act === "apply") {
