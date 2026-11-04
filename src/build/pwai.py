@@ -11,8 +11,8 @@ fails = []
 def ok(n, c, x=""):
     print(("ok   " if c else "FAIL ") + n, x if not c else "")
     if not c: fails.append(n)
-TX = {"es": {"partial": "La respuesta se cortó: el informe puede estar incompleto", "think": "La IA está pensando…", "two": "La IA está pensando… (2 tareas)", "wait": "Todavía no hay respuesta. Puede tardar hasta un minuto.", "done": "Listo: la IA ha respondido", "lbl": "Informe del editor", "fail": "La IA no respondió", "retry": "Reintentar", "noans": "Aún no ha respondido.", "vwait": "Esperando el informe del editor"},
-      "en": {"partial": "The answer was cut: the report may be incomplete", "think": "The AI is thinking…", "two": "The AI is thinking… (2 tasks)", "wait": "No answer yet. It can take up to a minute.", "done": "Done: the AI has answered", "lbl": "Editor's report", "fail": "The AI did not answer", "retry": "Retry", "noans": "No answer yet.", "vwait": "Waiting for the editor's report"}}
+TX = {"es": {"partial": "La respuesta se cortó: el informe puede estar incompleto", "think": "La IA está pensando…", "two": "La IA está pensando… (2 tareas)", "wait": "Todavía no hay respuesta. Puede tardar hasta dos minutos.", "done": "Listo: la IA ha respondido", "lbl": "Informe del editor", "fail": "La IA no respondió", "retry": "Reintentar", "noans": "Aún no ha respondido.", "vwait": "Esperando el informe del editor"},
+      "en": {"partial": "The answer was cut: the report may be incomplete", "think": "The AI is thinking…", "two": "The AI is thinking… (2 tasks)", "wait": "No answer yet. It can take up to two minutes.", "done": "Done: the AI has answered", "lbl": "Editor's report", "fail": "The AI did not answer", "retry": "Retry", "noans": "No answer yet.", "vwait": "Waiting for the editor's report"}}
 # mode: "ok" answers after `delay` with a minimal valid report; "fail" rejects the first call, answers later ones
 MOCK = r"""([delay, mode]) => {
   window.__calls = []; window.__keys = [];

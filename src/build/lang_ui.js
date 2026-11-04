@@ -7,7 +7,7 @@ Object.assign(T.es, {
   trGo: "Traducir con IA",
   trSame: "El guion ya está en esa variante y en esa versión bíblica.",
   trNeedText: "Primero pega un guion.",
-  trWorking: "Traduciendo… puede tardar hasta un minuto.",
+  trWorking: "Traduciendo… puede tardar hasta dos minutos.",
   trResult: (x) => `Así quedaría en ${x}`,
   trVerify: "Comprueba estas citas en la versión elegida antes de grabar:",
   trUse: "Usar esta versión",
@@ -31,7 +31,7 @@ Object.assign(T.en, {
   trGo: "Translate with AI",
   trSame: "The script is already in that variant and Bible version.",
   trNeedText: "Paste a script first.",
-  trWorking: "Translating… this can take up to a minute.",
+  trWorking: "Translating… this can take up to two minutes.",
   trResult: (x) => `How it reads in ${x}`,
   trVerify: "Check these quotes in the chosen Bible version before recording:",
   trUse: "Use this version",
@@ -123,7 +123,7 @@ async function trRun() {
 function trApply() {
   const r = TR.res;
   if (!r) return;
-  // (B-013, 2026-10-29) The call takes up to a minute: if the script or the open episode changed meanwhile, the translation is for another text
+  // (B-013, 2026-10-29) The call takes up to two minutes: if the script or the open episode changed meanwhile, the translation is for another text
   if (String(r.base || "") !== $("script").value.trim() || (r.prod || null) !== (G.prodId || null)) { TR.res = null; TR.err = t("trStale"); renderTr(); return; }
   TR.undo = { text: $("script").value, title: $("title").value, thumb: $("thumb").value, description: $("description").value, keyword: $("keyword").value,
     bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)),
