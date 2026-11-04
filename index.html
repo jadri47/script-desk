@@ -4401,8 +4401,8 @@ function reportPrompt(text, R, opts) {
   const det = Array.isArray(opts.detail);
   const detNames = det ? opts.detail.map((d) => d.name).join(", ") : "";
   const briefX = !det ? brief : en
-    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most.`
-    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan.`;
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most. ${VOICE_KEEP_EN}`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan. ${VOICE_KEEP_ES}`;
   const shapeX = !det ? shape : `{"areas": {"voice": {"rating": 1-5, "why": "..."}}, "items": [{"area": "voice", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shapeX;
   return `${briefX}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
@@ -4420,6 +4420,20 @@ function fixesPrompt(items, opts) {
   const list = fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n");
   const shape = `{"fixes": [{"id": "f1", "options": [{"text": "...", "why": "..."}]}]}`;
   return `${head}\n\n${list}\n\n${(en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape}`;
+}
+
+// (Adrian, 2026-11-03: A) The voice proposals on Goliat turned «Desde el punto de vista humano…» into «Mirándolo así…», losing the
+// human-view / God's-view contrast the passage turns on. A voice change keeps every contrast and qualifier.
+const VOICE_KEEP_ES = "Nunca quites un contraste o un matiz que sostiene la idea (por ejemplo «desde un punto de vista humano», «sin embargo», «en cambio», «a los ojos de Dios»): un cambio de voz conserva el sentido exacto de la frase.";
+const VOICE_KEEP_EN = "Never remove a contrast or qualifier the idea rests on (for example \"from a human point of view\", \"however\", \"instead\", \"in God's eyes\"): a voice change keeps the sentence's exact meaning.";
+// A spoken-voice rating from this value up means the voice proposals are optional: step 3 asks before showing them.
+const VOICE_GOOD = 4;
+// Gate of the detailed review (pure): a detailed report whose voice rating is VOICE_GOOD or more, with pending items, is offered as
+// optional instead of walked card by card. Returns { rating, n } to show the gate, or null.
+function voiceGate(report, pending) {
+  if (!report || report.detail !== true || !(pending > 0)) return null;
+  const r = report.areas && report.areas.voice ? reportRating(report.areas.voice.rating) : null;
+  return r != null && r >= VOICE_GOOD ? { rating: r, n: pending } : null;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
@@ -4998,7 +5012,7 @@ function descRisk(d) {
   return p && p.level !== "verde" ? p.issues : [];
 }
 
-if (typeof module !== "undefined") module.exports = { descPrompt, vetDescs, descRisk, descWithChapters, DESC_N, DESC_MIN, DESC_MAX, findAll, findFold, findNearest, secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { voiceGate, VOICE_GOOD, VOICE_KEEP_ES, VOICE_KEEP_EN, descPrompt, vetDescs, descRisk, descWithChapters, DESC_N, DESC_MIN, DESC_MAX, findAll, findFold, findNearest, secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
@@ -7351,8 +7365,8 @@ function reportPrompt(text, R, opts) {
   const det = Array.isArray(opts.detail);
   const detNames = det ? opts.detail.map((d) => d.name).join(", ") : "";
   const briefX = !det ? brief : en
-    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most.`
-    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan.`;
+    ? `You are an editor for a YouTube Bible-teaching channel. The author is a preacher with a doctorate: his exegesis, doctrine and quotations are not touched. The main sections (${detNames}) were already reviewed: do not rate them and do not propose changes inside them. Rate only the spoken voice of the rest (1 to 5: does it sound like someone talking to one person, or like an essay read aloud?) and propose at most ${REPORT_MAX_ITEMS} changes of spoken voice outside those sections, the ones that help most. ${VOICE_KEEP_EN}`
+    : `Eres editor de un canal de YouTube de enseñanza bíblica. El autor es un predicador con doctorado: su exégesis, su doctrina y sus citas no se tocan. Las secciones principales (${detNames}) ya se revisaron: no las valores ni propongas cambios dentro de ellas. Valora solo la voz hablada del resto (1 a 5: ¿suena a alguien que le habla a una persona o a un ensayo leído?) y propón como máximo ${REPORT_MAX_ITEMS} cambios de voz hablada fuera de esas secciones, los que más ayudan. ${VOICE_KEEP_ES}`;
   const shapeX = !det ? shape : `{"areas": {"voice": {"rating": 1-5, "why": "..."}}, "items": [{"area": "voice", "original": "...", "replacement": "...", "alts": ["...", "..."], "why": "...", "after": 1-5}], "words": [{"term": "...", "alts": ["...", "...", "..."]}]}`;
   const json = (en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shapeX;
   return `${briefX}\n\n${facts}\n\n${rules} ${flow}\n\n${json}\n\n${en ? "SCRIPT" : "GUION"}:\n"""\n${mk.masked}\n"""`;
@@ -7370,6 +7384,20 @@ function fixesPrompt(items, opts) {
   const list = fixes.map((f) => `=== ${f.id}\n${en ? "Problem" : "Problema"}: ${f.problem}\n${en ? "CONTEXT (do not rewrite it)" : "CONTEXTO (no lo reescribas)"}:\n"""\n${f.ctx}\n"""\n${en ? "FRAGMENT TO REWRITE" : "FRAGMENTO A REESCRIBIR"}:\n"""\n${f.frag}\n"""`).join("\n\n");
   const shape = `{"fixes": [{"id": "f1", "options": [{"text": "...", "why": "..."}]}]}`;
   return `${head}\n\n${list}\n\n${(en ? "Answer only with JSON: " : "Responde solo con JSON: ") + shape}`;
+}
+
+// (Adrian, 2026-11-03: A) The voice proposals on Goliat turned «Desde el punto de vista humano…» into «Mirándolo así…», losing the
+// human-view / God's-view contrast the passage turns on. A voice change keeps every contrast and qualifier.
+const VOICE_KEEP_ES = "Nunca quites un contraste o un matiz que sostiene la idea (por ejemplo «desde un punto de vista humano», «sin embargo», «en cambio», «a los ojos de Dios»): un cambio de voz conserva el sentido exacto de la frase.";
+const VOICE_KEEP_EN = "Never remove a contrast or qualifier the idea rests on (for example \"from a human point of view\", \"however\", \"instead\", \"in God's eyes\"): a voice change keeps the sentence's exact meaning.";
+// A spoken-voice rating from this value up means the voice proposals are optional: step 3 asks before showing them.
+const VOICE_GOOD = 4;
+// Gate of the detailed review (pure): a detailed report whose voice rating is VOICE_GOOD or more, with pending items, is offered as
+// optional instead of walked card by card. Returns { rating, n } to show the gate, or null.
+function voiceGate(report, pending) {
+  if (!report || report.detail !== true || !(pending > 0)) return null;
+  const r = report.areas && report.areas.voice ? reportRating(report.areas.voice.rating) : null;
+  return r != null && r >= VOICE_GOOD ? { rating: r, n: pending } : null;
 }
 
 const reportRating = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
@@ -7948,7 +7976,7 @@ function descRisk(d) {
   return p && p.level !== "verde" ? p.issues : [];
 }
 
-if (typeof module !== "undefined") module.exports = { descPrompt, vetDescs, descRisk, descWithChapters, DESC_N, DESC_MIN, DESC_MAX, findAll, findFold, findNearest, secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
+if (typeof module !== "undefined") module.exports = { voiceGate, VOICE_GOOD, VOICE_KEEP_ES, VOICE_KEEP_EN, descPrompt, vetDescs, descRisk, descWithChapters, DESC_N, DESC_MIN, DESC_MAX, findAll, findFold, findNearest, secSplitText, buildChapters, CHAPTER_MIN_SEC, markOn, markChoicesClean, marksOf, marksOutside, MARK_GROUPS, MARK_SCREENS, MARK_DEFAULT, esArticle, detailLocked, detailOnly, mergeReports, sectionsPrompt, vetSections, SEC_AREAS, mainSections, rehookPoints, detectMainStarts, MAIN_SECS, analyze, syllablesES, ifsz, inflesz, findReferences, findQuotes, wordDiff, detectLanguage, fmtTime, median, bibleGatewayUrl, sentences, findCues, buildUnits, detectLayout, remapLayout, sectionsFrom, sectionFlags, coldCandidates, diffOps, parseRetention, retAt, retentionBySection, avgViewed, packagingChecks, buildChapters, clipCandidates, buildFixCards, applyPatches, verifyProposal, verseSpans, maskVerses, unmaskCheck, vetSection, vetSuggestions, relocateSuggestion, applySuggestion, refsKey, adBreaks, scoreOf, FIX_SKIP, SCORE_W, weightOf, CATS, CAT_PRI, catOfKind, catOfCard, railItems, railCrowd, RAIL_LETTER, buildDecisions, projectedScore, coachNoOverlap, coachQuestionChoices, coachAiMask, coachAiPick, readinessOf, READY_RED_CAP, readyTotal, REPORT_AREAS, RATING_PTS, reportPrompt, fixesPrompt, REPORT_FIX_BATCH, REPORT_MAX_FIXES, vetReport, projectedReadiness, itemState, itemApplied, effectiveReport, itemGain, withBaseline, cleanBaseline, cleanBefore, cleanCost, scriptureSentences, vetWords, reportWordRows, matchCase, vetFixes, fixItem, repairJson, insideTester, wordsWithin, syllablesESCount };
 
 /* ===== Script Desk — UI (bilingual) ===== */
 const $ = (id) => document.getElementById(id);
@@ -7996,7 +8024,7 @@ const T = {
     ttTitle: "Títulos, miniatura y descripción", ttDesc: "Cinco títulos, textos de miniatura y una descripción con capítulos estimados.", ttBtn: "Generar",
     saveBtn: "Guardar esta versión", tpBtn: "Teleprompter (.txt)", mdBtn: "Revisión (.md)",
     aiUnavailable: "no disponible fuera de Claude", aiOnlyClaude: "La IA solo funciona dentro de Claude.", saveNeedsClaude: "Guardar requiere abrir la página en Claude.",
-    thinking: "Pensando… puede tardar hasta un minuto.",
+    thinking: "Pensando… puede tardar hasta dos minutos.",
     err: { not_granted: "Permiso denegado. Vuelve a cargar la página para intentarlo de nuevo.", rate_limited: "Demasiadas solicitudes seguidas; espera un minuto.", cancelled: "Detenido.", invalid_json: "La IA respondió con un formato que no se pudo leer; prueba de nuevo.", truncated: "La respuesta de la IA fue demasiado larga y se cortó. Volver a intentarlo cuesta de nuevo; avísale a Adrian si se repite.",
       // one sentence per code the server or the client can throw (B-005, Adrian approved the wording 2026-10-29)
       network: "Sin conexión. Revisa internet y vuelve a intentarlo.", upstream: "El servicio de IA no respondió. Inténtalo en un minuto.", daily_limit: "Se alcanzó el límite de hoy; mañana sigue.", auto_paused: "Sugerencias automáticas en pausa este mes; las manuales siguen.", not_member: "Esta cuenta no está en el equipo. Avísale a Adrian.", no_sample: "Esta función necesita la IA, no disponible aquí.", bad_request: "Algo falló en la petición. Avísale a Adrian si se repite.", no_key: "Algo falló en la petición. Avísale a Adrian.", quota_exceeded: "El almacenamiento está lleno.", db_error: "No se pudo guardar." },
@@ -8068,7 +8096,7 @@ const T = {
     ttTitle: "Titles, thumbnail and description", ttDesc: "Five titles, thumbnail texts and a description with estimated chapters.", ttBtn: "Generate",
     saveBtn: "Save this version", tpBtn: "Teleprompter (.txt)", mdBtn: "Review (.md)",
     aiUnavailable: "unavailable outside Claude", aiOnlyClaude: "AI only works inside Claude.", saveNeedsClaude: "Saving requires opening the page in Claude.",
-    thinking: "Thinking… this can take up to a minute.",
+    thinking: "Thinking… this can take up to two minutes.",
     err: { not_granted: "Permission denied. Reload the page to try again.", rate_limited: "Too many requests in a row; wait a minute.", cancelled: "Stopped.", invalid_json: "The AI answered in a format that couldn't be read; try again.", truncated: "The AI's answer was too long and got cut off. Trying again costs again; tell Adrian if it repeats.",
       network: "No connection. Check the internet and try again.", upstream: "The AI service did not answer. Try again in a minute.", daily_limit: "Today's limit is reached; it continues tomorrow.", auto_paused: "Automatic suggestions paused this month; manual ones still work.", not_member: "This account is not on the team. Tell Adrian.", no_sample: "This needs the AI, which is not available here.", bad_request: "Something failed in the request. Tell Adrian if it repeats.", no_key: "Something failed in the request. Tell Adrian.", quota_exceeded: "Storage is full.", db_error: "Couldn't save." },
     errGeneric: (m) => `Couldn't finish: ${m}.`, unknownErr: "unknown error",
@@ -11775,7 +11803,7 @@ Object.assign(T.es, {
   trGo: "Traducir con IA",
   trSame: "El guion ya está en esa variante y en esa versión bíblica.",
   trNeedText: "Primero pega un guion.",
-  trWorking: "Traduciendo… puede tardar hasta un minuto.",
+  trWorking: "Traduciendo… puede tardar hasta dos minutos.",
   trResult: (x) => `Así quedaría en ${x}`,
   trVerify: "Comprueba estas citas en la versión elegida antes de grabar:",
   trUse: "Usar esta versión",
@@ -11799,7 +11827,7 @@ Object.assign(T.en, {
   trGo: "Translate with AI",
   trSame: "The script is already in that variant and Bible version.",
   trNeedText: "Paste a script first.",
-  trWorking: "Translating… this can take up to a minute.",
+  trWorking: "Translating… this can take up to two minutes.",
   trResult: (x) => `How it reads in ${x}`,
   trVerify: "Check these quotes in the chosen Bible version before recording:",
   trUse: "Use this version",
@@ -11891,7 +11919,7 @@ async function trRun() {
 function trApply() {
   const r = TR.res;
   if (!r) return;
-  // (B-013, 2026-10-29) The call takes up to a minute: if the script or the open episode changed meanwhile, the translation is for another text
+  // (B-013, 2026-10-29) The call takes up to two minutes: if the script or the open episode changed meanwhile, the translation is for another text
   if (String(r.base || "") !== $("script").value.trim() || (r.prod || null) !== (G.prodId || null)) { TR.res = null; TR.err = t("trStale"); renderTr(); return; }
   TR.undo = { text: $("script").value, title: $("title").value, thumb: $("thumb").value, description: $("description").value, keyword: $("keyword").value,
     bigIdea: ($("bigIdea") || {}).value || "", nextEp: G.nextEp || "", lang: $("lang").value, audience: $("audience").value, translation: $("translation").value, cold: JSON.parse(JSON.stringify(G.cold)),
@@ -15294,6 +15322,8 @@ Object.assign(T.es, {
   // the walk: one card at a time (2026-10-26, plan "Walk Juan through it", step 3)
   rpGainTo: (n) => `+${n} a la nota`, rpApplyGo: "Aplicar y seguir →", rpDetail: "Revisión detallada",
   rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} puntos · ${a}: de ${x == null ? "sin valorar" : x + " de 5"} a ${y == null ? "sin valorar" : y + " de 5"}`,
+  // (Adrian, 2026-11-03: A, wording A) a good spoken voice: the voice proposals are optional
+  rpVgH: "Tu guion ya suena hablado", rpVgRate: (r) => `El editor le da ${r} de 5 a la voz hablada.`, rpVgLeft: (n) => n === 1 ? "Queda 1 sugerencia de una frase suelta; es opcional." : `Quedan ${n} sugerencias de frases sueltas; son opcionales.`, rpVgSee: (n) => n === 1 ? "Ver la sugerencia" : `Ver las ${n} sugerencias`,
   rpEndStep: "Paso 2 de 3 · Mejorar", rpEndH: "Terminaste los cambios", rpEndNoneH: "Revisaste los cambios, sin aplicar ninguno", rpEndNow: (a) => `Nota ahora: ${a}`,
   rpEndCount: (a, s) => `${a} ${a === 1 ? "aplicado" : "aplicados"} · ${s} ${s === 1 ? "saltado" : "saltados"}`, rpEndList: "Cambios aplicados", rpEndPub: "Ir a Publicar →",
 });
@@ -15320,6 +15350,7 @@ Object.assign(T.en, {
   rpRe2: "Measure again with the AI", rpBubNote: "\"Now\" adds what the editor said each accepted change is worth. \"Measure again\" reads the script once more.",
   rpGainTo: (n) => `+${n} to your score`, rpApplyGo: "Apply and continue →", rpDetail: "Detailed review",
   rpChipUp: (n, a) => `+${n} · ${a}`, rpChipDone: (a) => `✓ ${a}`, rpChipAria: (n, a, x, y) => `+${n} points · ${a}: from ${x == null ? "not rated" : x + " of 5"} to ${y == null ? "not rated" : y + " of 5"}`,
+  rpVgH: "Your script already sounds spoken", rpVgRate: (r) => `The editor gives the spoken voice ${r} of 5.`, rpVgLeft: (n) => n === 1 ? "1 single-sentence suggestion is left; it is optional." : `${n} single-sentence suggestions are left; they are optional.`, rpVgSee: (n) => n === 1 ? "See the suggestion" : `See the ${n} suggestions`,
   rpEndStep: "Step 2 of 3 · Improve", rpEndH: "You finished the changes", rpEndNoneH: "You reviewed the changes and applied none", rpEndNow: (a) => `Score now: ${a}`,
   rpEndCount: (a, s) => `${a} applied · ${s} skipped`, rpEndList: "Changes applied", rpEndPub: "Go to Publish →",
 });
@@ -15521,8 +15552,11 @@ function rpCurrent() {
   if (RP.busy) return null;
   const d = rpRiskList()[0];
   if (d) return { type: "risk", id: "risk:" + d.id, d, start: d.at ? d.at.start : null, end: d.at ? d.at.end : null };
-  const s = rpStates().find((x) => x.st === "pending" || x.st === "lost");
+  const sts = rpStates(), s = sts.find((x) => x.st === "pending" || x.st === "lost");
   if (!s) return null;
+  // (Adrian, 2026-11-03: A) a voice rated 4-5 is already good: ask before walking its proposals (RP.voiceOpen = this report, opened)
+  const vg = G.report && RP.voiceOpen === G.report.at ? null : voiceGate(G.report, sts.filter((x) => x.st === "pending" || x.st === "lost").length);
+  if (vg) return { type: "gate", id: "gate", ...vg, start: null, end: null };
   const it = G.report.items[s.i];
   return { type: "item", id: "item:" + s.i, i: s.i, it, st: s.st, start: s.start, end: s.end };
 }
@@ -15658,7 +15692,13 @@ function rpWriteHTML(cur) {
   return `<div class="rp-write"><label for="rpW">${h(t("rpWriteHere"))}</label><textarea id="rpW" rows="3">${h(w.value)}</textarea>${w.err ? `<p class="status err" role="alert">${h(w.err)}</p>` : ""}
     <div class="actions"><button type="button" class="small primary" data-rp="wapply" data-rp-primary>${h(t("coWriteApply"))}</button><button type="button" class="small linkish" data-rp="wcancel">${h(t("coCancel"))}</button></div></div>`;
 }
+function rpGateHTML(cur) {
+  return `<section class="rp-dec rp-gate" role="region" aria-labelledby="rpD" tabindex="-1"><h3 id="rpD">${h(t("rpVgH"))}</h3>
+    <p>${h(t("rpVgRate")(cur.rating))} ${h(t("rpVgLeft")(cur.n))}</p>
+    <div class="actions rp-act"><button type="button" class="small primary rp-go" data-rp="publish" data-rp-primary>${h(t("rpEndPub"))}</button><button type="button" class="small" data-rp="voice">${h(t("rpVgSee")(cur.n))}</button></div></section>`;
+}
 function rpDecisionHTML(R, cur, states) {
+  if (cur.type === "gate") return rpGateHTML(cur);
   const w = RP.write && RP.write.id === cur.id;
   const prevOk = RP.hist.some((e) => (e.t === "item" ? RP.skip.has(e.i) : e.ids.some((id) => state.fixDismissed.has(id))));
   const nav = `<div class="rp-nav"><button type="button" class="small linkish" data-rp="prev"${prevOk ? "" : " disabled"} title="${h(t("coPrevTip"))}">${h(t("coPrev"))}</button>${state.fixUndo.length ? `<button type="button" class="small" id="rpUndo" data-rp="undo">${h(t("fxUndo"))}</button>` : ""}</div>`;
@@ -15784,7 +15824,8 @@ function rpAct(act) {
   if (act === "re") { if (!RP.busy) RP.epoch++; RP.fix = null; RP.skip = new Set(); RP.hist = []; RP.write = null; RP.shown = ""; rpRun(true); renderGuide(); return; }
   if (act === "publish") return goStep(3);
   if (act === "undo") { RP.applying = rpKey(); RP.delay = 0; try { undoFix(); } finally { RP.applying = null; } return; }
-  if (!cur) return;
+  if (act === "voice") { RP.voiceOpen = G.report && G.report.at; RP.shown = ""; renderGuide(); return; }
+  if (!cur || cur.type === "gate") return;
   if (act === "skip") return rpSkip(cur);
   if (act === "prev") return rpPrev();
   if (act === "apply") {
@@ -16084,14 +16125,14 @@ document.addEventListener("click", (e) => { if (e.target.closest && e.target.clo
 // a test mock) is wrapped too, and a wrapped object is marked so a re-assignment built from it is not counted twice.
 Object.assign(T.es, {
   aiThinking: "La IA está pensando…", aiThinkingN: (n) => `La IA está pensando… (${n} tareas)`,
-  aiWait: "Todavía no hay respuesta. Puede tardar hasta un minuto.",
+  aiWait: "Todavía no hay respuesta. Puede tardar hasta dos minutos.",
   aiDone: "Listo: la IA ha respondido", aiFail: "La IA no respondió", aiFailSub: "El aviso en pantalla dice por qué.",
   aiRetry: "Reintentar", aiClose: "Cerrar", aiPillBusy: "La IA está pensando", aiPillDone: "La IA ha respondido",
   aiLblReport: "Informe del editor", aiLblFixes: (d, n) => `Arreglos ${d}/${n}`,
 });
 Object.assign(T.en, {
   aiThinking: "The AI is thinking…", aiThinkingN: (n) => `The AI is thinking… (${n} tasks)`,
-  aiWait: "No answer yet. It can take up to a minute.",
+  aiWait: "No answer yet. It can take up to two minutes.",
   aiDone: "Done: the AI has answered", aiFail: "The AI did not answer", aiFailSub: "The message on screen says why.",
   aiRetry: "Retry", aiClose: "Close", aiPillBusy: "The AI is thinking", aiPillDone: "The AI has answered",
   aiLblReport: "Editor's report", aiLblFixes: (d, n) => `Fixes ${d}/${n}`,
